@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- targetSdk 36 is the current Google Play requirement; API 37 behavior is tested before opting in. -->
+    <issue id="OldTargetApi" severity="ignore" />
+
+    <!-- Dependabot owns dependency update reporting. The Compose compiler must match AGP's built-in Kotlin. -->
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+</lint>
