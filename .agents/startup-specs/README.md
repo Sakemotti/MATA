@@ -2,7 +2,7 @@
 
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[TODO一覧画面仕様](../screen-specs/todo-list/spec.md)、[通知仕様](../notification-specs/README.md)、[ウィジェット仕様](../widget-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)
+- 関連仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[TODO一覧画面仕様](../screen-specs/todo-list/spec.md)、[通知仕様](../notification-specs/README.md)、[ウィジェット仕様](../widget-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)
 
 ## 1. 目的
 

@@ -25,8 +25,9 @@ MATAは、繰り返し設定に特化したAndroid向けTODO管理アプリで�
 - 表示言語は日本語のみとする。
 - UIはMaterial Design 3を基調とする。
 - 色、文字、形状、共通コンポーネント、アイコン、モーションおよびアクセシビリティは[MATAデザインシステム仕様](design-system-specs/README.md)で定義する。
+- スマートフォン、タブレット、折りたたみ端末、ChromeOS、横画面およびマルチウィンドウに対応し、現在のウィンドウサイズに応じてレイアウトを適応させる。
+- 画面サイズ、ナビゲーション、2ペイン、システム領域、折り目および入力方式の詳細は[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)で定義する。
 - 最低対応AndroidバージョンとターゲットAPIレベルは[開発ガイドライン](development-guidelines.md)で定義する。
-- タブレット・折りたたみ端末・横画面への具体的な対応範囲は、実装設計時に決定する。
 
 ## 3. 日付と「一日の終わり」
 
@@ -334,7 +335,6 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 次の項目はプロダクト要件には影響しない運用上の未決定事項として、公開準備までに決定する。
 
 - プライバシーポリシーと利用規約のURL
-- タブレット、折りたたみ端末、横画面の詳細レイアウト
 - Google Play公開に必要なプライバシーポリシーとデータセーフティ申告
 
-Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](domain-specs/README.md)、祝日連携は[祝日情報連携仕様](holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)、広告と課金は[収益化仕様](monetization-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](design-system-specs/README.md)で確定済みとする。
+Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](domain-specs/README.md)、祝日連携は[祝日情報連携仕様](holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)、広告と課金は[収益化仕様](monetization-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)で確定済みとする。

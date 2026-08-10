@@ -3,7 +3,7 @@
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
 - 親仕様: [収益化仕様](README.md)
-- 関連画面: [TODO一覧画面仕様](../screen-specs/todo-list/spec.md)、[設定画面仕様](../screen-specs/settings/spec.md)
+- 関連画面: [TODO一覧画面仕様](../screen-specs/todo-list/spec.md)、[設定画面仕様](../screen-specs/settings/spec.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)
 
 ## 1. 広告SDK
 
@@ -56,6 +56,7 @@ TODO一覧画面の日付別モードとカテゴリ別モードに限り、画�
 ## 4. レイアウト
 
 - バナーはシステムナビゲーション領域の上に固定する。
+- バナー幅の算出、サイズ変更時の再読込および大画面での最大幅は[画面別適応レイアウト仕様](../adaptive-layout-specs/screen-layouts.md)に従う。
 - TODO一覧の下端余白は、表示中のバナー高さと一致させる。
 - TODO行を隠したり、一覧内へ広告を挿入したりしない。
 - フローティングボタンとSnackbarはバナーの上へ配置する。

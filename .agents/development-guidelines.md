@@ -14,6 +14,8 @@
 
 起動経路、Navigation Compose、SplashScreen、初期化順序、障害回復および起動性能は[アプリ起動・初期化・復帰仕様](startup-specs/README.md)に従う。
 
+現在のウィンドウサイズに基づくナビゲーション、2ペイン、Edge-to-edge、Insets、折りたたみ端末および入力方式は[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)に従う。画面方向、アスペクト比およびActivityのリサイズを制限しない。
+
 ## 2. アプリ識別子
 
 - Namespace: `com.mochisofts.mata`
@@ -80,6 +82,7 @@ com.mochisofts.mata
 
 - 実装完了とリリース前の確認には、[総合動作確認項目書](test-specs/README.md)を使用する。
 - 起動経路と起動性能は、[起動の性能・試験仕様](startup-specs/performance-and-testing.md)も併用する。
+- 画面サイズ境界、マルチウィンドウ、折りたたみ端末および入力方式は、[適応レイアウトの試験・公開判定仕様](adaptive-layout-specs/testing-and-release.md)も併用する。
 - 各画面仕様の受け入れ条件は、画面別のテストIDと1対1で追跡する。
 - 論理日、繰り返し、期限、履歴集計はローカル単体テストを必須とする。
 - ViewModelは状態遷移を単体テストする。
@@ -103,5 +106,5 @@ com.mochisofts.mata
 2. `testDebugUnitTest` が成功する。
 3. `lintDebug` が成功する。
 4. `assembleDebug` が成功する。
-5. 画面変更はライト・ダークテーマとフォント拡大で確認する。
+5. 画面変更はライト・ダークテーマ、フォント拡大、各ウィンドウサイズクラスで確認する。
 6. 新しい権限、外部SDK、データ収集がある場合は仕様とプライバシー文書を更新する。

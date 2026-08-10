@@ -2,7 +2,7 @@
 
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[ウィジェット仕様](../widget-specs/README.md)、[起動仕様](../startup-specs/README.md)
+- 関連仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[ウィジェット仕様](../widget-specs/README.md)、[起動仕様](../startup-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)
 
 ## 1. 目的
 
