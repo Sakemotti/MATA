@@ -12,6 +12,8 @@
 - 非同期処理にはKotlin Coroutinesを使用する。
 - 日付と時刻には `java.time` APIを使用する。
 
+起動経路、Navigation Compose、SplashScreen、初期化順序、障害回復および起動性能は[アプリ起動・初期化・復帰仕様](startup-specs/README.md)に従う。
+
 ## 2. アプリ識別子
 
 - Namespace: `com.mochisofts.mata`
@@ -75,6 +77,7 @@ com.mochisofts.mata
 ## 8. テスト
 
 - 実装完了とリリース前の確認には、[総合動作確認項目書](test-specs/README.md)を使用する。
+- 起動経路と起動性能は、[起動の性能・試験仕様](startup-specs/performance-and-testing.md)も併用する。
 - 各画面仕様の受け入れ条件は、画面別のテストIDと1対1で追跡する。
 - 論理日、繰り返し、期限、履歴集計はローカル単体テストを必須とする。
 - ViewModelは状態遷移を単体テストする。

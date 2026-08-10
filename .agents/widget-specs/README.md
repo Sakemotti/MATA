@@ -22,6 +22,7 @@
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
 - [日本の祝日データ仕様](../holiday-specs/README.md)
 - [通知仕様](../notification-specs/README.md)
+- [アプリ起動・初期化・復帰仕様](../startup-specs/README.md)
 - [TODO一覧画面仕様](../screen-specs/todo-list/spec.md)
 
 ## 基本原則

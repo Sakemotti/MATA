@@ -2,7 +2,7 @@
 
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../app-spec.md)、[TODO一覧画面仕様](../screen-specs/todo-list/spec.md)、[設定画面仕様](../screen-specs/settings/spec.md)、[手動バックアップ仕様](../backup-specs/README.md)
+- 関連仕様: [アプリ全体仕様](../app-spec.md)、[TODO一覧画面仕様](../screen-specs/todo-list/spec.md)、[設定画面仕様](../screen-specs/settings/spec.md)、[手動バックアップ仕様](../backup-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)
 
 ## 1. 目的
 

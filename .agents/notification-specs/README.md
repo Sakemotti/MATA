@@ -21,6 +21,7 @@
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
 - [日本の祝日データ仕様](../holiday-specs/README.md)
+- [アプリ起動・初期化・復帰仕様](../startup-specs/README.md)
 - [TODO編集画面仕様](../screen-specs/todo-editor/spec.md)
 - [設定画面仕様](../screen-specs/settings/spec.md)
 
