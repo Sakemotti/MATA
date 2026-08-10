@@ -67,6 +67,8 @@ com.mochisofts.mata
 
 具体的な保存モデルは[データモデル仕様](domain-specs/data-model.md)、手動バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)に従う。
 
+UI、Room、繰り返し計算、メモリ、バックグラウンド処理、電力および性能計測は[性能・省電力仕様](performance-specs/README.md)に従う。
+
 ## 7. コーディング規約
 
 - Kotlin公式コーディング規約を基本とする。
@@ -83,6 +85,7 @@ com.mochisofts.mata
 - 実装完了とリリース前の確認には、[総合動作確認項目書](test-specs/README.md)を使用する。
 - 起動経路と起動性能は、[起動の性能・試験仕様](startup-specs/performance-and-testing.md)も併用する。
 - 画面サイズ境界、マルチウィンドウ、折りたたみ端末および入力方式は、[適応レイアウトの試験・公開判定仕様](adaptive-layout-specs/testing-and-release.md)も併用する。
+- UI、データ、大量件数、メモリおよびバックグラウンド処理は、[性能計測・公開判定仕様](performance-specs/benchmark-and-release.md)も併用する。
 - 各画面仕様の受け入れ条件は、画面別のテストIDと1対1で追跡する。
 - 論理日、繰り返し、期限、履歴集計はローカル単体テストを必須とする。
 - ViewModelは状態遷移を単体テストする。
