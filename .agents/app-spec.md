@@ -335,11 +335,12 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - アプリ独自のロック
 - バックアップファイルのアプリ独自暗号化
 
-## 17. 公開準備までに決定する項目
+## 17. 公開準備と継続運用
 
-次の項目はプロダクト要件には影響しない運用上の未決定事項として、公開準備までに決定する。
-
-- プライバシーポリシーと利用規約のURL
-- Google Play公開に必要なプライバシーポリシーとデータセーフティ申告
+- プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
+- 利用規約は`https://mochisofts.com/mata/terms`で公開する。
+- Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`、掲載用連絡先は`support@mochisofts.com`とする。
+- 公開前に法的URLの実在、Data safety、権限、SDK、署名、テストトラック、段階公開を[リリース・配布運用仕様](release-specs/README.md)で確認する。
+- Google PlayおよびAndroidの要件は公開候補ごとに現行内容を確認し、固定した過去要件だけを根拠に公開しない。
 
 Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](domain-specs/README.md)、祝日連携は[祝日情報連携仕様](holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)、広告と課金は[収益化仕様](monetization-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)で確定済みとする。

@@ -103,6 +103,8 @@ UI、Room、繰り返し計算、メモリ、バックグラウンド処理、�
 - GitHub Actionsで単体テスト、Lint、Debugビルドを実行する。
 - DependabotでGradle依存関係とGitHub Actionsを週次確認する。
 
+バージョン、署名、成果物、Google Playトラック、段階公開および公開後監視は[リリース・配布運用仕様](release-specs/README.md)に従う。
+
 ## 10. 完了条件
 
 実装を完了とする前に、少なくとも次を満たす。
