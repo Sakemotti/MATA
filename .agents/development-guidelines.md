@@ -74,6 +74,8 @@ com.mochisofts.mata
 - 色だけに依存した状態表現を避け、テキスト、アイコン、セマンティクスを併用する。
 - 公開APIと複雑な業務ルールには、目的が分かるコメントまたはテストを付ける。
 
+具体的なColorScheme、Typography、Shapes、寸法、共通コンポーネント、アイコン、モーションおよびアクセシビリティは[MATAデザインシステム仕様](design-system-specs/README.md)に従う。
+
 ## 8. テスト
 
 - 実装完了とリリース前の確認には、[総合動作確認項目書](test-specs/README.md)を使用する。
