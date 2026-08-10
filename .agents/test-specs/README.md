@@ -2,7 +2,7 @@
 
 - 文書状態: 初版
 - 最終更新日: 2026-08-10
-- 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)
+- 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../error-handling-specs/README.md)
 
 ## 1. 目的
 
@@ -121,7 +121,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と6画面
 | ネットワーク | オンライン、オフライン、処理途中の切断と復帰 |
 | ライフサイクル | 回転、バックグラウンド復帰、プロセス再生成、端末再起動 |
 
-公開URLは、仕様決定後に対応項目を具体化してから合否判定する。広告SDK、商品ID、課金、同意管理および収益化の公開判定は[収益化の試験・公開仕様](../monetization-specs/testing-and-release.md)、起動経路、復帰、初期化および起動性能は[起動の性能・試験仕様](../startup-specs/performance-and-testing.md)、テーマ、共通コンポーネント、モーションおよびアクセシビリティは[デザインシステムの試験仕様](../design-system-specs/motion-accessibility-and-testing.md)、ウィンドウ境界、2ペイン、Insets、折りたたみおよび入力方式は[適応レイアウトの試験・公開判定仕様](../adaptive-layout-specs/testing-and-release.md)を併用して確認する。
+公開URLは、仕様決定後に対応項目を具体化してから合否判定する。広告SDK、商品ID、課金、同意管理および収益化の公開判定は[収益化の試験・公開仕様](../monetization-specs/testing-and-release.md)、起動経路、復帰、初期化および起動性能は[起動の性能・試験仕様](../startup-specs/performance-and-testing.md)、テーマ、共通コンポーネント、モーションおよびアクセシビリティは[デザインシステムの試験仕様](../design-system-specs/motion-accessibility-and-testing.md)、ウィンドウ境界、2ペイン、Insets、折りたたみおよび入力方式は[適応レイアウトの試験・公開判定仕様](../adaptive-layout-specs/testing-and-release.md)、共通の失敗状態と回復は[エラー処理・障害回復の試験仕様](../error-handling-specs/testing.md)を併用して確認する。
 
 ## 7. 実行順序
 
