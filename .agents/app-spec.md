@@ -24,9 +24,9 @@ MATAは、繰り返し設定に特化したAndroid向けTODO管理アプリで�
 - Google Playで一般公開する。
 - 表示言語は日本語のみとする。
 - UIはMaterial Design 3を基調とする。
-- 色、文字、形状、共通コンポーネント、アイコン、モーションおよびアクセシビリティは[MATAデザインシステム仕様](design-system-specs/README.md)で定義する。
+- 色、文字、形状、共通コンポーネント、アイコン、モーションおよびアクセシビリティは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)で定義する。
 - スマートフォン、タブレット、折りたたみ端末、ChromeOS、横画面およびマルチウィンドウに対応し、現在のウィンドウサイズに応じてレイアウトを適応させる。
-- 画面サイズ、ナビゲーション、2ペイン、システム領域、折り目および入力方式の詳細は[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)で定義する。
+- 画面サイズ、ナビゲーション、2ペイン、システム領域、折り目および入力方式の詳細は[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)で定義する。
 - 最低対応AndroidバージョンとターゲットAPIレベルは[開発ガイドライン](development-guidelines.md)で定義する。
 
 ## 3. 日付と「一日の終わり」
@@ -257,11 +257,11 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - アーカイブ済みTODO一覧
 - 設定
 
-ランチャー、通知、ウィジェットからの起動、初期化順序、フォアグラウンド復帰およびプロセス再生成の詳細は[アプリ起動・初期化・復帰仕様](startup-specs/README.md)で定義する。
+ランチャー、通知、ウィジェットからの起動、初期化順序、フォアグラウンド復帰およびプロセス再生成の詳細は[アプリ起動・初期化・復帰仕様](non-functional-specs/startup-specs/README.md)で定義する。
 
-画面と機能に共通するエラー分類、表示、再試行、オフライン時の縮退、競合およびデータ障害からの回復は[エラー処理・障害回復仕様](error-handling-specs/README.md)で定義する。
+画面と機能に共通するエラー分類、表示、再試行、オフライン時の縮退、競合およびデータ障害からの回復は[エラー処理・障害回復仕様](non-functional-specs/error-handling-specs/README.md)で定義する。
 
-主要操作、データ取得、大量件数、バックグラウンド処理および省電力の品質基準は[性能・省電力仕様](performance-specs/README.md)で定義する。
+主要操作、データ取得、大量件数、バックグラウンド処理および省電力の品質基準は[性能・省電力仕様](non-functional-specs/performance-specs/README.md)で定義する。
 
 ## 13. 設定
 
@@ -301,7 +301,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - アプリ独自のPIN・生体認証ロックは設けない。
 - バックアップファイルのアプリ独自暗号化は行わず、個人情報を含む可能性をユーザーへ案内する。
 - 祝日情報の取得時に、TODO、カテゴリ、履歴などのユーザーデータを外部へ送信しない。
-- 端末内保存、外部通信、権限、通知のロック画面表示、依存SDKおよびGoogle Play申告は[セキュリティ・プライバシー仕様](security-privacy-specs/README.md)に従う。
+- 端末内保存、外部通信、権限、通知のロック画面表示、依存SDKおよびGoogle Play申告は[セキュリティ・プライバシー仕様](non-functional-specs/security-privacy-specs/README.md)に従う。
 
 ## 15. 収益化
 
@@ -316,7 +316,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - 広告にはGoogle AdMobの固定バナー、同意管理にはGoogle User Messaging Platformを使用する。
 - 広告はTODO一覧画面だけに表示する。
 
-商品、購入状態、購入承認、復元、広告表示条件、同意管理、プライバシーおよび公開判定の詳細は[収益化仕様](monetization-specs/README.md)で定義する。
+商品、購入状態、購入承認、復元、広告表示条件、同意管理、プライバシーおよび公開判定の詳細は[収益化仕様](functional-specs/monetization-specs/README.md)で定義する。
 
 ## 16. 対象外
 
@@ -340,7 +340,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
 - Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`、掲載用連絡先は`support@mochisofts.com`とする。
-- 公開前に法的URLの実在、Data safety、権限、SDK、署名、テストトラック、段階公開を[リリース・配布運用仕様](release-specs/README.md)で確認する。
+- 公開前に法的URLの実在、Data safety、権限、SDK、署名、テストトラック、段階公開を[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)で確認する。
 - Google PlayおよびAndroidの要件は公開候補ごとに現行内容を確認し、固定した過去要件だけを根拠に公開しない。
 
-Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](domain-specs/README.md)、祝日連携は[祝日情報連携仕様](holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)、広告と課金は[収益化仕様](monetization-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)で確定済みとする。
+Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](functional-specs/domain-specs/README.md)、祝日連携は[祝日情報連携仕様](functional-specs/holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](functional-specs/backup-specs/README.md)、広告と課金は[収益化仕様](functional-specs/monetization-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)で確定済みとする。

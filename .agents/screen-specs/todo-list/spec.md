@@ -2,7 +2,7 @@
 
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[カレンダー履歴画面仕様](../calendar-history/spec.md)、[カテゴリ管理画面仕様](../category-management/spec.md)、[アーカイブ済みTODO一覧画面仕様](../archived-todos/spec.md)、[設定画面仕様](../settings/spec.md)、[収益化仕様](../../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../../startup-specs/README.md)
+- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[カレンダー履歴画面仕様](../calendar-history/spec.md)、[カテゴリ管理画面仕様](../category-management/spec.md)、[アーカイブ済みTODO一覧画面仕様](../archived-todos/spec.md)、[設定画面仕様](../settings/spec.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../../non-functional-specs/startup-specs/README.md)
 
 ## 1. 目的
 
@@ -447,7 +447,7 @@ TODO登録画面には、表示中の状態に応じて次の初期値を渡す�
 - バナー領域がない場合は、その分TODO一覧を広げる。
 - バナー広告はシステムナビゲーション領域と重ならないようにする。
 
-広告形式、表示条件、同意、読み込み、破棄、更新および試験の詳細は[広告・同意管理仕様](../../monetization-specs/ads-and-consent.md)に従う。
+広告形式、表示条件、同意、読み込み、破棄、更新および試験の詳細は[広告・同意管理仕様](../../functional-specs/monetization-specs/ads-and-consent.md)に従う。
 
 ## 16. アクセシビリティ
 

@@ -595,4 +595,4 @@ OSへ登録済みの通知またはアラームが残っている場合は取り
 
 ## 17. 実装技術
 
-一覧と履歴は1ページ50件、検索待ち時間は300msとする。日本語タイトルのCollation Key、Paging 3およびOS通知取消の再整合Workは[データアクセス・ジョブ仕様](../../architecture-specs/data-access-and-jobs.md)に従う。
+一覧と履歴は1ページ50件、検索待ち時間は300msとする。日本語タイトルのCollation Key、Paging 3およびOS通知取消の再整合Workは[データアクセス・ジョブ仕様](../../non-functional-specs/architecture-specs/data-access-and-jobs.md)に従う。

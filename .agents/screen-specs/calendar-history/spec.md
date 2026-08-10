@@ -487,6 +487,6 @@
 
 ## 16. 実装技術
 
-月集計クエリ、影響月のキャッシュ無効化、直前・翌月の先読み、最大3か月キャッシュおよび過去側の最小月は[データアクセス・ジョブ仕様](../../architecture-specs/data-access-and-jobs.md)に従う。
+月集計クエリ、影響月のキャッシュ無効化、直前・翌月の先読み、最大3か月キャッシュおよび過去側の最小月は[データアクセス・ジョブ仕様](../../non-functional-specs/architecture-specs/data-access-and-jobs.md)に従う。
 
-完了色、日全体の状態、期間結果マーカーは[色・テーマ仕様](../../design-system-specs/colors-and-themes.md)と[コンポーネント・アイコン仕様](../../design-system-specs/components-and-icons.md)で確定済みとする。
+完了色、日全体の状態、期間結果マーカーは[色・テーマ仕様](../../non-functional-specs/design-system-specs/colors-and-themes.md)と[コンポーネント・アイコン仕様](../../non-functional-specs/design-system-specs/components-and-icons.md)で確定済みとする。

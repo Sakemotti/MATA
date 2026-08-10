@@ -2,7 +2,7 @@
 
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[TODO一覧画面仕様](../todo-list/spec.md)、[TODO登録・編集画面仕様](../todo-editor/spec.md)、[カレンダー履歴画面仕様](../calendar-history/spec.md)、[カテゴリ管理画面仕様](../category-management/spec.md)、[アーカイブ済みTODO一覧画面仕様](../archived-todos/spec.md)、[収益化仕様](../../monetization-specs/README.md)
+- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[TODO一覧画面仕様](../todo-list/spec.md)、[TODO登録・編集画面仕様](../todo-editor/spec.md)、[カレンダー履歴画面仕様](../calendar-history/spec.md)、[カテゴリ管理画面仕様](../category-management/spec.md)、[アーカイブ済みTODO一覧画面仕様](../archived-todos/spec.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)
 
 ## 1. 目的
 
@@ -347,7 +347,7 @@
 - 表示価格はアプリへ固定記載せず、Google Playから取得したローカライズ済み価格を使用する。
 - 購入状態はバックアップへ含めず、Google Playの購入情報を正とする。
 
-購入状態、購入承認、復元、払い戻しおよびエラー処理の正確な判定は[課金・権利状態仕様](../../monetization-specs/billing-and-entitlement.md)に従う。
+購入状態、購入承認、復元、払い戻しおよびエラー処理の正確な判定は[課金・権利状態仕様](../../functional-specs/monetization-specs/billing-and-entitlement.md)に従う。
 
 ### 11.2 表示状態
 
@@ -388,7 +388,7 @@
 - 選択変更後は既存広告を破棄し、新しい同意状態に従って広告表示条件を再評価する。
 - 広告への同意を拒否してもアプリの基本機能を制限しない。
 
-広告表示と同意管理の詳細は[広告・同意管理仕様](../../monetization-specs/ads-and-consent.md)に従う。
+広告表示と同意管理の詳細は[広告・同意管理仕様](../../functional-specs/monetization-specs/ads-and-consent.md)に従う。
 
 ## 12. アプリ情報
 
@@ -555,8 +555,8 @@
 
 ## 18. 未決定事項
 
-本画面の実装に必要なプロダクト仕様上の未決定事項はない。プライバシーポリシーと利用規約のURLは[リリース・配布運用仕様](../../release-specs/README.md)で確定済みとする。
+本画面の実装に必要なプロダクト仕様上の未決定事項はない。プライバシーポリシーと利用規約のURLは[リリース・配布運用仕様](../../non-functional-specs/release-specs/README.md)で確定済みとする。
 
-バックアップ形式バージョン1の詳細なJSONスキーマ、作成、復元、将来の形式移行方針は[手動バックアップ仕様](../../backup-specs/README.md)で定義する。
+バックアップ形式バージョン1の詳細なJSONスキーマ、作成、復元、将来の形式移行方針は[手動バックアップ仕様](../../functional-specs/backup-specs/README.md)で定義する。
 
-Google Playの商品IDと初期価格を含む課金・広告の詳細は[収益化仕様](../../monetization-specs/README.md)で確定済みとする。
+Google Playの商品IDと初期価格を含む課金・広告の詳細は[収益化仕様](../../functional-specs/monetization-specs/README.md)で確定済みとする。

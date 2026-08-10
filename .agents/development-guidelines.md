@@ -12,9 +12,9 @@
 - 非同期処理にはKotlin Coroutinesを使用する。
 - 日付と時刻には `java.time` APIを使用する。
 
-起動経路、Navigation Compose、SplashScreen、初期化順序、障害回復および起動性能は[アプリ起動・初期化・復帰仕様](startup-specs/README.md)に従う。
+起動経路、Navigation Compose、SplashScreen、初期化順序、障害回復および起動性能は[アプリ起動・初期化・復帰仕様](non-functional-specs/startup-specs/README.md)に従う。
 
-現在のウィンドウサイズに基づくナビゲーション、2ペイン、Edge-to-edge、Insets、折りたたみ端末および入力方式は[画面サイズ・適応レイアウト仕様](adaptive-layout-specs/README.md)に従う。画面方向、アスペクト比およびActivityのリサイズを制限しない。
+現在のウィンドウサイズに基づくナビゲーション、2ペイン、Edge-to-edge、Insets、折りたたみ端末および入力方式は[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)に従う。画面方向、アスペクト比およびActivityのリサイズを制限しない。
 
 ## 2. アプリ識別子
 
@@ -50,7 +50,7 @@ com.mochisofts.mata
 - 繰り返し計算と論理日計算はAndroid UIから分離し、ローカル単体テストを可能にする。
 - 画面固有コードが大きくなった場合は、`ui/<feature>` 単位で分割する。
 
-レイヤー、Hilt、Repository、UiState、型付きNavigation、Room、DataStore、Pagingおよびジョブの具体的な構成は[実装アーキテクチャ・データアクセス仕様](architecture-specs/README.md)に従う。
+レイヤー、Hilt、Repository、UiState、型付きNavigation、Room、DataStore、Pagingおよびジョブの具体的な構成は[実装アーキテクチャ・データアクセス仕様](non-functional-specs/architecture-specs/README.md)に従う。
 
 ## 5. 状態管理
 
@@ -67,35 +67,35 @@ com.mochisofts.mata
 - Androidの自動バックアップは無効とする。
 - 手動バックアップはStorage Access Frameworkを使用し、アプリ外の任意の場所へユーザー操作で保存する。
 
-具体的な保存モデルは[データモデル仕様](domain-specs/data-model.md)、手動バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)に従う。
+具体的な保存モデルは[データモデル仕様](functional-specs/domain-specs/data-model.md)、手動バックアップ形式は[手動バックアップ仕様](functional-specs/backup-specs/README.md)に従う。
 
-UI、Room、繰り返し計算、メモリ、バックグラウンド処理、電力および性能計測は[性能・省電力仕様](performance-specs/README.md)に従う。
+UI、Room、繰り返し計算、メモリ、バックグラウンド処理、電力および性能計測は[性能・省電力仕様](non-functional-specs/performance-specs/README.md)に従う。
 
 ## 7. コーディング規約
 
 - Kotlin公式コーディング規約を基本とする。
 - ファイルはUTF-8、改行はLF、インデントはスペース4個とする。
 - UI文字列は原則として文字列リソースへ置く。
-- ログは[ログ・診断・品質監視仕様](observability-specs/README.md)の構造化イベントを使用し、ユーザー入力、トークン、URIおよび外部SDK応答を記録しない。
+- ログは[ログ・診断・品質監視仕様](non-functional-specs/observability-specs/README.md)の構造化イベントを使用し、ユーザー入力、トークン、URIおよび外部SDK応答を記録しない。
 - 色、余白、文字スタイルはMaterialThemeまたは共通トークンから参照する。
 - 色だけに依存した状態表現を避け、テキスト、アイコン、セマンティクスを併用する。
 - 公開APIと複雑な業務ルールには、目的が分かるコメントまたはテストを付ける。
 
-具体的なColorScheme、Typography、Shapes、寸法、共通コンポーネント、アイコン、モーションおよびアクセシビリティは[MATAデザインシステム仕様](design-system-specs/README.md)に従う。
+具体的なColorScheme、Typography、Shapes、寸法、共通コンポーネント、アイコン、モーションおよびアクセシビリティは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)に従う。
 
 ## 8. テスト
 
 - 実装完了とリリース前の確認には、[総合動作確認項目書](test-specs/README.md)を使用する。
-- 起動経路と起動性能は、[起動の性能・試験仕様](startup-specs/performance-and-testing.md)も併用する。
-- 画面サイズ境界、マルチウィンドウ、折りたたみ端末および入力方式は、[適応レイアウトの試験・公開判定仕様](adaptive-layout-specs/testing-and-release.md)も併用する。
-- UI、データ、大量件数、メモリおよびバックグラウンド処理は、[性能計測・公開判定仕様](performance-specs/benchmark-and-release.md)も併用する。
+- 起動経路と起動性能は、[起動の性能・試験仕様](non-functional-specs/startup-specs/performance-and-testing.md)も併用する。
+- 画面サイズ境界、マルチウィンドウ、折りたたみ端末および入力方式は、[適応レイアウトの試験・公開判定仕様](non-functional-specs/adaptive-layout-specs/testing-and-release.md)も併用する。
+- UI、データ、大量件数、メモリおよびバックグラウンド処理は、[性能計測・公開判定仕様](non-functional-specs/performance-specs/benchmark-and-release.md)も併用する。
 - 各画面仕様の受け入れ条件は、画面別のテストIDと1対1で追跡する。
 - 論理日、繰り返し、期限、履歴集計はローカル単体テストを必須とする。
 - ViewModelは状態遷移を単体テストする。
 - 主要なユーザーフローはCompose UIテストで確認する。
 - データベースのマイグレーション追加時は移行テストを追加する。
 - 不具合修正時は、可能な限り再現テストを先に追加する。
-- 例外分類、再試行、縮退、競合および障害回復は[エラー処理・障害回復仕様](error-handling-specs/README.md)に従い、障害注入試験を追加する。
+- 例外分類、再試行、縮退、競合および障害回復は[エラー処理・障害回復仕様](non-functional-specs/error-handling-specs/README.md)に従い、障害注入試験を追加する。
 
 ## 9. GitとCI
 
@@ -105,7 +105,7 @@ UI、Room、繰り返し計算、メモリ、バックグラウンド処理、�
 - GitHub Actionsで単体テスト、Lint、Debugビルドを実行する。
 - DependabotでGradle依存関係とGitHub Actionsを週次確認する。
 
-バージョン、署名、成果物、Google Playトラック、段階公開および公開後監視は[リリース・配布運用仕様](release-specs/README.md)に従う。
+バージョン、署名、成果物、Google Playトラック、段階公開および公開後監視は[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)に従う。
 
 ## 10. 完了条件
 
@@ -117,5 +117,5 @@ UI、Room、繰り返し計算、メモリ、バックグラウンド処理、�
 4. `assembleDebug` が成功する。
 5. 画面変更はライト・ダークテーマ、フォント拡大、各ウィンドウサイズクラスで確認する。
 6. 新しい権限、外部SDK、データ収集がある場合は仕様とプライバシー文書を更新する。
-7. 端末内保存、通信、Manifest、秘密情報、依存関係およびData safetyは[セキュリティ・プライバシー仕様](security-privacy-specs/README.md)の公開条件を満たす。
-8. Release成果物のログ、診断機能、Android vitals、難読化mappingは[ログ・診断・品質監視仕様](observability-specs/README.md)の公開条件を満たす。
+7. 端末内保存、通信、Manifest、秘密情報、依存関係およびData safetyは[セキュリティ・プライバシー仕様](non-functional-specs/security-privacy-specs/README.md)の公開条件を満たす。
+8. Release成果物のログ、診断機能、Android vitals、難読化mappingは[ログ・診断・品質監視仕様](non-functional-specs/observability-specs/README.md)の公開条件を満たす。

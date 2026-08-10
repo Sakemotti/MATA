@@ -553,6 +553,6 @@ TODO登録・編集画面から表示していた場合、カテゴリ作成を�
 
 本画面の実装に必要なプロダクト仕様上の未決定事項はない。
 
-検索用キーワードは、Materialの固定英語名と各アイコン1～5語の日本語別名をバージョン管理されたリソースとして定義する。正規化と検索方法は[データアクセス・ジョブ仕様](../../architecture-specs/data-access-and-jobs.md)に従う。
+検索用キーワードは、Materialの固定英語名と各アイコン1～5語の日本語別名をバージョン管理されたリソースとして定義する。正規化と検索方法は[データアクセス・ジョブ仕様](../../non-functional-specs/architecture-specs/data-access-and-jobs.md)に従う。
 
-固定パレットのテーマ別表示トーンは[色・テーマ仕様](../../design-system-specs/colors-and-themes.md)、ドラッグ中のアニメーション値は[モーション・アクセシビリティ・試験仕様](../../design-system-specs/motion-accessibility-and-testing.md)で確定済みとする。
+固定パレットのテーマ別表示トーンは[色・テーマ仕様](../../non-functional-specs/design-system-specs/colors-and-themes.md)、ドラッグ中のアニメーション値は[モーション・アクセシビリティ・試験仕様](../../non-functional-specs/design-system-specs/motion-accessibility-and-testing.md)で確定済みとする。
