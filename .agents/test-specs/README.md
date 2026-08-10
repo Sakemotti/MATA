@@ -2,7 +2,7 @@
 
 - 文書状態: 初版
 - 最終更新日: 2026-08-10
-- 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../error-handling-specs/README.md)、[性能・省電力仕様](../performance-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)、[リリース・配布運用仕様](../release-specs/README.md)
+- 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../error-handling-specs/README.md)、[性能・省電力仕様](../performance-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)、[リリース・配布運用仕様](../release-specs/README.md)、[実装アーキテクチャ・データアクセス仕様](../architecture-specs/README.md)
 
 ## 1. 目的
 
@@ -164,4 +164,4 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と6画面
 - 画面仕様へ受け入れ条件を追加した場合は、同じ番号のテストIDを対応する画面ファイルへ追加する。
 - 受け入れ条件の意味を変更した場合は、対応テストの条件・操作と期待結果を同時に更新する。
 - アプリ全体仕様の画面横断ルールを変更した場合は、`app-core.md`と関係する全画面ファイルを更新する。
-- 実装時に別途決定する事項が確定した場合は、「保留」を許容せず具体的な合否条件を追加する。
+- 実装技術の定数または方式を変更した場合は、関係する仕様と具体的な合否条件を同時に更新する。

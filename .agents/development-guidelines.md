@@ -50,6 +50,8 @@ com.mochisofts.mata
 - 繰り返し計算と論理日計算はAndroid UIから分離し、ローカル単体テストを可能にする。
 - 画面固有コードが大きくなった場合は、`ui/<feature>` 単位で分割する。
 
+レイヤー、Hilt、Repository、UiState、型付きNavigation、Room、DataStore、Pagingおよびジョブの具体的な構成は[実装アーキテクチャ・データアクセス仕様](architecture-specs/README.md)に従う。
+
 ## 5. 状態管理
 
 - UI状態は不変データとして公開する。
