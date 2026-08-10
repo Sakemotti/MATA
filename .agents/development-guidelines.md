@@ -61,7 +61,7 @@ com.mochisofts.mata
 - Androidの自動バックアップは無効とする。
 - 手動バックアップはStorage Access Frameworkを使用し、アプリ外の任意の場所へユーザー操作で保存する。
 
-具体的なデータベースライブラリとバックアップ形式は、データ設計時に確定する。
+具体的な保存モデルは[データモデル仕様](domain-specs/data-model.md)、手動バックアップ形式は[手動バックアップ仕様](backup-specs/README.md)に従う。
 
 ## 7. コーディング規約
 
