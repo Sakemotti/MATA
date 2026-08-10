@@ -2,7 +2,7 @@
 
 - 文書状態: 初版
 - 最終更新日: 2026-08-10
-- 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../error-handling-specs/README.md)、[性能・省電力仕様](../performance-specs/README.md)
+- 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../startup-specs/README.md)、[MATAデザインシステム仕様](../design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../error-handling-specs/README.md)、[性能・省電力仕様](../performance-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)
 
 ## 1. 目的
 
