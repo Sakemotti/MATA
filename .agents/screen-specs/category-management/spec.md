@@ -2,7 +2,7 @@
 
 - 文書状態: 確定
 - 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[TODO一覧画面仕様](../todo-list/spec.md)、[TODO登録・編集画面仕様](../todo-editor/spec.md)、[カレンダー履歴画面仕様](../calendar-history/spec.md)、[設定画面仕様](../settings/spec.md)
+- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[TODO一覧画面仕様](../todo-list/spec.md)、[TODO登録・編集画面仕様](../todo-editor/spec.md)、[カレンダー履歴画面仕様](../calendar-history/spec.md)、[アーカイブ済みTODO一覧画面仕様](../archived-todos/spec.md)、[設定画面仕様](../settings/spec.md)
 
 ## 1. 目的
 
