@@ -20,6 +20,7 @@
 - [データモデル仕様](../domain-specs/data-model.md)
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
+- [日本の祝日データ仕様](../holiday-specs/README.md)
 - [TODO編集画面仕様](../screen-specs/todo-editor/spec.md)
 - [設定画面仕様](../screen-specs/settings/spec.md)
 
@@ -38,4 +39,3 @@
 - [Notification runtime permission](https://developer.android.com/develop/ui/compose/notifications/notification-permission)
 - [Schedule alarms](https://developer.android.com/develop/background-work/services/alarms)
 - [Task scheduling](https://developer.android.com/develop/background-work/background-tasks/persistent)
-

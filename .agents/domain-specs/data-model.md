@@ -205,6 +205,8 @@ HolidayEntityは祝日の日付、名称、取得元識別情報を保持する�
 
 祝日キャッシュは再取得可能なため、手動バックアップへ含めない。
 
+列、制約、取得状態、更新トランザクションの詳細は[祝日データ取得・キャッシュ仕様](../holiday-specs/fetch-and-cache.md)に従う。
+
 ## 6. 履歴スナップショット
 
 TodoExecutionEntityとPeriodResultEntityのsnapshotJsonには、少なくとも次を含める。

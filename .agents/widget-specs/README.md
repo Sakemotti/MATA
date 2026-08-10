@@ -20,6 +20,7 @@
 - [データモデル仕様](../domain-specs/data-model.md)
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
+- [日本の祝日データ仕様](../holiday-specs/README.md)
 - [通知仕様](../notification-specs/README.md)
 - [TODO一覧画面仕様](../screen-specs/todo-list/spec.md)
 
@@ -38,4 +39,3 @@
 - [Build UI with Glance](https://developer.android.com/develop/ui/compose/glance/build-ui)
 - [Manage and update GlanceAppWidget](https://developer.android.com/develop/ui/compose/glance/glance-app-widget)
 - [Handle user interaction](https://developer.android.com/develop/ui/compose/glance/user-interaction)
-
