@@ -1,6 +1,11 @@
 package com.mochisofts.mata.domain.repository
 
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.ArchiveActionPreview
+import com.mochisofts.mata.domain.model.ArchiveHistorySummary
+import com.mochisofts.mata.domain.model.ArchiveSortOrder
+import com.mochisofts.mata.domain.model.ArchivedHistoryItem
+import com.mochisofts.mata.domain.model.ArchivedTodoItem
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
@@ -13,7 +18,9 @@ import com.mochisofts.mata.domain.model.HistoryMonth
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.UUID
+import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 interface CategoryRepository {
     fun observeCategories(): Flow<List<Category>>
@@ -67,12 +74,15 @@ interface SettingsRepository {
     val weekStart: Flow<DayOfWeek>
     val theme: Flow<AppTheme>
     val notificationPermissionRequested: Flow<Boolean>
+    val archiveSortOrder: Flow<ArchiveSortOrder>
+        get() = flowOf(ArchiveSortOrder.NEWEST)
     suspend fun setShowCompleted(value: Boolean)
     suspend fun setTodoListMode(value: String)
     suspend fun setUncategorizedEndHour(value: Int)
     suspend fun setWeekStart(value: DayOfWeek)
     suspend fun setTheme(value: AppTheme)
     suspend fun setNotificationPermissionRequested(value: Boolean)
+    suspend fun setArchiveSortOrder(value: ArchiveSortOrder) = Unit
 }
 
 interface NotificationScheduler {
@@ -97,4 +107,14 @@ interface HistoryRepository {
     fun observeDay(date: LocalDate): Flow<HistoryDay>
     suspend fun undoCompletion(executionId: String): Result<CompletionUndoToken>
     suspend fun restoreCompletion(token: CompletionUndoToken): Result<Unit>
+}
+
+interface ArchiveRepository {
+    fun pagedTodos(query: String, sortOrder: ArchiveSortOrder): Flow<PagingData<ArchivedTodoItem>>
+    fun observeTodo(todoId: String): Flow<ArchivedTodoItem?>
+    fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary>
+    fun pagedHistory(todoId: String): Flow<PagingData<ArchivedHistoryItem>>
+    suspend fun getActionPreview(todoId: String): Result<ArchiveActionPreview>
+    suspend fun restore(todoId: String): Result<Unit>
+    suspend fun deletePermanently(todoId: String): Result<Unit>
 }

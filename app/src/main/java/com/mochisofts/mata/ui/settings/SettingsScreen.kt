@@ -264,6 +264,16 @@ fun SettingsScreen(
                                 },
                             )
                         }
+
+                        SettingsSectionHeader(R.string.settings_section_data)
+                        SettingsValueRow(
+                            title = stringResource(R.string.nav_archived_todos),
+                            value = stringResource(R.string.settings_open_management),
+                            description = stringResource(R.string.settings_archived_todos_description),
+                            isSaving = false,
+                            enabled = settingsEnabled,
+                            onClick = { onDestination(MataDestination.ARCHIVE) },
+                        )
                         Spacer(Modifier.height(32.dp))
                     }
                 }

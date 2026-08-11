@@ -3,6 +3,10 @@ package com.mochisofts.mata.data.repository
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoNotificationEntity
+import com.mochisofts.mata.domain.model.HistoryTodoSnapshot
+import com.mochisofts.mata.domain.model.NotificationRelation
+import com.mochisofts.mata.domain.model.NotificationUnit
+import com.mochisofts.mata.domain.model.TodoNotification
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
@@ -99,4 +103,43 @@ internal object HistorySnapshotJson {
     fun decode(value: String): HistorySnapshotV1? = runCatching {
         json.decodeFromString<HistorySnapshotV1>(value)
     }.getOrNull()
+
+    fun decodeDomain(value: String): HistoryTodoSnapshot? {
+        val snapshot = decode(value) ?: return null
+        val recurrence = runCatching {
+            RecurrenceRuleJson.decode(
+                snapshot.recurrenceType,
+                snapshot.repeatParamsVersion,
+                snapshot.repeatParamsJson,
+            )
+        }.getOrNull() ?: return null
+        return runCatching {
+            HistoryTodoSnapshot(
+                todoId = snapshot.todoId,
+                definitionRevision = snapshot.definitionRevision,
+                title = snapshot.title,
+                description = snapshot.description,
+                startDate = LocalDate.parse(snapshot.startDate),
+                endDate = snapshot.endDate?.let(LocalDate::parse),
+                recurrenceRule = recurrence,
+                dueMinutes = snapshot.dueMinutes,
+                notifications = snapshot.notifications.mapIndexed { index, notification ->
+                    TodoNotification(
+                        id = "history-$index",
+                        relation = NotificationRelation.fromStoredValue(notification.relation),
+                        amount = notification.amount,
+                        unit = NotificationUnit.fromStoredValue(notification.unit),
+                    )
+                },
+                categoryId = snapshot.categoryId,
+                categoryName = snapshot.categoryName,
+                categoryColorIndex = snapshot.categoryColorIndex,
+                categoryIconName = snapshot.categoryIconName,
+                categorySortOrder = snapshot.categorySortOrder,
+                endHour = snapshot.endHour,
+                weekStart = DayOfWeek.of(snapshot.weekStart),
+                createdAt = snapshot.createdAt,
+            )
+        }.getOrNull()
+    }
 }
