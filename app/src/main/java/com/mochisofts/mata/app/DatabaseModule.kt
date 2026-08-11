@@ -20,6 +20,7 @@ import com.mochisofts.mata.data.repository.RoomCategoryRepository
 import com.mochisofts.mata.data.repository.RoomTodoRepository
 import com.mochisofts.mata.data.repository.RoomHistoryReconciler
 import com.mochisofts.mata.data.repository.RoomHistoryRepository
+import com.mochisofts.mata.data.repository.RoomArchiveRepository
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
@@ -30,6 +31,7 @@ import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryRepository
+import com.mochisofts.mata.domain.repository.ArchiveRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -42,6 +44,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+    @Binds
+    @Singleton
+    abstract fun bindArchiveRepository(repository: RoomArchiveRepository): ArchiveRepository
+
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(repository: RoomCategoryRepository): CategoryRepository

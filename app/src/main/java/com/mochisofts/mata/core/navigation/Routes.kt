@@ -21,4 +21,10 @@ data object SettingsRoute
 data object CalendarHistoryRoute
 
 @Serializable
+data object ArchivedTodoListRoute
+
+@Serializable
+data class ArchivedTodoDetailRoute(val todoId: String)
+
+@Serializable
 data class PlaceholderRoute(val destination: String)

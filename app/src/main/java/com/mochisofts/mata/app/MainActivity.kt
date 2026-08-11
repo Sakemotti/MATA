@@ -41,6 +41,8 @@ import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
 import com.mochisofts.mata.core.navigation.CalendarHistoryRoute
+import com.mochisofts.mata.core.navigation.ArchivedTodoDetailRoute
+import com.mochisofts.mata.core.navigation.ArchivedTodoListRoute
 import com.mochisofts.mata.core.navigation.PlaceholderRoute
 import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
@@ -48,6 +50,9 @@ import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
 import com.mochisofts.mata.ui.category.CategoryListScreen
 import com.mochisofts.mata.ui.calendar.CalendarHistoryScreen
+import com.mochisofts.mata.ui.archive.ARCHIVE_RESULT_KEY
+import com.mochisofts.mata.ui.archive.ArchiveDetailScreen
+import com.mochisofts.mata.ui.archive.ArchiveListScreen
 import com.mochisofts.mata.ui.settings.SettingsScreen
 import com.mochisofts.mata.ui.todoeditor.TodoEditorScreen
 import com.mochisofts.mata.ui.todolist.TodoListScreen
@@ -106,8 +111,8 @@ private fun MataApp(
             MataDestination.TODOS -> navController.navigate(TodoListRoute()) { launchSingleTop = true }
             MataDestination.CALENDAR -> navController.navigate(CalendarHistoryRoute) { launchSingleTop = true }
             MataDestination.CATEGORIES -> navController.navigate(CategoryListRoute) { launchSingleTop = true }
+            MataDestination.ARCHIVE -> navController.navigate(ArchivedTodoListRoute) { launchSingleTop = true }
             MataDestination.SETTINGS -> navController.navigate(SettingsRoute) { launchSingleTop = true }
-            else -> navController.navigate(PlaceholderRoute(destination.name)) { launchSingleTop = true }
         }
     }
 
@@ -135,6 +140,29 @@ private fun MataApp(
         }
         composable<CalendarHistoryRoute> {
             CalendarHistoryScreen(onDestination = navigateToDestination)
+        }
+        composable<ArchivedTodoListRoute> {
+            ArchiveListScreen(
+                onOpenDetail = { navController.navigate(ArchivedTodoDetailRoute(it)) },
+                onDestination = navigateToDestination,
+            )
+        }
+        composable<ArchivedTodoDetailRoute> {
+            ArchiveDetailScreen(
+                onBack = navController::popBackStack,
+                onFinished = { messageRes ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(ARCHIVE_RESULT_KEY, messageRes)
+                    navController.popBackStack()
+                },
+                onNotFound = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(ARCHIVE_RESULT_KEY, R.string.error_todo_not_found)
+                    navController.popBackStack()
+                },
+            )
         }
         composable<CategoryListRoute> {
             CategoryListScreen(

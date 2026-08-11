@@ -1,7 +1,9 @@
 package com.mochisofts.mata.data.local
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -16,6 +18,60 @@ data class HistoryMonthExecutionRow(
 data class HistoryMonthPeriodRow(
     val displayDate: String,
     val achieved: Boolean,
+)
+
+data class ArchivedTodoRow(
+    @Embedded val todo: TodoEntity,
+    val categoryName: String?,
+    val categoryColorIndex: Int?,
+    val categoryIconName: String?,
+    val categoryEndHour: Int?,
+    val categorySortOrder: Int?,
+)
+
+data class ArchiveHistoryCountRow(
+    val completedCount: Int,
+    val missedCount: Int,
+    val skippedCount: Int,
+    val periodResultCount: Int,
+)
+
+data class ArchiveHistoryRow(
+    val rowType: String,
+    val id: String,
+    val todoId: String,
+    val historyDate: String,
+    val comparisonTime: Long,
+    val logicalDate: String?,
+    val status: String?,
+    val actedAt: Long?,
+    val finalizedAt: Long,
+    val periodType: String?,
+    val periodStart: String?,
+    val periodEnd: String?,
+    val requiredCount: Int?,
+    val completedCount: Int?,
+    val achieved: Boolean?,
+    val displayDate: String?,
+    val definitionRevision: Int,
+    val snapshotVersion: Int,
+    val snapshotJson: String,
+    val currentTitle: String,
+    val currentDescription: String,
+    val currentCategoryId: String?,
+    val currentStartDate: String,
+    val currentEndDate: String?,
+    val currentRecurrenceType: String,
+    val currentRepeatParamsVersion: Int,
+    val currentRepeatParamsJson: String,
+    val currentDueMinutes: Int?,
+    val currentDefinitionRevision: Int,
+    val currentCreatedAt: Long,
+    val currentCategoryName: String?,
+    val currentCategoryColorIndex: Int?,
+    val currentCategoryIconName: String?,
+    val currentCategorySortOrder: Int?,
+    val currentCategoryEndHour: Int?,
 )
 
 @Dao
@@ -49,6 +105,79 @@ interface TodoDao {
 
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun findById(id: String): TodoEntity?
+
+    @Query(
+        """
+        SELECT todos.*,
+            categories.name AS categoryName,
+            categories.colorIndex AS categoryColorIndex,
+            categories.iconName AS categoryIconName,
+            categories.endHour AS categoryEndHour,
+            categories.sortOrder AS categorySortOrder
+        FROM todos
+        LEFT JOIN categories ON categories.id = todos.categoryId
+        WHERE todos.archivedAt IS NOT NULL AND todos.id = :id
+        LIMIT 1
+        """,
+    )
+    fun observeArchivedById(id: String): Flow<ArchivedTodoRow?>
+
+    @Query(
+        """
+        SELECT todos.*,
+            categories.name AS categoryName,
+            categories.colorIndex AS categoryColorIndex,
+            categories.iconName AS categoryIconName,
+            categories.endHour AS categoryEndHour,
+            categories.sortOrder AS categorySortOrder
+        FROM todos
+        LEFT JOIN categories ON categories.id = todos.categoryId
+        WHERE todos.archivedAt IS NOT NULL
+          AND (:query = '' OR instr(lower(todos.title), lower(:query)) > 0
+            OR instr(lower(todos.description), lower(:query)) > 0
+            OR instr(lower(COALESCE(categories.name, '')), lower(:query)) > 0)
+        ORDER BY todos.archivedAt DESC, todos.title COLLATE LOCALIZED ASC, todos.id ASC
+        """,
+    )
+    fun pageArchivedNewest(query: String): PagingSource<Int, ArchivedTodoRow>
+
+    @Query(
+        """
+        SELECT todos.*,
+            categories.name AS categoryName,
+            categories.colorIndex AS categoryColorIndex,
+            categories.iconName AS categoryIconName,
+            categories.endHour AS categoryEndHour,
+            categories.sortOrder AS categorySortOrder
+        FROM todos
+        LEFT JOIN categories ON categories.id = todos.categoryId
+        WHERE todos.archivedAt IS NOT NULL
+          AND (:query = '' OR instr(lower(todos.title), lower(:query)) > 0
+            OR instr(lower(todos.description), lower(:query)) > 0
+            OR instr(lower(COALESCE(categories.name, '')), lower(:query)) > 0)
+        ORDER BY todos.archivedAt ASC, todos.title COLLATE LOCALIZED ASC, todos.id ASC
+        """,
+    )
+    fun pageArchivedOldest(query: String): PagingSource<Int, ArchivedTodoRow>
+
+    @Query(
+        """
+        SELECT todos.*,
+            categories.name AS categoryName,
+            categories.colorIndex AS categoryColorIndex,
+            categories.iconName AS categoryIconName,
+            categories.endHour AS categoryEndHour,
+            categories.sortOrder AS categorySortOrder
+        FROM todos
+        LEFT JOIN categories ON categories.id = todos.categoryId
+        WHERE todos.archivedAt IS NOT NULL
+          AND (:query = '' OR instr(lower(todos.title), lower(:query)) > 0
+            OR instr(lower(todos.description), lower(:query)) > 0
+            OR instr(lower(COALESCE(categories.name, '')), lower(:query)) > 0)
+        ORDER BY todos.title COLLATE LOCALIZED ASC, todos.archivedAt DESC, todos.id ASC
+        """,
+    )
+    fun pageArchivedTitle(query: String): PagingSource<Int, ArchivedTodoRow>
 
     @Query("SELECT * FROM todos WHERE archivedAt IS NULL ORDER BY id ASC")
     suspend fun findAllActive(): List<TodoEntity>
@@ -89,6 +218,69 @@ interface TodoExecutionDao {
 
     @Query("SELECT * FROM todo_executions WHERE todoId = :todoId")
     suspend fun findForTodo(todoId: String): List<TodoExecutionEntity>
+
+    @Query(
+        """
+        SELECT
+            (SELECT COUNT(*) FROM todo_executions WHERE todoId = :todoId AND status = 'completed')
+                AS completedCount,
+            (SELECT COUNT(*) FROM todo_executions WHERE todoId = :todoId AND status = 'missed')
+                AS missedCount,
+            (SELECT COUNT(*) FROM todo_executions WHERE todoId = :todoId AND status = 'skipped')
+                AS skippedCount,
+            (SELECT COUNT(*) FROM period_results WHERE todoId = :todoId)
+                AS periodResultCount
+        """,
+    )
+    fun observeArchiveHistoryCount(todoId: String): Flow<ArchiveHistoryCountRow>
+
+    @Query(
+        """
+        WITH archive_history AS (
+            SELECT 'execution' AS rowType,
+                id, todoId, logicalDate AS historyDate,
+                COALESCE(actedAt, finalizedAt) AS comparisonTime,
+                logicalDate, status, actedAt, finalizedAt,
+                NULL AS periodType, NULL AS periodStart, NULL AS periodEnd,
+                NULL AS requiredCount, NULL AS completedCount, NULL AS achieved,
+                NULL AS displayDate, definitionRevision, snapshotVersion, snapshotJson
+            FROM todo_executions
+            WHERE todoId = :todoId
+            UNION ALL
+            SELECT 'period' AS rowType,
+                id, todoId, displayDate AS historyDate,
+                finalizedAt AS comparisonTime,
+                NULL AS logicalDate, NULL AS status, NULL AS actedAt, finalizedAt,
+                periodType, periodStart, periodEnd,
+                requiredCount, completedCount, achieved,
+                displayDate, definitionRevision, snapshotVersion, snapshotJson
+            FROM period_results
+            WHERE todoId = :todoId
+        )
+        SELECT archive_history.*,
+            todos.title AS currentTitle,
+            todos.description AS currentDescription,
+            todos.categoryId AS currentCategoryId,
+            todos.startDate AS currentStartDate,
+            todos.endDate AS currentEndDate,
+            todos.recurrenceType AS currentRecurrenceType,
+            todos.repeatParamsVersion AS currentRepeatParamsVersion,
+            todos.repeatParamsJson AS currentRepeatParamsJson,
+            todos.dueMinutes AS currentDueMinutes,
+            todos.definitionRevision AS currentDefinitionRevision,
+            todos.createdAt AS currentCreatedAt,
+            categories.name AS currentCategoryName,
+            categories.colorIndex AS currentCategoryColorIndex,
+            categories.iconName AS currentCategoryIconName,
+            categories.sortOrder AS currentCategorySortOrder,
+            categories.endHour AS currentCategoryEndHour
+        FROM archive_history
+        INNER JOIN todos ON todos.id = archive_history.todoId
+        LEFT JOIN categories ON categories.id = todos.categoryId
+        ORDER BY historyDate DESC, comparisonTime DESC, rowType ASC, archive_history.id ASC
+        """,
+    )
+    fun pageArchiveHistory(todoId: String): PagingSource<Int, ArchiveHistoryRow>
 
     @Query("SELECT * FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate LIMIT 1")
     suspend fun find(todoId: String, logicalDate: String): TodoExecutionEntity?
@@ -149,6 +341,9 @@ interface TodoRuntimeStateDao {
 interface TodoNotificationDao {
     @Query("SELECT * FROM todo_notifications WHERE todoId = :todoId ORDER BY sortOrder ASC")
     suspend fun findForTodo(todoId: String): List<TodoNotificationEntity>
+
+    @Query("SELECT * FROM todo_notifications WHERE todoId = :todoId ORDER BY sortOrder ASC")
+    fun observeForTodo(todoId: String): Flow<List<TodoNotificationEntity>>
 
     @Query("SELECT * FROM todo_notifications WHERE id = :id AND todoId = :todoId LIMIT 1")
     suspend fun find(todoId: String, id: String): TodoNotificationEntity?

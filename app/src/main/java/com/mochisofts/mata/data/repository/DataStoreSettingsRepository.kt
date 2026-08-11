@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import javax.inject.Inject
@@ -44,6 +45,10 @@ class DataStoreSettingsRepository @Inject constructor(
         preferences[NOTIFICATION_PERMISSION_REQUESTED] ?: false
     }
 
+    override val archiveSortOrder: Flow<ArchiveSortOrder> = dataStore.data.map { preferences ->
+        ArchiveSortOrder.fromStoredValue(preferences[ARCHIVE_SORT_ORDER])
+    }
+
     override suspend fun setShowCompleted(value: Boolean) {
         dataStore.edit { it[SHOW_COMPLETED] = value }
     }
@@ -69,6 +74,10 @@ class DataStoreSettingsRepository @Inject constructor(
         dataStore.edit { it[NOTIFICATION_PERMISSION_REQUESTED] = value }
     }
 
+    override suspend fun setArchiveSortOrder(value: ArchiveSortOrder) {
+        dataStore.edit { it[ARCHIVE_SORT_ORDER] = value.storedValue }
+    }
+
     private companion object {
         val SHOW_COMPLETED = booleanPreferencesKey("show_completed_todos")
         val TODO_LIST_MODE = stringPreferencesKey("todo_list_mode")
@@ -76,5 +85,6 @@ class DataStoreSettingsRepository @Inject constructor(
         val WEEK_START = stringPreferencesKey("week_start")
         val THEME = stringPreferencesKey("theme")
         val NOTIFICATION_PERMISSION_REQUESTED = booleanPreferencesKey("notification_permission_requested")
+        val ARCHIVE_SORT_ORDER = stringPreferencesKey("archive_sort_order")
     }
 }
