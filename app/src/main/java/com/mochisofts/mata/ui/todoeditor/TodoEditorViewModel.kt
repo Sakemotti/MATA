@@ -8,12 +8,15 @@ import androidx.navigation.toRoute
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -32,16 +35,39 @@ data class TodoEditorUiState(
     val description: String = "",
     val categories: List<Category> = emptyList(),
     val categoryId: String? = null,
+    val today: LocalDate = LocalDate.MIN,
     val startDate: LocalDate = LocalDate.MIN,
+    val endDate: LocalDate? = null,
     val recurrenceType: RecurrenceType = RecurrenceType.ONCE,
+    val selectedWeekdays: Set<DayOfWeek> = emptySet(),
+    val monthlyDay: Int = 1,
+    val intervalDaysInput: String = "1",
+    val weeklyCount: Int = 1,
+    val monthlyCount: Int = 1,
+    val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val dueMinutes: Int? = null,
     val isSaving: Boolean = false,
     val isDirty: Boolean = false,
     @StringRes val errorMessageRes: Int? = null,
 ) {
+    val recurrenceRule: RecurrenceRule
+        get() = RecurrenceRule(
+            type = recurrenceType,
+            selectedWeekdays = selectedWeekdays,
+            monthlyDay = monthlyDay.takeIf { recurrenceType == RecurrenceType.MONTHLY_DAY },
+            intervalDays = intervalDaysInput.toIntOrNull()
+                ?.takeIf { recurrenceType == RecurrenceType.EVERY_N_DAYS },
+            requiredCount = when (recurrenceType) {
+                RecurrenceType.WEEKLY_COUNT -> weeklyCount
+                RecurrenceType.MONTHLY_COUNT -> monthlyCount
+                else -> null
+            },
+        )
+
     val canSave: Boolean
         get() = !isLoading && !isSaving && title.trim().isNotEmpty() && title.trim().length <= 100 &&
-            description.length <= 1000
+            description.length <= 1000 && recurrenceRule.isValid() &&
+            (recurrenceType == RecurrenceType.ONCE || endDate == null || !endDate.isBefore(startDate))
 }
 
 sealed interface TodoEditorEffect {
@@ -54,11 +80,13 @@ class TodoEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val todoRepository: TodoRepository,
     categoryRepository: CategoryRepository,
+    settingsRepository: SettingsRepository,
     clock: Clock,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<TodoEditorRoute>()
+    private val today = LocalDate.now(clock)
     private val _uiState = MutableStateFlow(
-        TodoEditorUiState(isNew = route.todoId == null, startDate = LocalDate.now(clock)),
+        TodoEditorUiState(isNew = route.todoId == null, today = today, startDate = today),
     )
     val uiState: StateFlow<TodoEditorUiState> = _uiState.asStateFlow()
 
@@ -69,6 +97,11 @@ class TodoEditorViewModel @Inject constructor(
         viewModelScope.launch {
             categoryRepository.observeCategories().collect { categories ->
                 _uiState.update { state -> state.copy(categories = categories) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.weekStart.collect { weekStart ->
+                _uiState.update { state -> state.copy(weekStart = weekStart) }
             }
         }
         viewModelScope.launch {
@@ -85,7 +118,13 @@ class TodoEditorViewModel @Inject constructor(
                         description = todo.description,
                         categoryId = todo.categoryId,
                         startDate = todo.startDate,
+                        endDate = todo.endDate.takeUnless { todo.recurrenceType == RecurrenceType.ONCE },
                         recurrenceType = todo.recurrenceType,
+                        selectedWeekdays = todo.recurrenceRule.selectedWeekdays,
+                        monthlyDay = todo.recurrenceRule.monthlyDay ?: todo.startDate.dayOfMonth,
+                        intervalDaysInput = (todo.recurrenceRule.intervalDays ?: 1).toString(),
+                        weeklyCount = todo.recurrenceRule.requiredCount ?: 1,
+                        monthlyCount = todo.recurrenceRule.requiredCount ?: 1,
                         dueMinutes = todo.dueMinutes,
                     )
                 }
@@ -97,7 +136,39 @@ class TodoEditorViewModel @Inject constructor(
     fun setDescription(value: String) = edit { copy(description = value) }
     fun setCategory(value: String?) = edit { copy(categoryId = value) }
     fun setStartDate(value: LocalDate) = edit { copy(startDate = value) }
-    fun setRecurrence(value: RecurrenceType) = edit { copy(recurrenceType = value) }
+    fun setEndDate(value: LocalDate?) = edit { copy(endDate = value) }
+    fun setRecurrence(value: RecurrenceType) = edit {
+        copy(
+            recurrenceType = value,
+            selectedWeekdays = if (
+                value == RecurrenceType.SELECTED_WEEKDAYS && selectedWeekdays.isEmpty()
+            ) {
+                setOf(startDate.dayOfWeek)
+            } else {
+                selectedWeekdays
+            },
+            monthlyDay = if (value == RecurrenceType.MONTHLY_DAY && monthlyDay == 1) {
+                startDate.dayOfMonth
+            } else {
+                monthlyDay
+            },
+        )
+    }
+    fun toggleWeekday(value: DayOfWeek) = edit {
+        copy(
+            selectedWeekdays = if (value in selectedWeekdays) {
+                selectedWeekdays - value
+            } else {
+                selectedWeekdays + value
+            },
+        )
+    }
+    fun setMonthlyDay(value: Int) = edit { copy(monthlyDay = value) }
+    fun setIntervalDays(value: String) = edit {
+        copy(intervalDaysInput = value.filter(Char::isDigit).take(3))
+    }
+    fun setWeeklyCount(value: Int) = edit { copy(weeklyCount = value) }
+    fun setMonthlyCount(value: Int) = edit { copy(monthlyCount = value) }
     fun setDueMinutes(value: Int?) = edit { copy(dueMinutes = value) }
 
     fun save() {
@@ -111,7 +182,8 @@ class TodoEditorViewModel @Inject constructor(
                 description = state.description,
                 categoryId = state.categoryId,
                 startDate = state.startDate,
-                recurrenceType = state.recurrenceType,
+                endDate = state.endDate.takeUnless { state.recurrenceType == RecurrenceType.ONCE },
+                recurrenceRule = state.recurrenceRule,
                 dueMinutes = state.dueMinutes,
             ).onSuccess {
                 effectsChannel.send(TodoEditorEffect.Saved(route.todoId == null))

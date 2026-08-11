@@ -47,10 +47,15 @@ interface TodoExecutionDao {
     @Query("SELECT * FROM todo_executions")
     fun observeAll(): Flow<List<TodoExecutionEntity>>
 
+    @Query("SELECT * FROM todo_executions WHERE todoId = :todoId")
+    suspend fun findForTodo(todoId: String): List<TodoExecutionEntity>
+
+    @Query("SELECT * FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate LIMIT 1")
+    suspend fun find(todoId: String, logicalDate: String): TodoExecutionEntity?
+
     @Upsert
     suspend fun upsert(execution: TodoExecutionEntity)
 
     @Query("DELETE FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate")
     suspend fun delete(todoId: String, logicalDate: String)
 }
-

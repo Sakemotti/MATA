@@ -93,8 +93,10 @@ fun CategoryListScreen(
         drawerState = drawerState,
         drawerContent = {
             MataNavigationDrawer(MataDestination.CATEGORIES) { destination ->
-                scope.launch { drawerState.close() }
-                if (destination != MataDestination.CATEGORIES) onDestination(destination)
+                scope.launch {
+                    drawerState.close()
+                    if (destination != MataDestination.CATEGORIES) onDestination(destination)
+                }
             }
         },
     ) {

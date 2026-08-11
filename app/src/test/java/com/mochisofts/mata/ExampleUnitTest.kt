@@ -1,6 +1,7 @@
 package com.mochisofts.mata
 
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.occursOn
@@ -50,8 +51,11 @@ class RecurrenceUnitTest {
         description = "",
         categoryId = null,
         startDate = LocalDate.of(2026, 8, 10),
-        recurrenceType = recurrenceType,
+        endDate = null,
+        recurrenceRule = RecurrenceRule(recurrenceType),
         dueMinutes = null,
+        definitionRevision = 1,
+        archivedAt = null,
         createdAt = 0,
     )
 }

@@ -2,9 +2,13 @@ package com.mochisofts.mata.ui.todoeditor
 
 import android.app.TimePickerDialog
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,15 +20,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -41,15 +50,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.Todo
+import com.mochisofts.mata.domain.model.nextOccurrences
+import com.mochisofts.mata.domain.model.recurrencePeriod
+import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+private enum class DatePickerTarget {
+    START,
+    END,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +86,8 @@ fun TodoEditorScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var dateField by remember { mutableStateOf<DatePickerTarget?>(null) }
+    var showRecurrenceSheet by remember { mutableStateOf(false) }
 
     fun requestBack() {
         if (state.isDirty) showDiscardDialog = true else onBack()
@@ -83,11 +109,8 @@ fun TodoEditorScreen(
                 title = {
                     Text(
                         stringResource(
-                            if (state.isNew) {
-                                R.string.todo_editor_add_title
-                            } else {
-                                R.string.todo_editor_edit_title
-                            },
+                            if (state.isNew) R.string.todo_editor_add_title
+                            else R.string.todo_editor_edit_title,
                         ),
                     )
                 },
@@ -115,111 +138,166 @@ fun TodoEditorScreen(
             )
         },
     ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                stringResource(R.string.todo_editor_section_basic_information),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            OutlinedTextField(
-                value = state.title,
-                onValueChange = viewModel::setTitle,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.todo_editor_title_label)) },
-                singleLine = true,
-                supportingText = {
-                    Text(stringResource(R.string.character_counter_format, state.title.length, 100))
-                },
-                isError = state.title.trim().isEmpty() || state.title.length > 100,
-            )
-            OutlinedTextField(
-                value = state.description,
-                onValueChange = viewModel::setDescription,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.todo_editor_description_label)) },
-                minLines = 3,
-                supportingText = {
-                    Text(stringResource(R.string.character_counter_format, state.description.length, 1000))
-                },
-                isError = state.description.length > 1000,
-            )
-            CategorySelector(state, viewModel::setCategory)
+        if (state.isLoading) {
+            Column(
+                Modifier.fillMaxSize().padding(padding),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator(Modifier.padding(32.dp))
+            }
+        } else {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    stringResource(R.string.todo_editor_section_basic_information),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = viewModel::setTitle,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.todo_editor_title_label)) },
+                    singleLine = true,
+                    supportingText = {
+                        Text(stringResource(R.string.character_counter_format, state.title.length, 100))
+                    },
+                    isError = state.title.trim().isEmpty() || state.title.length > 100,
+                )
+                OutlinedTextField(
+                    value = state.description,
+                    onValueChange = viewModel::setDescription,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.todo_editor_description_label)) },
+                    minLines = 3,
+                    supportingText = {
+                        Text(stringResource(R.string.character_counter_format, state.description.length, 1000))
+                    },
+                    isError = state.description.length > 1000,
+                )
+                CategorySelector(state, viewModel::setCategory)
 
-            Text(
-                stringResource(R.string.todo_editor_section_schedule),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            OutlinedTextField(
-                value = state.startDate.format(
-                    DateTimeFormatter.ofPattern(
-                        stringResource(R.string.date_pattern_full),
-                        Locale.JAPANESE,
-                    ),
-                ),
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-                label = {
-                    Text(
-                        stringResource(
-                            if (state.recurrenceType == RecurrenceType.ONCE) {
-                                R.string.todo_editor_execution_date_label
-                            } else {
-                                R.string.todo_editor_start_date_label
+                Text(
+                    stringResource(R.string.todo_editor_section_schedule),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                DateField(
+                    value = state.startDate,
+                    labelRes = if (state.recurrenceType == RecurrenceType.ONCE) {
+                        R.string.todo_editor_execution_date_label
+                    } else {
+                        R.string.todo_editor_start_date_label
+                    },
+                    onClick = { dateField = DatePickerTarget.START },
+                )
+                RecurrenceSelector(state.recurrenceType) { showRecurrenceSheet = true }
+                RecurrenceParameters(state, viewModel)
+
+                if (state.recurrenceType != RecurrenceType.ONCE) {
+                    val selectedEndDate = state.endDate
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(stringResource(R.string.todo_editor_specify_end_date))
+                            Text(
+                                if (selectedEndDate == null) {
+                                    stringResource(R.string.todo_editor_indefinite)
+                                } else {
+                                    selectedEndDate.toJapaneseDate()
+                                },
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = selectedEndDate != null,
+                            onCheckedChange = { enabled ->
+                                viewModel.setEndDate(state.startDate.takeIf { enabled })
                             },
-                        ),
-                    )
-                },
-                readOnly = true,
-            )
-            RecurrenceSelector(state.recurrenceType, viewModel::setRecurrence)
-            DueTimeSelector(state.dueMinutes, viewModel::setDueMinutes)
+                        )
+                    }
+                    selectedEndDate?.let { endDate ->
+                        DateField(
+                            value = endDate,
+                            labelRes = R.string.todo_editor_end_date_label,
+                            isError = endDate.isBefore(state.startDate),
+                            onClick = { dateField = DatePickerTarget.END },
+                        )
+                        if (endDate.isBefore(state.startDate)) {
+                            Text(
+                                stringResource(R.string.error_todo_end_date_before_start),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
 
-            Text(
-                stringResource(R.string.todo_editor_section_notification),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                stringResource(R.string.todo_editor_no_notification),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                stringResource(R.string.todo_editor_notification_placeholder),
-                style = MaterialTheme.typography.bodySmall,
-            )
+                SchedulePreview(state)
+                DueTimeSelector(state.dueMinutes, viewModel::setDueMinutes)
 
-            state.errorMessageRes?.let {
-                Text(stringResource(it), color = MaterialTheme.colorScheme.error)
+                Text(
+                    stringResource(R.string.todo_editor_section_notification),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    stringResource(R.string.todo_editor_no_notification),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    stringResource(R.string.todo_editor_notification_placeholder),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+
+                state.errorMessageRes?.let {
+                    Text(stringResource(it), color = MaterialTheme.colorScheme.error)
+                }
+                if (state.isSaving) CircularProgressIndicator()
             }
         }
     }
 
-    if (showDatePicker) {
+    dateField?.let { target ->
+        val selectedDate = if (target == DatePickerTarget.START) state.startDate else state.endDate ?: state.startDate
         val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = state.startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
         )
         DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
+            onDismissRequest = { dateField = null },
             confirmButton = {
                 TextButton(onClick = {
                     pickerState.selectedDateMillis?.let { millis ->
-                        viewModel.setStartDate(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                        if (target == DatePickerTarget.START) viewModel.setStartDate(date)
+                        else viewModel.setEndDate(date)
                     }
-                    showDatePicker = false
+                    dateField = null
                 }) { Text(stringResource(R.string.action_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = { dateField = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
         ) { DatePicker(pickerState) }
+    }
+
+    if (showRecurrenceSheet) {
+        RecurrenceBottomSheet(
+            selected = state.recurrenceType,
+            onSelect = { type ->
+                viewModel.setRecurrence(type)
+                showRecurrenceSheet = false
+            },
+            onDismiss = { showRecurrenceSheet = false },
+        )
     }
 
     if (showDiscardDialog) {
@@ -256,6 +334,40 @@ fun TodoEditorScreen(
     }
 }
 
+@Composable
+private fun DateField(
+    value: LocalDate,
+    @StringRes labelRes: Int,
+    onClick: () -> Unit,
+    isError: Boolean = false,
+) {
+    val label = stringResource(labelRes)
+    val displayValue = value.toJapaneseDate()
+    val fieldContentDescription = stringResource(
+        R.string.content_description_field_value,
+        label,
+        displayValue,
+    )
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = displayValue,
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
+            label = { Text(label) },
+            readOnly = true,
+            isError = isError,
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .semantics {
+                    contentDescription = fieldContentDescription
+                }
+                .clickable(role = Role.Button, onClick = onClick),
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Unit) {
@@ -269,7 +381,8 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
             readOnly = true,
             label = { Text(stringResource(R.string.label_category)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
+            modifier = Modifier.fillMaxWidth()
+                .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
@@ -277,35 +390,208 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
                 onClick = { onSelect(null); expanded = false },
             )
             state.categories.forEach { category ->
-                DropdownMenuItem(text = { Text(category.name) }, onClick = { onSelect(category.id); expanded = false })
+                DropdownMenuItem(
+                    text = { Text(category.name) },
+                    onClick = { onSelect(category.id); expanded = false },
+                )
             }
         }
     }
 }
 
+@Composable
+private fun RecurrenceSelector(value: RecurrenceType, onClick: () -> Unit) {
+    val label = stringResource(R.string.todo_editor_recurrence_label)
+    val displayValue = recurrenceLabel(value)
+    val fieldContentDescription = stringResource(
+        R.string.content_description_field_value,
+        label,
+        displayValue,
+    )
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = displayValue,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .semantics {
+                    contentDescription = fieldContentDescription
+                }
+                .clickable(role = Role.Button, onClick = onClick),
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecurrenceSelector(value: RecurrenceType, onSelect: (RecurrenceType) -> Unit) {
+private fun RecurrenceBottomSheet(
+    selected: RecurrenceType,
+    onSelect: (RecurrenceType) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            stringResource(R.string.todo_editor_recurrence_sheet_title),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        )
+        RecurrenceType.entries.forEach { type ->
+            ListItem(
+                headlineContent = { Text(recurrenceLabel(type)) },
+                trailingContent = {
+                    if (type == selected) Text(stringResource(R.string.label_completed))
+                },
+                modifier = Modifier.clickable { onSelect(type) },
+            )
+            HorizontalDivider()
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditorViewModel) {
+    when (state.recurrenceType) {
+        RecurrenceType.SELECTED_WEEKDAYS -> {
+            Text(stringResource(R.string.todo_editor_selected_weekdays_label))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DayOfWeek.entries.forEach { day ->
+                    FilterChip(
+                        selected = day in state.selectedWeekdays,
+                        onClick = { viewModel.toggleWeekday(day) },
+                        label = { Text(weekdayLabel(day)) },
+                    )
+                }
+            }
+            if (state.selectedWeekdays.isEmpty()) {
+                Text(
+                    stringResource(R.string.error_todo_recurrence_rule_invalid),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        RecurrenceType.MONTHLY_DAY -> NumberSelector(
+            value = state.monthlyDay,
+            range = 1..31,
+            label = stringResource(R.string.todo_editor_monthly_day_label),
+            formatRes = R.string.todo_editor_day_count_format,
+            onSelect = viewModel::setMonthlyDay,
+        )
+        RecurrenceType.EVERY_N_DAYS -> OutlinedTextField(
+            value = state.intervalDaysInput,
+            onValueChange = viewModel::setIntervalDays,
+            label = { Text(stringResource(R.string.todo_editor_interval_days_label)) },
+            suffix = { Text(stringResource(R.string.unit_day)) },
+            singleLine = true,
+            isError = state.intervalDaysInput.toIntOrNull() !in 1..999,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        RecurrenceType.WEEKLY_COUNT -> NumberSelector(
+            value = state.weeklyCount,
+            range = 1..7,
+            label = stringResource(R.string.todo_editor_weekly_count_label),
+            formatRes = R.string.todo_editor_count_format,
+            onSelect = viewModel::setWeeklyCount,
+        )
+        RecurrenceType.MONTHLY_COUNT -> NumberSelector(
+            value = state.monthlyCount,
+            range = 1..31,
+            label = stringResource(R.string.todo_editor_monthly_count_label),
+            formatRes = R.string.todo_editor_count_format,
+            onSelect = viewModel::setMonthlyCount,
+        )
+        else -> Unit
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NumberSelector(
+    value: Int,
+    range: IntRange,
+    label: String,
+    @StringRes formatRes: Int,
+    onSelect: (Int) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
-            value = stringResource(
-                if (value == RecurrenceType.ONCE) R.string.label_no_recurrence else R.string.label_daily,
-            ),
+            value = stringResource(formatRes, value),
             onValueChange = {},
             readOnly = true,
-            label = { Text(stringResource(R.string.todo_editor_recurrence_label)) },
+            label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
+            modifier = Modifier.fillMaxWidth()
+                .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.label_no_recurrence)) },
-                onClick = { onSelect(RecurrenceType.ONCE); expanded = false },
+            range.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(formatRes, option)) },
+                    onClick = { onSelect(option); expanded = false },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SchedulePreview(state: TodoEditorUiState) {
+    Text(
+        stringResource(R.string.todo_editor_schedule_preview_title),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    val todo = Todo(
+        id = "",
+        title = state.title,
+        description = state.description,
+        categoryId = state.categoryId,
+        startDate = state.startDate,
+        endDate = state.endDate.takeUnless { state.recurrenceType == RecurrenceType.ONCE },
+        recurrenceRule = state.recurrenceRule,
+        dueMinutes = state.dueMinutes,
+        definitionRevision = 1,
+        archivedAt = null,
+        createdAt = 0,
+    )
+    val previewFrom = maxOf(state.today, state.startDate)
+    if (state.recurrenceType.isCountBased) {
+        val period = todo.recurrencePeriod(previewFrom, state.weekStart)
+        if (period == null) {
+            Text(stringResource(R.string.todo_editor_no_upcoming_dates))
+        } else {
+            Text(
+                stringResource(
+                    R.string.todo_editor_count_preview_format,
+                    period.startDate.toJapaneseDate(),
+                    period.endDate.toJapaneseDate(),
+                    period.requiredCount,
+                ),
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.label_daily)) },
-                onClick = { onSelect(RecurrenceType.DAILY); expanded = false },
+        }
+    } else {
+        val dates = if (state.recurrenceRule.isValid()) {
+            todo.nextOccurrences(previewFrom, 3)
+        } else {
+            emptyList()
+        }
+        if (dates.isEmpty()) {
+            Text(stringResource(R.string.todo_editor_no_upcoming_dates))
+        } else {
+            dates.forEach { date -> Text(date.toJapaneseDate()) }
+        }
+        if (state.recurrenceType == RecurrenceType.WEEKDAYS) {
+            Text(
+                stringResource(R.string.todo_editor_holiday_provisional),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -352,3 +638,36 @@ private fun DueTimeSelector(value: Int?, onChange: (Int?) -> Unit) {
         }
     }
 }
+
+@Composable
+private fun recurrenceLabel(type: RecurrenceType): String = stringResource(
+    when (type) {
+        RecurrenceType.ONCE -> R.string.label_no_recurrence
+        RecurrenceType.DAILY -> R.string.label_daily
+        RecurrenceType.WEEKDAYS -> R.string.label_weekdays
+        RecurrenceType.SELECTED_WEEKDAYS -> R.string.label_selected_weekdays
+        RecurrenceType.MONTHLY_DAY -> R.string.label_monthly_day
+        RecurrenceType.MONTH_END -> R.string.label_month_end
+        RecurrenceType.EVERY_N_DAYS -> R.string.label_every_n_days
+        RecurrenceType.WEEKLY_COUNT -> R.string.label_weekly_count
+        RecurrenceType.MONTHLY_COUNT -> R.string.label_monthly_count
+    },
+)
+
+@Composable
+private fun weekdayLabel(day: DayOfWeek): String = stringResource(
+    when (day) {
+        DayOfWeek.MONDAY -> R.string.weekday_monday
+        DayOfWeek.TUESDAY -> R.string.weekday_tuesday
+        DayOfWeek.WEDNESDAY -> R.string.weekday_wednesday
+        DayOfWeek.THURSDAY -> R.string.weekday_thursday
+        DayOfWeek.FRIDAY -> R.string.weekday_friday
+        DayOfWeek.SATURDAY -> R.string.weekday_saturday
+        DayOfWeek.SUNDAY -> R.string.weekday_sunday
+    },
+)
+
+@Composable
+private fun LocalDate.toJapaneseDate(): String = format(
+    DateTimeFormatter.ofPattern(stringResource(R.string.date_pattern_full), Locale.JAPANESE),
+)

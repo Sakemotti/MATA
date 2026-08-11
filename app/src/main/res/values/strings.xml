@@ -17,14 +17,23 @@
     <string name="label_category">カテゴリ</string>
     <string name="label_completed">完了</string>
     <string name="label_pending">未完了</string>
+    <string name="label_skipped">スキップ</string>
     <string name="label_daily">毎日</string>
     <string name="label_no_recurrence">繰り返しなし</string>
+    <string name="label_weekdays">平日のみ</string>
+    <string name="label_selected_weekdays">曜日指定</string>
+    <string name="label_monthly_day">毎月の指定日</string>
+    <string name="label_month_end">毎月の月末</string>
+    <string name="label_every_n_days">一定日数ごと</string>
+    <string name="label_weekly_count">週X回</string>
+    <string name="label_monthly_count">月X回</string>
     <string name="label_not_set">設定なし</string>
     <string name="character_counter_format">%1$d / %2$d</string>
     <string name="hour_format">%1$d:00</string>
     <string name="time_format">%1$d:%2$02d</string>
     <string name="date_pattern_full">yyyy年M月d日（E）</string>
     <string name="date_pattern_short">M月d日（E）</string>
+    <string name="content_description_field_value">%1$s、%2$s</string>
 
     <!-- Navigation -->
     <string name="nav_todo_list">TODO一覧</string>
@@ -52,6 +61,11 @@
     <string name="empty_selected_date_todos">この日のTODOはありません</string>
     <string name="empty_category_todos">このカテゴリにTODOはありません</string>
     <string name="todo_due_time_format">期限 %1$d:%2$02d</string>
+    <string name="todo_recurrence_monthly_day_format">毎月%1$d日</string>
+    <string name="todo_recurrence_every_n_days_format">%1$d日ごと</string>
+    <string name="todo_recurrence_weekly_count_format">週%1$d回</string>
+    <string name="todo_recurrence_monthly_count_format">月%1$d回</string>
+    <string name="todo_recurrence_progress_format">%1$d / %2$d回</string>
 
     <!-- TODO editor -->
     <string name="todo_editor_add_title">TODOを追加</string>
@@ -63,7 +77,30 @@
     <string name="todo_editor_section_schedule">スケジュール</string>
     <string name="todo_editor_execution_date_label">実行日</string>
     <string name="todo_editor_start_date_label">開始日</string>
+    <string name="todo_editor_end_date_label">終了日</string>
+    <string name="todo_editor_specify_end_date">終了日を指定</string>
+    <string name="todo_editor_indefinite">無期限</string>
     <string name="todo_editor_recurrence_label">繰り返し</string>
+    <string name="todo_editor_recurrence_sheet_title">繰り返し方式</string>
+    <string name="todo_editor_selected_weekdays_label">実行する曜日</string>
+    <string name="todo_editor_monthly_day_label">毎月の実行日</string>
+    <string name="todo_editor_interval_days_label">実行間隔</string>
+    <string name="todo_editor_weekly_count_label">1週間の必要回数</string>
+    <string name="todo_editor_monthly_count_label">1か月の必要回数</string>
+    <string name="todo_editor_day_count_format">%1$d日</string>
+    <string name="unit_day">日</string>
+    <string name="todo_editor_count_format">%1$d回</string>
+    <string name="todo_editor_schedule_preview_title">スケジュールプレビュー</string>
+    <string name="todo_editor_no_upcoming_dates">有効期間内に実行予定はありません</string>
+    <string name="todo_editor_count_preview_format">%1$s〜%2$s・必要回数 %3$d回</string>
+    <string name="todo_editor_holiday_provisional">祝日情報の取得前は、月曜日から金曜日を暫定的に表示します</string>
+    <string name="weekday_monday">月</string>
+    <string name="weekday_tuesday">火</string>
+    <string name="weekday_wednesday">水</string>
+    <string name="weekday_thursday">木</string>
+    <string name="weekday_friday">金</string>
+    <string name="weekday_saturday">土</string>
+    <string name="weekday_sunday">日</string>
     <string name="todo_editor_due_time_label">期限時刻</string>
     <string name="todo_editor_section_notification">通知</string>
     <string name="todo_editor_no_notification">通知なし</string>
@@ -143,6 +180,10 @@
     <string name="error_todo_due_time_invalid">期限時刻が不正です</string>
     <string name="error_todo_category_not_found">選択したカテゴリが見つかりません</string>
     <string name="error_todo_date_in_past">過去の日付にはTODOを登録できません</string>
+    <string name="error_todo_end_date_before_start">終了日は開始日以降を指定してください</string>
+    <string name="error_todo_recurrence_rule_invalid">繰り返し設定を確認してください</string>
+    <string name="error_todo_already_acted">この日のTODOはすでに操作済みです</string>
+    <string name="error_todo_required_count_reached">この期間の必要回数を達成済みです</string>
     <string name="error_todo_not_found">TODOが見つかりません</string>
     <string name="error_todo_save_failed">TODOを保存できませんでした</string>
     <string name="error_todo_delete_failed">TODOを削除できませんでした</string>

@@ -42,6 +42,9 @@ android {
     buildFeatures {
         compose true
     }
+    sourceSets {
+        androidTest.assets.srcDir "$projectDir/schemas"
+    }
     lint {
         abortOnError = true
         checkDependencies = true
@@ -73,6 +76,7 @@ dependencies {
     implementation libs.androidx.hilt.navigation.compose
     implementation libs.hilt.android
     implementation libs.kotlinx.serialization.core
+    implementation libs.kotlinx.serialization.json
     ksp libs.androidx.room.compiler
     ksp libs.hilt.compiler
 
@@ -83,5 +87,6 @@ dependencies {
     testImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.espresso.core
     androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.compose.ui.test.junit4
 }

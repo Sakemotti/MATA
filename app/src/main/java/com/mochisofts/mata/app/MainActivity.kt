@@ -114,8 +114,10 @@ private fun PlaceholderScreen(
         drawerState = drawerState,
         drawerContent = {
             MataNavigationDrawer(destination) { selected ->
-                scope.launch { drawerState.close() }
-                if (selected != destination) onDestination(selected)
+                scope.launch {
+                    drawerState.close()
+                    if (selected != destination) onDestination(selected)
+                }
             }
         },
     ) {
