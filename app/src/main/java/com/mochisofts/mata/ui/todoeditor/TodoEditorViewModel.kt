@@ -107,6 +107,7 @@ data class TodoEditorUiState(
 sealed interface TodoEditorEffect {
     data class Saved(val isNew: Boolean) : TodoEditorEffect
     data object Deleted : TodoEditorEffect
+    data object Archived : TodoEditorEffect
     data object ExplainNotificationPermission : TodoEditorEffect
 }
 
@@ -309,6 +310,25 @@ class TodoEditorViewModel @Inject constructor(
                         state.copy(
                             isSaving = false,
                             errorMessageRes = R.string.error_todo_delete_failed,
+                        )
+                    }
+                }
+        }
+    }
+
+    fun archive() {
+        val todoId = route.todoId ?: return
+        _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
+        viewModelScope.launch {
+            todoRepository.archiveTodo(todoId)
+                .onSuccess { effectsChannel.send(TodoEditorEffect.Archived) }
+                .onFailure { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isSaving = false,
+                            errorMessageRes = throwable.toUserMessageRes(
+                                R.string.error_todo_archive_failed,
+                            ),
                         )
                     }
                 }

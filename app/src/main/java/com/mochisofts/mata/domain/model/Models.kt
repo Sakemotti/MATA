@@ -27,7 +27,8 @@ enum class RecurrenceType(val code: String) {
 enum class TodoState(val code: String) {
     PENDING("pending"),
     COMPLETED("completed"),
-    SKIPPED("skipped");
+    SKIPPED("skipped"),
+    MISSED("missed");
 
     companion object {
         fun fromStoredValue(value: String): TodoState =

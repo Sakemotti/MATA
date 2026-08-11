@@ -2,6 +2,8 @@ package com.mochisofts.mata.data.local
 
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +37,9 @@ interface TodoDao {
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun findById(id: String): TodoEntity?
 
+    @Query("SELECT * FROM todos WHERE archivedAt IS NULL ORDER BY id ASC")
+    suspend fun findAllActive(): List<TodoEntity>
+
     @Query(
         """
         SELECT DISTINCT todos.* FROM todos
@@ -63,11 +68,38 @@ interface TodoExecutionDao {
     @Query("SELECT * FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate LIMIT 1")
     suspend fun find(todoId: String, logicalDate: String): TodoExecutionEntity?
 
-    @Upsert
-    suspend fun upsert(execution: TodoExecutionEntity)
+    @Query("SELECT * FROM todo_executions WHERE operationId = :operationId LIMIT 1")
+    suspend fun findByOperationId(operationId: String): TodoExecutionEntity?
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(execution: TodoExecutionEntity)
 
     @Query("DELETE FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate")
     suspend fun delete(todoId: String, logicalDate: String)
+}
+
+@Dao
+interface PeriodResultDao {
+    @Query("SELECT * FROM period_results WHERE todoId = :todoId ORDER BY periodStart ASC")
+    suspend fun findForTodo(todoId: String): List<PeriodResultEntity>
+
+    @Query(
+        "SELECT * FROM period_results " +
+            "WHERE todoId = :todoId AND periodStart = :periodStart AND periodEnd = :periodEnd LIMIT 1",
+    )
+    suspend fun find(todoId: String, periodStart: String, periodEnd: String): PeriodResultEntity?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(result: PeriodResultEntity): Long
+}
+
+@Dao
+interface TodoRuntimeStateDao {
+    @Query("SELECT * FROM todo_runtime_states WHERE todoId = :todoId LIMIT 1")
+    suspend fun find(todoId: String): TodoRuntimeStateEntity?
+
+    @Upsert
+    suspend fun upsert(state: TodoRuntimeStateEntity)
 }
 
 @Dao

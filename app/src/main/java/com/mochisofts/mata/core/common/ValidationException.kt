@@ -22,6 +22,9 @@ enum class ValidationError {
     TODO_ALREADY_ACTED,
     TODO_REQUIRED_COUNT_REACHED,
     TODO_NOT_FOUND,
+    TODO_NOT_ACTIVE,
+    TODO_ACTION_DATE_INVALID,
+    TODO_ACTION_CANNOT_UNDO,
 }
 
 class ValidationException(

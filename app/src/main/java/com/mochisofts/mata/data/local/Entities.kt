@@ -55,7 +55,6 @@ data class TodoEntity(
 
 @Entity(
     tableName = "todo_executions",
-    primaryKeys = ["todoId", "logicalDate"],
     foreignKeys = [
         ForeignKey(
             entity = TodoEntity::class,
@@ -64,13 +63,80 @@ data class TodoEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("todoId"), Index("logicalDate")],
+    indices = [
+        Index(value = ["operationId"], unique = true),
+        Index("todoId"),
+        Index("logicalDate"),
+        Index("status"),
+        Index(value = ["todoId", "logicalDate"], unique = true),
+    ],
 )
 data class TodoExecutionEntity(
+    @androidx.room.PrimaryKey val id: String,
+    val operationId: String,
     val todoId: String,
     val logicalDate: String,
-    val state: String,
-    val performedAt: Long,
+    val status: String,
+    val actedAt: Long?,
+    val finalizedAt: Long,
+    val definitionRevision: Int,
+    val snapshotVersion: Int,
+    val snapshotJson: String,
+)
+
+@Entity(
+    tableName = "period_results",
+    foreignKeys = [
+        ForeignKey(
+            entity = TodoEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["todoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index("todoId"),
+        Index("periodStart"),
+        Index("periodEnd"),
+        Index("displayDate"),
+        Index(value = ["todoId", "periodStart", "periodEnd"], unique = true),
+    ],
+)
+data class PeriodResultEntity(
+    @androidx.room.PrimaryKey val id: String,
+    val todoId: String,
+    val periodType: String,
+    val periodStart: String,
+    val periodEnd: String,
+    val requiredCount: Int,
+    val completedCount: Int,
+    val achieved: Boolean,
+    val displayDate: String,
+    val finalizedAt: Long,
+    val definitionRevision: Int,
+    val snapshotVersion: Int,
+    val snapshotJson: String,
+)
+
+@Entity(
+    tableName = "todo_runtime_states",
+    foreignKeys = [
+        ForeignKey(
+            entity = TodoEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["todoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class TodoRuntimeStateEntity(
+    @androidx.room.PrimaryKey val todoId: String,
+    val lastFinalizedLogicalDate: String?,
+    val lastFinalizedWeeklyPeriodEnd: String?,
+    val lastFinalizedMonthlyPeriodEnd: String?,
+    val appliedDefinitionRevision: Int,
+    val reconciliationCursorDate: String?,
+    val updatedAt: Long,
 )
 
 @Entity(

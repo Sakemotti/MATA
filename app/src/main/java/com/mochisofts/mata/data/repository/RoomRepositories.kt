@@ -8,6 +8,8 @@ import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoNotificationDao
 import com.mochisofts.mata.data.local.TodoNotificationEntity
+import com.mochisofts.mata.data.local.TodoRuntimeStateDao
+import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
@@ -111,6 +113,7 @@ class RoomTodoRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val executionDao: TodoExecutionDao,
     private val notificationDao: TodoNotificationDao,
+    private val runtimeStateDao: TodoRuntimeStateDao,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
     private val clock: Clock,
@@ -138,11 +141,11 @@ class RoomTodoRepository @Inject constructor(
                 } else {
                     selectedDate
                 }
-                if (!todo.occursOn(targetDate)) return@mapNotNull null
                 val execution = executions[todo.id to targetDate.toString()]
+                if (!todo.occursOn(targetDate) && execution == null) return@mapNotNull null
                 val progress = todo.recurrencePeriod(targetDate, weekStart)?.let { period ->
                     val completedCount = executionsByTodo[todo.id].orEmpty().count { item ->
-                        TodoState.fromStoredValue(item.state) == TodoState.COMPLETED &&
+                        TodoState.fromStoredValue(item.status) == TodoState.COMPLETED &&
                             LocalDate.parse(item.logicalDate) in period.startDate..period.endDate
                     }
                     RecurrenceProgress(period, completedCount)
@@ -152,7 +155,7 @@ class RoomTodoRepository @Inject constructor(
                     todo = todo,
                     category = categoryEntity?.toDomain(),
                     logicalDate = targetDate,
-                    state = execution?.let { TodoState.fromStoredValue(it.state) } ?: TodoState.PENDING,
+                    state = execution?.let { TodoState.fromStoredValue(it.status) } ?: TodoState.PENDING,
                     progress = progress,
                 )
             }.sortedWith(
@@ -219,8 +222,7 @@ class RoomTodoRepository @Inject constructor(
         database.withTransaction {
             val existing = id?.let { todoDao.findById(it) }
             val now = clock.millis()
-            todoDao.upsert(
-                TodoEntity(
+            val updatedTodo = TodoEntity(
                     id = todoId,
                     title = trimmedTitle,
                     description = description,
@@ -239,8 +241,8 @@ class RoomTodoRepository @Inject constructor(
                     createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                     archivedAt = existing?.archivedAt,
-                ),
-            )
+                )
+            todoDao.upsert(updatedTodo)
             val existingNotifications = notificationDao.findForTodo(todoId).associateBy { it.id }
             notificationDao.deleteForTodo(todoId)
             notificationDao.upsertAll(
@@ -258,6 +260,19 @@ class RoomTodoRepository @Inject constructor(
                     )
                 },
             )
+            val existingRuntime = runtimeStateDao.find(todoId)
+            runtimeStateDao.upsert(
+                TodoRuntimeStateEntity(
+                    todoId = todoId,
+                    lastFinalizedLogicalDate = existingRuntime?.lastFinalizedLogicalDate
+                        ?: startDate.minusDays(1).toString(),
+                    lastFinalizedWeeklyPeriodEnd = existingRuntime?.lastFinalizedWeeklyPeriodEnd,
+                    lastFinalizedMonthlyPeriodEnd = existingRuntime?.lastFinalizedMonthlyPeriodEnd,
+                    appliedDefinitionRevision = updatedTodo.definitionRevision,
+                    reconciliationCursorDate = existingRuntime?.reconciliationCursorDate,
+                    updatedAt = now,
+                ),
+            )
         }
         runCatching { notificationScheduler.reconcileTodo(todoId) }
         todoId
@@ -267,16 +282,21 @@ class RoomTodoRepository @Inject constructor(
         todoId: String,
         logicalDate: LocalDate,
         completed: Boolean,
+        operationId: String,
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
+        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val now = ZonedDateTime.now(clock)
         database.withTransaction {
             val todoEntity = todoDao.findById(todoId)
-            if (todoEntity == null) {
-                throw ValidationException(ValidationError.TODO_NOT_FOUND)
-            }
+                ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
+            val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
+            val endHour = category?.endHour ?: uncategorizedEndHour
+            validateActionTarget(todoEntity, logicalDate, endHour, now)
             if (completed) {
+                if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existingExecution = executionDao.find(todoId, logicalDate.toString())
-                if (existingExecution?.let { TodoState.fromStoredValue(it.state) } == TodoState.COMPLETED) {
+                if (existingExecution?.let { TodoState.fromStoredValue(it.status) } == TodoState.COMPLETED) {
                     return@withTransaction
                 }
                 if (existingExecution != null) {
@@ -285,26 +305,133 @@ class RoomTodoRepository @Inject constructor(
                 val todo = todoEntity.toDomain()
                 todo.recurrencePeriod(logicalDate, weekStart)?.let { period ->
                     val completedCount = executionDao.findForTodo(todoId).count { execution ->
-                        TodoState.fromStoredValue(execution.state) == TodoState.COMPLETED &&
+                        TodoState.fromStoredValue(execution.status) == TodoState.COMPLETED &&
                             LocalDate.parse(execution.logicalDate) in period.startDate..period.endDate
                     }
                     if (completedCount >= period.requiredCount) {
                         throw ValidationException(ValidationError.TODO_REQUIRED_COUNT_REACHED)
                     }
                 }
-                executionDao.upsert(
-                    TodoExecutionEntity(
-                        todoId = todoId,
-                        logicalDate = logicalDate.toString(),
-                        state = TodoState.COMPLETED.code,
-                        performedAt = clock.millis(),
+                executionDao.insert(
+                    createExecution(
+                        todo = todoEntity,
+                        category = category,
+                        logicalDate = logicalDate,
+                        status = TodoState.COMPLETED,
+                        operationId = operationId,
+                        endHour = endHour,
+                        weekStart = weekStart,
                     ),
                 )
             } else {
+                val existingExecution = executionDao.find(todoId, logicalDate.toString())
+                if (existingExecution == null ||
+                    TodoState.fromStoredValue(existingExecution.status) != TodoState.COMPLETED
+                ) {
+                    throw ValidationException(ValidationError.TODO_ACTION_CANNOT_UNDO)
+                }
                 executionDao.delete(todoId, logicalDate.toString())
             }
+            updateAppliedRevision(todoEntity)
         }
         runCatching { notificationScheduler.reconcileTodo(todoId) }
+    }
+
+    override suspend fun setSkipped(
+        todoId: String,
+        logicalDate: LocalDate,
+        skipped: Boolean,
+        operationId: String,
+    ): Result<Unit> = runCatching {
+        val weekStart = settingsRepository.weekStart.first()
+        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val now = ZonedDateTime.now(clock)
+        database.withTransaction {
+            val todoEntity = todoDao.findById(todoId)
+                ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
+            val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
+            val endHour = category?.endHour ?: uncategorizedEndHour
+            validateActionTarget(todoEntity, logicalDate, endHour, now)
+            if (skipped) {
+                if (executionDao.findByOperationId(operationId) != null) return@withTransaction
+                val existing = executionDao.find(todoId, logicalDate.toString())
+                if (existing?.let { TodoState.fromStoredValue(it.status) } == TodoState.SKIPPED) {
+                    return@withTransaction
+                }
+                if (existing != null) throw ValidationException(ValidationError.TODO_ALREADY_ACTED)
+                executionDao.insert(
+                    createExecution(
+                        todo = todoEntity,
+                        category = category,
+                        logicalDate = logicalDate,
+                        status = TodoState.SKIPPED,
+                        operationId = operationId,
+                        endHour = endHour,
+                        weekStart = weekStart,
+                    ),
+                )
+            } else {
+                val existing = executionDao.find(todoId, logicalDate.toString())
+                if (existing == null || TodoState.fromStoredValue(existing.status) != TodoState.SKIPPED) {
+                    throw ValidationException(ValidationError.TODO_ACTION_CANNOT_UNDO)
+                }
+                executionDao.delete(todoId, logicalDate.toString())
+            }
+            updateAppliedRevision(todoEntity)
+        }
+        runCatching { notificationScheduler.reconcileTodo(todoId) }
+    }
+
+    override suspend fun archiveTodo(id: String): Result<Unit> = runCatching {
+        database.withTransaction {
+            val todo = todoDao.findById(id) ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
+            if (todo.archivedAt != null) return@withTransaction
+            val now = clock.millis()
+            todoDao.upsert(todo.copy(archivedAt = now, updatedAt = now))
+            updateAppliedRevision(todo)
+        }
+        runCatching { notificationScheduler.cancelTodo(id) }
+    }
+
+    override suspend fun restoreTodo(id: String): Result<Unit> = runCatching {
+        val weekStart = settingsRepository.weekStart.first()
+        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val now = ZonedDateTime.now(clock)
+        database.withTransaction {
+            val entity = todoDao.findById(id) ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
+            if (entity.archivedAt == null) return@withTransaction
+            val category = entity.categoryId?.let { categoryDao.findById(it) }
+            val endHour = category?.endHour ?: uncategorizedEndHour
+            val currentLogicalDate = logicalDate(now, endHour)
+            val todo = entity.toDomain()
+            val currentPeriod = todo.recurrencePeriod(currentLogicalDate, weekStart)
+            val existing = runtimeStateDao.find(id)
+            val restored = entity.copy(archivedAt = null, updatedAt = clock.millis())
+            todoDao.upsert(restored)
+            runtimeStateDao.upsert(
+                TodoRuntimeStateEntity(
+                    todoId = id,
+                    lastFinalizedLogicalDate = maxDateString(
+                        existing?.lastFinalizedLogicalDate,
+                        currentLogicalDate.minusDays(1),
+                    ),
+                    lastFinalizedWeeklyPeriodEnd = if (todo.recurrenceType == RecurrenceType.WEEKLY_COUNT) {
+                        maxDateString(existing?.lastFinalizedWeeklyPeriodEnd, currentPeriod?.startDate?.minusDays(1))
+                    } else {
+                        existing?.lastFinalizedWeeklyPeriodEnd
+                    },
+                    lastFinalizedMonthlyPeriodEnd = if (todo.recurrenceType == RecurrenceType.MONTHLY_COUNT) {
+                        maxDateString(existing?.lastFinalizedMonthlyPeriodEnd, currentPeriod?.startDate?.minusDays(1))
+                    } else {
+                        existing?.lastFinalizedMonthlyPeriodEnd
+                    },
+                    appliedDefinitionRevision = restored.definitionRevision,
+                    reconciliationCursorDate = null,
+                    updatedAt = clock.millis(),
+                ),
+            )
+        }
+        runCatching { notificationScheduler.reconcileTodo(id) }
     }
 
     override suspend fun deleteTodo(id: String): Result<Unit> = runCatching {
@@ -312,11 +439,76 @@ class RoomTodoRepository @Inject constructor(
         runCatching { notificationScheduler.cancelTodo(id) }
     }
 
+    private suspend fun createExecution(
+        todo: TodoEntity,
+        category: CategoryEntity?,
+        logicalDate: LocalDate,
+        status: TodoState,
+        operationId: String,
+        endHour: Int,
+        weekStart: java.time.DayOfWeek,
+    ): TodoExecutionEntity {
+        val timestamp = clock.millis()
+        return TodoExecutionEntity(
+            id = UUID.randomUUID().toString(),
+            operationId = operationId,
+            todoId = todo.id,
+            logicalDate = logicalDate.toString(),
+            status = status.code,
+            actedAt = timestamp,
+            finalizedAt = timestamp,
+            definitionRevision = todo.definitionRevision,
+            snapshotVersion = HistorySnapshotV1.VERSION,
+            snapshotJson = HistorySnapshotJson.encode(
+                todo = todo,
+                category = category,
+                notifications = notificationDao.findForTodo(todo.id),
+                endHour = endHour,
+                weekStart = weekStart,
+                logicalDate = logicalDate,
+            ),
+        )
+    }
+
+    private fun validateActionTarget(
+        entity: TodoEntity,
+        date: LocalDate,
+        endHour: Int,
+        now: ZonedDateTime,
+    ) {
+        if (entity.archivedAt != null) throw ValidationException(ValidationError.TODO_NOT_ACTIVE)
+        val todo = entity.toDomain()
+        if (date != logicalDate(now, endHour) || !todo.occursOn(date)) {
+            throw ValidationException(ValidationError.TODO_ACTION_DATE_INVALID)
+        }
+    }
+
+    private suspend fun updateAppliedRevision(todo: TodoEntity) {
+        val existing = runtimeStateDao.find(todo.id)
+        runtimeStateDao.upsert(
+            TodoRuntimeStateEntity(
+                todoId = todo.id,
+                lastFinalizedLogicalDate = existing?.lastFinalizedLogicalDate,
+                lastFinalizedWeeklyPeriodEnd = existing?.lastFinalizedWeeklyPeriodEnd,
+                lastFinalizedMonthlyPeriodEnd = existing?.lastFinalizedMonthlyPeriodEnd,
+                appliedDefinitionRevision = todo.definitionRevision,
+                reconciliationCursorDate = existing?.reconciliationCursorDate,
+                updatedAt = clock.millis(),
+            ),
+        )
+    }
+
     private fun TodoOccurrence.effectiveDueMinutes(): Int {
         val endHour = category?.endHour ?: 0
         val due = todo.dueMinutes ?: (endHour * 60)
         return due + if (due < endHour * 60 || todo.dueMinutes == null) 1440 else 0
     }
+}
+
+private fun maxDateString(existing: String?, candidate: LocalDate?): String? {
+    if (candidate == null) return existing
+    val current = existing?.let(LocalDate::parse)
+    return maxOf(current ?: candidate, candidate).toString()
 }
 
 private fun CategoryEntity.toDomain() = Category(
@@ -328,7 +520,7 @@ private fun CategoryEntity.toDomain() = Category(
     sortOrder = sortOrder,
 )
 
-private fun TodoEntity.toDomain(
+internal fun TodoEntity.toDomain(
     notifications: List<TodoNotification> = emptyList(),
 ) = Todo(
     id = id,

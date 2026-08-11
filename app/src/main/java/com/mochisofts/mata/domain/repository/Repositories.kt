@@ -9,6 +9,7 @@ import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 interface CategoryRepository {
@@ -39,7 +40,20 @@ interface TodoRepository {
         dueMinutes: Int?,
         notifications: List<TodoNotification> = emptyList(),
     ): Result<String>
-    suspend fun setCompleted(todoId: String, logicalDate: LocalDate, completed: Boolean): Result<Unit>
+    suspend fun setCompleted(
+        todoId: String,
+        logicalDate: LocalDate,
+        completed: Boolean,
+        operationId: String = UUID.randomUUID().toString(),
+    ): Result<Unit>
+    suspend fun setSkipped(
+        todoId: String,
+        logicalDate: LocalDate,
+        skipped: Boolean,
+        operationId: String = UUID.randomUUID().toString(),
+    ): Result<Unit>
+    suspend fun archiveTodo(id: String): Result<Unit>
+    suspend fun restoreTodo(id: String): Result<Unit>
     suspend fun deleteTodo(id: String): Result<Unit>
 }
 
@@ -64,4 +78,13 @@ interface NotificationScheduler {
     suspend fun reconcileTodo(todoId: String)
     suspend fun reconcileAll()
     suspend fun cancelTodo(todoId: String)
+}
+
+data class HistoryReconciliationResult(
+    val generatedRecords: Int,
+    val hasMore: Boolean,
+)
+
+interface HistoryReconciler {
+    suspend fun reconcile(maxRecords: Int = 500): HistoryReconciliationResult
 }

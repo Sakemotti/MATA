@@ -24,11 +24,14 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
@@ -41,6 +44,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -78,7 +82,10 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.runtime.rememberCoroutineScope
+
+private data class TodoActionTarget(val id: String, val title: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,9 +101,12 @@ fun TodoListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val completedMessage = stringResource(R.string.message_todo_completed)
+    val skippedMessage = stringResource(R.string.message_todo_skipped)
     val undoLabel = stringResource(R.string.action_undo)
     var showDatePicker by remember { mutableStateOf(false) }
     var readOnlyOccurrence by remember { mutableStateOf<TodoOccurrence?>(null) }
+    var archiveTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
+    var deleteTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
 
     LaunchedEffect(viewModel, resources, completedMessage, undoLabel) {
         viewModel.effects.collect { effect ->
@@ -105,14 +115,36 @@ fun TodoListScreen(
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
                 is TodoListEffect.Completed -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = completedMessage,
-                        actionLabel = undoLabel,
-                        withDismissAction = true,
-                    )
+                    val result = withTimeoutOrNull(5_000) {
+                        snackbarHostState.showSnackbar(
+                            message = completedMessage,
+                            actionLabel = undoLabel,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Indefinite,
+                        )
+                    }
                     if (result == SnackbarResult.ActionPerformed) {
                         viewModel.undoCompletion(effect.todoId, effect.logicalDate)
                     }
+                }
+                is TodoListEffect.Skipped -> {
+                    val result = withTimeoutOrNull(5_000) {
+                        snackbarHostState.showSnackbar(
+                            message = skippedMessage,
+                            actionLabel = undoLabel,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Indefinite,
+                        )
+                    }
+                    if (result == SnackbarResult.ActionPerformed) {
+                        viewModel.undoSkip(effect.todoId, effect.logicalDate)
+                    }
+                }
+                TodoListEffect.Archived -> {
+                    snackbarHostState.showSnackbar(resources.getString(R.string.message_todo_archived))
+                }
+                TodoListEffect.Deleted -> {
+                    snackbarHostState.showSnackbar(resources.getString(R.string.message_todo_deleted))
                 }
             }
         }
@@ -194,6 +226,13 @@ fun TodoListScreen(
                         onToday = viewModel::selectToday,
                         onPickDate = { showDatePicker = true },
                         onComplete = viewModel::complete,
+                        onSkip = viewModel::skip,
+                        onArchive = { occurrence ->
+                            archiveTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+                        },
+                        onDelete = { occurrence ->
+                            deleteTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+                        },
                         onOpen = { occurrence ->
                             if (state.selectedDate.isBefore(LocalDate.now())) {
                                 readOnlyOccurrence = occurrence
@@ -207,6 +246,9 @@ fun TodoListScreen(
                         onSelectCategory = viewModel::selectCategory,
                         onComplete = viewModel::complete,
                         onEdit = onEditTodo,
+                        onSkip = viewModel::skip,
+                        onArchive = { todo -> archiveTarget = TodoActionTarget(todo.id, todo.title) },
+                        onDelete = { todo -> deleteTarget = TodoActionTarget(todo.id, todo.title) },
                     )
                 }
             }
@@ -260,6 +302,44 @@ fun TodoListScreen(
             },
         )
     }
+
+    archiveTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { archiveTarget = null },
+            title = { Text(stringResource(R.string.dialog_archive_todo_title)) },
+            text = { Text(stringResource(R.string.dialog_archive_todo_message, target.title)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    archiveTarget = null
+                    viewModel.archive(target.id)
+                }) { Text(stringResource(R.string.action_archive)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { archiveTarget = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    deleteTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.dialog_delete_todo_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_todo_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteTarget = null
+                    viewModel.delete(target.id)
+                }) { Text(stringResource(R.string.action_delete_permanently)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -270,6 +350,9 @@ private fun DateMode(
     onToday: () -> Unit,
     onPickDate: () -> Unit,
     onComplete: (TodoOccurrence) -> Unit,
+    onSkip: (TodoOccurrence) -> Unit,
+    onArchive: (TodoOccurrence) -> Unit,
+    onDelete: (TodoOccurrence) -> Unit,
     onOpen: (TodoOccurrence) -> Unit,
 ) {
     Row(
@@ -323,7 +406,16 @@ private fun DateMode(
     } else {
         LazyColumn(Modifier.fillMaxSize()) {
             items(state.occurrences, key = { "${it.todo.id}:${it.logicalDate}" }) { occurrence ->
-                TodoOccurrenceRow(occurrence, state.isToday, onComplete, onOpen)
+                TodoOccurrenceRow(
+                    occurrence = occurrence,
+                    canComplete = state.isToday,
+                    showActions = !state.selectedDate.isBefore(LocalDate.now()),
+                    onComplete = onComplete,
+                    onSkip = onSkip,
+                    onArchive = onArchive,
+                    onDelete = onDelete,
+                    onOpen = onOpen,
+                )
                 HorizontalDivider()
             }
             item { Spacer(Modifier.height(96.dp)) }
@@ -337,6 +429,9 @@ private fun CategoryMode(
     onSelectCategory: (String?) -> Unit,
     onComplete: (TodoOccurrence) -> Unit,
     onEdit: (String) -> Unit,
+    onSkip: (TodoOccurrence) -> Unit,
+    onArchive: (Todo) -> Unit,
+    onDelete: (Todo) -> Unit,
 ) {
     Row(
         Modifier
@@ -382,6 +477,14 @@ private fun CategoryMode(
                             )
                         }
                     },
+                    trailingContent = {
+                        TodoActionMenu(
+                            canSkip = occurrence?.state == TodoState.PENDING,
+                            onSkip = occurrence?.let { { onSkip(it) } },
+                            onArchive = { onArchive(item.todo) },
+                            onDelete = { onDelete(item.todo) },
+                        )
+                    },
                     modifier = Modifier.clickable { onEdit(item.todo.id) },
                 )
                 HorizontalDivider()
@@ -395,7 +498,11 @@ private fun CategoryMode(
 private fun TodoOccurrenceRow(
     occurrence: TodoOccurrence,
     canComplete: Boolean,
+    showActions: Boolean,
     onComplete: (TodoOccurrence) -> Unit,
+    onSkip: (TodoOccurrence) -> Unit,
+    onArchive: (TodoOccurrence) -> Unit,
+    onDelete: (TodoOccurrence) -> Unit,
     onOpen: (TodoOccurrence) -> Unit,
 ) {
     val completed = occurrence.state == TodoState.COMPLETED
@@ -452,8 +559,54 @@ private fun TodoOccurrenceRow(
                 } else null,
             )
         },
+        trailingContent = if (showActions) {
+            {
+                TodoActionMenu(
+                    canSkip = canComplete && occurrence.state == TodoState.PENDING,
+                    onSkip = { onSkip(occurrence) },
+                    onArchive = { onArchive(occurrence) },
+                    onDelete = { onDelete(occurrence) },
+                )
+            }
+        } else {
+            null
+        },
         modifier = Modifier.clickable { onOpen(occurrence) },
     )
+}
+
+@Composable
+private fun TodoActionMenu(
+    canSkip: Boolean,
+    onSkip: (() -> Unit)?,
+    onArchive: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                Icons.Outlined.MoreVert,
+                contentDescription = stringResource(R.string.content_description_todo_actions),
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (canSkip && onSkip != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_skip)) },
+                    onClick = { expanded = false; onSkip() },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_archive)) },
+                onClick = { expanded = false; onArchive() },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_delete)) },
+                onClick = { expanded = false; onDelete() },
+            )
+        }
+    }
 }
 
 @Composable
@@ -496,4 +649,5 @@ private fun TodoState.labelRes(): Int = when (this) {
     TodoState.PENDING -> R.string.label_pending
     TodoState.COMPLETED -> R.string.label_completed
     TodoState.SKIPPED -> R.string.label_skipped
+    TodoState.MISSED -> R.string.label_missed
 }

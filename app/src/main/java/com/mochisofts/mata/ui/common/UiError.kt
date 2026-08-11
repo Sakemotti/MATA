@@ -30,5 +30,8 @@ fun Throwable.toUserMessageRes(@StringRes fallback: Int): Int =
         ValidationError.TODO_ALREADY_ACTED -> R.string.error_todo_already_acted
         ValidationError.TODO_REQUIRED_COUNT_REACHED -> R.string.error_todo_required_count_reached
         ValidationError.TODO_NOT_FOUND -> R.string.error_todo_not_found
+        ValidationError.TODO_NOT_ACTIVE -> R.string.error_todo_not_active
+        ValidationError.TODO_ACTION_DATE_INVALID -> R.string.error_todo_action_date_invalid
+        ValidationError.TODO_ACTION_CANNOT_UNDO -> R.string.error_todo_action_cannot_undo
         null -> fallback
     }

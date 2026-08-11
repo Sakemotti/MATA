@@ -99,4 +99,58 @@ class MataDatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate3To4_preservesExecutionsAndAddsHistoryTables() {
+        helper.createDatabase(databaseName, 3).apply {
+            execSQL(
+                """
+                INSERT INTO todos (
+                    id, title, description, categoryId, startDate, endDate, recurrenceType,
+                    repeatParamsVersion, repeatParamsJson, dueMinutes, definitionRevision,
+                    createdAt, updatedAt, archivedAt
+                ) VALUES (
+                    'todo-id', 'title', '', NULL, '2026-08-10', NULL, 'daily',
+                    1, '{}', NULL, 3, 1, 1, NULL
+                )
+                """.trimIndent(),
+            )
+            execSQL(
+                """
+                INSERT INTO todo_executions (todoId, logicalDate, state, performedAt)
+                VALUES ('todo-id', '2026-08-10', 'completed', 1234)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(
+            databaseName,
+            4,
+            true,
+            MIGRATION_3_4,
+        ).use { database ->
+            database.query(
+                """
+                SELECT status, actedAt, finalizedAt, definitionRevision, snapshotVersion
+                FROM todo_executions WHERE todoId = 'todo-id'
+                """.trimIndent(),
+            ).use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("completed", cursor.getString(0))
+                assertEquals(1234, cursor.getLong(1))
+                assertEquals(1234, cursor.getLong(2))
+                assertEquals(3, cursor.getInt(3))
+                assertEquals(1, cursor.getInt(4))
+            }
+            database.query("SELECT COUNT(*) FROM period_results").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
+            }
+            database.query("SELECT COUNT(*) FROM todo_runtime_states").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
+            }
+        }
+    }
 }

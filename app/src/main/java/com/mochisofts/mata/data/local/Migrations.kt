@@ -72,3 +72,107 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS todo_executions_new (
+                id TEXT NOT NULL PRIMARY KEY,
+                operationId TEXT NOT NULL,
+                todoId TEXT NOT NULL,
+                logicalDate TEXT NOT NULL,
+                status TEXT NOT NULL,
+                actedAt INTEGER,
+                finalizedAt INTEGER NOT NULL,
+                definitionRevision INTEGER NOT NULL,
+                snapshotVersion INTEGER NOT NULL,
+                snapshotJson TEXT NOT NULL,
+                FOREIGN KEY(todoId) REFERENCES todos(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO todo_executions_new (
+                id, operationId, todoId, logicalDate, status, actedAt, finalizedAt,
+                definitionRevision, snapshotVersion, snapshotJson
+            )
+            SELECT
+                lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-' ||
+                    lower(hex(randomblob(2))) || '-' || lower(hex(randomblob(2))) || '-' ||
+                    lower(hex(randomblob(6))),
+                lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-' ||
+                    lower(hex(randomblob(2))) || '-' || lower(hex(randomblob(2))) || '-' ||
+                    lower(hex(randomblob(6))),
+                executions.todoId,
+                executions.logicalDate,
+                executions.state,
+                executions.performedAt,
+                executions.performedAt,
+                todos.definitionRevision,
+                1,
+                '{"version":1,"migratedFromSchema":3}'
+            FROM todo_executions AS executions
+            INNER JOIN todos ON todos.id = executions.todoId
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE todo_executions")
+        db.execSQL("ALTER TABLE todo_executions_new RENAME TO todo_executions")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_todo_executions_operationId " +
+                "ON todo_executions(operationId)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todo_executions_todoId ON todo_executions(todoId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todo_executions_logicalDate ON todo_executions(logicalDate)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todo_executions_status ON todo_executions(status)")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_todo_executions_todoId_logicalDate " +
+                "ON todo_executions(todoId, logicalDate)",
+        )
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS period_results (
+                id TEXT NOT NULL PRIMARY KEY,
+                todoId TEXT NOT NULL,
+                periodType TEXT NOT NULL,
+                periodStart TEXT NOT NULL,
+                periodEnd TEXT NOT NULL,
+                requiredCount INTEGER NOT NULL,
+                completedCount INTEGER NOT NULL,
+                achieved INTEGER NOT NULL,
+                displayDate TEXT NOT NULL,
+                finalizedAt INTEGER NOT NULL,
+                definitionRevision INTEGER NOT NULL,
+                snapshotVersion INTEGER NOT NULL,
+                snapshotJson TEXT NOT NULL,
+                FOREIGN KEY(todoId) REFERENCES todos(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_period_results_todoId ON period_results(todoId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_period_results_periodStart ON period_results(periodStart)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_period_results_periodEnd ON period_results(periodEnd)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_period_results_displayDate ON period_results(displayDate)")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_period_results_todoId_periodStart_periodEnd " +
+                "ON period_results(todoId, periodStart, periodEnd)",
+        )
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS todo_runtime_states (
+                todoId TEXT NOT NULL PRIMARY KEY,
+                lastFinalizedLogicalDate TEXT,
+                lastFinalizedWeeklyPeriodEnd TEXT,
+                lastFinalizedMonthlyPeriodEnd TEXT,
+                appliedDefinitionRevision INTEGER NOT NULL,
+                reconciliationCursorDate TEXT,
+                updatedAt INTEGER NOT NULL,
+                FOREIGN KEY(todoId) REFERENCES todos(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+            """.trimIndent(),
+        )
+    }
+}

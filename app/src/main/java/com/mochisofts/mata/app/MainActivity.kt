@@ -79,6 +79,11 @@ class MainActivity : ComponentActivity() {
         notificationNavigation = intent.toNotificationNavigation()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.appResumed()
+    }
+
     companion object {
         const val ACTION_OPEN_NOTIFICATION = "com.mochisofts.mata.action.OPEN_NOTIFICATION"
         const val EXTRA_TODO_ID = "todo_id"

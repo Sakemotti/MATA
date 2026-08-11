@@ -55,6 +55,9 @@ data class TodoListUiState(
 sealed interface TodoListEffect {
     data class Message(@StringRes val messageRes: Int) : TodoListEffect
     data class Completed(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
+    data class Skipped(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
+    data object Archived : TodoListEffect
+    data object Deleted : TodoListEffect
 }
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -76,15 +79,19 @@ class TodoListViewModel @Inject constructor(
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
 
     private val occurrenceFlow = selectedDate.flatMapLatest(todoRepository::observeOccurrences)
+    private val todayOccurrenceFlow = todoRepository.observeOccurrences(LocalDate.now(clock))
 
-    private val content = combine(
+    private val baseContent = combine(
         occurrenceFlow,
+        todayOccurrenceFlow,
         todoRepository.observeTodos(),
         categoryRepository.observeCategories(),
-        selectedDate,
-        selectedCategoryId,
-    ) { occurrences, todos, categories, date, categoryId ->
-        Content(occurrences, todos, categories, date, categoryId)
+    ) { occurrences, todayOccurrences, todos, categories ->
+        BaseContent(occurrences, todayOccurrences, todos, categories)
+    }
+
+    private val content = combine(baseContent, selectedDate, selectedCategoryId) { base, date, categoryId ->
+        Content(base.occurrences, base.todayOccurrences, base.todos, base.categories, date, categoryId)
     }
 
     val uiState: StateFlow<TodoListUiState> = combine(
@@ -93,11 +100,10 @@ class TodoListViewModel @Inject constructor(
         settingsRepository.todoListMode,
     ) { content, showCompleted, storedMode ->
         val today = LocalDate.now(clock)
-        val currentOccurrences = content.occurrences.associateBy { it.todo.id }
-        val visibleOccurrences = if (content.date == today && !showCompleted) {
-            content.occurrences.filter { it.state != TodoState.COMPLETED }
-        } else {
-            content.occurrences
+        val currentOccurrences = content.todayOccurrences.associateBy { it.todo.id }
+        val visibleOccurrences = content.occurrences.filter { occurrence ->
+            occurrence.state != TodoState.SKIPPED &&
+                (content.date != today || showCompleted || occurrence.state != TodoState.COMPLETED)
         }
         TodoListUiState(
             isLoading = false,
@@ -110,7 +116,8 @@ class TodoListViewModel @Inject constructor(
             selectedCategoryId = content.categoryId,
             categoryItems = content.todos
                 .filter { it.categoryId == content.categoryId }
-                .map { todo -> CategoryTodoItem(todo, currentOccurrences[todo.id]) },
+                .map { todo -> CategoryTodoItem(todo, currentOccurrences[todo.id]) }
+                .filter { item -> item.occurrence?.state != TodoState.SKIPPED },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -177,12 +184,79 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
+    fun skip(occurrence: TodoOccurrence) {
+        viewModelScope.launch {
+            todoRepository.setSkipped(occurrence.todo.id, occurrence.logicalDate, true)
+                .onSuccess {
+                    effectsChannel.send(
+                        TodoListEffect.Skipped(occurrence.todo.id, occurrence.logicalDate),
+                    )
+                }
+                .onFailure { throwable ->
+                    effectsChannel.send(
+                        TodoListEffect.Message(
+                            throwable.toUserMessageRes(R.string.error_todo_skip_failed),
+                        ),
+                    )
+                }
+        }
+    }
+
+    fun undoSkip(todoId: String, logicalDate: LocalDate) {
+        viewModelScope.launch {
+            todoRepository.setSkipped(todoId, logicalDate, false)
+                .onFailure { throwable ->
+                    effectsChannel.send(
+                        TodoListEffect.Message(
+                            throwable.toUserMessageRes(R.string.error_todo_undo_skip_failed),
+                        ),
+                    )
+                }
+        }
+    }
+
+    fun archive(todoId: String) {
+        viewModelScope.launch {
+            todoRepository.archiveTodo(todoId)
+                .onSuccess { effectsChannel.send(TodoListEffect.Archived) }
+                .onFailure { throwable ->
+                    effectsChannel.send(
+                        TodoListEffect.Message(
+                            throwable.toUserMessageRes(R.string.error_todo_archive_failed),
+                        ),
+                    )
+                }
+        }
+    }
+
+    fun delete(todoId: String) {
+        viewModelScope.launch {
+            todoRepository.deleteTodo(todoId)
+                .onSuccess { effectsChannel.send(TodoListEffect.Deleted) }
+                .onFailure { throwable ->
+                    effectsChannel.send(
+                        TodoListEffect.Message(
+                            throwable.toUserMessageRes(R.string.error_todo_delete_failed),
+                        ),
+                    )
+                }
+        }
+    }
+
     private data class Content(
         val occurrences: List<TodoOccurrence>,
+        val todayOccurrences: List<TodoOccurrence>,
         val todos: List<Todo>,
         val categories: List<Category>,
         val date: LocalDate,
         val categoryId: String?,
+    )
+
+    private data class BaseContent(
+        val occurrences: List<TodoOccurrence>,
+        val todayOccurrences: List<TodoOccurrence>,
+        val todos: List<Todo>,
+        val categories: List<Category>,
     )
 }
 
