@@ -57,4 +57,46 @@ class MataDatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate2To3_addsNotificationTablesWithoutChangingTodos() {
+        helper.createDatabase(databaseName, 2).apply {
+            execSQL(
+                """
+                INSERT INTO todos (
+                    id, title, description, categoryId, startDate, endDate, recurrenceType,
+                    repeatParamsVersion, repeatParamsJson, dueMinutes, definitionRevision,
+                    createdAt, updatedAt, archivedAt
+                ) VALUES (
+                    'todo-id', 'title', '', NULL, '2026-08-10', '2026-08-10', 'none',
+                    1, '{}', 720, 1, 1, 1, NULL
+                )
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(
+            databaseName,
+            3,
+            true,
+            MIGRATION_2_3,
+        ).use { database ->
+            database.execSQL(
+                """
+                INSERT INTO todo_notifications (
+                    id, todoId, relation, amount, unit, sortOrder, createdAt, updatedAt
+                ) VALUES ('notification-id', 'todo-id', 'before', 30, 'minute', 0, 1, 1)
+                """.trimIndent(),
+            )
+            database.query("SELECT COUNT(*) FROM todo_notifications").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(1, cursor.getInt(0))
+            }
+            database.query("SELECT title FROM todos WHERE id = 'todo-id'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("title", cursor.getString(0))
+            }
+        }
+    }
 }

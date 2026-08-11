@@ -1,7 +1,14 @@
 package com.mochisofts.mata.ui.todoeditor
 
+import android.Manifest
 import android.app.TimePickerDialog
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
@@ -88,6 +97,23 @@ fun TodoEditorScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var dateField by remember { mutableStateOf<DatePickerTarget?>(null) }
     var showRecurrenceSheet by remember { mutableStateOf(false) }
+    var showNotificationPermissionRationale by remember { mutableStateOf(false) }
+    var showPastNotificationWarning by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) {
+        viewModel.notificationPermissionRequestFinished()
+    }
+    val systemSettingsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        viewModel.refreshNotificationStatus()
+    }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshNotificationStatus()
+    }
 
     fun requestBack() {
         if (state.isDirty) showDiscardDialog = true else onBack()
@@ -99,6 +125,9 @@ fun TodoEditorScreen(
             when (effect) {
                 is TodoEditorEffect.Saved -> onSaved(effect.isNew)
                 TodoEditorEffect.Deleted -> onSaved(false)
+                TodoEditorEffect.ExplainNotificationPermission -> {
+                    showNotificationPermissionRationale = true
+                }
             }
         }
     }
@@ -131,7 +160,16 @@ fun TodoEditorScreen(
                             )
                         }
                     }
-                    TextButton(onClick = viewModel::save, enabled = state.canSave && state.isDirty) {
+                    TextButton(
+                        onClick = {
+                            if (state.hasPastNotificationForCurrentOccurrence) {
+                                showPastNotificationWarning = true
+                            } else {
+                                viewModel.save()
+                            }
+                        },
+                        enabled = state.canSave && state.isDirty,
+                    ) {
                         Text(stringResource(R.string.action_save))
                     }
                 },
@@ -243,17 +281,25 @@ fun TodoEditorScreen(
                 SchedulePreview(state)
                 DueTimeSelector(state.dueMinutes, viewModel::setDueMinutes)
 
-                Text(
-                    stringResource(R.string.todo_editor_section_notification),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    stringResource(R.string.todo_editor_no_notification),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    stringResource(R.string.todo_editor_notification_placeholder),
-                    style = MaterialTheme.typography.bodySmall,
+                NotificationEditorSection(
+                    state = state,
+                    viewModel = viewModel,
+                    onOpenNotificationSettings = {
+                        systemSettingsLauncher.launch(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                        )
+                    },
+                    onOpenExactAlarmSettings = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            systemSettingsLauncher.launch(
+                                Intent(
+                                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                    Uri.parse("package:${context.packageName}"),
+                                ),
+                            )
+                        }
+                    },
                 )
 
                 state.errorMessageRes?.let {
@@ -327,6 +373,56 @@ fun TodoEditorScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+    if (showNotificationPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = {
+                showNotificationPermissionRationale = false
+                viewModel.notificationPermissionRequestFinished()
+            },
+            title = { Text(stringResource(R.string.notification_permission_dialog_title)) },
+            text = { Text(stringResource(R.string.notification_permission_dialog_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showNotificationPermissionRationale = false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        viewModel.notificationPermissionRequestFinished()
+                    }
+                }) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showNotificationPermissionRationale = false
+                    viewModel.notificationPermissionRequestFinished()
+                }) {
+                    Text(stringResource(R.string.action_not_now))
+                }
+            },
+        )
+    }
+    if (showPastNotificationWarning) {
+        AlertDialog(
+            onDismissRequest = { showPastNotificationWarning = false },
+            title = { Text(stringResource(R.string.todo_editor_past_notification_title)) },
+            text = { Text(stringResource(R.string.todo_editor_past_notification_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPastNotificationWarning = false
+                    viewModel.save()
+                }) {
+                    Text(stringResource(R.string.action_save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPastNotificationWarning = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

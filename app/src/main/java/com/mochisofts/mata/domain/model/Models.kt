@@ -79,6 +79,7 @@ data class Todo(
     val definitionRevision: Int,
     val archivedAt: Long?,
     val createdAt: Long,
+    val notifications: List<TodoNotification> = emptyList(),
 ) {
     val recurrenceType: RecurrenceType
         get() = recurrenceRule.type

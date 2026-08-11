@@ -3,7 +3,7 @@ package com.mochisofts.mata.core.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object TodoListRoute
+data class TodoListRoute(val selectedDate: String? = null)
 
 @Serializable
 data class TodoEditorRoute(val todoId: String? = null)

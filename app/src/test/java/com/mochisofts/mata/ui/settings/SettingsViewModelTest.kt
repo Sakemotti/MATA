@@ -3,6 +3,8 @@ package com.mochisofts.mata.ui.settings
 import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +24,7 @@ class SettingsViewModelTest {
     @Test
     fun valuesLoadAndSuccessfulChangesAreReflected() = runTest {
         val repository = FakeSettingsRepository()
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeNotificationScheduler())
 
         assertFalse(viewModel.uiState.value.isLoading)
         viewModel.setEndHour(4)
@@ -40,7 +42,7 @@ class SettingsViewModelTest {
     @Test
     fun failedSaveKeepsPreviousValueAndEmitsMessage() = runTest {
         val repository = FakeSettingsRepository().apply { failNextSave = true }
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeNotificationScheduler())
 
         viewModel.setEndHour(4)
 
@@ -57,6 +59,7 @@ class SettingsViewModelTest {
         private val endHourState = MutableStateFlow(0)
         private val weekStartState = MutableStateFlow(DayOfWeek.MONDAY)
         private val themeState = MutableStateFlow(AppTheme.SYSTEM)
+        private val notificationPermissionRequestedState = MutableStateFlow(false)
 
         var failNextSave = false
 
@@ -65,6 +68,8 @@ class SettingsViewModelTest {
         override val uncategorizedEndHour: Flow<Int> = endHourState
         override val weekStart: Flow<DayOfWeek> = weekStartState
         override val theme: Flow<AppTheme> = themeState
+        override val notificationPermissionRequested: Flow<Boolean> =
+            notificationPermissionRequestedState
 
         override suspend fun setShowCompleted(value: Boolean) {
             beforeSave()
@@ -91,11 +96,32 @@ class SettingsViewModelTest {
             themeState.value = value
         }
 
+        override suspend fun setNotificationPermissionRequested(value: Boolean) {
+            beforeSave()
+            notificationPermissionRequestedState.value = value
+        }
+
         private fun beforeSave() {
             if (failNextSave) {
                 failNextSave = false
                 error("save failed")
             }
         }
+    }
+
+    private class FakeNotificationScheduler : NotificationScheduler {
+        override val notificationCount: Flow<Int> = MutableStateFlow(0)
+
+        override fun systemState() = NotificationSystemState(
+            canPostNotifications = true,
+            runtimePermissionRelevant = false,
+            runtimePermissionGranted = true,
+            exactAlarmRelevant = false,
+            canScheduleExactAlarms = true,
+        )
+
+        override suspend fun reconcileTodo(todoId: String) = Unit
+        override suspend fun reconcileAll() = Unit
+        override suspend fun cancelTodo(todoId: String) = Unit
     }
 }

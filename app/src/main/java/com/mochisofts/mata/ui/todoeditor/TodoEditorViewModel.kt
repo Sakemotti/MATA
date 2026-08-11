@@ -8,9 +8,22 @@ import androidx.navigation.toRoute
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.NotificationRelation
+import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.model.NotificationUnit
+import com.mochisofts.mata.domain.model.NotificationValidationError
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.Todo
+import com.mochisofts.mata.domain.model.TodoNotification
+import com.mochisofts.mata.domain.model.nextNotificationCandidate
+import com.mochisofts.mata.domain.model.nextOccurrenceOnOrAfter
+import com.mochisofts.mata.domain.model.notificationTriggerAt
+import com.mochisofts.mata.domain.model.deadlineAt
+import com.mochisofts.mata.domain.model.logicalDate
+import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
@@ -18,6 +31,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -46,10 +61,28 @@ data class TodoEditorUiState(
     val monthlyCount: Int = 1,
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val dueMinutes: Int? = null,
+    val uncategorizedEndHour: Int = 0,
+    val notifications: List<TodoNotification> = emptyList(),
+    val notificationPreviews: Map<String, ZonedDateTime?> = emptyMap(),
+    val hasPastNotificationForCurrentOccurrence: Boolean = false,
+    val notificationPermissionRequested: Boolean = false,
+    val notificationSystemState: NotificationSystemState = NotificationSystemState(
+        canPostNotifications = false,
+        runtimePermissionRelevant = false,
+        runtimePermissionGranted = true,
+        exactAlarmRelevant = false,
+        canScheduleExactAlarms = true,
+    ),
     val isSaving: Boolean = false,
     val isDirty: Boolean = false,
     @StringRes val errorMessageRes: Int? = null,
 ) {
+    val effectiveEndHour: Int
+        get() = categories.firstOrNull { it.id == categoryId }?.endHour ?: uncategorizedEndHour
+
+    val notificationErrors: Set<NotificationValidationError>
+        get() = validateNotifications(notifications, dueMinutes, effectiveEndHour)
+
     val recurrenceRule: RecurrenceRule
         get() = RecurrenceRule(
             type = recurrenceType,
@@ -67,12 +100,14 @@ data class TodoEditorUiState(
     val canSave: Boolean
         get() = !isLoading && !isSaving && title.trim().isNotEmpty() && title.trim().length <= 100 &&
             description.length <= 1000 && recurrenceRule.isValid() &&
+            notificationErrors.isEmpty() &&
             (recurrenceType == RecurrenceType.ONCE || endDate == null || !endDate.isBefore(startDate))
 }
 
 sealed interface TodoEditorEffect {
     data class Saved(val isNew: Boolean) : TodoEditorEffect
     data object Deleted : TodoEditorEffect
+    data object ExplainNotificationPermission : TodoEditorEffect
 }
 
 @HiltViewModel
@@ -80,8 +115,9 @@ class TodoEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val todoRepository: TodoRepository,
     categoryRepository: CategoryRepository,
-    settingsRepository: SettingsRepository,
-    clock: Clock,
+    private val settingsRepository: SettingsRepository,
+    private val notificationScheduler: NotificationScheduler,
+    private val clock: Clock,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<TodoEditorRoute>()
     private val today = LocalDate.now(clock)
@@ -92,21 +128,32 @@ class TodoEditorViewModel @Inject constructor(
 
     private val effectsChannel = Channel<TodoEditorEffect>(Channel.BUFFERED)
     val effects: Flow<TodoEditorEffect> = effectsChannel.receiveAsFlow()
+    private var pendingSavedResult: Pair<Boolean, String>? = null
 
     init {
         viewModelScope.launch {
             categoryRepository.observeCategories().collect { categories ->
-                _uiState.update { state -> state.copy(categories = categories) }
+                _uiState.update { state -> refreshDerived(state.copy(categories = categories)) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.uncategorizedEndHour.collect { endHour ->
+                _uiState.update { state -> refreshDerived(state.copy(uncategorizedEndHour = endHour)) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.notificationPermissionRequested.collect { requested ->
+                _uiState.update { state -> state.copy(notificationPermissionRequested = requested) }
             }
         }
         viewModelScope.launch {
             settingsRepository.weekStart.collect { weekStart ->
-                _uiState.update { state -> state.copy(weekStart = weekStart) }
+                _uiState.update { state -> refreshDerived(state.copy(weekStart = weekStart)) }
             }
         }
         viewModelScope.launch {
             val todo = route.todoId?.let { todoRepository.getTodo(it) }
-            _uiState.update { state ->
+            _uiState.update { state -> refreshDerived(
                 if (route.todoId != null && todo == null) {
                     state.copy(isLoading = false, errorMessageRes = R.string.error_todo_not_found)
                 } else if (todo == null) {
@@ -126,10 +173,12 @@ class TodoEditorViewModel @Inject constructor(
                         weeklyCount = todo.recurrenceRule.requiredCount ?: 1,
                         monthlyCount = todo.recurrenceRule.requiredCount ?: 1,
                         dueMinutes = todo.dueMinutes,
+                        notifications = todo.notifications,
                     )
                 }
-            }
+            ) }
         }
+        refreshNotificationStatus()
     }
 
     fun setTitle(value: String) = edit { copy(title = value) }
@@ -171,6 +220,35 @@ class TodoEditorViewModel @Inject constructor(
     fun setMonthlyCount(value: Int) = edit { copy(monthlyCount = value) }
     fun setDueMinutes(value: Int?) = edit { copy(dueMinutes = value) }
 
+    fun upsertNotification(
+        id: String?,
+        relation: NotificationRelation,
+        amount: Int,
+        unit: NotificationUnit,
+    ) = edit {
+        val notification = TodoNotification(
+            id = id ?: UUID.randomUUID().toString(),
+            relation = relation,
+            amount = if (relation == NotificationRelation.AT) 0 else amount,
+            unit = if (relation == NotificationRelation.AT) NotificationUnit.MINUTE else unit,
+        )
+        copy(
+            notifications = if (id == null) {
+                notifications + notification
+            } else {
+                notifications.map { existing -> if (existing.id == id) notification else existing }
+            },
+        )
+    }
+
+    fun deleteNotification(id: String) = edit {
+        copy(notifications = notifications.filterNot { it.id == id })
+    }
+
+    fun refreshNotificationStatus() {
+        _uiState.update { it.copy(notificationSystemState = notificationScheduler.systemState()) }
+    }
+
     fun save() {
         val state = _uiState.value
         if (!state.canSave) return
@@ -185,8 +263,20 @@ class TodoEditorViewModel @Inject constructor(
                 endDate = state.endDate.takeUnless { state.recurrenceType == RecurrenceType.ONCE },
                 recurrenceRule = state.recurrenceRule,
                 dueMinutes = state.dueMinutes,
-            ).onSuccess {
-                effectsChannel.send(TodoEditorEffect.Saved(route.todoId == null))
+                notifications = state.notifications,
+            ).onSuccess { todoId ->
+                val systemState = notificationScheduler.systemState()
+                val shouldRequestPermission = state.notifications.isNotEmpty() &&
+                    systemState.runtimePermissionRelevant &&
+                    !systemState.runtimePermissionGranted &&
+                    !state.notificationPermissionRequested
+                if (shouldRequestPermission) {
+                    settingsRepository.setNotificationPermissionRequested(true)
+                    pendingSavedResult = (route.todoId == null) to todoId
+                    effectsChannel.send(TodoEditorEffect.ExplainNotificationPermission)
+                } else {
+                    effectsChannel.send(TodoEditorEffect.Saved(route.todoId == null))
+                }
             }.onFailure { throwable ->
                 _uiState.update {
                     it.copy(
@@ -195,6 +285,16 @@ class TodoEditorViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    fun notificationPermissionRequestFinished() {
+        val (isNew, todoId) = pendingSavedResult ?: return
+        pendingSavedResult = null
+        refreshNotificationStatus()
+        viewModelScope.launch {
+            runCatching { notificationScheduler.reconcileTodo(todoId) }
+            effectsChannel.send(TodoEditorEffect.Saved(isNew))
         }
     }
 
@@ -216,8 +316,60 @@ class TodoEditorViewModel @Inject constructor(
     }
 
     private fun edit(transform: TodoEditorUiState.() -> TodoEditorUiState) {
-        _uiState.update {
-            state -> state.transform().copy(isDirty = true, errorMessageRes = null)
+        _uiState.update { state ->
+            refreshDerived(state.transform().copy(isDirty = true, errorMessageRes = null))
         }
+    }
+
+    private fun refreshDerived(state: TodoEditorUiState): TodoEditorUiState {
+        if (!state.recurrenceRule.isValid()) {
+            return state.copy(
+                notificationPreviews = emptyMap(),
+                hasPastNotificationForCurrentOccurrence = false,
+            )
+        }
+        val todo = Todo(
+            id = route.todoId ?: "draft",
+            title = state.title,
+            description = state.description,
+            categoryId = state.categoryId,
+            startDate = state.startDate,
+            endDate = state.endDate.takeUnless { state.recurrenceType == RecurrenceType.ONCE },
+            recurrenceRule = state.recurrenceRule,
+            dueMinutes = state.dueMinutes,
+            definitionRevision = 1,
+            archivedAt = null,
+            createdAt = 0,
+            notifications = state.notifications,
+        )
+        val now = ZonedDateTime.now(clock)
+        val previews = state.notifications.associate { notification ->
+            notification.id to nextNotificationCandidate(
+                todo = todo,
+                notification = notification,
+                endHour = state.effectiveEndHour,
+                now = now,
+                weekStart = state.weekStart,
+            )?.triggerAt
+        }
+        val firstOccurrence = todo.nextOccurrenceOnOrAfter(logicalDate(now, state.effectiveEndHour))
+        val hasPastCandidate = firstOccurrence != null && state.notifications.any { notification ->
+            val deadline = deadlineAt(
+                firstOccurrence,
+                state.effectiveEndHour,
+                state.dueMinutes,
+                now.zone,
+            )
+            !notificationTriggerAt(deadline, notification).isAfter(now)
+        }
+        return state.copy(
+            notifications = state.notifications.sortedWith(
+                compareBy<TodoNotification> { previews[it.id]?.toInstant() }
+                    .thenBy { it.relation.ordinal }
+                    .thenBy { it.normalizedMinutes },
+            ),
+            notificationPreviews = previews,
+            hasPastNotificationForCurrentOccurrence = hasPastCandidate,
+        )
     }
 }

@@ -6,6 +6,8 @@ import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.data.local.CategoryDao
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
+import com.mochisofts.mata.data.local.TodoNotificationDao
+import com.mochisofts.mata.data.local.TodoNotificationEntity
 import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
@@ -16,11 +18,17 @@ import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
+import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.NotificationRelation
+import com.mochisofts.mata.domain.model.NotificationUnit
+import com.mochisofts.mata.domain.model.NotificationValidationError
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
+import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import java.text.Normalizer
@@ -41,6 +49,7 @@ class RoomCategoryRepository @Inject constructor(
     private val database: MataDatabase,
     private val categoryDao: CategoryDao,
     private val clock: Clock,
+    private val notificationScheduler: NotificationScheduler,
 ) : CategoryRepository {
     override fun observeCategories(): Flow<List<Category>> =
         categoryDao.observeAll().map { entities -> entities.map(CategoryEntity::toDomain) }
@@ -80,6 +89,7 @@ class RoomCategoryRepository @Inject constructor(
                 ),
             )
         }
+        runCatching { notificationScheduler.reconcileAll() }
         categoryId
     }
 
@@ -87,6 +97,7 @@ class RoomCategoryRepository @Inject constructor(
         database.withTransaction {
             categoryDao.findById(id)?.let { categoryDao.delete(it) }
         }
+        runCatching { notificationScheduler.reconcileAll() }
     }
 
     private fun normalizeName(value: String): String =
@@ -99,7 +110,9 @@ class RoomTodoRepository @Inject constructor(
     private val todoDao: TodoDao,
     private val categoryDao: CategoryDao,
     private val executionDao: TodoExecutionDao,
+    private val notificationDao: TodoNotificationDao,
     private val settingsRepository: SettingsRepository,
+    private val notificationScheduler: NotificationScheduler,
     private val clock: Clock,
 ) : TodoRepository {
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> =
@@ -152,7 +165,11 @@ class RoomTodoRepository @Inject constructor(
     override fun observeTodos(): Flow<List<Todo>> =
         todoDao.observeActive().map { entities -> entities.map(TodoEntity::toDomain) }
 
-    override suspend fun getTodo(id: String): Todo? = todoDao.findById(id)?.toDomain()
+    override suspend fun getTodo(id: String): Todo? = todoDao.findById(id)?.let { entity ->
+        entity.toDomain(
+            notifications = notificationDao.findForTodo(id).map(TodoNotificationEntity::toDomain),
+        )
+    }
 
     override suspend fun saveTodo(
         id: String?,
@@ -163,6 +180,7 @@ class RoomTodoRepository @Inject constructor(
         endDate: LocalDate?,
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
+        notifications: List<TodoNotification>,
     ): Result<String> = runCatching {
         val trimmedTitle = title.trim()
         validate(trimmedTitle.isNotEmpty(), ValidationError.TODO_TITLE_REQUIRED)
@@ -179,6 +197,21 @@ class RoomTodoRepository @Inject constructor(
             val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
             val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), endHour)
             validate(!startDate.isBefore(currentLogicalDate), ValidationError.TODO_DATE_IN_PAST)
+        }
+
+        val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
+        when (validateNotifications(notifications, dueMinutes, endHour).firstOrNull()) {
+            NotificationValidationError.TOO_MANY ->
+                throw ValidationException(ValidationError.TODO_NOTIFICATION_TOO_MANY)
+            NotificationValidationError.INVALID_AMOUNT ->
+                throw ValidationException(ValidationError.TODO_NOTIFICATION_AMOUNT_INVALID)
+            NotificationValidationError.DUPLICATE ->
+                throw ValidationException(ValidationError.TODO_NOTIFICATION_DUPLICATE)
+            NotificationValidationError.AFTER_REQUIRES_DEADLINE ->
+                throw ValidationException(ValidationError.TODO_NOTIFICATION_AFTER_REQUIRES_DEADLINE)
+            NotificationValidationError.AFTER_DAY_END ->
+                throw ValidationException(ValidationError.TODO_NOTIFICATION_AFTER_DAY_END)
+            null -> Unit
         }
 
         val todoId = id ?: UUID.randomUUID().toString()
@@ -208,7 +241,25 @@ class RoomTodoRepository @Inject constructor(
                     archivedAt = existing?.archivedAt,
                 ),
             )
+            val existingNotifications = notificationDao.findForTodo(todoId).associateBy { it.id }
+            notificationDao.deleteForTodo(todoId)
+            notificationDao.upsertAll(
+                notifications.mapIndexed { index, notification ->
+                    val existingNotification = existingNotifications[notification.id]
+                    TodoNotificationEntity(
+                        id = notification.id,
+                        todoId = todoId,
+                        relation = notification.relation.code,
+                        amount = notification.amount,
+                        unit = notification.unit.code,
+                        sortOrder = index,
+                        createdAt = existingNotification?.createdAt ?: now,
+                        updatedAt = now,
+                    )
+                },
+            )
         }
+        runCatching { notificationScheduler.reconcileTodo(todoId) }
         todoId
     }
 
@@ -224,7 +275,11 @@ class RoomTodoRepository @Inject constructor(
                 throw ValidationException(ValidationError.TODO_NOT_FOUND)
             }
             if (completed) {
-                if (executionDao.find(todoId, logicalDate.toString()) != null) {
+                val existingExecution = executionDao.find(todoId, logicalDate.toString())
+                if (existingExecution?.let { TodoState.fromStoredValue(it.state) } == TodoState.COMPLETED) {
+                    return@withTransaction
+                }
+                if (existingExecution != null) {
                     throw ValidationException(ValidationError.TODO_ALREADY_ACTED)
                 }
                 val todo = todoEntity.toDomain()
@@ -249,10 +304,12 @@ class RoomTodoRepository @Inject constructor(
                 executionDao.delete(todoId, logicalDate.toString())
             }
         }
+        runCatching { notificationScheduler.reconcileTodo(todoId) }
     }
 
     override suspend fun deleteTodo(id: String): Result<Unit> = runCatching {
         database.withTransaction { todoDao.deleteById(id) }
+        runCatching { notificationScheduler.cancelTodo(id) }
     }
 
     private fun TodoOccurrence.effectiveDueMinutes(): Int {
@@ -271,7 +328,9 @@ private fun CategoryEntity.toDomain() = Category(
     sortOrder = sortOrder,
 )
 
-private fun TodoEntity.toDomain() = Todo(
+private fun TodoEntity.toDomain(
+    notifications: List<TodoNotification> = emptyList(),
+) = Todo(
     id = id,
     title = title,
     description = description,
@@ -287,6 +346,14 @@ private fun TodoEntity.toDomain() = Todo(
     definitionRevision = definitionRevision,
     archivedAt = archivedAt,
     createdAt = createdAt,
+    notifications = notifications,
+)
+
+private fun TodoNotificationEntity.toDomain() = TodoNotification(
+    id = id,
+    relation = NotificationRelation.fromStoredValue(relation),
+    amount = amount,
+    unit = NotificationUnit.fromStoredValue(unit),
 )
 
 private fun validate(condition: Boolean, error: ValidationError) {
