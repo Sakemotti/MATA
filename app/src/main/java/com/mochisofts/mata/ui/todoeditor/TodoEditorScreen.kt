@@ -40,9 +40,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.time.Instant
 import java.time.ZoneOffset
@@ -78,20 +80,36 @@ fun TodoEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isNew) "TODOを追加" else "TODOを編集") },
+                title = {
+                    Text(
+                        stringResource(
+                            if (state.isNew) {
+                                R.string.todo_editor_add_title
+                            } else {
+                                R.string.todo_editor_edit_title
+                            },
+                        ),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = ::requestBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "戻る")
+                        Icon(
+                            Icons.Outlined.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
                     if (!state.isNew) {
                         IconButton(onClick = { showDeleteDialog = true }, enabled = !state.isSaving) {
-                            Icon(Icons.Outlined.Delete, contentDescription = "TODOを削除")
+                            Icon(
+                                Icons.Outlined.Delete,
+                                contentDescription = stringResource(R.string.content_description_delete_todo),
+                            )
                         }
                     }
                     TextButton(onClick = viewModel::save, enabled = state.canSave && state.isDirty) {
-                        Text("保存")
+                        Text(stringResource(R.string.action_save))
                     }
                 },
             )
@@ -106,43 +124,79 @@ fun TodoEditorScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("基本情報", style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.todo_editor_section_basic_information),
+                style = MaterialTheme.typography.titleMedium,
+            )
             OutlinedTextField(
                 value = state.title,
                 onValueChange = viewModel::setTitle,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("タイトル（必須）") },
+                label = { Text(stringResource(R.string.todo_editor_title_label)) },
                 singleLine = true,
-                supportingText = { Text("${state.title.length} / 100") },
+                supportingText = {
+                    Text(stringResource(R.string.character_counter_format, state.title.length, 100))
+                },
                 isError = state.title.trim().isEmpty() || state.title.length > 100,
             )
             OutlinedTextField(
                 value = state.description,
                 onValueChange = viewModel::setDescription,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("説明") },
+                label = { Text(stringResource(R.string.todo_editor_description_label)) },
                 minLines = 3,
-                supportingText = { Text("${state.description.length} / 1000") },
+                supportingText = {
+                    Text(stringResource(R.string.character_counter_format, state.description.length, 1000))
+                },
                 isError = state.description.length > 1000,
             )
             CategorySelector(state, viewModel::setCategory)
 
-            Text("スケジュール", style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.todo_editor_section_schedule),
+                style = MaterialTheme.typography.titleMedium,
+            )
             OutlinedTextField(
-                value = state.startDate.format(DateTimeFormatter.ofPattern("yyyy年M月d日（E）", Locale.JAPANESE)),
+                value = state.startDate.format(
+                    DateTimeFormatter.ofPattern(
+                        stringResource(R.string.date_pattern_full),
+                        Locale.JAPANESE,
+                    ),
+                ),
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-                label = { Text(if (state.recurrenceType == RecurrenceType.ONCE) "実行日" else "開始日") },
+                label = {
+                    Text(
+                        stringResource(
+                            if (state.recurrenceType == RecurrenceType.ONCE) {
+                                R.string.todo_editor_execution_date_label
+                            } else {
+                                R.string.todo_editor_start_date_label
+                            },
+                        ),
+                    )
+                },
                 readOnly = true,
             )
             RecurrenceSelector(state.recurrenceType, viewModel::setRecurrence)
             DueTimeSelector(state.dueMinutes, viewModel::setDueMinutes)
 
-            Text("通知", style = MaterialTheme.typography.titleMedium)
-            Text("通知なし", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("通知設定は次の実装単位で追加します", style = MaterialTheme.typography.bodySmall)
+            Text(
+                stringResource(R.string.todo_editor_section_notification),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                stringResource(R.string.todo_editor_no_notification),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                stringResource(R.string.todo_editor_notification_placeholder),
+                style = MaterialTheme.typography.bodySmall,
+            )
 
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            state.errorMessageRes?.let {
+                Text(stringResource(it), color = MaterialTheme.colorScheme.error)
+            }
         }
     }
 
@@ -158,30 +212,46 @@ fun TodoEditorScreen(
                         viewModel.setStartDate(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
                     }
                     showDatePicker = false
-                }) { Text("決定") }
+                }) { Text(stringResource(R.string.action_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("キャンセル") } },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
         ) { DatePicker(pickerState) }
     }
 
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("変更を破棄しますか？") },
-            text = { Text("入力した内容は保存されません。") },
-            confirmButton = { TextButton(onClick = onBack) { Text("破棄") } },
-            dismissButton = { TextButton(onClick = { showDiscardDialog = false }) { Text("編集を続ける") } },
+            title = { Text(stringResource(R.string.dialog_discard_changes_title)) },
+            text = { Text(stringResource(R.string.dialog_discard_changes_message)) },
+            confirmButton = {
+                TextButton(onClick = onBack) { Text(stringResource(R.string.action_discard)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text(stringResource(R.string.action_continue_editing))
+                }
+            },
         )
     }
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("TODOを完全に削除しますか？") },
-            text = { Text("TODOとすべての履歴が削除され、元に戻せません。") },
+            title = { Text(stringResource(R.string.dialog_delete_todo_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_todo_message)) },
             confirmButton = {
-                TextButton(onClick = { showDeleteDialog = false; viewModel.delete() }) { Text("完全削除") }
+                TextButton(onClick = { showDeleteDialog = false; viewModel.delete() }) {
+                    Text(stringResource(R.string.action_delete_permanently))
+                }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("キャンセル") } },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
         )
     }
 }
@@ -190,18 +260,22 @@ fun TodoEditorScreen(
 @Composable
 private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedName = state.categories.firstOrNull { it.id == state.categoryId }?.name ?: "カテゴリ未設定"
+    val selectedName = state.categories.firstOrNull { it.id == state.categoryId }?.name
+        ?: stringResource(R.string.label_uncategorized)
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
             value = selectedName,
             onValueChange = {},
             readOnly = true,
-            label = { Text("カテゴリ") },
+            label = { Text(stringResource(R.string.label_category)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.fillMaxWidth().menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("カテゴリ未設定") }, onClick = { onSelect(null); expanded = false })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.label_uncategorized)) },
+                onClick = { onSelect(null); expanded = false },
+            )
             state.categories.forEach { category ->
                 DropdownMenuItem(text = { Text(category.name) }, onClick = { onSelect(category.id); expanded = false })
             }
@@ -215,16 +289,24 @@ private fun RecurrenceSelector(value: RecurrenceType, onSelect: (RecurrenceType)
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
-            value = if (value == RecurrenceType.ONCE) "繰り返しなし" else "毎日",
+            value = stringResource(
+                if (value == RecurrenceType.ONCE) R.string.label_no_recurrence else R.string.label_daily,
+            ),
             onValueChange = {},
             readOnly = true,
-            label = { Text("繰り返し") },
+            label = { Text(stringResource(R.string.todo_editor_recurrence_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.fillMaxWidth().menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("繰り返しなし") }, onClick = { onSelect(RecurrenceType.ONCE); expanded = false })
-            DropdownMenuItem(text = { Text("毎日") }, onClick = { onSelect(RecurrenceType.DAILY); expanded = false })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.label_no_recurrence)) },
+                onClick = { onSelect(RecurrenceType.ONCE); expanded = false },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.label_daily)) },
+                onClick = { onSelect(RecurrenceType.DAILY); expanded = false },
+            )
         }
     }
 }
@@ -234,9 +316,10 @@ private fun DueTimeSelector(value: Int?, onChange: (Int?) -> Unit) {
     val context = LocalContext.current
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Column(Modifier.weight(1f)) {
-            Text("期限時刻")
+            Text(stringResource(R.string.todo_editor_due_time_label))
             Text(
-                value?.let { "${it / 60}:${(it % 60).toString().padStart(2, '0')}" } ?: "設定なし",
+                value?.let { stringResource(R.string.time_format, it / 60, it % 60) }
+                    ?: stringResource(R.string.label_not_set),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -265,7 +348,7 @@ private fun DueTimeSelector(value: Int?, onChange: (Int?) -> Unit) {
                     value % 60,
                     true,
                 ).show()
-            }) { Text("変更") }
+            }) { Text(stringResource(R.string.action_change)) }
         }
     }
 }

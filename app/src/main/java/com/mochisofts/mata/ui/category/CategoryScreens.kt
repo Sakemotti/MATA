@@ -62,13 +62,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
-import com.mochisofts.mata.core.designsystem.CategoryColorNames
+import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
@@ -99,10 +101,13 @@ fun CategoryListScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("カテゴリ管理") },
+                    title = { Text(stringResource(R.string.category_management_title)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Outlined.Menu, contentDescription = "メニューを開く")
+                            Icon(
+                                Icons.Outlined.Menu,
+                                contentDescription = stringResource(R.string.content_description_open_menu),
+                            )
                         }
                     },
                 )
@@ -111,7 +116,7 @@ fun CategoryListScreen(
                 ExtendedFloatingActionButton(
                     onClick = onAdd,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text("カテゴリを追加") },
+                    text = { Text(stringResource(R.string.action_add_category)) },
                 )
             },
         ) { padding ->
@@ -119,11 +124,11 @@ fun CategoryListScreen(
                 item {
                     ListItem(
                         leadingContent = { Icon(Icons.Outlined.Category, contentDescription = null) },
-                        headlineContent = { Text("カテゴリ未設定") },
+                        headlineContent = { Text(stringResource(R.string.label_uncategorized)) },
                         supportingContent = {
                             Column {
-                                Text("一日の終了 0:00")
-                                Text("設定画面の共通値を使用")
+                                Text(stringResource(R.string.category_default_end_time))
+                                Text(stringResource(R.string.category_use_common_setting))
                             }
                         },
                     )
@@ -136,8 +141,10 @@ fun CategoryListScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text("カテゴリを追加してTODOを整理しましょう")
-                            TextButton(onClick = onAdd) { Text("カテゴリを追加") }
+                            Text(stringResource(R.string.category_empty_message))
+                            TextButton(onClick = onAdd) {
+                                Text(stringResource(R.string.action_add_category))
+                            }
                         }
                     }
                 } else {
@@ -172,7 +179,9 @@ private fun CategoryListRow(category: Category, onClick: () -> Unit) {
             }
         },
         headlineContent = { Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text("一日の終了 ${category.endHour}:00") },
+        supportingContent = {
+            Text(stringResource(R.string.category_end_time_format, category.endHour))
+        },
         modifier = Modifier.clickable(onClick = onClick),
     )
 }
@@ -205,22 +214,38 @@ fun CategoryEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isNew) "カテゴリを追加" else "カテゴリを編集") },
+                title = {
+                    Text(
+                        stringResource(
+                            if (state.isNew) {
+                                R.string.category_editor_add_title
+                            } else {
+                                R.string.category_editor_edit_title
+                            },
+                        ),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = ::requestBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "戻る")
+                        Icon(
+                            Icons.Outlined.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
                     if (!state.isNew) {
                         IconButton(onClick = { showDeleteDialog = true }, enabled = !state.isSaving) {
-                            Icon(Icons.Outlined.Delete, contentDescription = "カテゴリを削除")
+                            Icon(
+                                Icons.Outlined.Delete,
+                                contentDescription = stringResource(R.string.content_description_delete_category),
+                            )
                         }
                     }
                     TextButton(
                         onClick = viewModel::save,
                         enabled = state.canSave && state.isDirty,
-                    ) { Text("保存") }
+                    ) { Text(stringResource(R.string.action_save)) }
                 },
             )
         },
@@ -243,13 +268,15 @@ fun CategoryEditorScreen(
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = viewModel::setName,
-                    label = { Text("カテゴリ名（必須）") },
-                    supportingText = { Text("${state.name.length} / 30") },
+                    label = { Text(stringResource(R.string.category_name_required_label)) },
+                    supportingText = {
+                        Text(stringResource(R.string.character_counter_format, state.name.length, 30))
+                    },
                     isError = state.name.length > 30,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Text("色", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.category_color_label), style = MaterialTheme.typography.titleMedium)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     CategoryLightColors.chunked(4).forEach { rowColors ->
                         Row(
@@ -260,7 +287,7 @@ fun CategoryEditorScreen(
                                 val index = CategoryLightColors.indexOf(color)
                                 ColorOption(
                                     color = color,
-                                    label = CategoryColorNames[index],
+                                    label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { viewModel.setColor(index) },
                                 )
@@ -268,9 +295,10 @@ fun CategoryEditorScreen(
                         }
                     }
                 }
-                Text("アイコン", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.category_icon_label), style = MaterialTheme.typography.titleMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(CategoryIconOptions, key = { it.id }) { option ->
+                        val label = stringResource(option.labelRes)
                         OutlinedCard(
                             onClick = { viewModel.setIcon(option.id) },
                             border = if (state.iconName == option.id) {
@@ -283,8 +311,8 @@ fun CategoryEditorScreen(
                                 Modifier.padding(12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Icon(option.imageVector, contentDescription = option.label)
-                                Text(option.label, style = MaterialTheme.typography.labelSmall)
+                                Icon(option.imageVector, contentDescription = label)
+                                Text(label, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
@@ -292,14 +320,20 @@ fun CategoryEditorScreen(
                 EndHourSelector(state.endHour, viewModel::setEndHour)
                 Text(
                     if (state.endHour == 0) {
-                        "カレンダー日と同じ0:00から23:59までを1日として扱います"
+                        stringResource(R.string.category_day_boundary_midnight)
                     } else {
-                        "${state.endHour}:00の場合、翌日の${state.endHour - 1}:59までを前日分として扱います"
+                        stringResource(
+                            R.string.category_day_boundary_format,
+                            state.endHour,
+                            state.endHour - 1,
+                        )
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                state.errorMessageRes?.let {
+                    Text(stringResource(it), color = MaterialTheme.colorScheme.error)
+                }
                 if (state.isSaving) CircularProgressIndicator()
             }
         }
@@ -308,24 +342,32 @@ fun CategoryEditorScreen(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("変更を破棄しますか？") },
-            text = { Text("入力した内容は保存されません。") },
-            confirmButton = { TextButton(onClick = onBack) { Text("破棄") } },
+            title = { Text(stringResource(R.string.dialog_discard_changes_title)) },
+            text = { Text(stringResource(R.string.dialog_discard_changes_message)) },
+            confirmButton = {
+                TextButton(onClick = onBack) { Text(stringResource(R.string.action_discard)) }
+            },
             dismissButton = {
-                TextButton(onClick = { showDiscardDialog = false }) { Text("編集を続ける") }
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text(stringResource(R.string.action_continue_editing))
+                }
             },
         )
     }
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("カテゴリを削除しますか？") },
-            text = { Text("所属するTODOはカテゴリ未設定へ移動します。この操作は元に戻せません。") },
+            title = { Text(stringResource(R.string.dialog_delete_category_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_category_message)) },
             confirmButton = {
-                TextButton(onClick = { showDeleteDialog = false; viewModel.delete() }) { Text("削除") }
+                TextButton(onClick = { showDeleteDialog = false; viewModel.delete() }) {
+                    Text(stringResource(R.string.action_delete))
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("キャンセル") }
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             },
         )
     }
@@ -342,8 +384,12 @@ private fun CategoryPreview(state: CategoryEditorUiState) {
                     tint = CategoryLightColors[state.colorIndex],
                 )
             },
-            headlineContent = { Text(state.name.ifBlank { "カテゴリ名" }) },
-            supportingContent = { Text("一日の終了 ${state.endHour}:00") },
+            headlineContent = {
+                Text(state.name.ifBlank { stringResource(R.string.category_name_preview) })
+            },
+            supportingContent = {
+                Text(stringResource(R.string.category_end_time_format, state.endHour))
+            },
         )
     }
 }
@@ -364,7 +410,13 @@ private fun ColorOption(
                 Modifier.size(32.dp).clip(CircleShape).background(color),
                 contentAlignment = Alignment.Center,
             ) {
-                if (selected) Icon(Icons.Outlined.Check, contentDescription = "$label、選択中", tint = Color.White)
+                if (selected) {
+                    Icon(
+                        Icons.Outlined.Check,
+                        contentDescription = stringResource(R.string.content_description_selected_option, label),
+                        tint = Color.White,
+                    )
+                }
             }
         }
     }
@@ -376,10 +428,10 @@ private fun EndHourSelector(value: Int, onSelect: (Int) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
-            value = "$value:00",
+            value = stringResource(R.string.hour_format, value),
             onValueChange = {},
             readOnly = true,
-            label = { Text("一日の終了時刻") },
+            label = { Text(stringResource(R.string.category_end_hour_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -391,7 +443,7 @@ private fun EndHourSelector(value: Int, onSelect: (Int) -> Unit) {
         ) {
             (0..23).forEach { hour ->
                 DropdownMenuItem(
-                    text = { Text("$hour:00") },
+                    text = { Text(stringResource(R.string.hour_format, hour)) },
                     onClick = { onSelect(hour); expanded = false },
                 )
             }

@@ -1,3 +1,151 @@
 <resources>
     <string name="app_name">MATA</string>
+
+    <!-- Common actions and labels -->
+    <string name="action_back">戻る</string>
+    <string name="action_save">保存</string>
+    <string name="action_delete">削除</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="action_confirm">決定</string>
+    <string name="action_close">閉じる</string>
+    <string name="action_change">変更</string>
+    <string name="action_discard">破棄</string>
+    <string name="action_continue_editing">編集を続ける</string>
+    <string name="action_undo">元に戻す</string>
+    <string name="content_description_open_menu">メニューを開く</string>
+    <string name="label_uncategorized">カテゴリ未設定</string>
+    <string name="label_category">カテゴリ</string>
+    <string name="label_completed">完了</string>
+    <string name="label_pending">未完了</string>
+    <string name="label_daily">毎日</string>
+    <string name="label_no_recurrence">繰り返しなし</string>
+    <string name="label_not_set">設定なし</string>
+    <string name="character_counter_format">%1$d / %2$d</string>
+    <string name="hour_format">%1$d:00</string>
+    <string name="time_format">%1$d:%2$02d</string>
+    <string name="date_pattern_full">yyyy年M月d日（E）</string>
+    <string name="date_pattern_short">M月d日（E）</string>
+
+    <!-- Navigation -->
+    <string name="nav_todo_list">TODO一覧</string>
+    <string name="nav_calendar_history">カレンダー履歴</string>
+    <string name="nav_category_management">カテゴリ管理</string>
+    <string name="nav_archived_todos">アーカイブ済みTODO</string>
+    <string name="nav_settings">設定</string>
+    <string name="placeholder_screen_message">この画面は次の実装単位で追加します</string>
+
+    <!-- TODO list -->
+    <string name="todo_list_title">TODO</string>
+    <string name="action_add_todo">TODOを追加</string>
+    <string name="content_description_show_completed_todos">完了済みTODOを表示</string>
+    <string name="content_description_hide_completed_todos">完了済みTODOを非表示</string>
+    <string name="todo_list_tab_date">日付</string>
+    <string name="todo_list_tab_category">カテゴリ</string>
+    <string name="message_todo_completed">TODOを完了しました</string>
+    <string name="todo_description_empty">説明なし</string>
+    <string name="content_description_previous_day">前日</string>
+    <string name="content_description_next_day">翌日</string>
+    <string name="label_today">今日</string>
+    <string name="action_return_to_today">今日へ戻る</string>
+    <string name="message_loading">読み込み中…</string>
+    <string name="empty_today_todos">今日のTODOはありません</string>
+    <string name="empty_selected_date_todos">この日のTODOはありません</string>
+    <string name="empty_category_todos">このカテゴリにTODOはありません</string>
+    <string name="todo_due_time_format">期限 %1$d:%2$02d</string>
+
+    <!-- TODO editor -->
+    <string name="todo_editor_add_title">TODOを追加</string>
+    <string name="todo_editor_edit_title">TODOを編集</string>
+    <string name="content_description_delete_todo">TODOを削除</string>
+    <string name="todo_editor_section_basic_information">基本情報</string>
+    <string name="todo_editor_title_label">タイトル（必須）</string>
+    <string name="todo_editor_description_label">説明</string>
+    <string name="todo_editor_section_schedule">スケジュール</string>
+    <string name="todo_editor_execution_date_label">実行日</string>
+    <string name="todo_editor_start_date_label">開始日</string>
+    <string name="todo_editor_recurrence_label">繰り返し</string>
+    <string name="todo_editor_due_time_label">期限時刻</string>
+    <string name="todo_editor_section_notification">通知</string>
+    <string name="todo_editor_no_notification">通知なし</string>
+    <string name="todo_editor_notification_placeholder">通知設定は次の実装単位で追加します</string>
+    <string name="dialog_delete_todo_title">TODOを完全に削除しますか？</string>
+    <string name="dialog_delete_todo_message">TODOとすべての履歴が削除され、元に戻せません。</string>
+    <string name="action_delete_permanently">完全削除</string>
+
+    <!-- Category management and editor -->
+    <string name="category_management_title">カテゴリ管理</string>
+    <string name="action_add_category">カテゴリを追加</string>
+    <string name="category_default_end_time">一日の終了 0:00</string>
+    <string name="category_use_common_setting">設定画面の共通値を使用</string>
+    <string name="category_empty_message">カテゴリを追加してTODOを整理しましょう</string>
+    <string name="category_end_time_format">一日の終了 %1$d:00</string>
+    <string name="category_editor_add_title">カテゴリを追加</string>
+    <string name="category_editor_edit_title">カテゴリを編集</string>
+    <string name="content_description_delete_category">カテゴリを削除</string>
+    <string name="category_name_required_label">カテゴリ名（必須）</string>
+    <string name="category_color_label">色</string>
+    <string name="category_icon_label">アイコン</string>
+    <string name="category_name_preview">カテゴリ名</string>
+    <string name="category_end_hour_label">一日の終了時刻</string>
+    <string name="category_day_boundary_midnight">カレンダー日と同じ0:00から23:59までを1日として扱います</string>
+    <string name="category_day_boundary_format">%1$d:00の場合、翌日の%2$d:59までを前日分として扱います</string>
+    <string name="content_description_selected_option">%1$s、選択中</string>
+    <string name="dialog_discard_changes_title">変更を破棄しますか？</string>
+    <string name="dialog_discard_changes_message">入力した内容は保存されません。</string>
+    <string name="dialog_delete_category_title">カテゴリを削除しますか？</string>
+    <string name="dialog_delete_category_message">所属するTODOはカテゴリ未設定へ移動します。この操作は元に戻せません。</string>
+
+    <!-- Category icon names -->
+    <string name="category_icon_category">カテゴリ</string>
+    <string name="category_icon_home">家</string>
+    <string name="category_icon_shopping">買い物</string>
+    <string name="category_icon_restaurant">食事</string>
+    <string name="category_icon_health">健康</string>
+    <string name="category_icon_fitness">筋力トレーニング</string>
+    <string name="category_icon_running">ランニング</string>
+    <string name="category_icon_school">学校</string>
+    <string name="category_icon_reading">読書</string>
+    <string name="category_icon_work">仕事</string>
+    <string name="category_icon_game">ゲーム</string>
+    <string name="category_icon_event">イベント</string>
+    <string name="category_icon_pets">ペット</string>
+
+    <!-- Category color names -->
+    <string name="category_color_red">赤</string>
+    <string name="category_color_pink">ピンク</string>
+    <string name="category_color_purple">紫</string>
+    <string name="category_color_indigo">藍</string>
+    <string name="category_color_blue">青</string>
+    <string name="category_color_light_blue">水色</string>
+    <string name="category_color_cyan">シアン</string>
+    <string name="category_color_teal">青緑</string>
+    <string name="category_color_green">緑</string>
+    <string name="category_color_light_green">黄緑</string>
+    <string name="category_color_lime">ライム</string>
+    <string name="category_color_yellow">黄</string>
+    <string name="category_color_orange">オレンジ</string>
+    <string name="category_color_deep_orange">濃いオレンジ</string>
+    <string name="category_color_brown">茶</string>
+    <string name="category_color_gray">グレー</string>
+
+    <!-- Validation and operation errors -->
+    <string name="error_category_name_required">カテゴリ名を入力してください</string>
+    <string name="error_category_name_too_long">カテゴリ名は30文字以内で入力してください</string>
+    <string name="error_category_color_invalid">色を選択してください</string>
+    <string name="error_category_end_hour_invalid">一日の終了時刻が不正です</string>
+    <string name="error_category_name_duplicate">同じ名前のカテゴリがあります</string>
+    <string name="error_category_not_found">カテゴリが見つかりません</string>
+    <string name="error_category_save_failed">カテゴリを保存できませんでした</string>
+    <string name="error_category_delete_failed">カテゴリを削除できませんでした</string>
+    <string name="error_todo_title_required">タイトルを入力してください</string>
+    <string name="error_todo_title_too_long">タイトルは100文字以内で入力してください</string>
+    <string name="error_todo_description_too_long">説明は1000文字以内で入力してください</string>
+    <string name="error_todo_due_time_invalid">期限時刻が不正です</string>
+    <string name="error_todo_category_not_found">選択したカテゴリが見つかりません</string>
+    <string name="error_todo_date_in_past">過去の日付にはTODOを登録できません</string>
+    <string name="error_todo_not_found">TODOが見つかりません</string>
+    <string name="error_todo_save_failed">TODOを保存できませんでした</string>
+    <string name="error_todo_delete_failed">TODOを削除できませんでした</string>
+    <string name="error_todo_complete_failed">完了にできませんでした</string>
+    <string name="error_todo_undo_completion_failed">完了を取り消せませんでした</string>
 </resources>

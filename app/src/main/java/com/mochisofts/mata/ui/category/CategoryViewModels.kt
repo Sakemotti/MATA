@@ -1,12 +1,15 @@
 package com.mochisofts.mata.ui.category
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -40,7 +43,7 @@ data class CategoryEditorUiState(
     val endHour: Int = 0,
     val isDirty: Boolean = false,
     val isSaving: Boolean = false,
-    val error: String? = null,
+    @StringRes val errorMessageRes: Int? = null,
 ) {
     val canSave: Boolean
         get() = !isLoading && !isSaving && name.trim().isNotEmpty() && name.length <= 30
@@ -70,7 +73,7 @@ class CategoryEditorViewModel @Inject constructor(
                 when {
                     route.categoryId != null && category == null -> state.copy(
                         isLoading = false,
-                        error = "カテゴリが見つかりません",
+                        errorMessageRes = R.string.error_category_not_found,
                     )
                     category == null -> state.copy(isLoading = false)
                     else -> state.copy(
@@ -93,7 +96,7 @@ class CategoryEditorViewModel @Inject constructor(
     fun save() {
         val state = _uiState.value
         if (!state.canSave || !state.isDirty) return
-        _uiState.update { it.copy(isSaving = true, error = null) }
+        _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             repository.saveCategory(
                 id = route.categoryId,
@@ -105,7 +108,10 @@ class CategoryEditorViewModel @Inject constructor(
                 effectsChannel.send(CategoryEditorEffect.Saved(id, route.categoryId == null))
             }.onFailure { throwable ->
                 _uiState.update {
-                    it.copy(isSaving = false, error = throwable.message ?: "カテゴリを保存できませんでした")
+                    it.copy(
+                        isSaving = false,
+                        errorMessageRes = throwable.toUserMessageRes(R.string.error_category_save_failed),
+                    )
                 }
             }
         }
@@ -113,19 +119,24 @@ class CategoryEditorViewModel @Inject constructor(
 
     fun delete() {
         val categoryId = route.categoryId ?: return
-        _uiState.update { it.copy(isSaving = true, error = null) }
+        _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             repository.deleteCategory(categoryId)
                 .onSuccess { effectsChannel.send(CategoryEditorEffect.Deleted) }
                 .onFailure {
                     _uiState.update { state ->
-                        state.copy(isSaving = false, error = "カテゴリを削除できませんでした")
+                        state.copy(
+                            isSaving = false,
+                            errorMessageRes = R.string.error_category_delete_failed,
+                        )
                     }
                 }
         }
     }
 
     private fun edit(transform: CategoryEditorUiState.() -> CategoryEditorUiState) {
-        _uiState.update { state -> state.transform().copy(isDirty = true, error = null) }
+        _uiState.update {
+            state -> state.transform().copy(isDirty = true, errorMessageRes = null)
+        }
     }
 }

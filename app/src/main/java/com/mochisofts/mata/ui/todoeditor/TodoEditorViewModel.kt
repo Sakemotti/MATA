@@ -1,14 +1,17 @@
 package com.mochisofts.mata.ui.todoeditor
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -34,7 +37,7 @@ data class TodoEditorUiState(
     val dueMinutes: Int? = null,
     val isSaving: Boolean = false,
     val isDirty: Boolean = false,
-    val error: String? = null,
+    @StringRes val errorMessageRes: Int? = null,
 ) {
     val canSave: Boolean
         get() = !isLoading && !isSaving && title.trim().isNotEmpty() && title.trim().length <= 100 &&
@@ -72,7 +75,7 @@ class TodoEditorViewModel @Inject constructor(
             val todo = route.todoId?.let { todoRepository.getTodo(it) }
             _uiState.update { state ->
                 if (route.todoId != null && todo == null) {
-                    state.copy(isLoading = false, error = "TODOが見つかりません")
+                    state.copy(isLoading = false, errorMessageRes = R.string.error_todo_not_found)
                 } else if (todo == null) {
                     state.copy(isLoading = false)
                 } else {
@@ -100,7 +103,7 @@ class TodoEditorViewModel @Inject constructor(
     fun save() {
         val state = _uiState.value
         if (!state.canSave) return
-        _uiState.update { it.copy(isSaving = true, error = null) }
+        _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             todoRepository.saveTodo(
                 id = route.todoId,
@@ -114,7 +117,10 @@ class TodoEditorViewModel @Inject constructor(
                 effectsChannel.send(TodoEditorEffect.Saved(route.todoId == null))
             }.onFailure { throwable ->
                 _uiState.update {
-                    it.copy(isSaving = false, error = throwable.message ?: "TODOを保存できませんでした")
+                    it.copy(
+                        isSaving = false,
+                        errorMessageRes = throwable.toUserMessageRes(R.string.error_todo_save_failed),
+                    )
                 }
             }
         }
@@ -122,20 +128,24 @@ class TodoEditorViewModel @Inject constructor(
 
     fun delete() {
         val todoId = route.todoId ?: return
-        _uiState.update { it.copy(isSaving = true, error = null) }
+        _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             todoRepository.deleteTodo(todoId)
                 .onSuccess { effectsChannel.send(TodoEditorEffect.Deleted) }
                 .onFailure {
                     _uiState.update { state ->
-                        state.copy(isSaving = false, error = "TODOを削除できませんでした")
+                        state.copy(
+                            isSaving = false,
+                            errorMessageRes = R.string.error_todo_delete_failed,
+                        )
                     }
                 }
         }
     }
 
     private fun edit(transform: TodoEditorUiState.() -> TodoEditorUiState) {
-        _uiState.update { state -> state.transform().copy(isDirty = true, error = null) }
+        _uiState.update {
+            state -> state.transform().copy(isDirty = true, errorMessageRes = null)
+        }
     }
 }
-

@@ -14,34 +14,50 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Work
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.mochisofts.mata.R
 
 data class CategoryIconOption(
     val id: String,
-    val label: String,
+    @StringRes val labelRes: Int,
     val imageVector: ImageVector,
 )
 
 val CategoryIconOptions = listOf(
-    CategoryIconOption("Category", "カテゴリ", Icons.Outlined.Category),
-    CategoryIconOption("Home", "家", Icons.Outlined.Home),
-    CategoryIconOption("ShoppingCart", "買い物", Icons.Outlined.ShoppingCart),
-    CategoryIconOption("Restaurant", "食事", Icons.Outlined.Restaurant),
-    CategoryIconOption("Favorite", "健康", Icons.Outlined.Favorite),
-    CategoryIconOption("FitnessCenter", "筋力トレーニング", Icons.Outlined.FitnessCenter),
-    CategoryIconOption("DirectionsRun", "ランニング", Icons.Outlined.DirectionsRun),
-    CategoryIconOption("School", "学校", Icons.Outlined.School),
-    CategoryIconOption("MenuBook", "読書", Icons.Outlined.MenuBook),
-    CategoryIconOption("Work", "仕事", Icons.Outlined.Work),
-    CategoryIconOption("SportsEsports", "ゲーム", Icons.Outlined.SportsEsports),
-    CategoryIconOption("Event", "イベント", Icons.Outlined.Event),
-    CategoryIconOption("Pets", "ペット", Icons.Outlined.Pets),
+    CategoryIconOption("Category", R.string.category_icon_category, Icons.Outlined.Category),
+    CategoryIconOption("Home", R.string.category_icon_home, Icons.Outlined.Home),
+    CategoryIconOption("ShoppingCart", R.string.category_icon_shopping, Icons.Outlined.ShoppingCart),
+    CategoryIconOption("Restaurant", R.string.category_icon_restaurant, Icons.Outlined.Restaurant),
+    CategoryIconOption("Favorite", R.string.category_icon_health, Icons.Outlined.Favorite),
+    CategoryIconOption("FitnessCenter", R.string.category_icon_fitness, Icons.Outlined.FitnessCenter),
+    CategoryIconOption("DirectionsRun", R.string.category_icon_running, Icons.Outlined.DirectionsRun),
+    CategoryIconOption("School", R.string.category_icon_school, Icons.Outlined.School),
+    CategoryIconOption("MenuBook", R.string.category_icon_reading, Icons.Outlined.MenuBook),
+    CategoryIconOption("Work", R.string.category_icon_work, Icons.Outlined.Work),
+    CategoryIconOption("SportsEsports", R.string.category_icon_game, Icons.Outlined.SportsEsports),
+    CategoryIconOption("Event", R.string.category_icon_event, Icons.Outlined.Event),
+    CategoryIconOption("Pets", R.string.category_icon_pets, Icons.Outlined.Pets),
 )
 
 fun categoryIcon(id: String): ImageVector =
     CategoryIconOptions.firstOrNull { it.id == id }?.imageVector ?: Icons.Outlined.Category
 
-val CategoryColorNames = listOf(
-    "赤", "ピンク", "紫", "藍", "青", "水色", "シアン", "青緑",
-    "緑", "黄緑", "ライム", "黄", "オレンジ", "濃いオレンジ", "茶", "グレー",
+val CategoryColorNameResIds = listOf(
+    R.string.category_color_red,
+    R.string.category_color_pink,
+    R.string.category_color_purple,
+    R.string.category_color_indigo,
+    R.string.category_color_blue,
+    R.string.category_color_light_blue,
+    R.string.category_color_cyan,
+    R.string.category_color_teal,
+    R.string.category_color_green,
+    R.string.category_color_light_green,
+    R.string.category_color_lime,
+    R.string.category_color_yellow,
+    R.string.category_color_orange,
+    R.string.category_color_deep_orange,
+    R.string.category_color_brown,
+    R.string.category_color_gray,
 )

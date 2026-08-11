@@ -1,7 +1,9 @@
 package com.mochisofts.mata.ui.todolist
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
@@ -9,6 +11,7 @@ import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -47,7 +50,7 @@ data class TodoListUiState(
 )
 
 sealed interface TodoListEffect {
-    data class Message(val text: String) : TodoListEffect
+    data class Message(@StringRes val messageRes: Int) : TodoListEffect
     data class Completed(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
 }
 
@@ -143,14 +146,26 @@ class TodoListViewModel @Inject constructor(
                         TodoListEffect.Completed(occurrence.todo.id, occurrence.logicalDate),
                     )
                 }
-                .onFailure { effectsChannel.send(TodoListEffect.Message("完了にできませんでした")) }
+                .onFailure { throwable ->
+                    effectsChannel.send(
+                        TodoListEffect.Message(
+                            throwable.toUserMessageRes(R.string.error_todo_complete_failed),
+                        ),
+                    )
+                }
         }
     }
 
     fun undoCompletion(todoId: String, logicalDate: LocalDate) {
         viewModelScope.launch {
             todoRepository.setCompleted(todoId, logicalDate, false)
-                .onFailure { effectsChannel.send(TodoListEffect.Message("完了を取り消せませんでした")) }
+                .onFailure { throwable ->
+                    effectsChannel.send(
+                        TodoListEffect.Message(
+                            throwable.toUserMessageRes(R.string.error_todo_undo_completion_failed),
+                        ),
+                    )
+                }
         }
     }
 
@@ -165,4 +180,3 @@ class TodoListViewModel @Inject constructor(
 
 private fun String.toTodoListMode(): TodoListMode =
     runCatching { TodoListMode.valueOf(this) }.getOrDefault(TodoListMode.DATE)
-

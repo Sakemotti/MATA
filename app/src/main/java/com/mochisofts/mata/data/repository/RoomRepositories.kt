@@ -1,6 +1,7 @@
 package com.mochisofts.mata.data.repository
 
 import androidx.room.withTransaction
+import com.mochisofts.mata.core.common.ValidationError
 import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.data.local.CategoryDao
 import com.mochisofts.mata.data.local.CategoryEntity
@@ -49,16 +50,16 @@ class RoomCategoryRepository @Inject constructor(
         endHour: Int,
     ): Result<String> = runCatching {
         val trimmedName = name.trim()
-        require(trimmedName.isNotEmpty()) { "カテゴリ名を入力してください" }
-        require(trimmedName.length <= 30) { "カテゴリ名は30文字以内で入力してください" }
-        require(colorIndex in 0..15) { "色を選択してください" }
-        require(endHour in 0..23) { "一日の終了時刻が不正です" }
+        validate(trimmedName.isNotEmpty(), ValidationError.CATEGORY_NAME_REQUIRED)
+        validate(trimmedName.length <= 30, ValidationError.CATEGORY_NAME_TOO_LONG)
+        validate(colorIndex in 0..15, ValidationError.CATEGORY_COLOR_INVALID)
+        validate(endHour in 0..23, ValidationError.CATEGORY_END_HOUR_INVALID)
 
         val categoryId = id ?: UUID.randomUUID().toString()
         val normalizedName = normalizeName(trimmedName)
         database.withTransaction {
             if (categoryDao.findDuplicate(normalizedName, categoryId) != null) {
-                throw ValidationException("同じ名前のカテゴリがあります")
+                throw ValidationException(ValidationError.CATEGORY_NAME_DUPLICATE)
             }
             val existing = id?.let { categoryDao.findById(it) }
             categoryDao.upsert(
@@ -147,17 +148,17 @@ class RoomTodoRepository @Inject constructor(
         dueMinutes: Int?,
     ): Result<String> = runCatching {
         val trimmedTitle = title.trim()
-        require(trimmedTitle.isNotEmpty()) { "タイトルを入力してください" }
-        require(trimmedTitle.length <= 100) { "タイトルは100文字以内で入力してください" }
-        require(description.length <= 1000) { "説明は1000文字以内で入力してください" }
-        require(dueMinutes == null || dueMinutes in 0..1439) { "期限時刻が不正です" }
+        validate(trimmedTitle.isNotEmpty(), ValidationError.TODO_TITLE_REQUIRED)
+        validate(trimmedTitle.length <= 100, ValidationError.TODO_TITLE_TOO_LONG)
+        validate(description.length <= 1000, ValidationError.TODO_DESCRIPTION_TOO_LONG)
+        validate(dueMinutes == null || dueMinutes in 0..1439, ValidationError.TODO_DUE_TIME_INVALID)
         val category = categoryId?.let { categoryDao.findById(it) }
         if (categoryId != null && category == null) {
-            throw ValidationException("選択したカテゴリが見つかりません")
+            throw ValidationException(ValidationError.TODO_CATEGORY_NOT_FOUND)
         }
         if (id == null) {
             val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), category?.endHour ?: 0)
-            require(!startDate.isBefore(currentLogicalDate)) { "過去の日付にはTODOを登録できません" }
+            validate(!startDate.isBefore(currentLogicalDate), ValidationError.TODO_DATE_IN_PAST)
         }
 
         val todoId = id ?: UUID.randomUUID().toString()
@@ -188,7 +189,9 @@ class RoomTodoRepository @Inject constructor(
         completed: Boolean,
     ): Result<Unit> = runCatching {
         database.withTransaction {
-            checkNotNull(todoDao.findById(todoId)) { "TODOが見つかりません" }
+            if (todoDao.findById(todoId) == null) {
+                throw ValidationException(ValidationError.TODO_NOT_FOUND)
+            }
             if (completed) {
                 executionDao.upsert(
                     TodoExecutionEntity(
@@ -234,3 +237,7 @@ private fun TodoEntity.toDomain() = Todo(
     dueMinutes = dueMinutes,
     createdAt = createdAt,
 )
+
+private fun validate(condition: Boolean, error: ValidationError) {
+    if (!condition) throw ValidationException(error)
+}

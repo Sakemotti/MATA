@@ -57,14 +57,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
 import com.mochisofts.mata.domain.model.TodoOccurrence
+import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoState
 import java.time.Instant
 import java.time.LocalDate
@@ -86,17 +90,22 @@ fun TodoListScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    val completedMessage = stringResource(R.string.message_todo_completed)
+    val undoLabel = stringResource(R.string.action_undo)
     var showDatePicker by remember { mutableStateOf(false) }
     var readOnlyOccurrence by remember { mutableStateOf<TodoOccurrence?>(null) }
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(viewModel, resources, completedMessage, undoLabel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is TodoListEffect.Message -> snackbarHostState.showSnackbar(effect.text)
+                is TodoListEffect.Message -> {
+                    snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
+                }
                 is TodoListEffect.Completed -> {
                     val result = snackbarHostState.showSnackbar(
-                        message = "TODOを完了しました",
-                        actionLabel = "元に戻す",
+                        message = completedMessage,
+                        actionLabel = undoLabel,
                         withDismissAction = true,
                     )
                     if (result == SnackbarResult.ActionPerformed) {
@@ -119,10 +128,13 @@ fun TodoListScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("TODO") },
+                    title = { Text(stringResource(R.string.todo_list_title)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Outlined.Menu, contentDescription = "メニューを開く")
+                            Icon(
+                                Icons.Outlined.Menu,
+                                contentDescription = stringResource(R.string.content_description_open_menu),
+                            )
                         }
                     },
                     actions = {
@@ -131,9 +143,9 @@ fun TodoListScreen(
                                 Icon(
                                     if (state.showCompleted) Icons.Outlined.CheckCircle else Icons.Outlined.Check,
                                     contentDescription = if (state.showCompleted) {
-                                        "完了済みTODOを非表示"
+                                        stringResource(R.string.content_description_hide_completed_todos)
                                     } else {
-                                        "完了済みTODOを表示"
+                                        stringResource(R.string.content_description_show_completed_todos)
                                     },
                                 )
                             }
@@ -146,7 +158,7 @@ fun TodoListScreen(
                 ExtendedFloatingActionButton(
                     onClick = onAddTodo,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text("TODOを追加") },
+                    text = { Text(stringResource(R.string.action_add_todo)) },
                 )
             },
         ) { padding ->
@@ -156,7 +168,17 @@ fun TodoListScreen(
                         Tab(
                             selected = state.mode == mode,
                             onClick = { viewModel.setMode(mode) },
-                            text = { Text(if (mode == TodoListMode.DATE) "日付" else "カテゴリ") },
+                            text = {
+                                Text(
+                                    stringResource(
+                                        if (mode == TodoListMode.DATE) {
+                                            R.string.todo_list_tab_date
+                                        } else {
+                                            R.string.todo_list_tab_category
+                                        },
+                                    ),
+                                )
+                            },
                         )
                     }
                 }
@@ -202,10 +224,12 @@ fun TodoListScreen(
                         viewModel.selectDate(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
                     }
                     showDatePicker = false
-                }) { Text("決定") }
+                }) { Text(stringResource(R.string.action_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("キャンセル") }
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             },
         ) { DatePicker(pickerState) }
     }
@@ -216,13 +240,27 @@ fun TodoListScreen(
             title = { Text(occurrence.todo.title) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(occurrence.todo.description.ifBlank { "説明なし" })
-                    Text(occurrence.category?.name ?: "カテゴリ未設定")
-                    Text(if (occurrence.state == TodoState.COMPLETED) "完了" else "未完了")
+                    Text(
+                        occurrence.todo.description.ifBlank {
+                            stringResource(R.string.todo_description_empty)
+                        },
+                    )
+                    Text(occurrence.category?.name ?: stringResource(R.string.label_uncategorized))
+                    Text(
+                        stringResource(
+                            if (occurrence.state == TodoState.COMPLETED) {
+                                R.string.label_completed
+                            } else {
+                                R.string.label_pending
+                            },
+                        ),
+                    )
                 }
             },
             confirmButton = {
-                TextButton(onClick = { readOnlyOccurrence = null }) { Text("閉じる") }
+                TextButton(onClick = { readOnlyOccurrence = null }) {
+                    Text(stringResource(R.string.action_close))
+                }
             },
         )
     }
@@ -244,26 +282,48 @@ private fun DateMode(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         IconButton(onClick = onPrevious) {
-            Icon(Icons.Outlined.ChevronLeft, contentDescription = "前日")
+            Icon(
+                Icons.Outlined.ChevronLeft,
+                contentDescription = stringResource(R.string.content_description_previous_day),
+            )
         }
         TextButton(onClick = onPickDate) {
             Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(if (state.isToday) "今日" else state.selectedDate.toJapaneseDate())
+            Text(
+                if (state.isToday) {
+                    stringResource(R.string.label_today)
+                } else {
+                    state.selectedDate.toJapaneseDate(stringResource(R.string.date_pattern_short))
+                },
+            )
         }
         IconButton(onClick = onNext) {
-            Icon(Icons.Outlined.ChevronRight, contentDescription = "翌日")
+            Icon(
+                Icons.Outlined.ChevronRight,
+                contentDescription = stringResource(R.string.content_description_next_day),
+            )
         }
     }
     if (!state.isToday) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            TextButton(onClick = onToday) { Text("今日へ戻る") }
+            TextButton(onClick = onToday) { Text(stringResource(R.string.action_return_to_today)) }
         }
     }
     if (state.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(stringResource(R.string.message_loading))
+        }
     } else if (state.occurrences.isEmpty()) {
-        EmptyTodos(if (state.isToday) "今日のTODOはありません" else "この日のTODOはありません")
+        EmptyTodos(
+            stringResource(
+                if (state.isToday) {
+                    R.string.empty_today_todos
+                } else {
+                    R.string.empty_selected_date_todos
+                },
+            ),
+        )
     } else {
         LazyColumn(Modifier.fillMaxSize()) {
             items(state.occurrences, key = { "${it.todo.id}:${it.logicalDate}" }) { occurrence ->
@@ -293,7 +353,7 @@ private fun CategoryMode(
         FilterChip(
             selected = state.selectedCategoryId == null,
             onClick = { onSelectCategory(null) },
-            label = { Text("カテゴリ未設定") },
+            label = { Text(stringResource(R.string.label_uncategorized)) },
         )
         state.categories.forEach { category ->
             FilterChip(
@@ -304,7 +364,7 @@ private fun CategoryMode(
         }
     }
     if (state.categoryItems.isEmpty()) {
-        EmptyTodos("このカテゴリにTODOはありません")
+        EmptyTodos(stringResource(R.string.empty_category_todos))
     } else {
         LazyColumn(Modifier.fillMaxSize()) {
             items(state.categoryItems, key = { it.todo.id }) { item ->
@@ -313,7 +373,13 @@ private fun CategoryMode(
                     headlineContent = { Text(item.todo.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                     supportingContent = {
                         Text(
-                            if (item.todo.recurrenceType.name == "DAILY") "毎日" else item.todo.startDate.toJapaneseDate(),
+                            if (item.todo.recurrenceType == RecurrenceType.DAILY) {
+                                stringResource(R.string.label_daily)
+                            } else {
+                                item.todo.startDate.toJapaneseDate(
+                                    stringResource(R.string.date_pattern_short),
+                                )
+                            },
                         )
                     },
                     leadingContent = {
@@ -360,10 +426,21 @@ private fun TodoOccurrenceRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(
                         onClick = {},
-                        label = { Text(occurrence.category?.name ?: "カテゴリ未設定") },
+                        label = {
+                            Text(
+                                occurrence.category?.name
+                                    ?: stringResource(R.string.label_uncategorized),
+                            )
+                        },
                     )
                     occurrence.todo.dueMinutes?.let { minutes ->
-                        Text("期限 ${minutes / 60}:${(minutes % 60).toString().padStart(2, '0')}")
+                        Text(
+                            stringResource(
+                                R.string.todo_due_time_format,
+                                minutes / 60,
+                                minutes % 60,
+                            ),
+                        )
                     }
                 }
             }
@@ -387,5 +464,5 @@ private fun EmptyTodos(message: String) {
     }
 }
 
-private fun LocalDate.toJapaneseDate(): String =
-    format(DateTimeFormatter.ofPattern("M月d日（E）", Locale.JAPANESE))
+private fun LocalDate.toJapaneseDate(pattern: String): String =
+    format(DateTimeFormatter.ofPattern(pattern, Locale.JAPANESE))

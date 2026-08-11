@@ -1,5 +1,6 @@
 package com.mochisofts.mata.app
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -12,16 +13,18 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import com.mochisofts.mata.R
 
-enum class MataDestination(val label: String) {
-    TODOS("TODO一覧"),
-    CALENDAR("カレンダー履歴"),
-    CATEGORIES("カテゴリ管理"),
-    ARCHIVE("アーカイブ済みTODO"),
-    SETTINGS("設定"),
+enum class MataDestination(@StringRes val labelRes: Int) {
+    TODOS(R.string.nav_todo_list),
+    CALENDAR(R.string.nav_calendar_history),
+    CATEGORIES(R.string.nav_category_management),
+    ARCHIVE(R.string.nav_archived_todos),
+    SETTINGS(R.string.nav_settings),
 }
 
 @Composable
@@ -31,7 +34,7 @@ fun MataNavigationDrawer(
 ) {
     ModalDrawerSheet {
         Text(
-            text = "MATA",
+            text = stringResource(R.string.app_name),
             style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
         )
@@ -45,7 +48,7 @@ fun MataNavigationDrawer(
                 MataDestination.SETTINGS -> Icons.Outlined.Settings
             }
             NavigationDrawerItem(
-                label = { Text(destination.label) },
+                label = { Text(stringResource(destination.labelRes)) },
                 selected = destination == selected,
                 onClick = { onSelect(destination) },
                 icon = { Icon(icon, contentDescription = null) },
@@ -54,4 +57,3 @@ fun MataNavigationDrawer(
         }
     }
 }
-

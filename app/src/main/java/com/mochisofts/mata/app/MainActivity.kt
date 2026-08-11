@@ -23,11 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
@@ -120,10 +122,13 @@ private fun PlaceholderScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(destination.label) },
+                    title = { Text(stringResource(destination.labelRes)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Outlined.Menu, contentDescription = "メニューを開く")
+                            Icon(
+                                Icons.Outlined.Menu,
+                                contentDescription = stringResource(R.string.content_description_open_menu),
+                            )
                         }
                     },
                 )
@@ -134,7 +139,7 @@ private fun PlaceholderScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "この画面は次の実装単位で追加します",
+                    stringResource(R.string.placeholder_screen_message),
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
