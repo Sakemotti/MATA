@@ -40,12 +40,14 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
+import com.mochisofts.mata.core.navigation.CalendarHistoryRoute
 import com.mochisofts.mata.core.navigation.PlaceholderRoute
 import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
 import com.mochisofts.mata.ui.category.CategoryListScreen
+import com.mochisofts.mata.ui.calendar.CalendarHistoryScreen
 import com.mochisofts.mata.ui.settings.SettingsScreen
 import com.mochisofts.mata.ui.todoeditor.TodoEditorScreen
 import com.mochisofts.mata.ui.todolist.TodoListScreen
@@ -102,6 +104,7 @@ private fun MataApp(
     val navigateToDestination: (MataDestination) -> Unit = { destination ->
         when (destination) {
             MataDestination.TODOS -> navController.navigate(TodoListRoute()) { launchSingleTop = true }
+            MataDestination.CALENDAR -> navController.navigate(CalendarHistoryRoute) { launchSingleTop = true }
             MataDestination.CATEGORIES -> navController.navigate(CategoryListRoute) { launchSingleTop = true }
             MataDestination.SETTINGS -> navController.navigate(SettingsRoute) { launchSingleTop = true }
             else -> navController.navigate(PlaceholderRoute(destination.name)) { launchSingleTop = true }
@@ -129,6 +132,9 @@ private fun MataApp(
                 onBack = navController::popBackStack,
                 onSaved = { navController.popBackStack() },
             )
+        }
+        composable<CalendarHistoryRoute> {
+            CalendarHistoryScreen(onDestination = navigateToDestination)
         }
         composable<CategoryListRoute> {
             CategoryListScreen(

@@ -7,6 +7,9 @@ import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
+import com.mochisofts.mata.domain.model.CompletionUndoToken
+import com.mochisofts.mata.domain.model.HistoryDay
+import com.mochisofts.mata.domain.model.HistoryMonth
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.UUID
@@ -87,4 +90,11 @@ data class HistoryReconciliationResult(
 
 interface HistoryReconciler {
     suspend fun reconcile(maxRecords: Int = 500): HistoryReconciliationResult
+}
+
+interface HistoryRepository {
+    fun observeMonth(startDate: LocalDate, endDate: LocalDate): Flow<HistoryMonth>
+    fun observeDay(date: LocalDate): Flow<HistoryDay>
+    suspend fun undoCompletion(executionId: String): Result<CompletionUndoToken>
+    suspend fun restoreCompletion(token: CompletionUndoToken): Result<Unit>
 }

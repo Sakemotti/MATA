@@ -6,6 +6,7 @@ import com.mochisofts.mata.data.local.TodoNotificationEntity
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -27,8 +28,10 @@ internal data class HistorySnapshotV1(
     val categoryName: String?,
     val categoryColorIndex: Int?,
     val categoryIconName: String?,
+    val categorySortOrder: Int? = null,
     val endHour: Int,
     val weekStart: Int,
+    val createdAt: Long = 0,
     val logicalDate: String?,
     val periodStart: String?,
     val periodEnd: String?,
@@ -83,11 +86,17 @@ internal object HistorySnapshotJson {
             categoryName = category?.name,
             categoryColorIndex = category?.colorIndex,
             categoryIconName = category?.iconName,
+            categorySortOrder = category?.sortOrder,
             endHour = endHour,
             weekStart = weekStart.value,
+            createdAt = todo.createdAt,
             logicalDate = logicalDate?.toString(),
             periodStart = periodStart?.toString(),
             periodEnd = periodEnd?.toString(),
         ),
     )
+
+    fun decode(value: String): HistorySnapshotV1? = runCatching {
+        json.decodeFromString<HistorySnapshotV1>(value)
+    }.getOrNull()
 }
