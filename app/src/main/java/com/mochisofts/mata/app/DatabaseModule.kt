@@ -19,6 +19,7 @@ import com.mochisofts.mata.data.local.TodoRuntimeStateDao
 import com.mochisofts.mata.data.repository.RoomCategoryRepository
 import com.mochisofts.mata.data.repository.RoomTodoRepository
 import com.mochisofts.mata.data.repository.RoomHistoryReconciler
+import com.mochisofts.mata.data.repository.RoomHistoryRepository
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
@@ -28,6 +29,7 @@ import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.domain.repository.HistoryReconciler
+import com.mochisofts.mata.domain.repository.HistoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -51,6 +53,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHistoryReconciler(reconciler: RoomHistoryReconciler): HistoryReconciler
+
+    @Binds
+    @Singleton
+    abstract fun bindHistoryRepository(repository: RoomHistoryRepository): HistoryRepository
 
     @Binds
     @Singleton

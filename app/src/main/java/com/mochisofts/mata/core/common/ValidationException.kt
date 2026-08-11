@@ -25,6 +25,8 @@ enum class ValidationError {
     TODO_NOT_ACTIVE,
     TODO_ACTION_DATE_INVALID,
     TODO_ACTION_CANNOT_UNDO,
+    HISTORY_RECORD_NOT_FOUND,
+    HISTORY_COMPLETION_NOT_UNDOABLE,
 }
 
 class ValidationException(

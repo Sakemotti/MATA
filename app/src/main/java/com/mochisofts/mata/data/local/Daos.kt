@@ -8,6 +8,16 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+data class HistoryMonthExecutionRow(
+    val logicalDate: String,
+    val status: String,
+)
+
+data class HistoryMonthPeriodRow(
+    val displayDate: String,
+    val achieved: Boolean,
+)
+
 @Dao
 interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY sortOrder ASC")
@@ -33,6 +43,9 @@ interface CategoryDao {
 interface TodoDao {
     @Query("SELECT * FROM todos WHERE archivedAt IS NULL ORDER BY createdAt ASC")
     fun observeActive(): Flow<List<TodoEntity>>
+
+    @Query("SELECT * FROM todos ORDER BY createdAt ASC")
+    fun observeAll(): Flow<List<TodoEntity>>
 
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun findById(id: String): TodoEntity?
@@ -62,6 +75,18 @@ interface TodoExecutionDao {
     @Query("SELECT * FROM todo_executions")
     fun observeAll(): Flow<List<TodoExecutionEntity>>
 
+    @Query(
+        "SELECT logicalDate, status FROM todo_executions " +
+            "WHERE logicalDate BETWEEN :startDate AND :endDate ORDER BY logicalDate ASC",
+    )
+    fun observeMonthRows(startDate: String, endDate: String): Flow<List<HistoryMonthExecutionRow>>
+
+    @Query(
+        "SELECT * FROM todo_executions WHERE logicalDate = :logicalDate " +
+            "ORDER BY finalizedAt ASC, id ASC",
+    )
+    fun observeForDate(logicalDate: String): Flow<List<TodoExecutionEntity>>
+
     @Query("SELECT * FROM todo_executions WHERE todoId = :todoId")
     suspend fun findForTodo(todoId: String): List<TodoExecutionEntity>
 
@@ -71,15 +96,33 @@ interface TodoExecutionDao {
     @Query("SELECT * FROM todo_executions WHERE operationId = :operationId LIMIT 1")
     suspend fun findByOperationId(operationId: String): TodoExecutionEntity?
 
+    @Query("SELECT * FROM todo_executions WHERE id = :id LIMIT 1")
+    suspend fun findById(id: String): TodoExecutionEntity?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(execution: TodoExecutionEntity)
 
     @Query("DELETE FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate")
     suspend fun delete(todoId: String, logicalDate: String)
+
+    @Query("DELETE FROM todo_executions WHERE id = :id")
+    suspend fun deleteById(id: String)
 }
 
 @Dao
 interface PeriodResultDao {
+    @Query(
+        "SELECT displayDate, achieved FROM period_results " +
+            "WHERE displayDate BETWEEN :startDate AND :endDate ORDER BY displayDate ASC",
+    )
+    fun observeMonthRows(startDate: String, endDate: String): Flow<List<HistoryMonthPeriodRow>>
+
+    @Query(
+        "SELECT * FROM period_results WHERE displayDate = :displayDate " +
+            "ORDER BY finalizedAt ASC, id ASC",
+    )
+    fun observeForDate(displayDate: String): Flow<List<PeriodResultEntity>>
+
     @Query("SELECT * FROM period_results WHERE todoId = :todoId ORDER BY periodStart ASC")
     suspend fun findForTodo(todoId: String): List<PeriodResultEntity>
 

@@ -33,5 +33,8 @@ fun Throwable.toUserMessageRes(@StringRes fallback: Int): Int =
         ValidationError.TODO_NOT_ACTIVE -> R.string.error_todo_not_active
         ValidationError.TODO_ACTION_DATE_INVALID -> R.string.error_todo_action_date_invalid
         ValidationError.TODO_ACTION_CANNOT_UNDO -> R.string.error_todo_action_cannot_undo
+        ValidationError.HISTORY_RECORD_NOT_FOUND -> R.string.error_history_record_not_found
+        ValidationError.HISTORY_COMPLETION_NOT_UNDOABLE ->
+            R.string.error_history_completion_not_undoable
         null -> fallback
     }

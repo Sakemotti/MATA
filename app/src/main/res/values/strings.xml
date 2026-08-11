@@ -27,6 +27,10 @@
     <string name="label_pending">未完了</string>
     <string name="label_skipped">スキップ</string>
     <string name="label_missed">未完了</string>
+    <string name="label_unfinished">未完了</string>
+    <string name="label_in_progress">進行中</string>
+    <string name="label_achieved">達成</string>
+    <string name="label_unachieved">未達成</string>
     <string name="label_daily">毎日</string>
     <string name="label_no_recurrence">繰り返しなし</string>
     <string name="label_weekdays">平日のみ</string>
@@ -42,6 +46,9 @@
     <string name="time_format">%1$d:%2$02d</string>
     <string name="date_pattern_full">yyyy年M月d日（E）</string>
     <string name="date_pattern_short">M月d日（E）</string>
+    <string name="date_pattern_plain">yyyy年M月d日</string>
+    <string name="date_time_pattern">yyyy年M月d日 H:mm</string>
+    <string name="year_month_pattern">yyyy年M月</string>
     <string name="content_description_field_value">%1$s、%2$s</string>
 
     <!-- Navigation -->
@@ -51,6 +58,40 @@
     <string name="nav_archived_todos">アーカイブ済みTODO</string>
     <string name="nav_settings">設定</string>
     <string name="placeholder_screen_message">この画面は次の実装単位で追加します</string>
+
+    <!-- Calendar history -->
+    <string name="calendar_history_title">カレンダー履歴</string>
+    <string name="calendar_history_previous_month">前月</string>
+    <string name="calendar_history_next_month">翌月</string>
+    <string name="calendar_history_select_month">年月を選択</string>
+    <string name="calendar_history_selected_suffix">、選択中</string>
+    <string name="calendar_history_today_suffix">、今日</string>
+    <string name="calendar_history_cell_count">%1$d / %2$d</string>
+    <string name="calendar_history_cell_count_semantics">、完了%1$d件、予定%2$d件</string>
+    <string name="calendar_history_period_achieved">、期間達成</string>
+    <string name="calendar_history_period_unachieved">、期間未達成</string>
+    <string name="calendar_history_day_count">完了 %1$d / %2$d</string>
+    <string name="calendar_history_period_results">期間結果</string>
+    <string name="calendar_history_empty_day">この日の履歴はありません</string>
+    <string name="calendar_history_entry_support">%1$s・期限 %2$s・%3$s</string>
+    <string name="calendar_history_action_time">操作日時 %1$s</string>
+    <string name="calendar_history_weekly_period_format">週%2$d回: %1$d / %2$d %3$s</string>
+    <string name="calendar_history_monthly_period_format">月%2$d回: %1$d / %2$d %3$s</string>
+    <string name="calendar_history_period_range">%1$s〜%2$s</string>
+    <string name="calendar_history_recurrence">繰り返し設定</string>
+    <string name="calendar_history_due">期限時刻</string>
+    <string name="calendar_history_logical_date">対象論理日</string>
+    <string name="calendar_history_state">状態</string>
+    <string name="calendar_history_operation_time">操作日時</string>
+    <string name="calendar_history_period">対象期間</string>
+    <string name="calendar_history_result">期間結果</string>
+    <string name="calendar_history_result_count">%1$d / %2$d回・%3$s</string>
+    <string name="calendar_history_notifications">通知設定</string>
+    <string name="calendar_history_completion_undone">完了を取り消しました</string>
+    <string name="calendar_history_month_load_error">月の履歴を読み込めませんでした</string>
+    <string name="calendar_history_day_load_error">この日の履歴を読み込めませんでした</string>
+    <string name="calendar_history_undo_error">完了を取り消せませんでした</string>
+    <string name="calendar_history_restore_error">完了履歴を元に戻せませんでした</string>
 
     <!-- Settings -->
     <string name="settings_title">設定</string>
@@ -269,6 +310,8 @@
     <string name="error_todo_undo_completion_failed">完了を取り消せませんでした</string>
     <string name="error_todo_skip_failed">スキップできませんでした</string>
     <string name="error_todo_undo_skip_failed">スキップを取り消せませんでした</string>
+    <string name="error_history_record_not_found">履歴が見つかりません</string>
+    <string name="error_history_completion_not_undoable">この完了履歴は取り消せません</string>
 
     <!-- Android notifications -->
     <string name="notification_channel_name">TODO通知</string>

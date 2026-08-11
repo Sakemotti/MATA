@@ -18,4 +18,7 @@ data class CategoryEditorRoute(val categoryId: String? = null)
 data object SettingsRoute
 
 @Serializable
+data object CalendarHistoryRoute
+
+@Serializable
 data class PlaceholderRoute(val destination: String)
