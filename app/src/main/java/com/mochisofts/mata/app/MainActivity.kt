@@ -1,5 +1,6 @@
 package com.mochisofts.mata.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,8 +22,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -51,31 +55,63 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MataAppViewModel by viewModels()
+    private var notificationNavigation by mutableStateOf<NotificationNavigation?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        notificationNavigation = intent.toNotificationNavigation()
         enableEdgeToEdge()
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             MataTheme(appTheme = theme) {
-                MataApp()
+                MataApp(
+                    notificationNavigation = notificationNavigation,
+                    onNotificationHandled = { notificationNavigation = null },
+                    onNotificationOpened = viewModel::notificationOpened,
+                )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        notificationNavigation = intent.toNotificationNavigation()
+    }
+
+    companion object {
+        const val ACTION_OPEN_NOTIFICATION = "com.mochisofts.mata.action.OPEN_NOTIFICATION"
+        const val EXTRA_TODO_ID = "todo_id"
+        const val EXTRA_LOGICAL_DATE = "logical_date"
+        const val EXTRA_CANDIDATE_KEY = "candidate_key"
     }
 }
 
 @Composable
-private fun MataApp(navController: NavHostController = rememberNavController()) {
+private fun MataApp(
+    notificationNavigation: NotificationNavigation?,
+    onNotificationHandled: () -> Unit,
+    onNotificationOpened: (String) -> Unit,
+    navController: NavHostController = rememberNavController(),
+) {
     val navigateToDestination: (MataDestination) -> Unit = { destination ->
         when (destination) {
-            MataDestination.TODOS -> navController.navigate(TodoListRoute) { launchSingleTop = true }
+            MataDestination.TODOS -> navController.navigate(TodoListRoute()) { launchSingleTop = true }
             MataDestination.CATEGORIES -> navController.navigate(CategoryListRoute) { launchSingleTop = true }
             MataDestination.SETTINGS -> navController.navigate(SettingsRoute) { launchSingleTop = true }
             else -> navController.navigate(PlaceholderRoute(destination.name)) { launchSingleTop = true }
         }
     }
 
-    NavHost(navController = navController, startDestination = TodoListRoute) {
+    LaunchedEffect(notificationNavigation) {
+        notificationNavigation?.let { request ->
+            navController.navigate(TodoListRoute(request.logicalDate)) { launchSingleTop = true }
+            onNotificationOpened(request.todoId)
+            onNotificationHandled()
+        }
+    }
+
+    NavHost(navController = navController, startDestination = TodoListRoute()) {
         composable<TodoListRoute> {
             TodoListScreen(
                 onAddTodo = { navController.navigate(TodoEditorRoute()) },
@@ -112,6 +148,18 @@ private fun MataApp(navController: NavHostController = rememberNavController()) 
             PlaceholderScreen(destination, navigateToDestination)
         }
     }
+}
+
+private data class NotificationNavigation(
+    val todoId: String,
+    val logicalDate: String,
+)
+
+private fun Intent.toNotificationNavigation(): NotificationNavigation? {
+    if (action != MainActivity.ACTION_OPEN_NOTIFICATION) return null
+    val todoId = getStringExtra(MainActivity.EXTRA_TODO_ID) ?: return null
+    val logicalDate = getStringExtra(MainActivity.EXTRA_LOGICAL_DATE) ?: return null
+    return NotificationNavigation(todoId, logicalDate)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

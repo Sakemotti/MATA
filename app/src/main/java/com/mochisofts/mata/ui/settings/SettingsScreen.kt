@@ -1,5 +1,11 @@
 package com.mochisofts.mata.ui.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,11 +56,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
@@ -73,9 +82,19 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val context = LocalContext.current
     var showEndHourSheet by remember { mutableStateOf(false) }
     var showWeekStartSheet by remember { mutableStateOf(false) }
     var showThemeSheet by remember { mutableStateOf(false) }
+    val systemSettingsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        viewModel.refreshNotificationStatus()
+    }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshNotificationStatus()
+    }
 
     LaunchedEffect(viewModel, resources) {
         viewModel.effects.collect { effect ->
@@ -192,6 +211,59 @@ fun SettingsScreen(
                             enabled = settingsEnabled,
                             onClick = { showThemeSheet = true },
                         )
+
+                        SettingsSectionHeader(R.string.settings_section_notifications)
+                        SettingsValueRow(
+                            title = stringResource(R.string.settings_notification_permission_title),
+                            value = stringResource(
+                                if (state.notificationSystemState.canPostNotifications) {
+                                    R.string.settings_permission_granted
+                                } else {
+                                    R.string.settings_permission_not_granted
+                                },
+                            ),
+                            description = stringResource(R.string.settings_notification_permission_description),
+                            isSaving = false,
+                            enabled = settingsEnabled,
+                            onClick = {
+                                systemSettingsLauncher.launch(
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                                )
+                            },
+                        )
+                        if (state.notificationSystemState.exactAlarmRelevant) {
+                            HorizontalDivider()
+                            SettingsValueRow(
+                                title = stringResource(R.string.settings_exact_alarm_title),
+                                value = stringResource(
+                                    if (state.notificationSystemState.canScheduleExactAlarms) {
+                                        R.string.settings_permission_granted
+                                    } else {
+                                        R.string.settings_permission_not_granted
+                                    },
+                                ),
+                                description = stringResource(
+                                    if (state.notificationSystemState.canScheduleExactAlarms) {
+                                        R.string.settings_exact_alarm_description
+                                    } else {
+                                        R.string.settings_exact_alarm_fallback_description
+                                    },
+                                ),
+                                isSaving = false,
+                                enabled = settingsEnabled && state.notificationCount > 0,
+                                onClick = {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                        systemSettingsLauncher.launch(
+                                            Intent(
+                                                Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                                Uri.parse("package:${context.packageName}"),
+                                            ),
+                                        )
+                                    }
+                                },
+                            )
+                        }
                         Spacer(Modifier.height(32.dp))
                     }
                 }

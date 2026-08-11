@@ -72,3 +72,54 @@ data class TodoExecutionEntity(
     val state: String,
     val performedAt: Long,
 )
+
+@Entity(
+    tableName = "todo_notifications",
+    foreignKeys = [
+        ForeignKey(
+            entity = TodoEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["todoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index("todoId"),
+        Index(value = ["todoId", "sortOrder"], unique = true),
+    ],
+)
+data class TodoNotificationEntity(
+    @androidx.room.PrimaryKey val id: String,
+    val todoId: String,
+    val relation: String,
+    val amount: Int,
+    val unit: String,
+    val sortOrder: Int,
+    val createdAt: Long,
+    val updatedAt: Long,
+)
+
+@Entity(
+    tableName = "scheduled_notifications",
+    indices = [
+        Index("todoId"),
+        Index("notificationSettingId"),
+        Index("triggerAt"),
+        Index("state"),
+        Index(value = ["requestCode"], unique = true),
+    ],
+)
+data class ScheduledNotificationEntity(
+    @androidx.room.PrimaryKey val candidateKey: String,
+    val todoId: String,
+    val notificationSettingId: String,
+    val logicalDate: String,
+    val definitionRevision: Int,
+    val triggerAt: Long,
+    val requestCode: Int,
+    val schedulingMode: String,
+    val state: String,
+    val failureCode: String?,
+    val createdAt: Long,
+    val updatedAt: Long,
+)

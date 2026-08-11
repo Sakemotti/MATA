@@ -40,6 +40,10 @@ class DataStoreSettingsRepository @Inject constructor(
         AppTheme.fromStoredValue(preferences[THEME])
     }
 
+    override val notificationPermissionRequested: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[NOTIFICATION_PERMISSION_REQUESTED] ?: false
+    }
+
     override suspend fun setShowCompleted(value: Boolean) {
         dataStore.edit { it[SHOW_COMPLETED] = value }
     }
@@ -61,11 +65,16 @@ class DataStoreSettingsRepository @Inject constructor(
         dataStore.edit { it[THEME] = value.code }
     }
 
+    override suspend fun setNotificationPermissionRequested(value: Boolean) {
+        dataStore.edit { it[NOTIFICATION_PERMISSION_REQUESTED] = value }
+    }
+
     private companion object {
         val SHOW_COMPLETED = booleanPreferencesKey("show_completed_todos")
         val TODO_LIST_MODE = stringPreferencesKey("todo_list_mode")
         val UNCATEGORIZED_END_HOUR = intPreferencesKey("uncategorized_end_hour")
         val WEEK_START = stringPreferencesKey("week_start")
         val THEME = stringPreferencesKey("theme")
+        val NOTIFICATION_PERMISSION_REQUESTED = booleanPreferencesKey("notification_permission_requested")
     }
 }

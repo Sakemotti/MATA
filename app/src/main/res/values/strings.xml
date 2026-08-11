@@ -12,6 +12,12 @@
     <string name="action_discard">破棄</string>
     <string name="action_continue_editing">編集を続ける</string>
     <string name="action_undo">元に戻す</string>
+    <string name="action_complete">完了</string>
+    <string name="action_continue">続ける</string>
+    <string name="action_not_now">後で</string>
+    <string name="action_open_settings">通知設定を開く</string>
+    <string name="action_alarm_settings">アラーム設定を開く</string>
+    <string name="action_apply">適用</string>
     <string name="content_description_open_menu">メニューを開く</string>
     <string name="label_uncategorized">カテゴリ未設定</string>
     <string name="label_category">カテゴリ</string>
@@ -47,6 +53,7 @@
     <string name="settings_title">設定</string>
     <string name="settings_section_general">一般</string>
     <string name="settings_section_display">表示</string>
+    <string name="settings_section_notifications">通知</string>
     <string name="settings_end_hour_title">一日の終了時刻</string>
     <string name="settings_end_hour_description">カテゴリ未設定のTODOに適用します</string>
     <string name="settings_week_start_title">週の開始曜日</string>
@@ -58,6 +65,13 @@
     <string name="settings_theme_system">端末設定に従う</string>
     <string name="settings_theme_light">ライト</string>
     <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_notification_permission_title">通知権限</string>
+    <string name="settings_notification_permission_description">Androidの通知設定を確認します</string>
+    <string name="settings_exact_alarm_title">正確なアラーム</string>
+    <string name="settings_exact_alarm_description">指定時刻に正確な通知を登録できます</string>
+    <string name="settings_exact_alarm_fallback_description">許可されるまで通知時刻が遅れる可能性があります</string>
+    <string name="settings_permission_granted">許可済み</string>
+    <string name="settings_permission_not_granted">許可されていません</string>
     <string name="settings_loading_error">設定を読み込めませんでした</string>
     <string name="settings_save_error">設定を保存できませんでした</string>
     <string name="action_retry">再試行</string>
@@ -130,7 +144,26 @@
     <string name="todo_editor_due_time_label">期限時刻</string>
     <string name="todo_editor_section_notification">通知</string>
     <string name="todo_editor_no_notification">通知なし</string>
-    <string name="todo_editor_notification_placeholder">通知設定は次の実装単位で追加します</string>
+    <string name="action_add_notification">通知を追加</string>
+    <string name="action_delete_notification">通知を削除</string>
+    <string name="todo_editor_add_notification_title">通知を追加</string>
+    <string name="todo_editor_edit_notification_title">通知を編集</string>
+    <string name="todo_editor_notification_amount">差分</string>
+    <string name="notification_relation_before">期限より前</string>
+    <string name="notification_relation_at">期限時刻ちょうど</string>
+    <string name="notification_relation_after">期限より後</string>
+    <string name="notification_relation_before_format">期限の%1$d%2$s前</string>
+    <string name="notification_relation_after_format">期限の%1$d%2$s後</string>
+    <string name="unit_minute">分</string>
+    <string name="unit_hour">時間</string>
+    <string name="todo_editor_notification_next_format">次回: %1$s</string>
+    <string name="todo_editor_notification_invalid_preview">この設定では通知できません</string>
+    <string name="todo_editor_notification_permission_warning">通知が許可されていないため、設定を保持したまま通知を停止します</string>
+    <string name="todo_editor_inexact_alarm_warning">通常通知へ切り替わるため、通知時刻が遅れる可能性があります</string>
+    <string name="notification_permission_dialog_title">通知を許可しますか？</string>
+    <string name="notification_permission_dialog_message">TODOを指定した時刻にお知らせするため、Androidの通知権限を使用します。許可しなくてもTODOと通知設定は保存されます。</string>
+    <string name="todo_editor_past_notification_title">経過済みの通知があります</string>
+    <string name="todo_editor_past_notification_message">今回分の経過済み通知は発火しません。将来の実行回に対する通知は通常どおり登録します。</string>
     <string name="dialog_delete_todo_title">TODOを完全に削除しますか？</string>
     <string name="dialog_delete_todo_message">TODOとすべての履歴が削除され、元に戻せません。</string>
     <string name="action_delete_permanently">完全削除</string>
@@ -208,6 +241,11 @@
     <string name="error_todo_date_in_past">過去の日付にはTODOを登録できません</string>
     <string name="error_todo_end_date_before_start">終了日は開始日以降を指定してください</string>
     <string name="error_todo_recurrence_rule_invalid">繰り返し設定を確認してください</string>
+    <string name="error_todo_notification_too_many">通知は10件まで設定できます</string>
+    <string name="error_todo_notification_amount_invalid">差分は1から999までで入力してください</string>
+    <string name="error_todo_notification_duplicate">同じ通知タイミングが重複しています</string>
+    <string name="error_todo_notification_after_requires_deadline">期限より後の通知には期限時刻が必要です</string>
+    <string name="error_todo_notification_after_day_end">通知時刻が一日の終了以後になります</string>
     <string name="error_todo_already_acted">この日のTODOはすでに操作済みです</string>
     <string name="error_todo_required_count_reached">この期間の必要回数を達成済みです</string>
     <string name="error_todo_not_found">TODOが見つかりません</string>
@@ -215,4 +253,24 @@
     <string name="error_todo_delete_failed">TODOを削除できませんでした</string>
     <string name="error_todo_complete_failed">完了にできませんでした</string>
     <string name="error_todo_undo_completion_failed">完了を取り消せませんでした</string>
+
+    <!-- Android notifications -->
+    <string name="notification_channel_name">TODO通知</string>
+    <string name="notification_channel_description">TODOの期限前、期限時刻、期限超過を通知します</string>
+    <string name="notification_public_text">TODOの通知</string>
+    <string name="notification_progress_format">%1$d/%2$d回完了</string>
+    <string name="notification_day_boundary">この日の期限になりました</string>
+    <string name="notification_due_now">期限時刻です</string>
+    <string name="notification_before_text">期限まであと%1$s</string>
+    <string name="notification_after_text">期限を%1$s過ぎています</string>
+    <string name="notification_minute_count">%1$d分</string>
+    <string name="notification_hour_count">%1$d時間</string>
+    <string name="notification_day_count">%1$d日</string>
+    <string name="notification_completed">完了しました</string>
+    <string name="notification_completion_failed">完了できませんでした</string>
+    <string name="notification_undo_failed">完了を取り消せませんでした</string>
+    <string name="notification_group_title">MATAのTODO通知</string>
+    <plurals name="notification_group_count">
+        <item quantity="other">未処理の通知が%d件あります</item>
+    </plurals>
 </resources>

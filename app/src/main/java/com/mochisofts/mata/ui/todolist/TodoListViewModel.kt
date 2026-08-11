@@ -2,8 +2,11 @@ package com.mochisofts.mata.ui.todolist
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
@@ -57,12 +60,17 @@ sealed interface TodoListEffect {
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TodoListViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val todoRepository: TodoRepository,
     categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val selectedDate = MutableStateFlow(LocalDate.now(clock))
+    private val route = savedStateHandle.toRoute<TodoListRoute>()
+    private val selectedDate = MutableStateFlow(
+        route.selectedDate?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
+            ?: LocalDate.now(clock),
+    )
     private val selectedCategoryId = MutableStateFlow<String?>(null)
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()

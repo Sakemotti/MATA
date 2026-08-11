@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DayOfWeek
@@ -35,6 +37,14 @@ data class SettingsUiState(
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val showCompleted: Boolean = false,
     val theme: AppTheme = AppTheme.SYSTEM,
+    val notificationCount: Int = 0,
+    val notificationSystemState: NotificationSystemState = NotificationSystemState(
+        canPostNotifications = false,
+        runtimePermissionRelevant = false,
+        runtimePermissionGranted = true,
+        exactAlarmRelevant = false,
+        canScheduleExactAlarms = true,
+    ),
     val savingSetting: SavingSetting? = null,
 )
 
@@ -45,6 +55,7 @@ sealed interface SettingsEffect {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
+    private val notificationScheduler: NotificationScheduler,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -56,6 +67,12 @@ class SettingsViewModel @Inject constructor(
 
     init {
         load()
+        viewModelScope.launch {
+            notificationScheduler.notificationCount.collect { count ->
+                _uiState.update { state -> state.copy(notificationCount = count) }
+            }
+        }
+        refreshNotificationStatus(reconcile = false)
     }
 
     fun retry() = load()
@@ -74,6 +91,15 @@ class SettingsViewModel @Inject constructor(
 
     fun setTheme(value: AppTheme) = save(SavingSetting.THEME) {
         repository.setTheme(value)
+    }
+
+    fun refreshNotificationStatus(reconcile: Boolean = true) {
+        _uiState.update { state ->
+            state.copy(notificationSystemState = notificationScheduler.systemState())
+        }
+        if (reconcile) {
+            viewModelScope.launch { runCatching { notificationScheduler.reconcileAll() } }
+        }
     }
 
     private fun load() {
@@ -113,6 +139,11 @@ class SettingsViewModel @Inject constructor(
             runCatching { operation() }
                 .onFailure {
                     effectsChannel.send(SettingsEffect.Message(R.string.settings_save_error))
+                }
+                .onSuccess {
+                    if (setting == SavingSetting.END_HOUR || setting == SavingSetting.WEEK_START) {
+                        runCatching { notificationScheduler.reconcileAll() }
+                    }
                 }
             _uiState.update { state ->
                 state.copy(savingSetting = null)
