@@ -33,6 +33,7 @@
     <string name="time_format">%1$d:%2$02d</string>
     <string name="date_pattern_full">yyyy年M月d日（E）</string>
     <string name="date_pattern_short">M月d日（E）</string>
+    <string name="content_description_field_value">%1$s、%2$s</string>
 
     <!-- Navigation -->
     <string name="nav_todo_list">TODO一覧</string>

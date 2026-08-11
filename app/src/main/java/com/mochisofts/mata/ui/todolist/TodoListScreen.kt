@@ -122,8 +122,10 @@ fun TodoListScreen(
         drawerState = drawerState,
         drawerContent = {
             MataNavigationDrawer(MataDestination.TODOS) { destination ->
-                scope.launch { drawerState.close() }
-                if (destination != MataDestination.TODOS) onDestination(destination)
+                scope.launch {
+                    drawerState.close()
+                    if (destination != MataDestination.TODOS) onDestination(destination)
+                }
             }
         },
     ) {

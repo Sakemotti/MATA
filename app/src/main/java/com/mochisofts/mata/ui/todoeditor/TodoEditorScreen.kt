@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -49,6 +50,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
@@ -336,14 +341,31 @@ private fun DateField(
     onClick: () -> Unit,
     isError: Boolean = false,
 ) {
-    OutlinedTextField(
-        value = value.toJapaneseDate(),
-        onValueChange = {},
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        label = { Text(stringResource(labelRes)) },
-        readOnly = true,
-        isError = isError,
+    val label = stringResource(labelRes)
+    val displayValue = value.toJapaneseDate()
+    val fieldContentDescription = stringResource(
+        R.string.content_description_field_value,
+        label,
+        displayValue,
     )
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = displayValue,
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
+            label = { Text(label) },
+            readOnly = true,
+            isError = isError,
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .semantics {
+                    contentDescription = fieldContentDescription
+                }
+                .clickable(role = Role.Button, onClick = onClick),
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -379,13 +401,30 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
 
 @Composable
 private fun RecurrenceSelector(value: RecurrenceType, onClick: () -> Unit) {
-    OutlinedTextField(
-        value = recurrenceLabel(value),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(stringResource(R.string.todo_editor_recurrence_label)) },
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+    val label = stringResource(R.string.todo_editor_recurrence_label)
+    val displayValue = recurrenceLabel(value)
+    val fieldContentDescription = stringResource(
+        R.string.content_description_field_value,
+        label,
+        displayValue,
     )
+    Box(Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = displayValue,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .semantics {
+                    contentDescription = fieldContentDescription
+                }
+                .clickable(role = Role.Button, onClick = onClick),
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
