@@ -18,12 +18,15 @@
     <string name="action_open_settings">通知設定を開く</string>
     <string name="action_alarm_settings">アラーム設定を開く</string>
     <string name="action_apply">適用</string>
+    <string name="action_skip">スキップ</string>
+    <string name="action_archive">アーカイブ</string>
     <string name="content_description_open_menu">メニューを開く</string>
     <string name="label_uncategorized">カテゴリ未設定</string>
     <string name="label_category">カテゴリ</string>
     <string name="label_completed">完了</string>
     <string name="label_pending">未完了</string>
     <string name="label_skipped">スキップ</string>
+    <string name="label_missed">未完了</string>
     <string name="label_daily">毎日</string>
     <string name="label_no_recurrence">繰り返しなし</string>
     <string name="label_weekdays">平日のみ</string>
@@ -91,6 +94,10 @@
     <string name="todo_list_tab_date">日付</string>
     <string name="todo_list_tab_category">カテゴリ</string>
     <string name="message_todo_completed">TODOを完了しました</string>
+    <string name="message_todo_skipped">TODOをスキップしました</string>
+    <string name="message_todo_archived">TODOをアーカイブしました</string>
+    <string name="message_todo_deleted">TODOを完全削除しました</string>
+    <string name="content_description_todo_actions">TODOの操作</string>
     <string name="todo_description_empty">説明なし</string>
     <string name="content_description_previous_day">前日</string>
     <string name="content_description_next_day">翌日</string>
@@ -111,6 +118,7 @@
     <string name="todo_editor_add_title">TODOを追加</string>
     <string name="todo_editor_edit_title">TODOを編集</string>
     <string name="content_description_delete_todo">TODOを削除</string>
+    <string name="content_description_archive_todo">TODOをアーカイブ</string>
     <string name="todo_editor_section_basic_information">基本情報</string>
     <string name="todo_editor_title_label">タイトル（必須）</string>
     <string name="todo_editor_description_label">説明</string>
@@ -167,6 +175,8 @@
     <string name="dialog_delete_todo_title">TODOを完全に削除しますか？</string>
     <string name="dialog_delete_todo_message">TODOとすべての履歴が削除され、元に戻せません。</string>
     <string name="action_delete_permanently">完全削除</string>
+    <string name="dialog_archive_todo_title">TODOをアーカイブしますか？</string>
+    <string name="dialog_archive_todo_message">「%1$s」の今後の予定と通知を停止します。完了・スキップ履歴は保持されます。</string>
 
     <!-- Category management and editor -->
     <string name="category_management_title">カテゴリ管理</string>
@@ -249,10 +259,16 @@
     <string name="error_todo_already_acted">この日のTODOはすでに操作済みです</string>
     <string name="error_todo_required_count_reached">この期間の必要回数を達成済みです</string>
     <string name="error_todo_not_found">TODOが見つかりません</string>
+    <string name="error_todo_not_active">アーカイブ済みのTODOは操作できません</string>
+    <string name="error_todo_action_date_invalid">現在の実行対象ではないため操作できません</string>
+    <string name="error_todo_action_cannot_undo">確定済みの履歴は取り消せません</string>
     <string name="error_todo_save_failed">TODOを保存できませんでした</string>
     <string name="error_todo_delete_failed">TODOを削除できませんでした</string>
+    <string name="error_todo_archive_failed">TODOをアーカイブできませんでした</string>
     <string name="error_todo_complete_failed">完了にできませんでした</string>
     <string name="error_todo_undo_completion_failed">完了を取り消せませんでした</string>
+    <string name="error_todo_skip_failed">スキップできませんでした</string>
+    <string name="error_todo_undo_skip_failed">スキップを取り消せませんでした</string>
 
     <!-- Android notifications -->
     <string name="notification_channel_name">TODO通知</string>

@@ -119,7 +119,7 @@ class AndroidNotificationScheduler @Inject constructor(
         val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
         val executions = executionDao.findForTodo(todoId)
-        val completedDates = executions.filter { TodoState.fromStoredValue(it.state) == TodoState.COMPLETED }
+        val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }
             .mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
         val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
         val now = ZonedDateTime.now(clock)

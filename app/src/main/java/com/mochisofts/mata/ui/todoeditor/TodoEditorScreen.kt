@@ -25,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -95,6 +96,7 @@ fun TodoEditorScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showArchiveDialog by remember { mutableStateOf(false) }
     var dateField by remember { mutableStateOf<DatePickerTarget?>(null) }
     var showRecurrenceSheet by remember { mutableStateOf(false) }
     var showNotificationPermissionRationale by remember { mutableStateOf(false) }
@@ -125,6 +127,7 @@ fun TodoEditorScreen(
             when (effect) {
                 is TodoEditorEffect.Saved -> onSaved(effect.isNew)
                 TodoEditorEffect.Deleted -> onSaved(false)
+                TodoEditorEffect.Archived -> onSaved(false)
                 TodoEditorEffect.ExplainNotificationPermission -> {
                     showNotificationPermissionRationale = true
                 }
@@ -153,6 +156,14 @@ fun TodoEditorScreen(
                 },
                 actions = {
                     if (!state.isNew) {
+                        IconButton(onClick = { showArchiveDialog = true }, enabled = !state.isSaving) {
+                            Icon(
+                                Icons.Outlined.Archive,
+                                contentDescription = stringResource(
+                                    R.string.content_description_archive_todo,
+                                ),
+                            )
+                        }
                         IconButton(onClick = { showDeleteDialog = true }, enabled = !state.isSaving) {
                             Icon(
                                 Icons.Outlined.Delete,
@@ -373,6 +384,23 @@ fun TodoEditorScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+    if (showArchiveDialog) {
+        AlertDialog(
+            onDismissRequest = { showArchiveDialog = false },
+            title = { Text(stringResource(R.string.dialog_archive_todo_title)) },
+            text = { Text(stringResource(R.string.dialog_archive_todo_message, state.title)) },
+            confirmButton = {
+                TextButton(onClick = { showArchiveDialog = false; viewModel.archive() }) {
+                    Text(stringResource(R.string.action_archive))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showArchiveDialog = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

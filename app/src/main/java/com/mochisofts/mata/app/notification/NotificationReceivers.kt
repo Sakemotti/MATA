@@ -225,7 +225,7 @@ class NotificationDeliveryService @Inject constructor(
 
         val progress = todo.recurrencePeriod(date, weekStart)?.let { period ->
             val count = executionDao.findForTodo(todo.id).count { item ->
-                TodoState.fromStoredValue(item.state) == TodoState.COMPLETED &&
+                TodoState.fromStoredValue(item.status) == TodoState.COMPLETED &&
                     LocalDate.parse(item.logicalDate) in period.startDate..period.endDate
             }
             RecurrenceProgress(period, count)

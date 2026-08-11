@@ -9,12 +9,16 @@ import com.mochisofts.mata.data.local.CategoryDao
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.MIGRATION_1_2
 import com.mochisofts.mata.data.local.MIGRATION_2_3
+import com.mochisofts.mata.data.local.MIGRATION_3_4
+import com.mochisofts.mata.data.local.PeriodResultDao
 import com.mochisofts.mata.data.local.ScheduledNotificationDao
 import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoNotificationDao
+import com.mochisofts.mata.data.local.TodoRuntimeStateDao
 import com.mochisofts.mata.data.repository.RoomCategoryRepository
 import com.mochisofts.mata.data.repository.RoomTodoRepository
+import com.mochisofts.mata.data.repository.RoomHistoryReconciler
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
@@ -23,6 +27,7 @@ import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.domain.repository.HistoryReconciler
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -45,6 +50,10 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindHistoryReconciler(reconciler: RoomHistoryReconciler): HistoryReconciler
+
+    @Binds
+    @Singleton
     abstract fun bindSettingsRepository(repository: DataStoreSettingsRepository): SettingsRepository
 
     @Binds
@@ -63,7 +72,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MataDatabase =
         Room.databaseBuilder(context, MataDatabase::class.java, "mata.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
 
     @Provides
@@ -74,6 +83,13 @@ object DatabaseModule {
 
     @Provides
     fun provideTodoExecutionDao(database: MataDatabase): TodoExecutionDao = database.todoExecutionDao()
+
+    @Provides
+    fun providePeriodResultDao(database: MataDatabase): PeriodResultDao = database.periodResultDao()
+
+    @Provides
+    fun provideTodoRuntimeStateDao(database: MataDatabase): TodoRuntimeStateDao =
+        database.todoRuntimeStateDao()
 
     @Provides
     fun provideTodoNotificationDao(database: MataDatabase): TodoNotificationDao =
