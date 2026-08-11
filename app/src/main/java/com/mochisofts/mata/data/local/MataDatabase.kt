@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [CategoryEntity::class, TodoEntity::class, TodoExecutionEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class MataDatabase : RoomDatabase() {
@@ -13,4 +13,3 @@ abstract class MataDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao
     abstract fun todoExecutionDao(): TodoExecutionDao
 }
-

@@ -19,6 +19,10 @@ fun Throwable.toUserMessageRes(@StringRes fallback: Int): Int =
         ValidationError.TODO_DUE_TIME_INVALID -> R.string.error_todo_due_time_invalid
         ValidationError.TODO_CATEGORY_NOT_FOUND -> R.string.error_todo_category_not_found
         ValidationError.TODO_DATE_IN_PAST -> R.string.error_todo_date_in_past
+        ValidationError.TODO_END_DATE_BEFORE_START -> R.string.error_todo_end_date_before_start
+        ValidationError.TODO_RECURRENCE_RULE_INVALID -> R.string.error_todo_recurrence_rule_invalid
+        ValidationError.TODO_ALREADY_ACTED -> R.string.error_todo_already_acted
+        ValidationError.TODO_REQUIRED_COUNT_REACHED -> R.string.error_todo_required_count_reached
         ValidationError.TODO_NOT_FOUND -> R.string.error_todo_not_found
         null -> fallback
     }

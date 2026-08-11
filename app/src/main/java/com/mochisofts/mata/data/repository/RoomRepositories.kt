@@ -11,13 +11,17 @@ import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.RecurrenceProgress
+import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.occursOn
+import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import java.text.Normalizer
 import java.time.Clock
@@ -29,6 +33,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 @Singleton
@@ -94,6 +99,7 @@ class RoomTodoRepository @Inject constructor(
     private val todoDao: TodoDao,
     private val categoryDao: CategoryDao,
     private val executionDao: TodoExecutionDao,
+    private val settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : TodoRepository {
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> =
@@ -101,30 +107,40 @@ class RoomTodoRepository @Inject constructor(
             todoDao.observeActive(),
             categoryDao.observeAll(),
             executionDao.observeAll(),
-        ) { todoEntities, categoryEntities, executionEntities ->
+            settingsRepository.uncategorizedEndHour,
+            settingsRepository.weekStart,
+        ) { todoEntities, categoryEntities, executionEntities, uncategorizedEndHour, weekStart ->
             val categories = categoryEntities.associateBy(CategoryEntity::id)
             val executions = executionEntities.associateBy { it.todoId to it.logicalDate }
+            val executionsByTodo = executionEntities.groupBy(TodoExecutionEntity::todoId)
             val now = ZonedDateTime.now(clock)
             val today = now.toLocalDate()
 
             todoEntities.mapNotNull { entity ->
                 val todo = entity.toDomain()
                 val categoryEntity = entity.categoryId?.let(categories::get)
+                val endHour = categoryEntity?.endHour ?: uncategorizedEndHour
                 val targetDate = if (selectedDate == today) {
-                    logicalDate(now, categoryEntity?.endHour ?: 0)
+                    logicalDate(now, endHour)
                 } else {
                     selectedDate
                 }
                 if (!todo.occursOn(targetDate)) return@mapNotNull null
+                val execution = executions[todo.id to targetDate.toString()]
+                val progress = todo.recurrencePeriod(targetDate, weekStart)?.let { period ->
+                    val completedCount = executionsByTodo[todo.id].orEmpty().count { item ->
+                        TodoState.fromStoredValue(item.state) == TodoState.COMPLETED &&
+                            LocalDate.parse(item.logicalDate) in period.startDate..period.endDate
+                    }
+                    RecurrenceProgress(period, completedCount)
+                }
+                if (execution == null && progress?.isAchieved == true) return@mapNotNull null
                 TodoOccurrence(
                     todo = todo,
                     category = categoryEntity?.toDomain(),
                     logicalDate = targetDate,
-                    state = if (executions.containsKey(todo.id to targetDate.toString())) {
-                        TodoState.COMPLETED
-                    } else {
-                        TodoState.PENDING
-                    },
+                    state = execution?.let { TodoState.fromStoredValue(it.state) } ?: TodoState.PENDING,
+                    progress = progress,
                 )
             }.sortedWith(
                 compareBy<TodoOccurrence> { occurrence -> occurrence.effectiveDueMinutes() }
@@ -144,7 +160,8 @@ class RoomTodoRepository @Inject constructor(
         description: String,
         categoryId: String?,
         startDate: LocalDate,
-        recurrenceType: RecurrenceType,
+        endDate: LocalDate?,
+        recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
     ): Result<String> = runCatching {
         val trimmedTitle = title.trim()
@@ -152,16 +169,20 @@ class RoomTodoRepository @Inject constructor(
         validate(trimmedTitle.length <= 100, ValidationError.TODO_TITLE_TOO_LONG)
         validate(description.length <= 1000, ValidationError.TODO_DESCRIPTION_TOO_LONG)
         validate(dueMinutes == null || dueMinutes in 0..1439, ValidationError.TODO_DUE_TIME_INVALID)
+        validate(recurrenceRule.isValid(), ValidationError.TODO_RECURRENCE_RULE_INVALID)
+        validate(endDate == null || !endDate.isBefore(startDate), ValidationError.TODO_END_DATE_BEFORE_START)
         val category = categoryId?.let { categoryDao.findById(it) }
         if (categoryId != null && category == null) {
             throw ValidationException(ValidationError.TODO_CATEGORY_NOT_FOUND)
         }
         if (id == null) {
-            val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), category?.endHour ?: 0)
+            val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
+            val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), endHour)
             validate(!startDate.isBefore(currentLogicalDate), ValidationError.TODO_DATE_IN_PAST)
         }
 
         val todoId = id ?: UUID.randomUUID().toString()
+        val encodedRule = RecurrenceRuleJson.encode(recurrenceRule)
         database.withTransaction {
             val existing = id?.let { todoDao.findById(it) }
             val now = clock.millis()
@@ -172,8 +193,16 @@ class RoomTodoRepository @Inject constructor(
                     description = description,
                     categoryId = categoryId,
                     startDate = startDate.toString(),
-                    recurrenceType = recurrenceType.name,
+                    endDate = if (recurrenceRule.type == RecurrenceType.ONCE) {
+                        startDate.toString()
+                    } else {
+                        endDate?.toString()
+                    },
+                    recurrenceType = encodedRule.typeCode,
+                    repeatParamsVersion = encodedRule.paramsVersion,
+                    repeatParamsJson = encodedRule.paramsJson,
                     dueMinutes = dueMinutes,
+                    definitionRevision = (existing?.definitionRevision ?: 0) + 1,
                     createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                     archivedAt = existing?.archivedAt,
@@ -188,16 +217,31 @@ class RoomTodoRepository @Inject constructor(
         logicalDate: LocalDate,
         completed: Boolean,
     ): Result<Unit> = runCatching {
+        val weekStart = settingsRepository.weekStart.first()
         database.withTransaction {
-            if (todoDao.findById(todoId) == null) {
+            val todoEntity = todoDao.findById(todoId)
+            if (todoEntity == null) {
                 throw ValidationException(ValidationError.TODO_NOT_FOUND)
             }
             if (completed) {
+                if (executionDao.find(todoId, logicalDate.toString()) != null) {
+                    throw ValidationException(ValidationError.TODO_ALREADY_ACTED)
+                }
+                val todo = todoEntity.toDomain()
+                todo.recurrencePeriod(logicalDate, weekStart)?.let { period ->
+                    val completedCount = executionDao.findForTodo(todoId).count { execution ->
+                        TodoState.fromStoredValue(execution.state) == TodoState.COMPLETED &&
+                            LocalDate.parse(execution.logicalDate) in period.startDate..period.endDate
+                    }
+                    if (completedCount >= period.requiredCount) {
+                        throw ValidationException(ValidationError.TODO_REQUIRED_COUNT_REACHED)
+                    }
+                }
                 executionDao.upsert(
                     TodoExecutionEntity(
                         todoId = todoId,
                         logicalDate = logicalDate.toString(),
-                        state = TodoState.COMPLETED.name,
+                        state = TodoState.COMPLETED.code,
                         performedAt = clock.millis(),
                     ),
                 )
@@ -233,8 +277,15 @@ private fun TodoEntity.toDomain() = Todo(
     description = description,
     categoryId = categoryId,
     startDate = LocalDate.parse(startDate),
-    recurrenceType = RecurrenceType.valueOf(recurrenceType),
+    endDate = endDate?.let(LocalDate::parse),
+    recurrenceRule = RecurrenceRuleJson.decode(
+        typeCode = recurrenceType,
+        paramsVersion = repeatParamsVersion,
+        paramsJson = repeatParamsJson,
+    ),
     dueMinutes = dueMinutes,
+    definitionRevision = definitionRevision,
+    archivedAt = archivedAt,
     createdAt = createdAt,
 )
 

@@ -1,5 +1,6 @@
 package com.mochisofts.mata.ui.todolist
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -69,6 +70,7 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoState
 import java.time.Instant
 import java.time.LocalDate
@@ -246,15 +248,7 @@ fun TodoListScreen(
                         },
                     )
                     Text(occurrence.category?.name ?: stringResource(R.string.label_uncategorized))
-                    Text(
-                        stringResource(
-                            if (occurrence.state == TodoState.COMPLETED) {
-                                R.string.label_completed
-                            } else {
-                                R.string.label_pending
-                            },
-                        ),
-                    )
+                    Text(stringResource(occurrence.state.labelRes()))
                 }
             },
             confirmButton = {
@@ -373,13 +367,7 @@ private fun CategoryMode(
                     headlineContent = { Text(item.todo.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                     supportingContent = {
                         Text(
-                            if (item.todo.recurrenceType == RecurrenceType.DAILY) {
-                                stringResource(R.string.label_daily)
-                            } else {
-                                item.todo.startDate.toJapaneseDate(
-                                    stringResource(R.string.date_pattern_short),
-                                )
-                            },
+                            recurrenceSummary(item.todo),
                         )
                     },
                     leadingContent = {
@@ -422,6 +410,15 @@ private fun TodoOccurrenceRow(
             Column {
                 if (occurrence.todo.description.isNotBlank()) {
                     Text(occurrence.todo.description, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                occurrence.progress?.let { progress ->
+                    Text(
+                        stringResource(
+                            R.string.todo_recurrence_progress_format,
+                            progress.completedCount,
+                            progress.period.requiredCount,
+                        ),
+                    )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AssistChip(
@@ -466,3 +463,35 @@ private fun EmptyTodos(message: String) {
 
 private fun LocalDate.toJapaneseDate(pattern: String): String =
     format(DateTimeFormatter.ofPattern(pattern, Locale.JAPANESE))
+
+@Composable
+private fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
+    RecurrenceType.ONCE -> todo.startDate.toJapaneseDate(stringResource(R.string.date_pattern_short))
+    RecurrenceType.DAILY -> stringResource(R.string.label_daily)
+    RecurrenceType.WEEKDAYS -> stringResource(R.string.label_weekdays)
+    RecurrenceType.SELECTED_WEEKDAYS -> stringResource(R.string.label_selected_weekdays)
+    RecurrenceType.MONTHLY_DAY -> stringResource(
+        R.string.todo_recurrence_monthly_day_format,
+        todo.recurrenceRule.monthlyDay ?: 1,
+    )
+    RecurrenceType.MONTH_END -> stringResource(R.string.label_month_end)
+    RecurrenceType.EVERY_N_DAYS -> stringResource(
+        R.string.todo_recurrence_every_n_days_format,
+        todo.recurrenceRule.intervalDays ?: 1,
+    )
+    RecurrenceType.WEEKLY_COUNT -> stringResource(
+        R.string.todo_recurrence_weekly_count_format,
+        todo.recurrenceRule.requiredCount ?: 1,
+    )
+    RecurrenceType.MONTHLY_COUNT -> stringResource(
+        R.string.todo_recurrence_monthly_count_format,
+        todo.recurrenceRule.requiredCount ?: 1,
+    )
+}
+
+@StringRes
+private fun TodoState.labelRes(): Int = when (this) {
+    TodoState.PENDING -> R.string.label_pending
+    TodoState.COMPLETED -> R.string.label_completed
+    TodoState.SKIPPED -> R.string.label_skipped
+}

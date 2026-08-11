@@ -32,6 +32,7 @@ data class CategoryEntity(
     indices = [
         Index("categoryId"),
         Index("startDate"),
+        Index("endDate"),
         Index("archivedAt"),
     ],
 )
@@ -41,8 +42,12 @@ data class TodoEntity(
     val description: String,
     val categoryId: String?,
     val startDate: String,
+    val endDate: String?,
     val recurrenceType: String,
+    val repeatParamsVersion: Int,
+    val repeatParamsJson: String,
     val dueMinutes: Int?,
+    val definitionRevision: Int,
     val createdAt: Long,
     val updatedAt: Long,
     val archivedAt: Long?,
@@ -67,4 +72,3 @@ data class TodoExecutionEntity(
     val state: String,
     val performedAt: Long,
 )
-

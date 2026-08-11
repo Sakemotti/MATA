@@ -1,10 +1,11 @@
 package com.mochisofts.mata.domain.repository
 
 import com.mochisofts.mata.domain.model.Category
-import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import java.time.LocalDate
+import java.time.DayOfWeek
 import kotlinx.coroutines.flow.Flow
 
 interface CategoryRepository {
@@ -30,7 +31,8 @@ interface TodoRepository {
         description: String,
         categoryId: String?,
         startDate: LocalDate,
-        recurrenceType: RecurrenceType,
+        endDate: LocalDate?,
+        recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
     ): Result<String>
     suspend fun setCompleted(todoId: String, logicalDate: LocalDate, completed: Boolean): Result<Unit>
@@ -40,6 +42,10 @@ interface TodoRepository {
 interface SettingsRepository {
     val showCompleted: Flow<Boolean>
     val todoListMode: Flow<String>
+    val uncategorizedEndHour: Flow<Int>
+    val weekStart: Flow<DayOfWeek>
     suspend fun setShowCompleted(value: Boolean)
     suspend fun setTodoListMode(value: String)
+    suspend fun setUncategorizedEndHour(value: Int)
+    suspend fun setWeekStart(value: DayOfWeek)
 }

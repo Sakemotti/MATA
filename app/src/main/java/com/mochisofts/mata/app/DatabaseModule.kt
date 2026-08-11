@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.mochisofts.mata.data.local.CategoryDao
 import com.mochisofts.mata.data.local.MataDatabase
+import com.mochisofts.mata.data.local.MIGRATION_1_2
 import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.repository.RoomCategoryRepository
@@ -46,7 +47,9 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MataDatabase =
-        Room.databaseBuilder(context, MataDatabase::class.java, "mata.db").build()
+        Room.databaseBuilder(context, MataDatabase::class.java, "mata.db")
+            .addMigrations(MIGRATION_1_2)
+            .build()
 
     @Provides
     fun provideCategoryDao(database: MataDatabase): CategoryDao = database.categoryDao()
