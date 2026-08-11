@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,15 +31,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
 import com.mochisofts.mata.core.navigation.PlaceholderRoute
+import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
 import com.mochisofts.mata.ui.category.CategoryListScreen
+import com.mochisofts.mata.ui.settings.SettingsScreen
 import com.mochisofts.mata.ui.todoeditor.TodoEditorScreen
 import com.mochisofts.mata.ui.todolist.TodoListScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,11 +50,14 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val viewModel: MataAppViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MataTheme {
+            val theme by viewModel.theme.collectAsStateWithLifecycle()
+            MataTheme(appTheme = theme) {
                 MataApp()
             }
         }
@@ -62,6 +70,7 @@ private fun MataApp(navController: NavHostController = rememberNavController()) 
         when (destination) {
             MataDestination.TODOS -> navController.navigate(TodoListRoute) { launchSingleTop = true }
             MataDestination.CATEGORIES -> navController.navigate(CategoryListRoute) { launchSingleTop = true }
+            MataDestination.SETTINGS -> navController.navigate(SettingsRoute) { launchSingleTop = true }
             else -> navController.navigate(PlaceholderRoute(destination.name)) { launchSingleTop = true }
         }
     }
@@ -92,6 +101,9 @@ private fun MataApp(navController: NavHostController = rememberNavController()) 
                 onBack = navController::popBackStack,
                 onSaved = { navController.popBackStack() },
             )
+        }
+        composable<SettingsRoute> {
+            SettingsScreen(onDestination = navigateToDestination)
         }
         composable<PlaceholderRoute> { entry ->
             val route = entry.toRoute<PlaceholderRoute>()

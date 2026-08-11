@@ -15,5 +15,7 @@ data object CategoryListRoute
 data class CategoryEditorRoute(val categoryId: String? = null)
 
 @Serializable
-data class PlaceholderRoute(val destination: String)
+data object SettingsRoute
 
+@Serializable
+data class PlaceholderRoute(val destination: String)

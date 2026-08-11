@@ -10,6 +10,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.mochisofts.mata.domain.model.AppTheme
 
 private val MataLightColors = lightColorScheme(
     primary = Color(0xFF386A20),
@@ -58,8 +59,15 @@ private val MataDarkColors = darkColorScheme(
 )
 
 @Composable
-fun MataTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun MataTheme(
+    appTheme: AppTheme = AppTheme.SYSTEM,
+    content: @Composable () -> Unit,
+) {
+    val dark = when (appTheme) {
+        AppTheme.SYSTEM -> isSystemInDarkTheme()
+        AppTheme.LIGHT -> false
+        AppTheme.DARK -> true
+    }
     val colors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val context = LocalContext.current
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -77,4 +85,3 @@ val CategoryLightColors = listOf(
     0xFF2E7D32, 0xFF558B2F, 0xFF827717, 0xFFF9A825,
     0xFFEF6C00, 0xFFD84315, 0xFF5D4037, 0xFF546E7A,
 ).map(::Color)
-
