@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import javax.inject.Inject
@@ -35,6 +36,10 @@ class DataStoreSettingsRepository @Inject constructor(
             ?: DayOfWeek.MONDAY
     }
 
+    override val theme: Flow<AppTheme> = dataStore.data.map { preferences ->
+        AppTheme.fromStoredValue(preferences[THEME])
+    }
+
     override suspend fun setShowCompleted(value: Boolean) {
         dataStore.edit { it[SHOW_COMPLETED] = value }
     }
@@ -52,10 +57,15 @@ class DataStoreSettingsRepository @Inject constructor(
         dataStore.edit { it[WEEK_START] = value.name }
     }
 
+    override suspend fun setTheme(value: AppTheme) {
+        dataStore.edit { it[THEME] = value.code }
+    }
+
     private companion object {
         val SHOW_COMPLETED = booleanPreferencesKey("show_completed_todos")
         val TODO_LIST_MODE = stringPreferencesKey("todo_list_mode")
         val UNCATEGORIZED_END_HOUR = intPreferencesKey("uncategorized_end_hour")
         val WEEK_START = stringPreferencesKey("week_start")
+        val THEME = stringPreferencesKey("theme")
     }
 }

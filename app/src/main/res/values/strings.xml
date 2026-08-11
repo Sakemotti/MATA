@@ -43,6 +43,32 @@
     <string name="nav_settings">設定</string>
     <string name="placeholder_screen_message">この画面は次の実装単位で追加します</string>
 
+    <!-- Settings -->
+    <string name="settings_title">設定</string>
+    <string name="settings_section_general">一般</string>
+    <string name="settings_section_display">表示</string>
+    <string name="settings_end_hour_title">一日の終了時刻</string>
+    <string name="settings_end_hour_description">カテゴリ未設定のTODOに適用します</string>
+    <string name="settings_week_start_title">週の開始曜日</string>
+    <string name="settings_week_start_description">週X回TODOの期間区切りに使用します</string>
+    <string name="settings_show_completed_title">完了済みTODOを表示</string>
+    <string name="settings_show_completed_description">今日のTODO一覧に完了済みを表示します</string>
+    <string name="settings_theme_title">テーマ</string>
+    <string name="settings_theme_description">アプリ全体の表示テーマを選択します</string>
+    <string name="settings_theme_system">端末設定に従う</string>
+    <string name="settings_theme_light">ライト</string>
+    <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_loading_error">設定を読み込めませんでした</string>
+    <string name="settings_save_error">設定を保存できませんでした</string>
+    <string name="action_retry">再試行</string>
+    <string name="weekday_monday_full">月曜日</string>
+    <string name="weekday_tuesday_full">火曜日</string>
+    <string name="weekday_wednesday_full">水曜日</string>
+    <string name="weekday_thursday_full">木曜日</string>
+    <string name="weekday_friday_full">金曜日</string>
+    <string name="weekday_saturday_full">土曜日</string>
+    <string name="weekday_sunday_full">日曜日</string>
+
     <!-- TODO list -->
     <string name="todo_list_title">TODO</string>
     <string name="action_add_todo">TODOを追加</string>

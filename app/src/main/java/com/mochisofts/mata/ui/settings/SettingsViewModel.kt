@@ -1,0 +1,129 @@
+package com.mochisofts.mata.ui.settings
+
+import androidx.annotation.StringRes
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.mochisofts.mata.R
+import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.repository.SettingsRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.DayOfWeek
+import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+enum class SavingSetting {
+    END_HOUR,
+    WEEK_START,
+    SHOW_COMPLETED,
+    THEME,
+}
+
+data class SettingsUiState(
+    val isLoading: Boolean = true,
+    val hasLoadError: Boolean = false,
+    val endHour: Int = 0,
+    val weekStart: DayOfWeek = DayOfWeek.MONDAY,
+    val showCompleted: Boolean = false,
+    val theme: AppTheme = AppTheme.SYSTEM,
+    val savingSetting: SavingSetting? = null,
+)
+
+sealed interface SettingsEffect {
+    data class Message(@StringRes val messageRes: Int) : SettingsEffect
+}
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val repository: SettingsRepository,
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    private val effectsChannel = Channel<SettingsEffect>(Channel.BUFFERED)
+    val effects: Flow<SettingsEffect> = effectsChannel.receiveAsFlow()
+
+    private var loadJob: Job? = null
+
+    init {
+        load()
+    }
+
+    fun retry() = load()
+
+    fun setEndHour(value: Int) = save(SavingSetting.END_HOUR) {
+        repository.setUncategorizedEndHour(value)
+    }
+
+    fun setWeekStart(value: DayOfWeek) = save(SavingSetting.WEEK_START) {
+        repository.setWeekStart(value)
+    }
+
+    fun setShowCompleted(value: Boolean) = save(SavingSetting.SHOW_COMPLETED) {
+        repository.setShowCompleted(value)
+    }
+
+    fun setTheme(value: AppTheme) = save(SavingSetting.THEME) {
+        repository.setTheme(value)
+    }
+
+    private fun load() {
+        loadJob?.cancel()
+        _uiState.update { it.copy(isLoading = true, hasLoadError = false) }
+        loadJob = viewModelScope.launch {
+            combine(
+                repository.uncategorizedEndHour,
+                repository.weekStart,
+                repository.showCompleted,
+                repository.theme,
+            ) { endHour, weekStart, showCompleted, theme ->
+                SettingsSnapshot(endHour, weekStart, showCompleted, theme)
+            }.catch {
+                _uiState.update { state ->
+                    state.copy(isLoading = false, hasLoadError = true)
+                }
+            }.collect { settings ->
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        hasLoadError = false,
+                        endHour = settings.endHour,
+                        weekStart = settings.weekStart,
+                        showCompleted = settings.showCompleted,
+                        theme = settings.theme,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun save(setting: SavingSetting, operation: suspend () -> Unit) {
+        if (_uiState.value.savingSetting != null) return
+        _uiState.update { it.copy(savingSetting = setting) }
+        viewModelScope.launch {
+            runCatching { operation() }
+                .onFailure {
+                    effectsChannel.send(SettingsEffect.Message(R.string.settings_save_error))
+                }
+            _uiState.update { state ->
+                state.copy(savingSetting = null)
+            }
+        }
+    }
+
+    private data class SettingsSnapshot(
+        val endHour: Int,
+        val weekStart: DayOfWeek,
+        val showCompleted: Boolean,
+        val theme: AppTheme,
+    )
+}
