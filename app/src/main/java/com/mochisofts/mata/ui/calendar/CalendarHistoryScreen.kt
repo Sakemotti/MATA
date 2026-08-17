@@ -814,6 +814,7 @@ private fun recurrenceLabel(type: RecurrenceType): String = stringResource(
         RecurrenceType.WEEKDAYS -> R.string.label_weekdays
         RecurrenceType.SELECTED_WEEKDAYS -> R.string.label_selected_weekdays
         RecurrenceType.MONTHLY_DAY -> R.string.label_monthly_day
+        RecurrenceType.MONTHLY_NTH_WEEKDAYS -> R.string.label_monthly_nth_weekdays
         RecurrenceType.MONTH_END -> R.string.label_month_end
         RecurrenceType.EVERY_N_DAYS -> R.string.label_every_n_days
         RecurrenceType.WEEKLY_COUNT -> R.string.label_weekly_count

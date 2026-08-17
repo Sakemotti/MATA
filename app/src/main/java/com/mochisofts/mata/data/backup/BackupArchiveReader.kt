@@ -15,6 +15,7 @@ import com.mochisofts.mata.data.repository.RecurrenceRuleJson
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
+import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.io.ByteArrayInputStream
@@ -399,6 +400,30 @@ class BackupArchiveReader @Inject constructor() {
             RecurrenceType.MONTHLY_DAY -> {
                 expectName("day")
                 RecurrenceRule(type, monthlyDay = strictInt())
+            }
+            RecurrenceType.MONTHLY_NTH_WEEKDAYS -> {
+                expectName("nthWeekdays")
+                beginArray()
+                val nthWeekdays = mutableListOf<MonthlyNthWeekday>()
+                while (hasNext()) {
+                    beginObject()
+                    expectName("ordinal")
+                    val ordinal = strictInt()
+                    expectName("weekday")
+                    val dayOfWeek = weekday(strictString())
+                    requireObjectEnd()
+                    nthWeekdays += MonthlyNthWeekday(ordinal, dayOfWeek)
+                }
+                endArray()
+                val canonical = nthWeekdays.sortedWith(
+                    compareBy(MonthlyNthWeekday::ordinal, { it.dayOfWeek.value }),
+                )
+                if (nthWeekdays.isEmpty() || nthWeekdays.distinct().size != nthWeekdays.size ||
+                    nthWeekdays != canonical || nthWeekdays.any { !it.isValid() }
+                ) {
+                    invalid("Invalid monthly nth weekday list")
+                }
+                RecurrenceRule(type, monthlyNthWeekdays = nthWeekdays.toSet())
             }
             RecurrenceType.EVERY_N_DAYS -> {
                 expectName("intervalDays")

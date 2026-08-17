@@ -1015,6 +1015,21 @@ private fun recurrenceDescription(rule: RecurrenceRule): String = when (rule.typ
         R.string.todo_recurrence_monthly_day_format,
         rule.monthlyDay ?: 1,
     )
+    RecurrenceType.MONTHLY_NTH_WEEKDAYS -> {
+        val labels = rule.monthlyNthWeekdays
+            .sortedWith(compareBy({ it.ordinal }, { it.dayOfWeek.value }))
+            .map { value ->
+                stringResource(
+                    R.string.todo_recurrence_nth_weekday_item_format,
+                    value.ordinal,
+                    weekdayLabel(value.dayOfWeek),
+                )
+            }
+        stringResource(
+            R.string.todo_recurrence_monthly_nth_weekdays_format,
+            labels.joinToString(stringResource(R.string.list_separator_middle_dot)),
+        )
+    }
     RecurrenceType.MONTH_END -> stringResource(R.string.label_month_end)
     RecurrenceType.EVERY_N_DAYS -> stringResource(
         R.string.todo_recurrence_every_n_days_format,

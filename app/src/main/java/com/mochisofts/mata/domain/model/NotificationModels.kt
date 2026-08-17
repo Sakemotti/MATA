@@ -198,6 +198,20 @@ fun Todo.nextOccurrenceOnOrAfter(
             }
             date
         }
+        RecurrenceType.MONTHLY_NTH_WEEKDAYS -> generateSequence(YearMonth.from(from)) {
+            it.plusMonths(1)
+        }.take(24).flatMap { month ->
+            recurrenceRule.monthlyNthWeekdays.asSequence().mapNotNull { selection ->
+                month.atDay(1)
+                    .with(
+                        java.time.temporal.TemporalAdjusters.dayOfWeekInMonth(
+                            selection.ordinal,
+                            selection.dayOfWeek,
+                        ),
+                    )
+                    .takeIf { YearMonth.from(it) == month && !it.isBefore(from) }
+            }
+        }.minOrNull()
         RecurrenceType.MONTH_END -> {
             var date = YearMonth.from(from).atEndOfMonth()
             if (date.isBefore(from)) date = YearMonth.from(from).plusMonths(1).atEndOfMonth()

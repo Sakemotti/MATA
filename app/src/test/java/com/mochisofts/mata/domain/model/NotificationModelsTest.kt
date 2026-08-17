@@ -107,6 +107,33 @@ class NotificationModelsTest {
     }
 
     @Test
+    fun nextCandidate_supportsMultipleMonthlyNthWeekdays() {
+        val todo = todo(
+            startDate = LocalDate.of(2026, 1, 1),
+            recurrenceRule = RecurrenceRule(
+                RecurrenceType.MONTHLY_NTH_WEEKDAYS,
+                monthlyNthWeekdays = setOf(
+                    MonthlyNthWeekday(1, DayOfWeek.MONDAY),
+                    MonthlyNthWeekday(3, DayOfWeek.FRIDAY),
+                    MonthlyNthWeekday(5, DayOfWeek.MONDAY),
+                ),
+            ),
+            dueMinutes = 12 * 60,
+        )
+
+        val candidate = nextNotificationCandidate(
+            todo = todo,
+            notification = notification(NotificationRelation.AT, 0),
+            endHour = 0,
+            now = ZonedDateTime.of(2026, 1, 6, 9, 0, 0, 0, zone),
+            weekStart = DayOfWeek.MONDAY,
+            holidays = setOf(LocalDate.of(2026, 1, 16)),
+        )
+
+        assertEquals(LocalDate.of(2026, 1, 16), candidate?.logicalDate)
+    }
+
+    @Test
     fun invalidBoundaryAfterNotificationHasNoCandidate() {
         val todo = todo(
             startDate = LocalDate.of(2026, 8, 10),

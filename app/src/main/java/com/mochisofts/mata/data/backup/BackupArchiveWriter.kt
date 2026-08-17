@@ -20,6 +20,7 @@ import com.mochisofts.mata.data.local.TodoRuntimeStateDao
 import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.OutputStream
@@ -219,6 +220,18 @@ class BackupArchiveWriter @Inject constructor(
                 endArray()
             }
             RecurrenceType.MONTHLY_DAY -> name("day").value(rule.monthlyDay!!.toLong())
+            RecurrenceType.MONTHLY_NTH_WEEKDAYS -> {
+                name("nthWeekdays").beginArray()
+                rule.monthlyNthWeekdays
+                    .sortedWith(compareBy(MonthlyNthWeekday::ordinal, { it.dayOfWeek.value }))
+                    .forEach { value ->
+                        beginObject()
+                        name("ordinal").value(value.ordinal.toLong())
+                        name("weekday").value(value.dayOfWeek.backupCode())
+                        endObject()
+                    }
+                endArray()
+            }
             RecurrenceType.EVERY_N_DAYS -> name("intervalDays").value(rule.intervalDays!!.toLong())
             RecurrenceType.WEEKLY_COUNT,
             RecurrenceType.MONTHLY_COUNT,

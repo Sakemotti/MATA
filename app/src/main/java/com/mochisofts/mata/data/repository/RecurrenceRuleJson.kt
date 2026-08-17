@@ -1,5 +1,6 @@
 package com.mochisofts.mata.data.repository
 
+import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.time.DayOfWeek
@@ -24,6 +25,9 @@ internal object RecurrenceRuleJson {
     fun encode(rule: RecurrenceRule): EncodedRecurrenceRule {
         val payload = RepeatParamsPayload(
             selectedWeekdays = rule.selectedWeekdays.map(DayOfWeek::getValue).sorted(),
+            monthlyNthWeekdays = rule.monthlyNthWeekdays
+                .sortedWith(compareBy(MonthlyNthWeekday::ordinal, { it.dayOfWeek.value }))
+                .map { MonthlyNthWeekdayPayload(it.ordinal, it.dayOfWeek.value) },
             monthlyDay = rule.monthlyDay,
             intervalDays = rule.intervalDays,
             requiredCount = rule.requiredCount,
@@ -41,6 +45,9 @@ internal object RecurrenceRuleJson {
         return RecurrenceRule(
             type = RecurrenceType.fromStoredValue(typeCode),
             selectedWeekdays = payload.selectedWeekdays.map(DayOfWeek::of).toSet(),
+            monthlyNthWeekdays = payload.monthlyNthWeekdays
+                .map { MonthlyNthWeekday(it.ordinal, DayOfWeek.of(it.dayOfWeek)) }
+                .toSet(),
             monthlyDay = payload.monthlyDay,
             intervalDays = payload.intervalDays,
             requiredCount = payload.requiredCount,
@@ -51,7 +58,14 @@ internal object RecurrenceRuleJson {
 @Serializable
 private data class RepeatParamsPayload(
     val selectedWeekdays: List<Int> = emptyList(),
+    val monthlyNthWeekdays: List<MonthlyNthWeekdayPayload> = emptyList(),
     val monthlyDay: Int? = null,
     val intervalDays: Int? = null,
     val requiredCount: Int? = null,
+)
+
+@Serializable
+private data class MonthlyNthWeekdayPayload(
+    val ordinal: Int,
+    val dayOfWeek: Int,
 )

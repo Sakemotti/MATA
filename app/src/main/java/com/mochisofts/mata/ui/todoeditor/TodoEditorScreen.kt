@@ -608,6 +608,36 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
             formatRes = R.string.todo_editor_day_count_format,
             onSelect = viewModel::setMonthlyDay,
         )
+        RecurrenceType.MONTHLY_NTH_WEEKDAYS -> {
+            Text(stringResource(R.string.todo_editor_monthly_nth_weekdays_label))
+            (1..5).forEach { ordinal ->
+                Text(
+                    stringResource(R.string.todo_editor_ordinal_format, ordinal),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DayOfWeek.entries.forEach { dayOfWeek ->
+                        FilterChip(
+                            selected = state.monthlyNthWeekdays.any {
+                                it.ordinal == ordinal && it.dayOfWeek == dayOfWeek
+                            },
+                            onClick = {
+                                viewModel.toggleMonthlyNthWeekday(ordinal, dayOfWeek)
+                            },
+                            label = { Text(weekdayLabel(dayOfWeek)) },
+                        )
+                    }
+                }
+            }
+            if (state.monthlyNthWeekdays.isEmpty()) {
+                Text(
+                    stringResource(R.string.error_todo_recurrence_rule_invalid),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
         RecurrenceType.EVERY_N_DAYS -> OutlinedTextField(
             value = state.intervalDaysInput,
             onValueChange = viewModel::setIntervalDays,
@@ -823,6 +853,7 @@ private fun recurrenceLabel(type: RecurrenceType): String = stringResource(
         RecurrenceType.WEEKDAYS -> R.string.label_weekdays
         RecurrenceType.SELECTED_WEEKDAYS -> R.string.label_selected_weekdays
         RecurrenceType.MONTHLY_DAY -> R.string.label_monthly_day
+        RecurrenceType.MONTHLY_NTH_WEEKDAYS -> R.string.label_monthly_nth_weekdays
         RecurrenceType.MONTH_END -> R.string.label_month_end
         RecurrenceType.EVERY_N_DAYS -> R.string.label_every_n_days
         RecurrenceType.WEEKLY_COUNT -> R.string.label_weekly_count

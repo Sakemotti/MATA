@@ -103,6 +103,45 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
+    fun monthlyNthWeekdays_supportMultipleSelectionsAndSkipMissingFifthWeekday() {
+        val start = LocalDate.of(2026, 1, 1)
+        val end = LocalDate.of(2026, 4, 30)
+        val rule = RecurrenceRule(
+            RecurrenceType.MONTHLY_NTH_WEEKDAYS,
+            monthlyNthWeekdays = setOf(
+                MonthlyNthWeekday(1, DayOfWeek.MONDAY),
+                MonthlyNthWeekday(3, DayOfWeek.FRIDAY),
+                MonthlyNthWeekday(5, DayOfWeek.MONDAY),
+            ),
+        )
+        val scheduled = todo(start, end, rule)
+
+        assertEquals(
+            listOf(
+                LocalDate.of(2026, 1, 5),
+                LocalDate.of(2026, 1, 16),
+                LocalDate.of(2026, 2, 2),
+                LocalDate.of(2026, 2, 20),
+                LocalDate.of(2026, 3, 2),
+                LocalDate.of(2026, 3, 20),
+                LocalDate.of(2026, 3, 30),
+                LocalDate.of(2026, 4, 6),
+                LocalDate.of(2026, 4, 17),
+            ),
+            scheduled.occurrencesIn(start, end),
+        )
+        assertTrue(scheduled.occursOn(LocalDate.of(2026, 1, 5), setOf(LocalDate.of(2026, 1, 5))))
+        assertTrue(rule.isValid())
+        assertFalse(RecurrenceRule(RecurrenceType.MONTHLY_NTH_WEEKDAYS).isValid())
+        assertFalse(
+            RecurrenceRule(
+                RecurrenceType.MONTHLY_NTH_WEEKDAYS,
+                monthlyNthWeekdays = setOf(MonthlyNthWeekday(6, DayOfWeek.MONDAY)),
+            ).isValid(),
+        )
+    }
+
+    @Test
     fun everyNDays_isAnchoredToStartDateAndIncludesEndDate() {
         val start = LocalDate.of(2026, 8, 10)
         val scheduled = todo(

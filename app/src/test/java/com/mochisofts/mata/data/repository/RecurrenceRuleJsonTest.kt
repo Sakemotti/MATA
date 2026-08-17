@@ -1,5 +1,6 @@
 package com.mochisofts.mata.data.repository
 
+import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.time.DayOfWeek
@@ -18,6 +19,14 @@ class RecurrenceRuleJsonTest {
                 selectedWeekdays = setOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
             ),
             RecurrenceRule(RecurrenceType.MONTHLY_DAY, monthlyDay = 31),
+            RecurrenceRule(
+                RecurrenceType.MONTHLY_NTH_WEEKDAYS,
+                monthlyNthWeekdays = setOf(
+                    MonthlyNthWeekday(1, DayOfWeek.MONDAY),
+                    MonthlyNthWeekday(3, DayOfWeek.FRIDAY),
+                    MonthlyNthWeekday(5, DayOfWeek.MONDAY),
+                ),
+            ),
             RecurrenceRule(RecurrenceType.MONTH_END),
             RecurrenceRule(RecurrenceType.EVERY_N_DAYS, intervalDays = 999),
             RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 7),
