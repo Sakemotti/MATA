@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.collection.intSetOf
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.GlanceAppWidgetManager.Companion.SET_WIDGET_PREVIEWS_RESULT_RATE_LIMITED
 import com.mochisofts.mata.widget.TodayTodoWidgetReceiver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -31,9 +32,10 @@ class WidgetPreviewPublisher @Inject constructor(
             .firstOrNull { it.provider == component }
             ?: return
         if (provider.generatedPreviewCategories and category != 0) return
-        GlanceAppWidgetManager(context).setWidgetPreviews(
+        val result = GlanceAppWidgetManager(context).setWidgetPreviews(
             TodayTodoWidgetReceiver::class,
             intSetOf(category),
         )
+        if (result == SET_WIDGET_PREVIEWS_RESULT_RATE_LIMITED) return
     }
 }

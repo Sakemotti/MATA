@@ -20,8 +20,8 @@ import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.PreviewSizeMode
 import androidx.glance.appwidget.SizeMode
@@ -31,6 +31,7 @@ import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.background
+import androidx.glance.color.ColorProvider as DayNightColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -86,8 +87,7 @@ class TodayTodoWidget : GlanceAppWidget() {
     override val previewSizeMode: PreviewSizeMode = RESPONSIVE_SIZE_MODE
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val appWidgetId = (id as? AppWidgetId)?.appWidgetId
-            ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
         val state = widgetEntryPoint(context).widgetStateDao().find(appWidgetId)
         val model = state?.snapshotJson?.let { value ->
             runCatching { WidgetSnapshotJson.decode(value) }.getOrNull()
@@ -486,7 +486,9 @@ class CompleteTodoWidgetAction : ActionCallback {
         val expectedRevision = parameters[WidgetActionKeys.definitionRevision] ?: return
         val snapshotVersion = parameters[WidgetActionKeys.snapshotVersion] ?: return
         val appWidgetId = parameters[WidgetActionKeys.appWidgetId] ?: return
-        if ((glanceId as? AppWidgetId)?.appWidgetId != appWidgetId) return
+        if (runCatching { GlanceAppWidgetManager(context).getAppWidgetId(glanceId) }.getOrNull() !=
+            appWidgetId
+        ) return
         val dependencies = widgetActionEntryPoint(context)
         if (snapshotVersion != WidgetDisplayModel.CURRENT_VERSION) {
             dependencies.refreshCoordinator().refreshAll(appWidgetId)
@@ -537,7 +539,9 @@ class CompleteTodoWidgetAction : ActionCallback {
 class UndoWidgetCompletionAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val appWidgetId = parameters[WidgetActionKeys.appWidgetId] ?: return
-        if ((glanceId as? AppWidgetId)?.appWidgetId != appWidgetId) return
+        if (runCatching { GlanceAppWidgetManager(context).getAppWidgetId(glanceId) }.getOrNull() !=
+            appWidgetId
+        ) return
         val dependencies = widgetActionEntryPoint(context)
         val state = dependencies.widgetStateDao().find(appWidgetId) ?: return
         val operationId = state.undoOperationId ?: return
@@ -675,8 +679,11 @@ private fun widgetReceiverEntryPoint(context: Context): WidgetReceiverEntryPoint
     EntryPointAccessors.fromApplication(context.applicationContext, WidgetReceiverEntryPoint::class.java)
 
 private fun categoryColor(index: Int): ColorProvider {
-    val color = CATEGORY_COLORS[index.coerceIn(CATEGORY_COLORS.indices)]
-    return ColorProvider(Color(color))
+    val safeIndex = index.coerceIn(LIGHT_CATEGORY_COLORS.indices)
+    return DayNightColorProvider(
+        Color(LIGHT_CATEGORY_COLORS[safeIndex]),
+        Color(DARK_CATEGORY_COLORS[safeIndex]),
+    )
 }
 
 private fun categoryIconResource(iconName: String): Int = when (iconName) {
@@ -696,18 +703,25 @@ private fun categoryIconResource(iconName: String): Int = when (iconName) {
 }
 
 private object WidgetColors {
-    val background = ColorProvider(R.color.widget_background)
-    val onSurface = ColorProvider(R.color.widget_on_surface)
-    val onSurfaceVariant = ColorProvider(R.color.widget_on_surface_variant)
-    val primary = ColorProvider(R.color.widget_primary)
-    val error = ColorProvider(R.color.widget_error)
+    val background = DayNightColorProvider(Color(0xFFFDFDF5), Color(0xFF1A1C18))
+    val onSurface = DayNightColorProvider(Color(0xFF1A1C18), Color(0xFFE3E3DC))
+    val onSurfaceVariant = DayNightColorProvider(Color(0xFF43483F), Color(0xFFC3C8BC))
+    val primary = DayNightColorProvider(Color(0xFF386A20), Color(0xFF9CD67D))
+    val error = DayNightColorProvider(Color(0xFFBA1A1A), Color(0xFFFFB4AB))
 }
 
-private val CATEGORY_COLORS = longArrayOf(
+private val LIGHT_CATEGORY_COLORS = longArrayOf(
     0xFFC62828, 0xFFAD1457, 0xFF6A1B9A, 0xFF283593,
     0xFF1565C0, 0xFF0277BD, 0xFF00838F, 0xFF00796B,
     0xFF2E7D32, 0xFF558B2F, 0xFF827717, 0xFFF9A825,
     0xFFEF6C00, 0xFFD84315, 0xFF5D4037, 0xFF546E7A,
+)
+
+private val DARK_CATEGORY_COLORS = longArrayOf(
+    0xFFEF9A9A, 0xFFF48FB1, 0xFFCE93D8, 0xFF9FA8DA,
+    0xFF90CAF9, 0xFF81D4FA, 0xFF80DEEA, 0xFF80CBC4,
+    0xFFA5D6A7, 0xFFC5E1A5, 0xFFE6EE9C, 0xFFFFF59D,
+    0xFFFFCC80, 0xFFFFAB91, 0xFFBCAAA4, 0xFFB0BEC5,
 )
 
 private const val UNDO_DURATION_MILLIS = 15_000L

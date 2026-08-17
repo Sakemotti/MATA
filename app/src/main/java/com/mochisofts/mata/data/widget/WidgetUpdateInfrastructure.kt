@@ -9,7 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.util.Log
-import androidx.glance.appwidget.AppWidgetId
+import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.work.BackoffPolicy
 import androidx.work.CoroutineWorker
@@ -148,7 +148,8 @@ class WidgetUndoExpiryWorker(
         }
         dao.upsert(state.withoutUndo(now))
         runCatching {
-            TodayTodoWidget().update(applicationContext, AppWidgetId(appWidgetId))
+            val glanceId = GlanceAppWidgetManager(applicationContext).getGlanceIdBy(appWidgetId)
+            TodayTodoWidget().update(applicationContext, glanceId)
         }
         return Result.success()
     }
@@ -163,11 +164,14 @@ class WidgetRefreshCoordinator @Inject constructor(
     private val holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) {
+    private val glanceManager = GlanceAppWidgetManager(context)
+
     suspend fun refreshAll(preferredAppWidgetId: Int? = null): Boolean {
-        val ids = GlanceAppWidgetManager(context)
+        val ids = glanceManager
             .getGlanceIds(TodayTodoWidget::class.java)
-            .filterIsInstance<AppWidgetId>()
-            .sortedBy { if (it.appWidgetId == preferredAppWidgetId) 0 else 1 }
+            .sortedBy {
+                if (glanceManager.getAppWidgetId(it) == preferredAppWidgetId) 0 else 1
+            }
         if (ids.isEmpty()) {
             alarmScheduler.cancel()
             stateDao.deleteAll()
@@ -178,7 +182,7 @@ class WidgetRefreshCoordinator @Inject constructor(
         }
 
         val now = clock.millis()
-        val activeIds = ids.mapTo(mutableSetOf(), AppWidgetId::appWidgetId)
+        val activeIds = ids.mapTo(mutableSetOf(), glanceManager::getAppWidgetId)
         stateDao.findAll()
             .filterNot { it.appWidgetId in activeIds }
             .forEach { stateDao.delete(it.appWidgetId) }
@@ -192,7 +196,7 @@ class WidgetRefreshCoordinator @Inject constructor(
         var allSucceeded = true
         var nextRefreshAt = model.nextRefreshAt
         ids.forEach { id ->
-            val appWidgetId = id.appWidgetId
+            val appWidgetId = glanceManager.getAppWidgetId(id)
             val previous = stateDao.find(appWidgetId)
             val undoValid = previous?.undoExpiresAt?.let { it > now } == true
             val state = WidgetInstanceStateEntity(
@@ -224,7 +228,7 @@ class WidgetRefreshCoordinator @Inject constructor(
             }
             WidgetDiagnostics.logState(context, stateDao.find(appWidgetId) ?: state)
         }
-        stateDao.findAll().filter { state -> ids.any { it.appWidgetId == state.appWidgetId } }
+        stateDao.findAll().filter { state -> state.appWidgetId in activeIds }
             .forEach { state -> stateDao.upsert(state.copy(nextRefreshAt = nextRefreshAt)) }
         alarmScheduler.schedule(nextRefreshAt)
         if (allSucceeded) {
@@ -235,9 +239,10 @@ class WidgetRefreshCoordinator @Inject constructor(
         return allSucceeded
     }
 
-    private suspend fun markFailure(ids: List<AppWidgetId>, now: Long, errorCode: String) {
+    private suspend fun markFailure(ids: List<GlanceId>, now: Long, errorCode: String) {
         ids.forEach { id ->
-            val previous = stateDao.find(id.appWidgetId)
+            val appWidgetId = glanceManager.getAppWidgetId(id)
+            val previous = stateDao.find(appWidgetId)
             stateDao.upsert(
                 previous?.copy(
                     loadState = if (previous.snapshotJson == null) LOAD_ERROR else LOAD_STALE,
@@ -245,7 +250,7 @@ class WidgetRefreshCoordinator @Inject constructor(
                     lastFailureAt = now,
                     updatedAt = now,
                 ) ?: WidgetInstanceStateEntity(
-                    appWidgetId = id.appWidgetId,
+                    appWidgetId = appWidgetId,
                     snapshotVersion = WidgetDisplayModel.CURRENT_VERSION,
                     snapshotJson = null,
                     lastSuccessAt = null,
