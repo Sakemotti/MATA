@@ -532,6 +532,9 @@ interface WidgetInstanceStateDao {
     suspend fun findAll(): List<WidgetInstanceStateEntity>
 
     @Query("SELECT * FROM widget_instance_states WHERE appWidgetId = :appWidgetId LIMIT 1")
+    fun observe(appWidgetId: Int): Flow<WidgetInstanceStateEntity?>
+
+    @Query("SELECT * FROM widget_instance_states WHERE appWidgetId = :appWidgetId LIMIT 1")
     suspend fun find(appWidgetId: Int): WidgetInstanceStateEntity?
 
     @Upsert
