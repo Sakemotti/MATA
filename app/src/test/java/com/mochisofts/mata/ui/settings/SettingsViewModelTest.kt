@@ -1,14 +1,25 @@
 package com.mochisofts.mata.ui.settings
 
+import android.app.Activity
 import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.BillingEvent
+import com.mochisofts.mata.domain.model.BillingLaunchResult
+import com.mochisofts.mata.domain.model.BillingProduct
+import com.mochisofts.mata.domain.model.BillingState
+import com.mochisofts.mata.domain.model.EntitlementState
+import com.mochisofts.mata.domain.model.EntitlementStatus
 import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.model.REMOVE_ADS_PRODUCT_ID
+import com.mochisofts.mata.domain.repository.EntitlementRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -24,7 +35,11 @@ class SettingsViewModelTest {
     @Test
     fun valuesLoadAndSuccessfulChangesAreReflected() = runTest {
         val repository = FakeSettingsRepository()
-        val viewModel = SettingsViewModel(repository, FakeNotificationScheduler())
+        val viewModel = SettingsViewModel(
+            repository,
+            FakeNotificationScheduler(),
+            entitlementRepository = FakeEntitlementRepository(),
+        )
 
         assertFalse(viewModel.uiState.value.isLoading)
         viewModel.setEndHour(4)
@@ -42,7 +57,11 @@ class SettingsViewModelTest {
     @Test
     fun failedSaveKeepsPreviousValueAndEmitsMessage() = runTest {
         val repository = FakeSettingsRepository().apply { failNextSave = true }
-        val viewModel = SettingsViewModel(repository, FakeNotificationScheduler())
+        val viewModel = SettingsViewModel(
+            repository,
+            FakeNotificationScheduler(),
+            entitlementRepository = FakeEntitlementRepository(),
+        )
 
         viewModel.setEndHour(4)
 
@@ -51,6 +70,27 @@ class SettingsViewModelTest {
             R.string.settings_save_error,
             (viewModel.effects.first() as SettingsEffect.Message).messageRes,
         )
+    }
+
+    @Test
+    fun billingStateIsReflectedInUiState() = runTest {
+        val entitlementRepository = FakeEntitlementRepository()
+        val viewModel = SettingsViewModel(
+            FakeSettingsRepository(),
+            FakeNotificationScheduler(),
+            entitlementRepository = entitlementRepository,
+        )
+        val billing = BillingState(
+            entitlement = EntitlementStatus(
+                state = EntitlementState.NOT_PURCHASED,
+                lastVerifiedState = EntitlementState.NOT_PURCHASED,
+            ),
+            product = BillingProduct(REMOVE_ADS_PRODUCT_ID, "￥500"),
+        )
+
+        entitlementRepository.mutableState.value = billing
+
+        assertEquals(billing, viewModel.uiState.value.billing)
     }
 
     private class FakeSettingsRepository : SettingsRepository {
@@ -123,5 +163,18 @@ class SettingsViewModelTest {
         override suspend fun reconcileTodo(todoId: String) = Unit
         override suspend fun reconcileAll() = Unit
         override suspend fun cancelTodo(todoId: String) = Unit
+    }
+
+    private class FakeEntitlementRepository : EntitlementRepository {
+        val mutableState = MutableStateFlow(BillingState())
+        private val mutableEvents = MutableSharedFlow<BillingEvent>()
+
+        override val state: StateFlow<BillingState> = mutableState
+        override val events: Flow<BillingEvent> = mutableEvents
+
+        override suspend fun start() = Unit
+        override suspend fun refresh() = Unit
+        override suspend fun restore() = Unit
+        override suspend fun launchPurchase(activity: Activity) = BillingLaunchResult.STARTED
     }
 }
