@@ -71,6 +71,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.nextOccurrences
 import com.mochisofts.mata.domain.model.recurrencePeriod
@@ -702,7 +703,7 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         }
     } else {
         val dates = if (state.recurrenceRule.isValid()) {
-            todo.nextOccurrences(previewFrom, 3)
+            todo.nextOccurrences(previewFrom, 3, state.holidaySnapshot.dates)
         } else {
             emptyList()
         }
@@ -712,11 +713,62 @@ private fun SchedulePreview(state: TodoEditorUiState) {
             dates.forEach { date -> Text(date.toJapaneseDate()) }
         }
         if (state.recurrenceType == RecurrenceType.WEEKDAYS) {
-            Text(
-                stringResource(R.string.todo_editor_holiday_provisional),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            val previewYears = (dates.map { it.year } + previewFrom.year).toSet()
+            val previewStatuses = previewYears.map(state.holidaySnapshot::statusFor).toSet()
+            val statusMessage = when {
+                HolidayYearStatus.FETCHING in previewStatuses -> {
+                    if (previewYears.all(state.holidaySnapshot::isDefinitive)) {
+                        R.string.holiday_data_refreshing
+                    } else {
+                        R.string.holiday_data_loading
+                    }
+                }
+                HolidayYearStatus.FAILED_WITHOUT_CACHE in previewStatuses ->
+                    R.string.holiday_data_provisional
+                HolidayYearStatus.UNAVAILABLE in previewStatuses -> R.string.holiday_data_unavailable
+                previewYears.any { year ->
+                    state.holidaySnapshot.statusFor(year) == HolidayYearStatus.OUT_OF_RANGE &&
+                        !state.holidaySnapshot.isDefinitive(year)
+                } -> R.string.holiday_data_out_of_range
+                HolidayYearStatus.FAILED_WITH_CACHE in previewStatuses ->
+                    R.string.holiday_data_failed_with_cache
+                HolidayYearStatus.AVAILABLE_STALE in previewStatuses -> R.string.holiday_data_stale
+                else -> null
+            }
+            statusMessage?.let { messageRes ->
+                Text(
+                    stringResource(messageRes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (
+                        HolidayYearStatus.FAILED_WITHOUT_CACHE in previewStatuses ||
+                        HolidayYearStatus.FAILED_WITH_CACHE in previewStatuses
+                    ) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            val scanEnd = dates.lastOrNull() ?: previewFrom.plusDays(30)
+            state.holidaySnapshot.namesByDate
+                .asSequence()
+                .filter { (date, _) ->
+                    date in previewFrom..scanEnd && date.dayOfWeek.value <= 5 &&
+                        !date.isBefore(todo.startDate) && todo.endDate?.let(date::isAfter) != true
+                }
+                .sortedBy { it.key }
+                .take(3)
+                .forEach { (date, name) ->
+                    Text(
+                        stringResource(
+                            R.string.todo_editor_excluded_holiday_format,
+                            date.toJapaneseDate(),
+                            name,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
         }
     }
 }

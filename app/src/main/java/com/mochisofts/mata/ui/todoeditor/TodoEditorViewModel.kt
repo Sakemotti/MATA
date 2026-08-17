@@ -9,6 +9,7 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.NotificationRelation
+import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.NotificationValidationError
@@ -23,6 +24,7 @@ import com.mochisofts.mata.domain.model.deadlineAt
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -63,6 +65,7 @@ data class TodoEditorUiState(
     val dueMinutes: Int? = null,
     val uncategorizedEndHour: Int = 0,
     val notifications: List<TodoNotification> = emptyList(),
+    val holidaySnapshot: HolidaySnapshot = HolidaySnapshot(),
     val notificationPreviews: Map<String, ZonedDateTime?> = emptyMap(),
     val hasPastNotificationForCurrentOccurrence: Boolean = false,
     val notificationPermissionRequested: Boolean = false,
@@ -118,6 +121,7 @@ class TodoEditorViewModel @Inject constructor(
     categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
+    holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<TodoEditorRoute>()
@@ -132,6 +136,11 @@ class TodoEditorViewModel @Inject constructor(
     private var pendingSavedResult: Pair<Boolean, String>? = null
 
     init {
+        viewModelScope.launch {
+            holidayRepository.snapshot.collect { snapshot ->
+                _uiState.update { state -> refreshDerived(state.copy(holidaySnapshot = snapshot)) }
+            }
+        }
         viewModelScope.launch {
             categoryRepository.observeCategories().collect { categories ->
                 _uiState.update { state -> refreshDerived(state.copy(categories = categories)) }
@@ -370,9 +379,13 @@ class TodoEditorViewModel @Inject constructor(
                 endHour = state.effectiveEndHour,
                 now = now,
                 weekStart = state.weekStart,
+                holidays = state.holidaySnapshot.dates,
             )?.triggerAt
         }
-        val firstOccurrence = todo.nextOccurrenceOnOrAfter(logicalDate(now, state.effectiveEndHour))
+        val firstOccurrence = todo.nextOccurrenceOnOrAfter(
+            logicalDate(now, state.effectiveEndHour),
+            state.holidaySnapshot.dates,
+        )
         val hasPastCandidate = firstOccurrence != null && state.notifications.any { notification ->
             val deadline = deadlineAt(
                 firstOccurrence,

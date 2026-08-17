@@ -189,3 +189,44 @@ data class ScheduledNotificationEntity(
     val createdAt: Long,
     val updatedAt: Long,
 )
+
+@Entity(
+    tableName = "holidays",
+    indices = [Index("year")],
+)
+data class HolidayEntity(
+    @androidx.room.PrimaryKey val date: String,
+    val year: Int,
+    val name: String,
+    val sourceId: String,
+    val sourceDataHash: String,
+    val fetchedAt: Long,
+)
+
+@Entity(tableName = "holiday_fetch_states")
+data class HolidayFetchStateEntity(
+    @androidx.room.PrimaryKey val year: Int,
+    val sourceId: String,
+    val availability: String,
+    val dataHash: String?,
+    val fetchedAt: Long?,
+    val lastCheckedAt: Long?,
+    val lastAttemptedAt: Long?,
+    val lastAttemptResult: String,
+    val etag: String?,
+    val lastModified: String?,
+    val lastErrorCode: String?,
+)
+
+@Entity(tableName = "holiday_update_states")
+data class HolidayUpdateStateEntity(
+    @androidx.room.PrimaryKey val id: Int = 1,
+    val generation: Long,
+    val changedYears: String,
+    val changedDates: String,
+    val renamedDates: String,
+    val domainProcessed: Boolean,
+    val notificationProcessed: Boolean,
+    val widgetProcessed: Boolean,
+    val createdAt: Long,
+)

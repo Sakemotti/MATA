@@ -8,10 +8,14 @@ import androidx.navigation.toRoute
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.HolidaySnapshot
+import com.mochisofts.mata.domain.model.HolidayYearStatus
+import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
@@ -50,6 +54,9 @@ data class TodoListUiState(
     val categories: List<Category> = emptyList(),
     val selectedCategoryId: String? = null,
     val categoryItems: List<CategoryTodoItem> = emptyList(),
+    val holidayName: String? = null,
+    val holidayStatus: HolidayYearStatus? = null,
+    val holidayDataAvailable: Boolean = false,
 )
 
 sealed interface TodoListEffect {
@@ -66,6 +73,7 @@ class TodoListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val todoRepository: TodoRepository,
     categoryRepository: CategoryRepository,
+    holidayRepository: HolidayRepository,
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
@@ -86,12 +94,21 @@ class TodoListViewModel @Inject constructor(
         todayOccurrenceFlow,
         todoRepository.observeTodos(),
         categoryRepository.observeCategories(),
-    ) { occurrences, todayOccurrences, todos, categories ->
-        BaseContent(occurrences, todayOccurrences, todos, categories)
+        holidayRepository.snapshot,
+    ) { occurrences, todayOccurrences, todos, categories, holidaySnapshot ->
+        BaseContent(occurrences, todayOccurrences, todos, categories, holidaySnapshot)
     }
 
     private val content = combine(baseContent, selectedDate, selectedCategoryId) { base, date, categoryId ->
-        Content(base.occurrences, base.todayOccurrences, base.todos, base.categories, date, categoryId)
+        Content(
+            base.occurrences,
+            base.todayOccurrences,
+            base.todos,
+            base.categories,
+            base.holidaySnapshot,
+            date,
+            categoryId,
+        )
     }
 
     val uiState: StateFlow<TodoListUiState> = combine(
@@ -118,6 +135,12 @@ class TodoListViewModel @Inject constructor(
                 .filter { it.categoryId == content.categoryId }
                 .map { todo -> CategoryTodoItem(todo, currentOccurrences[todo.id]) }
                 .filter { item -> item.occurrence?.state != TodoState.SKIPPED },
+            holidayName = content.holidaySnapshot.holidayName(content.date),
+            holidayStatus = content.holidaySnapshot.statusFor(content.date.year)
+                .takeIf {
+                    content.todos.any { todo -> todo.recurrenceType == RecurrenceType.WEEKDAYS }
+                },
+            holidayDataAvailable = content.holidaySnapshot.isDefinitive(content.date.year),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -248,6 +271,7 @@ class TodoListViewModel @Inject constructor(
         val todayOccurrences: List<TodoOccurrence>,
         val todos: List<Todo>,
         val categories: List<Category>,
+        val holidaySnapshot: HolidaySnapshot,
         val date: LocalDate,
         val categoryId: String?,
     )
@@ -257,6 +281,7 @@ class TodoListViewModel @Inject constructor(
         val todayOccurrences: List<TodoOccurrence>,
         val todos: List<Todo>,
         val categories: List<Category>,
+        val holidaySnapshot: HolidaySnapshot,
     )
 }
 

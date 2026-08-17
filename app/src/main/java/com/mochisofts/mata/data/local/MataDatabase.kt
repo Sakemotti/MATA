@@ -12,8 +12,11 @@ import androidx.room.RoomDatabase
         TodoRuntimeStateEntity::class,
         TodoNotificationEntity::class,
         ScheduledNotificationEntity::class,
+        HolidayEntity::class,
+        HolidayFetchStateEntity::class,
+        HolidayUpdateStateEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class MataDatabase : RoomDatabase() {
@@ -24,4 +27,7 @@ abstract class MataDatabase : RoomDatabase() {
     abstract fun todoRuntimeStateDao(): TodoRuntimeStateDao
     abstract fun todoNotificationDao(): TodoNotificationDao
     abstract fun scheduledNotificationDao(): ScheduledNotificationDao
+    abstract fun holidayDao(): HolidayDao
+    abstract fun holidayFetchStateDao(): HolidayFetchStateDao
+    abstract fun holidayUpdateStateDao(): HolidayUpdateStateDao
 }

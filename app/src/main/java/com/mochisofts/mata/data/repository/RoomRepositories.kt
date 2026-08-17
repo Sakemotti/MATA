@@ -30,6 +30,7 @@ import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -116,34 +117,46 @@ class RoomTodoRepository @Inject constructor(
     private val runtimeStateDao: TodoRuntimeStateDao,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
+    private val holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : TodoRepository {
-    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> =
-        combine(
+    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> {
+        val inputs = combine(
             todoDao.observeActive(),
             categoryDao.observeAll(),
             executionDao.observeAll(),
             settingsRepository.uncategorizedEndHour,
             settingsRepository.weekStart,
         ) { todoEntities, categoryEntities, executionEntities, uncategorizedEndHour, weekStart ->
-            val categories = categoryEntities.associateBy(CategoryEntity::id)
-            val executions = executionEntities.associateBy { it.todoId to it.logicalDate }
-            val executionsByTodo = executionEntities.groupBy(TodoExecutionEntity::todoId)
+            OccurrenceInputs(
+                todos = todoEntities,
+                categories = categoryEntities,
+                executions = executionEntities,
+                uncategorizedEndHour = uncategorizedEndHour,
+                weekStart = weekStart,
+            )
+        }
+        return combine(inputs, holidayRepository.snapshot) { input, holidaySnapshot ->
+            val categories = input.categories.associateBy(CategoryEntity::id)
+            val executions = input.executions.associateBy { it.todoId to it.logicalDate }
+            val executionsByTodo = input.executions.groupBy(TodoExecutionEntity::todoId)
             val now = ZonedDateTime.now(clock)
             val today = now.toLocalDate()
 
-            todoEntities.mapNotNull { entity ->
+            input.todos.mapNotNull { entity ->
                 val todo = entity.toDomain()
                 val categoryEntity = entity.categoryId?.let(categories::get)
-                val endHour = categoryEntity?.endHour ?: uncategorizedEndHour
+                val endHour = categoryEntity?.endHour ?: input.uncategorizedEndHour
                 val targetDate = if (selectedDate == today) {
                     logicalDate(now, endHour)
                 } else {
                     selectedDate
                 }
                 val execution = executions[todo.id to targetDate.toString()]
-                if (!todo.occursOn(targetDate) && execution == null) return@mapNotNull null
-                val progress = todo.recurrencePeriod(targetDate, weekStart)?.let { period ->
+                if (!todo.occursOn(targetDate, holidaySnapshot.dates) && execution == null) {
+                    return@mapNotNull null
+                }
+                val progress = todo.recurrencePeriod(targetDate, input.weekStart)?.let { period ->
                     val completedCount = executionsByTodo[todo.id].orEmpty().count { item ->
                         TodoState.fromStoredValue(item.status) == TodoState.COMPLETED &&
                             LocalDate.parse(item.logicalDate) in period.startDate..period.endDate
@@ -164,6 +177,15 @@ class RoomTodoRepository @Inject constructor(
                     .thenBy { it.todo.createdAt },
             )
         }
+    }
+
+    private data class OccurrenceInputs(
+        val todos: List<TodoEntity>,
+        val categories: List<CategoryEntity>,
+        val executions: List<TodoExecutionEntity>,
+        val uncategorizedEndHour: Int,
+        val weekStart: java.time.DayOfWeek,
+    )
 
     override fun observeTodos(): Flow<List<Todo>> =
         todoDao.observeActive().map { entities -> entities.map(TodoEntity::toDomain) }
@@ -286,13 +308,14 @@ class RoomTodoRepository @Inject constructor(
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
         val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val holidays = holidayRepository.currentSnapshot().dates
         val now = ZonedDateTime.now(clock)
         database.withTransaction {
             val todoEntity = todoDao.findById(todoId)
                 ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
             val endHour = category?.endHour ?: uncategorizedEndHour
-            validateActionTarget(todoEntity, logicalDate, endHour, now)
+            validateActionTarget(todoEntity, logicalDate, endHour, now, holidays)
             if (completed) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existingExecution = executionDao.find(todoId, logicalDate.toString())
@@ -345,13 +368,14 @@ class RoomTodoRepository @Inject constructor(
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
         val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val holidays = holidayRepository.currentSnapshot().dates
         val now = ZonedDateTime.now(clock)
         database.withTransaction {
             val todoEntity = todoDao.findById(todoId)
                 ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
             val endHour = category?.endHour ?: uncategorizedEndHour
-            validateActionTarget(todoEntity, logicalDate, endHour, now)
+            validateActionTarget(todoEntity, logicalDate, endHour, now, holidays)
             if (skipped) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existing = executionDao.find(todoId, logicalDate.toString())
@@ -475,10 +499,11 @@ class RoomTodoRepository @Inject constructor(
         date: LocalDate,
         endHour: Int,
         now: ZonedDateTime,
+        holidays: Set<LocalDate>,
     ) {
         if (entity.archivedAt != null) throw ValidationException(ValidationError.TODO_NOT_ACTIVE)
         val todo = entity.toDomain()
-        if (date != logicalDate(now, endHour) || !todo.occursOn(date)) {
+        if (date != logicalDate(now, endHour) || !todo.occursOn(date, holidays)) {
             throw ValidationException(ValidationError.TODO_ACTION_DATE_INVALID)
         }
     }

@@ -8,12 +8,14 @@ import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -28,6 +30,7 @@ import org.junit.runner.RunWith
 class RoomHistoryReconcilerTest {
     private lateinit var database: MataDatabase
     private lateinit var reconciler: RoomHistoryReconciler
+    private lateinit var holidayRepository: TestHolidayRepository
 
     @Before
     fun setUp() {
@@ -35,6 +38,7 @@ class RoomHistoryReconcilerTest {
         database = Room.inMemoryDatabaseBuilder(context, MataDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        holidayRepository = TestHolidayRepository()
         reconciler = RoomHistoryReconciler(
             database = database,
             todoDao = database.todoDao(),
@@ -44,6 +48,7 @@ class RoomHistoryReconcilerTest {
             runtimeStateDao = database.todoRuntimeStateDao(),
             notificationDao = database.todoNotificationDao(),
             settingsRepository = FakeSettingsRepository(),
+            holidayRepository = holidayRepository,
             clock = Clock.fixed(
                 Instant.parse("2026-08-11T03:00:00Z"),
                 ZoneId.of("Asia/Tokyo"),
@@ -106,6 +111,23 @@ class RoomHistoryReconcilerTest {
         assertEquals(3, result.requiredCount)
         assertEquals(2, result.completedCount)
         assertFalse(result.achieved)
+    }
+
+    @Test
+    fun weekdayTodo_doesNotCreateMissedRecordForHoliday() = runBlocking {
+        holidayRepository.snapshot.value = HolidaySnapshot(
+            namesByDate = mapOf(LocalDate.of(2026, 8, 10) to "祝日"),
+        )
+        database.todoDao().upsert(
+            todo("weekdays", RecurrenceRule(RecurrenceType.WEEKDAYS), "2026-08-07"),
+        )
+
+        reconciler.reconcile()
+
+        assertEquals(
+            listOf("2026-08-07"),
+            database.todoExecutionDao().findForTodo("weekdays").map { it.logicalDate },
+        )
     }
 
     private fun todo(id: String, rule: RecurrenceRule, startDate: String): TodoEntity {

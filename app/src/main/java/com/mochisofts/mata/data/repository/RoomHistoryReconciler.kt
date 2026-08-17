@@ -20,6 +20,7 @@ import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryReconciliationResult
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.nio.charset.StandardCharsets
 import java.time.Clock
@@ -43,6 +44,7 @@ class RoomHistoryReconciler @Inject constructor(
     private val runtimeStateDao: TodoRuntimeStateDao,
     private val notificationDao: TodoNotificationDao,
     private val settingsRepository: SettingsRepository,
+    private val holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : HistoryReconciler {
     private val mutex = Mutex()
@@ -53,6 +55,7 @@ class RoomHistoryReconciler @Inject constructor(
             val now = ZonedDateTime.now(clock)
             val weekStart = settingsRepository.weekStart.first()
             val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+            val holidays = holidayRepository.currentSnapshot().dates
             var generated = 0
             var hasMore = false
 
@@ -79,6 +82,7 @@ class RoomHistoryReconciler @Inject constructor(
                         currentLogicalDate = currentLogicalDate,
                         weekStart = weekStart,
                         limit = maxRecords - generated,
+                        holidays = holidays,
                     )
                 }
                 generated += outcome.generated
@@ -97,6 +101,7 @@ class RoomHistoryReconciler @Inject constructor(
         currentLogicalDate: LocalDate,
         weekStart: DayOfWeek,
         limit: Int,
+        holidays: Set<LocalDate>,
     ): ReconcileOutcome = database.withTransaction {
         val runtime = runtimeStateDao.find(todo.id) ?: initialRuntime(todo)
         val domainTodo = todo.toDomain()
@@ -110,7 +115,7 @@ class RoomHistoryReconciler @Inject constructor(
 
         while (cursor.isBefore(targetEnd) && generated < limit && scanned < MAX_SCANNED_ITEMS) {
             val date = cursor.plusDays(1)
-            if (domainTodo.occursOn(date) && executionDao.find(todo.id, date.toString()) == null) {
+            if (domainTodo.occursOn(date, holidays) && executionDao.find(todo.id, date.toString()) == null) {
                 val finalizedAt = logicalDayEnd(date, endHour, clock.zone).toInstant().toEpochMilli()
                 executionDao.insert(
                     TodoExecutionEntity(
