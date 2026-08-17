@@ -14,6 +14,7 @@ import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.RecurrenceRule
@@ -53,6 +54,7 @@ class RoomCategoryRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val clock: Clock,
     private val notificationScheduler: NotificationScheduler,
+    private val widgetUpdater: WidgetUpdater,
 ) : CategoryRepository {
     override fun observeCategories(): Flow<List<Category>> =
         categoryDao.observeAll().map { entities -> entities.map(CategoryEntity::toDomain) }
@@ -94,7 +96,29 @@ class RoomCategoryRepository @Inject constructor(
             )
         }
         runCatching { notificationScheduler.reconcileAll() }
+        runCatching { widgetUpdater.requestUpdate() }
         categoryId
+    }
+
+    override suspend fun reorderCategories(orderedIds: List<String>): Result<Unit> = runCatching {
+        require(orderedIds.size == orderedIds.distinct().size) {
+            "Category order contains duplicate IDs"
+        }
+        database.withTransaction {
+            val persistedIds = categoryDao.findAll().map(CategoryEntity::id)
+            require(orderedIds.size == persistedIds.size && orderedIds.toSet() == persistedIds.toSet()) {
+                "Category order is stale"
+            }
+
+            val updatedAt = clock.millis()
+            orderedIds.forEachIndexed { index, id ->
+                categoryDao.updateSortOrder(id, -(index + 1), updatedAt)
+            }
+            orderedIds.forEachIndexed { index, id ->
+                categoryDao.updateSortOrder(id, index, updatedAt)
+            }
+        }
+        runCatching { widgetUpdater.requestUpdate() }
     }
 
     override suspend fun deleteCategory(id: String): Result<Unit> = runCatching {
@@ -102,6 +126,7 @@ class RoomCategoryRepository @Inject constructor(
             categoryDao.findById(id)?.let { categoryDao.delete(it) }
         }
         runCatching { notificationScheduler.reconcileAll() }
+        runCatching { widgetUpdater.requestUpdate() }
     }
 
     private fun normalizeName(value: String): String =

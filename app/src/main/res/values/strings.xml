@@ -330,6 +330,11 @@
     <string name="category_use_common_setting">設定画面の共通値を使用</string>
     <string name="category_empty_message">カテゴリを追加してTODOを整理しましょう</string>
     <string name="category_end_time_format">一日の終了 %1$d:00</string>
+    <string name="category_reorder_handle">%1$sを並べ替え</string>
+    <string name="category_move_up">上へ移動</string>
+    <string name="category_move_down">下へ移動</string>
+    <string name="category_list_position">%1$d件中%2$d番目</string>
+    <string name="category_reorder_saved">並び順を保存しました。%1$d件中%2$d番目です</string>
     <string name="category_editor_add_title">カテゴリを追加</string>
     <string name="category_editor_edit_title">カテゴリを編集</string>
     <string name="content_description_delete_category">カテゴリを削除</string>
@@ -388,6 +393,7 @@
     <string name="error_category_not_found">カテゴリが見つかりません</string>
     <string name="error_category_save_failed">カテゴリを保存できませんでした</string>
     <string name="error_category_delete_failed">カテゴリを削除できませんでした</string>
+    <string name="error_category_reorder_failed">並び順を保存できませんでした。変更前の順序に戻しました</string>
     <string name="error_todo_title_required">タイトルを入力してください</string>
     <string name="error_todo_title_too_long">タイトルは100文字以内で入力してください</string>
     <string name="error_todo_description_too_long">説明は1000文字以内で入力してください</string>

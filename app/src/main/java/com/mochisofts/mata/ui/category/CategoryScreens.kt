@@ -1,9 +1,14 @@
 package com.mochisofts.mata.ui.category
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +33,7 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -47,6 +54,9 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -59,12 +69,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
@@ -75,6 +97,7 @@ import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.domain.model.Category
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,9 +108,82 @@ fun CategoryListScreen(
     onDestination: (MataDestination) -> Unit,
     viewModel: CategoryListViewModel = hiltViewModel(),
 ) {
-    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val hapticFeedback = LocalHapticFeedback.current
+    val density = LocalDensity.current
+    val edgeThreshold = with(density) { 64.dp.toPx() }
+    val autoScrollStep = with(density) { 12.dp.toPx() }
+    var draggedCategoryId by remember { mutableStateOf<String?>(null) }
+    var draggedOffset by remember { mutableStateOf(0f) }
+    var autoScrollDelta by remember { mutableStateOf(0f) }
+
+    fun updateAutoScroll(draggedCenter: Float) {
+        val layoutInfo = listState.layoutInfo
+        autoScrollDelta = when {
+            draggedCenter < layoutInfo.viewportStartOffset + edgeThreshold -> -autoScrollStep
+            draggedCenter > layoutInfo.viewportEndOffset - edgeThreshold -> autoScrollStep
+            else -> 0f
+        }
+    }
+
+    fun moveDraggedCategory(categoryId: String) {
+        val layoutInfo = listState.layoutInfo
+        val draggedItem = layoutInfo.visibleItemsInfo.firstOrNull { it.key == categoryId } ?: return
+        val draggedTop = draggedItem.offset + draggedOffset
+        val draggedCenter = draggedTop + draggedItem.size / 2f
+        val targetItem = layoutInfo.visibleItemsInfo.firstOrNull { item ->
+            item.key is String &&
+                item.key != categoryId &&
+                state.categories.any { it.id == item.key } &&
+                draggedCenter >= item.offset &&
+                draggedCenter <= item.offset + item.size
+        }
+        if (targetItem != null &&
+            viewModel.moveReorderingCategory(categoryId, targetItem.key as String)
+        ) {
+            draggedOffset = draggedTop - targetItem.offset
+        }
+        updateAutoScroll(draggedCenter)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is CategoryListEffect.OrderSaved -> {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    snackbarHostState.showSnackbar(
+                        context.getString(
+                            R.string.category_reorder_saved,
+                            effect.total,
+                            effect.position,
+                        ),
+                    )
+                }
+                is CategoryListEffect.Message -> {
+                    snackbarHostState.showSnackbar(context.getString(effect.messageRes))
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(draggedCategoryId, autoScrollDelta) {
+        val categoryId = draggedCategoryId ?: return@LaunchedEffect
+        while (autoScrollDelta != 0f) {
+            val consumed = listState.scrollBy(autoScrollDelta)
+            if (consumed == 0f) {
+                autoScrollDelta = 0f
+                break
+            }
+            draggedOffset += consumed
+            moveDraggedCategory(categoryId)
+            delay(16)
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -121,9 +217,13 @@ fun CategoryListScreen(
                     text = { Text(stringResource(R.string.action_add_category)) },
                 )
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { padding ->
-            LazyColumn(Modifier.fillMaxSize().padding(padding)) {
-                item {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                state = listState,
+            ) {
+                item(key = "uncategorized") {
                     ListItem(
                         leadingContent = { Icon(Icons.Outlined.Category, contentDescription = null) },
                         headlineContent = { Text(stringResource(R.string.label_uncategorized)) },
@@ -136,8 +236,8 @@ fun CategoryListScreen(
                     )
                     HorizontalDivider()
                 }
-                if (categories.isEmpty()) {
-                    item {
+                if (state.categories.isEmpty()) {
+                    item(key = "empty") {
                         Column(
                             Modifier.fillMaxWidth().padding(32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -150,9 +250,48 @@ fun CategoryListScreen(
                         }
                     }
                 } else {
-                    items(categories, key = Category::id) { category ->
-                        CategoryListRow(category = category, onClick = { onEdit(category.id) })
-                        HorizontalDivider()
+                    items(state.categories, key = Category::id) { category ->
+                        val index = state.categories.indexOfFirst { it.id == category.id }
+                        val isDragging = draggedCategoryId == category.id
+                        Column(
+                            Modifier.animateItem(placementSpec = tween(durationMillis = 200)),
+                        ) {
+                            CategoryListRow(
+                                category = category,
+                                index = index,
+                                total = state.categories.size,
+                                isDragging = isDragging,
+                                draggedOffset = if (isDragging) draggedOffset else 0f,
+                                reorderEnabled = !state.isOrderSaving,
+                                onClick = { onEdit(category.id) },
+                                onMoveUp = { viewModel.moveCategoryOneStep(category.id, -1) },
+                                onMoveDown = { viewModel.moveCategoryOneStep(category.id, 1) },
+                                onDragStart = {
+                                    if (viewModel.startReordering()) {
+                                        draggedCategoryId = category.id
+                                        draggedOffset = 0f
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
+                                },
+                                onDrag = { delta ->
+                                    draggedOffset += delta
+                                    moveDraggedCategory(category.id)
+                                },
+                                onDragEnd = {
+                                    autoScrollDelta = 0f
+                                    draggedCategoryId = null
+                                    draggedOffset = 0f
+                                    viewModel.finishReordering(category.id)
+                                },
+                                onDragCancel = {
+                                    autoScrollDelta = 0f
+                                    draggedCategoryId = null
+                                    draggedOffset = 0f
+                                    viewModel.cancelReordering()
+                                },
+                            )
+                            HorizontalDivider()
+                        }
                     }
                 }
                 item { Spacer(Modifier.height(96.dp)) }
@@ -162,30 +301,109 @@ fun CategoryListScreen(
 }
 
 @Composable
-private fun CategoryListRow(category: Category, onClick: () -> Unit) {
-    ListItem(
-        leadingContent = {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(CategoryLightColors[category.colorIndex].copy(alpha = 0.14f))
-                    .clickable(onClick = onClick),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    categoryIcon(category.iconName),
-                    contentDescription = null,
-                    tint = CategoryLightColors[category.colorIndex],
-                )
-            }
-        },
-        headlineContent = { Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Text(stringResource(R.string.category_end_time_format, category.endHour))
-        },
-        modifier = Modifier.clickable(onClick = onClick),
+private fun CategoryListRow(
+    category: Category,
+    index: Int,
+    total: Int,
+    isDragging: Boolean,
+    draggedOffset: Float,
+    reorderEnabled: Boolean,
+    onClick: () -> Unit,
+    onMoveUp: () -> Boolean,
+    onMoveDown: () -> Boolean,
+    onDragStart: () -> Unit,
+    onDrag: (Float) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
+) {
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 6.dp else 0.dp,
+        animationSpec = tween(durationMillis = 150),
+        label = "category-row-elevation",
     )
+    val scale by animateFloatAsState(
+        targetValue = if (isDragging) 1.02f else 1f,
+        animationSpec = tween(durationMillis = 150),
+        label = "category-row-scale",
+    )
+    val iconLabel = stringResource(
+        CategoryIconOptions.firstOrNull { it.id == category.iconName }?.labelRes
+            ?: R.string.category_icon_category,
+    )
+    val positionLabel = stringResource(R.string.category_list_position, total, index + 1)
+    val reorderLabel = stringResource(R.string.category_reorder_handle, category.name)
+    val moveUpLabel = stringResource(R.string.category_move_up)
+    val moveDownLabel = stringResource(R.string.category_move_down)
+    val accessibilityActions = buildList {
+        if (reorderEnabled && index > 0) {
+            add(CustomAccessibilityAction(moveUpLabel, onMoveUp))
+        }
+        if (reorderEnabled && index < total - 1) {
+            add(CustomAccessibilityAction(moveDownLabel, onMoveDown))
+        }
+    }
+
+    Surface(
+        modifier = Modifier
+            .zIndex(if (isDragging) 1f else 0f)
+            .graphicsLayer {
+                translationY = draggedOffset
+                scaleX = scale
+                scaleY = scale
+            },
+        shadowElevation = elevation,
+    ) {
+        ListItem(
+            leadingContent = {
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(CategoryLightColors[category.colorIndex].copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        categoryIcon(category.iconName),
+                        contentDescription = iconLabel,
+                        tint = CategoryLightColors[category.colorIndex],
+                    )
+                }
+            },
+            headlineContent = {
+                Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            },
+            supportingContent = {
+                Text(stringResource(R.string.category_end_time_format, category.endHour))
+            },
+            trailingContent = {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = reorderLabel
+                            customActions = accessibilityActions
+                        }
+                        .pointerInput(category.id, reorderEnabled) {
+                            if (!reorderEnabled) return@pointerInput
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { onDragStart() },
+                                onDragEnd = onDragEnd,
+                                onDragCancel = onDragCancel,
+                            ) { change, dragAmount ->
+                                change.consume()
+                                onDrag(dragAmount.y)
+                            }
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Outlined.DragHandle, contentDescription = null)
+                }
+            },
+            modifier = Modifier
+                .clickable(enabled = !isDragging, onClick = onClick)
+                .semantics { stateDescription = positionLabel },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

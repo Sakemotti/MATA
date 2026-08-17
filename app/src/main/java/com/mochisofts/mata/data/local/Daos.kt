@@ -100,6 +100,9 @@ interface CategoryDao {
     @Upsert
     suspend fun upsert(category: CategoryEntity)
 
+    @Query("UPDATE categories SET sortOrder = :sortOrder, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateSortOrder(id: String, sortOrder: Int, updatedAt: Long)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertBackup(category: CategoryEntity)
 

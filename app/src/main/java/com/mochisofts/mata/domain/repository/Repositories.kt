@@ -34,6 +34,7 @@ interface CategoryRepository {
         iconName: String,
         endHour: Int,
     ): Result<String>
+    suspend fun reorderCategories(orderedIds: List<String>): Result<Unit>
     suspend fun deleteCategory(id: String): Result<Unit>
 }
 
