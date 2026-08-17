@@ -398,4 +398,13 @@
     <plurals name="notification_group_count">
         <item quantity="other">未処理の通知が%d件あります</item>
     </plurals>
+    <string name="holiday_data_stale">祝日情報の更新期限を過ぎています。保存済みの情報を使用します</string>
+    <string name="holiday_data_loading">祝日情報を取得しています。完了までは平日の予定を暫定表示します</string>
+    <string name="holiday_data_refreshing">保存済みの祝日情報を使用しながら更新しています</string>
+    <string name="holiday_data_unavailable">祝日情報が未取得のため、平日の予定は暫定表示です</string>
+    <string name="holiday_data_provisional">祝日情報を取得できないため、平日の予定は暫定表示です</string>
+    <string name="holiday_data_failed_with_cache">祝日情報の更新に失敗しました。保存済みの情報を使用します</string>
+    <string name="holiday_data_out_of_range">祝日情報の取得対象範囲外のため、平日の予定は暫定表示です</string>
+    <string name="holiday_name_format">祝日：%1$s</string>
+    <string name="todo_editor_excluded_holiday_format">%1$s（%2$s）は実行日から除外</string>
 </resources>

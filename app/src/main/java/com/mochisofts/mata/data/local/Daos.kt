@@ -384,3 +384,48 @@ interface ScheduledNotificationDao {
     @Query("DELETE FROM scheduled_notifications WHERE todoId = :todoId")
     suspend fun deleteForTodo(todoId: String)
 }
+
+@Dao
+interface HolidayDao {
+    @Query("SELECT * FROM holidays ORDER BY date ASC")
+    fun observeAll(): Flow<List<HolidayEntity>>
+
+    @Query("SELECT * FROM holidays ORDER BY date ASC")
+    suspend fun findAll(): List<HolidayEntity>
+
+    @Query("SELECT * FROM holidays WHERE year IN (:years) ORDER BY date ASC")
+    suspend fun findForYears(years: List<Int>): List<HolidayEntity>
+
+    @Query("DELETE FROM holidays WHERE year = :year")
+    suspend fun deleteYear(year: Int)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(holidays: List<HolidayEntity>)
+}
+
+@Dao
+interface HolidayFetchStateDao {
+    @Query("SELECT * FROM holiday_fetch_states ORDER BY year ASC")
+    fun observeAll(): Flow<List<HolidayFetchStateEntity>>
+
+    @Query("SELECT * FROM holiday_fetch_states ORDER BY year ASC")
+    suspend fun findAll(): List<HolidayFetchStateEntity>
+
+    @Query("SELECT * FROM holiday_fetch_states WHERE year IN (:years) ORDER BY year ASC")
+    suspend fun findForYears(years: List<Int>): List<HolidayFetchStateEntity>
+
+    @Upsert
+    suspend fun upsertAll(states: List<HolidayFetchStateEntity>)
+}
+
+@Dao
+interface HolidayUpdateStateDao {
+    @Query("SELECT * FROM holiday_update_states WHERE id = 1 LIMIT 1")
+    fun observeCurrent(): Flow<HolidayUpdateStateEntity?>
+
+    @Query("SELECT * FROM holiday_update_states WHERE id = 1 LIMIT 1")
+    suspend fun findCurrent(): HolidayUpdateStateEntity?
+
+    @Upsert
+    suspend fun upsert(state: HolidayUpdateStateEntity)
+}

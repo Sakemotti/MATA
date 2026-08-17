@@ -10,6 +10,10 @@ import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.MIGRATION_1_2
 import com.mochisofts.mata.data.local.MIGRATION_2_3
 import com.mochisofts.mata.data.local.MIGRATION_3_4
+import com.mochisofts.mata.data.local.MIGRATION_4_5
+import com.mochisofts.mata.data.local.HolidayDao
+import com.mochisofts.mata.data.local.HolidayFetchStateDao
+import com.mochisofts.mata.data.local.HolidayUpdateStateDao
 import com.mochisofts.mata.data.local.PeriodResultDao
 import com.mochisofts.mata.data.local.ScheduledNotificationDao
 import com.mochisofts.mata.data.local.TodoDao
@@ -22,6 +26,9 @@ import com.mochisofts.mata.data.repository.RoomHistoryReconciler
 import com.mochisofts.mata.data.repository.RoomHistoryRepository
 import com.mochisofts.mata.data.repository.RoomArchiveRepository
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
+import com.mochisofts.mata.data.repository.RoomHolidayRepository
+import com.mochisofts.mata.data.holiday.HolidayHttpClient
+import com.mochisofts.mata.data.holiday.UrlConnectionHolidayHttpClient
 import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
 import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
@@ -32,6 +39,7 @@ import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryRepository
 import com.mochisofts.mata.domain.repository.ArchiveRepository
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -75,6 +83,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAlarmGateway(gateway: AndroidAlarmGateway): AlarmGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindHolidayRepository(repository: RoomHolidayRepository): HolidayRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHolidayHttpClient(client: UrlConnectionHolidayHttpClient): HolidayHttpClient
 }
 
 @Module
@@ -84,7 +100,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MataDatabase =
         Room.databaseBuilder(context, MataDatabase::class.java, "mata.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
 
     @Provides
@@ -110,6 +126,17 @@ object DatabaseModule {
     @Provides
     fun provideScheduledNotificationDao(database: MataDatabase): ScheduledNotificationDao =
         database.scheduledNotificationDao()
+
+    @Provides
+    fun provideHolidayDao(database: MataDatabase): HolidayDao = database.holidayDao()
+
+    @Provides
+    fun provideHolidayFetchStateDao(database: MataDatabase): HolidayFetchStateDao =
+        database.holidayFetchStateDao()
+
+    @Provides
+    fun provideHolidayUpdateStateDao(database: MataDatabase): HolidayUpdateStateDao =
+        database.holidayUpdateStateDao()
 
     @Provides
     @Singleton

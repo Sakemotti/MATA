@@ -132,6 +132,7 @@ fun nextNotificationCandidate(
     weekStart: DayOfWeek,
     completedDates: Set<LocalDate> = emptySet(),
     actedDates: Set<LocalDate> = completedDates,
+    holidays: Set<LocalDate> = emptySet(),
 ): NotificationCandidate? {
     if (todo.archivedAt != null || validateNotifications(listOf(notification), todo.dueMinutes, endHour).isNotEmpty()) {
         return null
@@ -139,7 +140,7 @@ fun nextNotificationCandidate(
 
     var searchDate = maxOf(todo.startDate, logicalDate(now, endHour))
     repeat(MAX_CANDIDATE_SEARCH_STEPS) {
-        val occurrenceDate = todo.nextOccurrenceOnOrAfter(searchDate) ?: return null
+        val occurrenceDate = todo.nextOccurrenceOnOrAfter(searchDate, holidays) ?: return null
         if (todo.endDate?.let(occurrenceDate::isAfter) == true) return null
         searchDate = occurrenceDate.plusDays(1)
         if (occurrenceDate in actedDates) return@repeat

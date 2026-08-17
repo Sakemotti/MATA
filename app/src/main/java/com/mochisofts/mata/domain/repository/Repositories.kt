@@ -15,6 +15,8 @@ import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.CompletionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryMonth
+import com.mochisofts.mata.domain.model.HolidayRefreshResult
+import com.mochisofts.mata.domain.model.HolidaySnapshot
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.UUID
@@ -117,4 +119,13 @@ interface ArchiveRepository {
     suspend fun getActionPreview(todoId: String): Result<ArchiveActionPreview>
     suspend fun restore(todoId: String): Result<Unit>
     suspend fun deletePermanently(todoId: String): Result<Unit>
+}
+
+interface HolidayRepository {
+    val snapshot: Flow<HolidaySnapshot>
+    suspend fun currentSnapshot(): HolidaySnapshot
+    suspend fun needsRefresh(): Boolean
+    suspend fun refresh(): HolidayRefreshResult
+    suspend fun pendingNotificationGeneration(): Long?
+    suspend fun markNotificationGenerationProcessed(generation: Long)
 }

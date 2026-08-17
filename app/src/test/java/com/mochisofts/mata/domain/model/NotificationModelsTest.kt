@@ -87,6 +87,26 @@ class NotificationModelsTest {
     }
 
     @Test
+    fun nextCandidate_skipsJapaneseHolidayForWeekdayTodo() {
+        val todo = todo(
+            startDate = LocalDate.of(2026, 8, 10),
+            recurrenceRule = RecurrenceRule(RecurrenceType.WEEKDAYS),
+            dueMinutes = 12 * 60,
+        )
+
+        val candidate = nextNotificationCandidate(
+            todo = todo,
+            notification = notification(NotificationRelation.AT, 0),
+            endHour = 0,
+            now = ZonedDateTime.of(2026, 8, 10, 9, 0, 0, 0, zone),
+            weekStart = DayOfWeek.MONDAY,
+            holidays = setOf(LocalDate.of(2026, 8, 10)),
+        )
+
+        assertEquals(LocalDate.of(2026, 8, 11), candidate?.logicalDate)
+    }
+
+    @Test
     fun invalidBoundaryAfterNotificationHasNoCandidate() {
         val todo = todo(
             startDate = LocalDate.of(2026, 8, 10),
