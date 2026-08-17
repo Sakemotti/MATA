@@ -176,3 +176,53 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         )
     }
 }
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS holidays (
+                date TEXT NOT NULL PRIMARY KEY,
+                year INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                sourceId TEXT NOT NULL,
+                sourceDataHash TEXT NOT NULL,
+                fetchedAt INTEGER NOT NULL
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_holidays_year ON holidays(year)")
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS holiday_fetch_states (
+                year INTEGER NOT NULL PRIMARY KEY,
+                sourceId TEXT NOT NULL,
+                availability TEXT NOT NULL,
+                dataHash TEXT,
+                fetchedAt INTEGER,
+                lastCheckedAt INTEGER,
+                lastAttemptedAt INTEGER,
+                lastAttemptResult TEXT NOT NULL,
+                etag TEXT,
+                lastModified TEXT,
+                lastErrorCode TEXT
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS holiday_update_states (
+                id INTEGER NOT NULL PRIMARY KEY,
+                generation INTEGER NOT NULL,
+                changedYears TEXT NOT NULL,
+                changedDates TEXT NOT NULL,
+                renamedDates TEXT NOT NULL,
+                domainProcessed INTEGER NOT NULL,
+                notificationProcessed INTEGER NOT NULL,
+                widgetProcessed INTEGER NOT NULL,
+                createdAt INTEGER NOT NULL
+            )
+            """.trimIndent(),
+        )
+    }
+}

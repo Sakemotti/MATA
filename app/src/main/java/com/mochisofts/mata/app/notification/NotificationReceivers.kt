@@ -32,6 +32,7 @@ import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import dagger.hilt.android.AndroidEntryPoint
@@ -170,6 +171,7 @@ class NotificationDeliveryService @Inject constructor(
     private val executionDao: TodoExecutionDao,
     private val notificationDao: TodoNotificationDao,
     private val settingsRepository: SettingsRepository,
+    private val holidayRepository: HolidayRepository,
     private val scheduler: NotificationScheduler,
     private val presenter: NotificationPresenter,
     private val clock: Clock,
@@ -205,7 +207,10 @@ class NotificationDeliveryService @Inject constructor(
             createdAt = entity.createdAt,
         )
         val execution = executionDao.find(todo.id, date.toString())
-        if (!todo.occursOn(date) || execution != null || !scheduler.systemState().canPostNotifications) {
+        val holidays = holidayRepository.currentSnapshot().dates
+        if (!todo.occursOn(date, holidays) || execution != null ||
+            !scheduler.systemState().canPostNotifications
+        ) {
             suppress(scheduled, "not_eligible")
             return
         }

@@ -76,6 +76,7 @@ import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.HolidayYearStatus
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -218,6 +219,7 @@ fun TodoListScreen(
                         )
                     }
                 }
+                HolidayDataStatus(state)
                 when (state.mode) {
                     TodoListMode.DATE -> DateMode(
                         state = state,
@@ -337,6 +339,52 @@ fun TodoListScreen(
                 TextButton(onClick = { deleteTarget = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
+            },
+        )
+    }
+}
+
+@Composable
+private fun HolidayDataStatus(state: TodoListUiState) {
+    state.holidayName?.let { name ->
+        Text(
+            text = stringResource(R.string.holiday_name_format, name),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+    val message = when (state.holidayStatus) {
+        HolidayYearStatus.AVAILABLE_STALE -> R.string.holiday_data_stale
+        HolidayYearStatus.FAILED_WITH_CACHE -> R.string.holiday_data_failed_with_cache
+        HolidayYearStatus.FETCHING -> if (state.holidayDataAvailable) {
+            R.string.holiday_data_refreshing
+        } else {
+            R.string.holiday_data_loading
+        }
+        HolidayYearStatus.UNAVAILABLE -> R.string.holiday_data_unavailable
+        HolidayYearStatus.FAILED_WITHOUT_CACHE -> R.string.holiday_data_provisional
+        HolidayYearStatus.OUT_OF_RANGE -> if (state.holidayDataAvailable) {
+            null
+        } else {
+            R.string.holiday_data_out_of_range
+        }
+        HolidayYearStatus.AVAILABLE_CURRENT,
+        null,
+        -> null
+    }
+    message?.let { messageRes ->
+        Text(
+            text = stringResource(messageRes),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (
+                state.holidayStatus == HolidayYearStatus.FAILED_WITHOUT_CACHE ||
+                state.holidayStatus == HolidayYearStatus.FAILED_WITH_CACHE
+            ) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
             },
         )
     }

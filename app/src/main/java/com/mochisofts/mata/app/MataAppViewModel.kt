@@ -6,6 +6,8 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HistoryReconciler
+import com.mochisofts.mata.domain.repository.HolidayRepository
+import com.mochisofts.mata.data.holiday.HolidayWorkScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,6 +22,8 @@ class MataAppViewModel @Inject constructor(
     settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
     private val historyReconciler: HistoryReconciler,
+    private val holidayRepository: HolidayRepository,
+    private val holidayWorkScheduler: HolidayWorkScheduler,
 ) : ViewModel() {
     val theme: StateFlow<AppTheme> = settingsRepository.theme
         .catch { emit(AppTheme.SYSTEM) }
@@ -35,6 +39,9 @@ class MataAppViewModel @Inject constructor(
 
     fun appResumed() {
         viewModelScope.launch {
+            if (runCatching { holidayRepository.needsRefresh() }.getOrDefault(false)) {
+                holidayWorkScheduler.enqueueImmediate()
+            }
             runCatching {
                 do {
                     val result = historyReconciler.reconcile()

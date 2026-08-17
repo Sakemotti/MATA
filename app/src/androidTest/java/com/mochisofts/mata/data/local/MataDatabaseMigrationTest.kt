@@ -153,4 +153,36 @@ class MataDatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate4To5_addsHolidayCacheTables() {
+        helper.createDatabase(databaseName, 4).close()
+
+        helper.runMigrationsAndValidate(
+            databaseName,
+            5,
+            true,
+            MIGRATION_4_5,
+        ).use { database ->
+            database.execSQL(
+                """
+                INSERT INTO holidays (
+                    date, year, name, sourceId, sourceDataHash, fetchedAt
+                ) VALUES ('2026-01-01', 2026, '元日', 'holidays_jp_v1', 'hash', 1)
+                """.trimIndent(),
+            )
+            database.query("SELECT name FROM holidays WHERE date = '2026-01-01'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("元日", cursor.getString(0))
+            }
+            database.query("SELECT COUNT(*) FROM holiday_fetch_states").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
+            }
+            database.query("SELECT COUNT(*) FROM holiday_update_states").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
+            }
+        }
+    }
 }

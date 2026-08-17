@@ -67,6 +67,7 @@ class RoomArchiveRepositoryTest {
             runtimeStateDao = database.todoRuntimeStateDao(),
             settingsRepository = settings,
             notificationScheduler = scheduler,
+            holidayRepository = TestHolidayRepository(),
             clock = clock,
         )
         repository = RoomArchiveRepository(

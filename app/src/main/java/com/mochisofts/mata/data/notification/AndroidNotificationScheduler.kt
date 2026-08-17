@@ -31,6 +31,7 @@ import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.nextNotificationCandidate
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
@@ -52,6 +53,7 @@ class AndroidNotificationScheduler @Inject constructor(
     private val notificationDao: TodoNotificationDao,
     private val scheduledDao: ScheduledNotificationDao,
     private val settingsRepository: SettingsRepository,
+    private val holidayRepository: HolidayRepository,
     private val alarmGateway: AlarmGateway,
     private val clock: Clock,
 ) : NotificationScheduler {
@@ -82,19 +84,20 @@ class AndroidNotificationScheduler @Inject constructor(
 
     override suspend fun reconcileTodo(todoId: String) {
         mutex.withLock {
-            reconcileTodoLocked(todoId)
+            reconcileTodoLocked(todoId, holidayRepository.currentSnapshot().dates)
             updateReconcileReceiver()
         }
     }
 
     override suspend fun reconcileAll() {
         mutex.withLock {
+            val holidays = holidayRepository.currentSnapshot().dates
             val activeTodos = todoDao.findActiveWithNotifications()
             val activeIds = activeTodos.mapTo(mutableSetOf(), TodoEntity::id)
             scheduledDao.findTodoIds().filterNot(activeIds::contains).forEach { todoId ->
                 cancelTodoLocked(todoId)
             }
-            activeTodos.forEach { reconcileTodoLocked(it.id) }
+            activeTodos.forEach { reconcileTodoLocked(it.id, holidays) }
             updateReconcileReceiver()
         }
     }
@@ -106,7 +109,7 @@ class AndroidNotificationScheduler @Inject constructor(
         }
     }
 
-    private suspend fun reconcileTodoLocked(todoId: String) {
+    private suspend fun reconcileTodoLocked(todoId: String, holidays: Set<LocalDate>) {
         val entity = todoDao.findById(todoId)
         val notificationEntities = notificationDao.findForTodo(todoId)
         if (entity == null || entity.archivedAt != null || notificationEntities.isEmpty()) {
@@ -132,6 +135,7 @@ class AndroidNotificationScheduler @Inject constructor(
                 weekStart = weekStart,
                 completedDates = completedDates,
                 actedDates = actedDates,
+                holidays = holidays,
             )
         }
         val desiredKeys = desiredCandidates.mapTo(mutableSetOf()) { candidate ->
