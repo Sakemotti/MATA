@@ -8,6 +8,12 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
+import com.mochisofts.mata.data.backup.BackupCoordinator
+import com.mochisofts.mata.data.backup.BackupErrorCode
+import com.mochisofts.mata.data.backup.BackupOperationState
+import com.mochisofts.mata.data.backup.BackupOperationStatus
+import com.mochisofts.mata.data.backup.BackupOperationType
+import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DayOfWeek
 import javax.inject.Inject
@@ -46,16 +52,19 @@ data class SettingsUiState(
         canScheduleExactAlarms = true,
     ),
     val savingSetting: SavingSetting? = null,
+    val backupOperation: BackupOperationState = BackupOperationState(),
 )
 
 sealed interface SettingsEffect {
     data class Message(@StringRes val messageRes: Int) : SettingsEffect
+    data object RestoreCompleted : SettingsEffect
 }
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
+    private val backupCoordinator: BackupCoordinator? = null,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -73,6 +82,28 @@ class SettingsViewModel @Inject constructor(
             }
         }
         refreshNotificationStatus(reconcile = false)
+        backupCoordinator?.let { coordinator ->
+            viewModelScope.launch {
+                coordinator.state.collect { operation ->
+                    _uiState.update { it.copy(backupOperation = operation) }
+                    when (operation.status) {
+                        BackupOperationStatus.SUCCEEDED -> {
+                            if (operation.type == BackupOperationType.RESTORE) {
+                                effectsChannel.send(SettingsEffect.RestoreCompleted)
+                            } else {
+                                effectsChannel.send(SettingsEffect.Message(R.string.backup_create_success))
+                            }
+                            coordinator.acknowledgeResult()
+                        }
+                        BackupOperationStatus.FAILED -> {
+                            effectsChannel.send(SettingsEffect.Message(operation.errorMessage()))
+                            coordinator.acknowledgeResult()
+                        }
+                        else -> Unit
+                    }
+                }
+            }
+        }
     }
 
     fun retry() = load()
@@ -91,6 +122,36 @@ class SettingsViewModel @Inject constructor(
 
     fun setTheme(value: AppTheme) = save(SavingSetting.THEME) {
         repository.setTheme(value)
+    }
+
+    fun suggestedBackupFileName(): String = backupCoordinator?.suggestedFileName().orEmpty()
+
+    fun createTargetSelected(uri: Uri?) {
+        if (uri != null && backupCoordinator?.startCreate(uri) == false) {
+            viewModelScope.launch {
+                effectsChannel.send(SettingsEffect.Message(R.string.backup_operation_already_running))
+            }
+        }
+    }
+
+    fun restoreFileSelected(uri: Uri?) {
+        if (uri != null && backupCoordinator?.startRestoreValidation(uri) == false) {
+            viewModelScope.launch {
+                effectsChannel.send(SettingsEffect.Message(R.string.backup_operation_already_running))
+            }
+        }
+    }
+
+    fun confirmRestore() {
+        if (backupCoordinator?.confirmRestore() == false) {
+            viewModelScope.launch {
+                effectsChannel.send(SettingsEffect.Message(R.string.backup_restore_start_error))
+            }
+        }
+    }
+
+    fun cancelRestoreConfirmation() {
+        backupCoordinator?.cancelRestoreConfirmation()
     }
 
     fun refreshNotificationStatus(reconcile: Boolean = true) {
@@ -157,4 +218,15 @@ class SettingsViewModel @Inject constructor(
         val showCompleted: Boolean,
         val theme: AppTheme,
     )
+}
+
+@StringRes
+private fun BackupOperationState.errorMessage(): Int = when (errorCode) {
+    BackupErrorCode.INVALID_FILE -> R.string.backup_invalid_file
+    BackupErrorCode.UNSUPPORTED_VERSION -> R.string.backup_unsupported_version
+    BackupErrorCode.STORAGE_UNAVAILABLE -> R.string.backup_storage_error
+    BackupErrorCode.NOT_ENOUGH_SPACE -> R.string.backup_not_enough_space
+    BackupErrorCode.INCOMPLETE_FILE_REMAINS -> R.string.backup_incomplete_file_remains
+    BackupErrorCode.RESTORE_ROLLED_BACK -> R.string.backup_restore_rolled_back
+    BackupErrorCode.INTERNAL, null -> R.string.backup_operation_error
 }

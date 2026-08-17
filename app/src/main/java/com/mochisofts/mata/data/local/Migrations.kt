@@ -2,6 +2,8 @@ package com.mochisofts.mata.data.local
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import org.json.JSONArray
+import org.json.JSONObject
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -249,3 +251,86 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE categories ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE categories SET updatedAt = createdAt")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_categories_normalizedName " +
+                "ON categories(normalizedName)",
+        )
+        repairLegacyExecutionSnapshots(db)
+    }
+}
+
+private fun repairLegacyExecutionSnapshots(db: SupportSQLiteDatabase) {
+    db.query(
+        """
+        SELECT executions.id, executions.todoId, executions.logicalDate,
+            executions.definitionRevision,
+            todos.title, todos.description, todos.startDate, todos.endDate,
+            todos.recurrenceType, todos.repeatParamsVersion, todos.repeatParamsJson,
+            todos.dueMinutes, todos.categoryId, todos.createdAt,
+            categories.name, categories.colorIndex, categories.iconName,
+            categories.sortOrder, COALESCE(categories.endHour, 0)
+        FROM todo_executions AS executions
+        INNER JOIN todos ON todos.id = executions.todoId
+        LEFT JOIN categories ON categories.id = todos.categoryId
+        WHERE executions.snapshotJson = '{"version":1,"migratedFromSchema":3}'
+        """.trimIndent(),
+    ).use { cursor ->
+        while (cursor.moveToNext()) {
+            val todoId = cursor.getString(1)
+            val notifications = JSONArray()
+            db.query(
+                "SELECT relation, amount, unit FROM todo_notifications " +
+                    "WHERE todoId = ? ORDER BY sortOrder ASC",
+                arrayOf(todoId),
+            ).use { notificationCursor ->
+                while (notificationCursor.moveToNext()) {
+                    notifications.put(
+                        JSONObject()
+                            .put("relation", notificationCursor.getString(0))
+                            .put("amount", notificationCursor.getInt(1))
+                            .put("unit", notificationCursor.getString(2)),
+                    )
+                }
+            }
+            val snapshot = JSONObject()
+                .put("version", 1)
+                .put("todoId", todoId)
+                .put("definitionRevision", cursor.getInt(3))
+                .put("title", cursor.getString(4))
+                .put("description", cursor.getString(5))
+                .put("startDate", cursor.getString(6))
+                .put("endDate", cursor.stringOrJsonNull(7))
+                .put("recurrenceType", cursor.getString(8))
+                .put("repeatParamsVersion", cursor.getInt(9))
+                .put("repeatParamsJson", cursor.getString(10))
+                .put("dueMinutes", cursor.intOrJsonNull(11))
+                .put("notifications", notifications)
+                .put("categoryId", cursor.stringOrJsonNull(12))
+                .put("categoryName", cursor.stringOrJsonNull(14))
+                .put("categoryColorIndex", cursor.intOrJsonNull(15))
+                .put("categoryIconName", cursor.stringOrJsonNull(16))
+                .put("categorySortOrder", cursor.intOrJsonNull(17))
+                .put("endHour", cursor.getInt(18))
+                .put("weekStart", 1)
+                .put("createdAt", cursor.getLong(13))
+                .put("logicalDate", cursor.getString(2))
+                .put("periodStart", JSONObject.NULL)
+                .put("periodEnd", JSONObject.NULL)
+            db.execSQL(
+                "UPDATE todo_executions SET snapshotJson = ? WHERE id = ?",
+                arrayOf(snapshot.toString(), cursor.getString(0)),
+            )
+        }
+    }
+}
+
+private fun android.database.Cursor.stringOrJsonNull(index: Int): Any =
+    if (isNull(index)) JSONObject.NULL else getString(index)
+
+private fun android.database.Cursor.intOrJsonNull(index: Int): Any =
+    if (isNull(index)) JSONObject.NULL else getInt(index)

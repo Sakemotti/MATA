@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -68,6 +70,13 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.data.backup.BACKUP_MIME_TYPE
+import com.mochisofts.mata.data.backup.BackupOperationPhase
+import com.mochisofts.mata.data.backup.BackupOperationState
+import com.mochisofts.mata.data.backup.BackupOperationStatus
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.DayOfWeek
 import kotlinx.coroutines.launch
 
@@ -75,6 +84,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     onDestination: (MataDestination) -> Unit,
+    onRestoreCompleted: () -> Unit = { onDestination(MataDestination.TODOS) },
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -86,6 +96,15 @@ fun SettingsScreen(
     var showEndHourSheet by remember { mutableStateOf(false) }
     var showWeekStartSheet by remember { mutableStateOf(false) }
     var showThemeSheet by remember { mutableStateOf(false) }
+    var showBackupWarning by remember { mutableStateOf(false) }
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE),
+        viewModel::createTargetSelected,
+    )
+    val openDocumentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+        viewModel::restoreFileSelected,
+    )
     val systemSettingsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
@@ -101,6 +120,10 @@ fun SettingsScreen(
             when (effect) {
                 is SettingsEffect.Message -> {
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
+                }
+                SettingsEffect.RestoreCompleted -> {
+                    Toast.makeText(context, R.string.backup_restore_success, Toast.LENGTH_SHORT).show()
+                    onRestoreCompleted()
                 }
             }
         }
@@ -155,7 +178,8 @@ fun SettingsScreen(
                     }
                 }
                 else -> {
-                    val settingsEnabled = state.savingSetting == null
+                    val settingsEnabled = state.savingSetting == null &&
+                        !state.backupOperation.blocksDataChanges
                     Column(
                         Modifier
                             .fillMaxSize()
@@ -274,6 +298,28 @@ fun SettingsScreen(
                             enabled = settingsEnabled,
                             onClick = { onDestination(MataDestination.ARCHIVE) },
                         )
+                        HorizontalDivider()
+                        SettingsValueRow(
+                            title = stringResource(R.string.backup_create_title),
+                            value = stringResource(R.string.backup_create_value),
+                            description = stringResource(R.string.backup_create_description),
+                            isSaving = false,
+                            enabled = settingsEnabled,
+                            onClick = { showBackupWarning = true },
+                        )
+                        HorizontalDivider()
+                        SettingsValueRow(
+                            title = stringResource(R.string.backup_restore_title),
+                            value = stringResource(R.string.backup_restore_value),
+                            description = stringResource(R.string.backup_restore_description),
+                            isSaving = false,
+                            enabled = settingsEnabled,
+                            onClick = {
+                                openDocumentLauncher.launch(
+                                    arrayOf(BACKUP_MIME_TYPE, "application/octet-stream"),
+                                )
+                            },
+                        )
                         Spacer(Modifier.height(32.dp))
                     }
                 }
@@ -320,6 +366,117 @@ fun SettingsScreen(
             onDismiss = { showThemeSheet = false },
         )
     }
+    if (showBackupWarning) {
+        AlertDialog(
+            onDismissRequest = { showBackupWarning = false },
+            title = { Text(stringResource(R.string.backup_warning_title)) },
+            text = { Text(stringResource(R.string.backup_warning_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showBackupWarning = false
+                        createDocumentLauncher.launch(viewModel.suggestedBackupFileName())
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBackupWarning = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+    if (state.backupOperation.status == BackupOperationStatus.AWAITING_CONFIRMATION) {
+        RestoreConfirmationDialog(
+            operation = state.backupOperation,
+            onConfirm = viewModel::confirmRestore,
+            onCancel = viewModel::cancelRestoreConfirmation,
+        )
+    }
+    if (state.backupOperation.status == BackupOperationStatus.RUNNING) {
+        BackupProgressDialog(state.backupOperation)
+    }
+}
+
+@Composable
+private fun RestoreConfirmationDialog(
+    operation: BackupOperationState,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val summary = operation.summary ?: return
+    val manifest = summary.manifest
+    val timePattern = stringResource(R.string.date_time_pattern)
+    val createdAt = remember(manifest.createdAt, timePattern) {
+        DateTimeFormatter.ofPattern(timePattern)
+            .format(Instant.ofEpochMilli(manifest.createdAt).atZone(ZoneId.systemDefault()))
+    }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.backup_restore_confirm_created_at, createdAt))
+                Text(stringResource(R.string.backup_restore_confirm_app_version, manifest.appVersionName))
+                Text(stringResource(R.string.backup_restore_confirm_todos, manifest.counts.todos))
+                Text(stringResource(R.string.backup_restore_confirm_archived, summary.archivedTodoCount))
+                Text(stringResource(R.string.backup_restore_confirm_categories, manifest.counts.categories))
+                Text(stringResource(R.string.backup_restore_confirm_notifications, manifest.counts.notifications))
+                Text(stringResource(R.string.backup_restore_confirm_history, manifest.counts.executions))
+                Text(stringResource(R.string.backup_restore_confirm_periods, manifest.counts.periodResults))
+                Text(
+                    stringResource(R.string.backup_restore_confirm_warning),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.backup_restore_action))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun BackupProgressDialog(operation: BackupOperationState) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(stringResource(R.string.backup_progress_title)) },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                CircularProgressIndicator()
+                Text(stringResource(operation.phase.labelResource()))
+                operation.progress?.let {
+                    Text(stringResource(R.string.backup_progress_percent, it))
+                }
+            }
+        },
+        confirmButton = {},
+    )
+}
+
+@StringRes
+private fun BackupOperationPhase.labelResource(): Int = when (this) {
+    BackupOperationPhase.NONE,
+    BackupOperationPhase.PREPARING,
+    -> R.string.backup_phase_preparing
+    BackupOperationPhase.WRITING -> R.string.backup_phase_writing
+    BackupOperationPhase.VALIDATING -> R.string.backup_phase_validating
+    BackupOperationPhase.RESTORING -> R.string.backup_phase_restoring
+    BackupOperationPhase.REBUILDING -> R.string.backup_phase_rebuilding
+    BackupOperationPhase.ROLLING_BACK -> R.string.backup_phase_rolling_back
 }
 
 @Composable

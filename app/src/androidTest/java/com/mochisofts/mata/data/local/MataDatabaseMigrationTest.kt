@@ -215,4 +215,30 @@ class MataDatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate6To7_addsCategoryUpdatedAtAndNormalizedNameConstraint() {
+        helper.createDatabase(databaseName, 6).apply {
+            execSQL(
+                """
+                INSERT INTO categories (
+                    id, name, normalizedName, colorIndex, iconName, endHour, sortOrder, createdAt
+                ) VALUES ('category-id', '日常', '日常', 0, 'Home', 0, 0, 123)
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(
+            databaseName,
+            7,
+            true,
+            MIGRATION_6_7,
+        ).use { database ->
+            database.query("SELECT updatedAt FROM categories WHERE id = 'category-id'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(123, cursor.getLong(0))
+            }
+        }
+    }
 }

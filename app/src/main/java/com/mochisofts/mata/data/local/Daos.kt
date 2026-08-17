@@ -82,6 +82,12 @@ interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY sortOrder ASC")
     suspend fun findAll(): List<CategoryEntity>
 
+    @Query("SELECT COUNT(*) FROM categories")
+    suspend fun backupCount(): Int
+
+    @Query("SELECT * FROM categories ORDER BY sortOrder ASC, id ASC LIMIT :limit OFFSET :offset")
+    suspend fun backupPage(limit: Int, offset: Int): List<CategoryEntity>
+
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun findById(id: String): CategoryEntity?
 
@@ -93,6 +99,12 @@ interface CategoryDao {
 
     @Upsert
     suspend fun upsert(category: CategoryEntity)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertBackup(category: CategoryEntity)
+
+    @Query("DELETE FROM categories")
+    suspend fun deleteAllForRestore()
 
     @Delete
     suspend fun delete(category: CategoryEntity)
@@ -185,6 +197,12 @@ interface TodoDao {
     @Query("SELECT * FROM todos WHERE archivedAt IS NULL ORDER BY id ASC")
     suspend fun findAllActive(): List<TodoEntity>
 
+    @Query("SELECT COUNT(*) FROM todos")
+    suspend fun backupCount(): Int
+
+    @Query("SELECT * FROM todos ORDER BY createdAt ASC, id ASC LIMIT :limit OFFSET :offset")
+    suspend fun backupPage(limit: Int, offset: Int): List<TodoEntity>
+
     @Query(
         """
         SELECT DISTINCT todos.* FROM todos
@@ -198,6 +216,12 @@ interface TodoDao {
     @Upsert
     suspend fun upsert(todo: TodoEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertBackup(todo: TodoEntity)
+
+    @Query("DELETE FROM todos")
+    suspend fun deleteAllForRestore()
+
     @Query("DELETE FROM todos WHERE id = :id")
     suspend fun deleteById(id: String)
 }
@@ -209,6 +233,15 @@ interface TodoExecutionDao {
 
     @Query("SELECT * FROM todo_executions")
     suspend fun findAll(): List<TodoExecutionEntity>
+
+    @Query("SELECT COUNT(*) FROM todo_executions")
+    suspend fun backupCount(): Int
+
+    @Query(
+        "SELECT * FROM todo_executions " +
+            "ORDER BY logicalDate ASC, todoId ASC, id ASC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun backupPage(limit: Int, offset: Int): List<TodoExecutionEntity>
 
     @Query(
         """
@@ -309,6 +342,9 @@ interface TodoExecutionDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(execution: TodoExecutionEntity)
 
+    @Query("DELETE FROM todo_executions")
+    suspend fun deleteAllForRestore()
+
     @Query("DELETE FROM todo_executions WHERE todoId = :todoId AND logicalDate = :logicalDate")
     suspend fun delete(todoId: String, logicalDate: String)
 
@@ -318,6 +354,15 @@ interface TodoExecutionDao {
 
 @Dao
 interface PeriodResultDao {
+    @Query("SELECT COUNT(*) FROM period_results")
+    suspend fun backupCount(): Int
+
+    @Query(
+        "SELECT * FROM period_results " +
+            "ORDER BY periodStart ASC, todoId ASC, id ASC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun backupPage(limit: Int, offset: Int): List<PeriodResultEntity>
+
     @Query(
         "SELECT displayDate, achieved FROM period_results " +
             "WHERE displayDate BETWEEN :startDate AND :endDate ORDER BY displayDate ASC",
@@ -341,15 +386,33 @@ interface PeriodResultDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(result: PeriodResultEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertBackup(result: PeriodResultEntity)
+
+    @Query("DELETE FROM period_results")
+    suspend fun deleteAllForRestore()
 }
 
 @Dao
 interface TodoRuntimeStateDao {
+    @Query("SELECT COUNT(*) FROM todo_runtime_states")
+    suspend fun backupCount(): Int
+
+    @Query("SELECT * FROM todo_runtime_states ORDER BY todoId ASC LIMIT :limit OFFSET :offset")
+    suspend fun backupPage(limit: Int, offset: Int): List<TodoRuntimeStateEntity>
+
     @Query("SELECT * FROM todo_runtime_states WHERE todoId = :todoId LIMIT 1")
     suspend fun find(todoId: String): TodoRuntimeStateEntity?
 
     @Upsert
     suspend fun upsert(state: TodoRuntimeStateEntity)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertBackup(state: TodoRuntimeStateEntity)
+
+    @Query("DELETE FROM todo_runtime_states")
+    suspend fun deleteAllForRestore()
 }
 
 @Dao
@@ -369,8 +432,20 @@ interface TodoNotificationDao {
     @Query("SELECT COUNT(*) FROM todo_notifications")
     suspend fun count(): Int
 
+    @Query(
+        "SELECT * FROM todo_notifications " +
+            "ORDER BY todoId ASC, sortOrder ASC, id ASC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun backupPage(limit: Int, offset: Int): List<TodoNotificationEntity>
+
     @Upsert
     suspend fun upsertAll(notifications: List<TodoNotificationEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertBackup(notification: TodoNotificationEntity)
+
+    @Query("DELETE FROM todo_notifications")
+    suspend fun deleteAllForRestore()
 
     @Query("DELETE FROM todo_notifications WHERE todoId = :todoId")
     suspend fun deleteForTodo(todoId: String)
@@ -398,6 +473,9 @@ interface ScheduledNotificationDao {
 
     @Query("DELETE FROM scheduled_notifications WHERE todoId = :todoId")
     suspend fun deleteForTodo(todoId: String)
+
+    @Query("DELETE FROM scheduled_notifications")
+    suspend fun deleteAllForRestore()
 }
 
 @Dao

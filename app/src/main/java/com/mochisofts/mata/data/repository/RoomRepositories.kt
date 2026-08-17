@@ -89,6 +89,7 @@ class RoomCategoryRepository @Inject constructor(
                     endHour = endHour,
                     sortOrder = existing?.sortOrder ?: categoryDao.nextSortOrder(),
                     createdAt = existing?.createdAt ?: clock.millis(),
+                    updatedAt = clock.millis(),
                 ),
             )
         }

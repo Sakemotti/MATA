@@ -17,7 +17,7 @@ import androidx.room.RoomDatabase
         HolidayUpdateStateEntity::class,
         WidgetInstanceStateEntity::class,
     ],
-    version = 6,
+    version = MataDatabase.SCHEMA_VERSION,
     exportSchema = true,
 )
 abstract class MataDatabase : RoomDatabase() {
@@ -32,4 +32,8 @@ abstract class MataDatabase : RoomDatabase() {
     abstract fun holidayFetchStateDao(): HolidayFetchStateDao
     abstract fun holidayUpdateStateDao(): HolidayUpdateStateDao
     abstract fun widgetInstanceStateDao(): WidgetInstanceStateDao
+
+    companion object {
+        const val SCHEMA_VERSION = 7
+    }
 }
