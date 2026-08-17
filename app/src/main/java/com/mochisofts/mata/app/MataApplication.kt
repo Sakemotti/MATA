@@ -8,6 +8,7 @@ import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.data.holiday.HolidayWorkScheduler
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.data.widget.WidgetPreviewPublisher
+import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -36,6 +37,7 @@ class MataApplication : Application() {
     @Inject lateinit var categoryRepository: CategoryRepository
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var clock: Clock
+    @Inject lateinit var backupCoordinator: BackupCoordinator
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -67,6 +69,7 @@ class MataApplication : Application() {
                 .collect { widgetUpdater.requestUpdate() }
         }
         applicationScope.launch {
+            backupCoordinator.recoverInterruptedOperation()
             if (runCatching { holidayRepository.needsRefresh() }.getOrDefault(true)) {
                 holidayWorkScheduler.enqueueImmediate()
             }

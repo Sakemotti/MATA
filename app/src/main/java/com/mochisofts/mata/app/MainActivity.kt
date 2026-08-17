@@ -198,7 +198,15 @@ private fun MataApp(
             )
         }
         composable<SettingsRoute> {
-            SettingsScreen(onDestination = navigateToDestination)
+            SettingsScreen(
+                onDestination = navigateToDestination,
+                onRestoreCompleted = {
+                    navController.navigate(TodoListRoute(initialMode = MainActivity.WIDGET_MODE_DATE)) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
         }
         composable<PlaceholderRoute> { entry ->
             val route = entry.toRoute<PlaceholderRoute>()

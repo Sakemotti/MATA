@@ -6,7 +6,10 @@ import androidx.room.Index
 
 @Entity(
     tableName = "categories",
-    indices = [Index(value = ["sortOrder"], unique = true)],
+    indices = [
+        Index(value = ["normalizedName"], unique = true),
+        Index(value = ["sortOrder"], unique = true),
+    ],
 )
 data class CategoryEntity(
     @androidx.room.PrimaryKey val id: String,
@@ -17,6 +20,7 @@ data class CategoryEntity(
     val endHour: Int,
     val sortOrder: Int,
     val createdAt: Long,
+    val updatedAt: Long = createdAt,
 )
 
 @Entity(
