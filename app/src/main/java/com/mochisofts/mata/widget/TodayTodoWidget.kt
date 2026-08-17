@@ -4,6 +4,8 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -88,15 +90,18 @@ class TodayTodoWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val state = widgetEntryPoint(context).widgetStateDao().find(appWidgetId)
-        val model = state?.snapshotJson?.let { value ->
-            runCatching { WidgetSnapshotJson.decode(value) }.getOrNull()
-        }?.takeIf { it.snapshotVersion == WidgetDisplayModel.CURRENT_VERSION }
-        val lastUpdated = state?.lastSuccessAt?.let { timestamp ->
-            val time = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalTime()
-            context.getString(R.string.widget_last_updated_format, TIME_FORMAT.format(time))
-        }
+        val stateDao = widgetEntryPoint(context).widgetStateDao()
+        val initialState = stateDao.find(appWidgetId)
+        val stateUpdates = stateDao.observe(appWidgetId)
         provideContent {
+            val state by stateUpdates.collectAsState(initialState)
+            val model = state?.snapshotJson?.let { value ->
+                runCatching { WidgetSnapshotJson.decode(value) }.getOrNull()
+            }?.takeIf { it.snapshotVersion == WidgetDisplayModel.CURRENT_VERSION }
+            val lastUpdated = state?.lastSuccessAt?.let { timestamp ->
+                val time = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalTime()
+                context.getString(R.string.widget_last_updated_format, TIME_FORMAT.format(time))
+            }
             GlanceTheme {
                 TodayTodoWidgetContent(
                     appWidgetId = appWidgetId,
