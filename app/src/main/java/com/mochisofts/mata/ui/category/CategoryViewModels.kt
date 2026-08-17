@@ -15,24 +15,125 @@ import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+data class CategoryListUiState(
+    val categories: List<Category> = emptyList(),
+    val isReordering: Boolean = false,
+    val isOrderSaving: Boolean = false,
+)
+
+sealed interface CategoryListEffect {
+    data class OrderSaved(val position: Int, val total: Int) : CategoryListEffect
+    data class Message(@StringRes val messageRes: Int) : CategoryListEffect
+}
+
 @HiltViewModel
 class CategoryListViewModel @Inject constructor(
-    repository: CategoryRepository,
+    private val repository: CategoryRepository,
 ) : ViewModel() {
-    val categories: StateFlow<List<Category>> = repository.observeCategories().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = emptyList(),
-    )
+    private val _uiState = MutableStateFlow(CategoryListUiState())
+    val uiState: StateFlow<CategoryListUiState> = _uiState.asStateFlow()
+
+    private val effectsChannel = Channel<CategoryListEffect>(Channel.BUFFERED)
+    val effects: Flow<CategoryListEffect> = effectsChannel.receiveAsFlow()
+
+    private var persistedCategories: List<Category> = emptyList()
+
+    init {
+        viewModelScope.launch {
+            repository.observeCategories().collect { categories ->
+                persistedCategories = categories
+                _uiState.update { state ->
+                    if (state.isReordering || state.isOrderSaving) state
+                    else state.copy(categories = categories)
+                }
+            }
+        }
+    }
+
+    fun startReordering(): Boolean {
+        if (_uiState.value.isOrderSaving) return false
+        _uiState.update { it.copy(isReordering = true) }
+        return true
+    }
+
+    fun moveReorderingCategory(categoryId: String, targetCategoryId: String): Boolean {
+        val state = _uiState.value
+        if (!state.isReordering || state.isOrderSaving || categoryId == targetCategoryId) return false
+        val fromIndex = state.categories.indexOfFirst { it.id == categoryId }
+        val targetIndex = state.categories.indexOfFirst { it.id == targetCategoryId }
+        if (fromIndex == -1 || targetIndex == -1) return false
+        _uiState.update { current ->
+            current.copy(categories = current.categories.move(fromIndex, targetIndex))
+        }
+        return true
+    }
+
+    fun finishReordering(categoryId: String) {
+        val state = _uiState.value
+        if (!state.isReordering || state.isOrderSaving) return
+        persistOrder(categoryId)
+    }
+
+    fun cancelReordering() {
+        if (!_uiState.value.isReordering) return
+        _uiState.update {
+            it.copy(categories = persistedCategories, isReordering = false, isOrderSaving = false)
+        }
+    }
+
+    fun moveCategoryOneStep(categoryId: String, offset: Int): Boolean {
+        val state = _uiState.value
+        if (state.isReordering || state.isOrderSaving || offset !in listOf(-1, 1)) return false
+        val fromIndex = state.categories.indexOfFirst { it.id == categoryId }
+        val targetIndex = fromIndex + offset
+        if (fromIndex == -1 || targetIndex !in state.categories.indices) return false
+        _uiState.update {
+            it.copy(
+                categories = it.categories.move(fromIndex, targetIndex),
+                isReordering = true,
+            )
+        }
+        persistOrder(categoryId)
+        return true
+    }
+
+    private fun persistOrder(categoryId: String) {
+        val orderedCategories = _uiState.value.categories
+        if (orderedCategories.map(Category::id) == persistedCategories.map(Category::id)) {
+            _uiState.update { it.copy(isReordering = false) }
+            return
+        }
+        _uiState.update { it.copy(isReordering = false, isOrderSaving = true) }
+        viewModelScope.launch {
+            repository.reorderCategories(orderedCategories.map(Category::id))
+                .onSuccess {
+                    persistedCategories = orderedCategories
+                    _uiState.update {
+                        it.copy(categories = orderedCategories, isOrderSaving = false)
+                    }
+                    val position = orderedCategories.indexOfFirst { it.id == categoryId } + 1
+                    effectsChannel.send(CategoryListEffect.OrderSaved(position, orderedCategories.size))
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(categories = persistedCategories, isOrderSaving = false)
+                    }
+                    effectsChannel.send(
+                        CategoryListEffect.Message(R.string.error_category_reorder_failed),
+                    )
+                }
+        }
+    }
 }
+
+private fun <T> List<T>.move(fromIndex: Int, targetIndex: Int): List<T> =
+    toMutableList().apply { add(targetIndex, removeAt(fromIndex)) }
 
 data class CategoryEditorUiState(
     val isLoading: Boolean = true,
