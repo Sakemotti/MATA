@@ -7,6 +7,7 @@ import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HolidayRepository
+import com.mochisofts.mata.domain.repository.EntitlementRepository
 import com.mochisofts.mata.data.holiday.HolidayWorkScheduler
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +27,7 @@ class MataAppViewModel @Inject constructor(
     private val holidayRepository: HolidayRepository,
     private val holidayWorkScheduler: HolidayWorkScheduler,
     private val widgetUpdater: WidgetUpdater,
+    private val entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
     val theme: StateFlow<AppTheme> = settingsRepository.theme
         .catch { emit(AppTheme.SYSTEM) }
@@ -52,6 +54,7 @@ class MataAppViewModel @Inject constructor(
                 } while (result.hasMore)
             }
             runCatching { notificationScheduler.reconcileAll() }
+            runCatching { entitlementRepository.refresh() }
         }
     }
 }

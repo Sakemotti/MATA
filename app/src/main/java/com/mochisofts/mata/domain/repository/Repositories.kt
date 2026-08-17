@@ -1,5 +1,6 @@
 package com.mochisofts.mata.domain.repository
 
+import android.app.Activity
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
@@ -7,6 +8,9 @@ import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.ArchivedHistoryItem
 import com.mochisofts.mata.domain.model.ArchivedTodoItem
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.BillingEvent
+import com.mochisofts.mata.domain.model.BillingLaunchResult
+import com.mochisofts.mata.domain.model.BillingState
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
@@ -23,6 +27,7 @@ import java.util.UUID
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.StateFlow
 
 interface CategoryRepository {
     fun observeCategories(): Flow<List<Category>>
@@ -132,4 +137,13 @@ interface HolidayRepository {
     suspend fun markNotificationGenerationProcessed(generation: Long)
     suspend fun pendingWidgetGeneration(): Long?
     suspend fun markWidgetGenerationProcessed(generation: Long)
+}
+
+interface EntitlementRepository {
+    val state: StateFlow<BillingState>
+    val events: Flow<BillingEvent>
+    suspend fun start()
+    suspend fun refresh()
+    suspend fun restore()
+    suspend fun launchPurchase(activity: Activity): BillingLaunchResult
 }
