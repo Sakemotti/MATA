@@ -75,9 +75,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
@@ -113,7 +113,7 @@ fun CategoryListScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val hapticFeedback = LocalHapticFeedback.current
     val density = LocalDensity.current
     val edgeThreshold = with(density) { 64.dp.toPx() }
@@ -151,13 +151,13 @@ fun CategoryListScreen(
         updateAutoScroll(draggedCenter)
     }
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(viewModel, resources) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is CategoryListEffect.OrderSaved -> {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     snackbarHostState.showSnackbar(
-                        context.getString(
+                        resources.getString(
                             R.string.category_reorder_saved,
                             effect.total,
                             effect.position,
@@ -165,7 +165,7 @@ fun CategoryListScreen(
                     )
                 }
                 is CategoryListEffect.Message -> {
-                    snackbarHostState.showSnackbar(context.getString(effect.messageRes))
+                    snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
             }
         }
