@@ -185,4 +185,34 @@ class MataDatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate5To6_addsPersistedWidgetInstanceState() {
+        helper.createDatabase(databaseName, 5).close()
+
+        helper.runMigrationsAndValidate(
+            databaseName,
+            6,
+            true,
+            MIGRATION_5_6,
+        ).use { database ->
+            database.execSQL(
+                """
+                INSERT INTO widget_instance_states (
+                    appWidgetId, snapshotVersion, snapshotJson, lastSuccessAt, loadState,
+                    errorCode, lastFailureAt, undoOperationId, undoTodoTitle, undoExpiresAt,
+                    nextRefreshAt, updatedAt
+                ) VALUES (42, 1, '{}', 100, 'ready', NULL, NULL, NULL, NULL, NULL, 200, 100)
+                """.trimIndent(),
+            )
+            database.query(
+                "SELECT snapshotVersion, loadState, nextRefreshAt FROM widget_instance_states WHERE appWidgetId = 42",
+            ).use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(1, cursor.getInt(0))
+                assertEquals("ready", cursor.getString(1))
+                assertEquals(200, cursor.getLong(2))
+            }
+        }
+    }
 }

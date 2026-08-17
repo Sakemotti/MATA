@@ -64,6 +64,7 @@ interface TodoRepository {
         skipped: Boolean,
         operationId: String = UUID.randomUUID().toString(),
     ): Result<Unit>
+    suspend fun undoCompletion(operationId: String): Result<Unit>
     suspend fun archiveTodo(id: String): Result<Unit>
     suspend fun restoreTodo(id: String): Result<Unit>
     suspend fun deleteTodo(id: String): Result<Unit>
@@ -128,4 +129,6 @@ interface HolidayRepository {
     suspend fun refresh(): HolidayRefreshResult
     suspend fun pendingNotificationGeneration(): Long?
     suspend fun markNotificationGenerationProcessed(generation: Long)
+    suspend fun pendingWidgetGeneration(): Long?
+    suspend fun markWidgetGenerationProcessed(generation: Long)
 }

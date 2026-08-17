@@ -11,9 +11,11 @@ import com.mochisofts.mata.data.local.MIGRATION_1_2
 import com.mochisofts.mata.data.local.MIGRATION_2_3
 import com.mochisofts.mata.data.local.MIGRATION_3_4
 import com.mochisofts.mata.data.local.MIGRATION_4_5
+import com.mochisofts.mata.data.local.MIGRATION_5_6
 import com.mochisofts.mata.data.local.HolidayDao
 import com.mochisofts.mata.data.local.HolidayFetchStateDao
 import com.mochisofts.mata.data.local.HolidayUpdateStateDao
+import com.mochisofts.mata.data.local.WidgetInstanceStateDao
 import com.mochisofts.mata.data.local.PeriodResultDao
 import com.mochisofts.mata.data.local.ScheduledNotificationDao
 import com.mochisofts.mata.data.local.TodoDao
@@ -100,7 +102,13 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MataDatabase =
         Room.databaseBuilder(context, MataDatabase::class.java, "mata.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+            )
             .build()
 
     @Provides
@@ -137,6 +145,10 @@ object DatabaseModule {
     @Provides
     fun provideHolidayUpdateStateDao(database: MataDatabase): HolidayUpdateStateDao =
         database.holidayUpdateStateDao()
+
+    @Provides
+    fun provideWidgetInstanceStateDao(database: MataDatabase): WidgetInstanceStateDao =
+        database.widgetInstanceStateDao()
 
     @Provides
     @Singleton

@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -36,9 +37,11 @@ class HolidaySyncWorker(
         if (!processPendingGeneration(repository, dependencies.notificationScheduler())) {
             return if (runAttemptCount < MAX_RETRY_INDEX) Result.retry() else terminalFailure()
         }
+        processPendingWidgetGeneration(repository, dependencies.widgetUpdater())
 
         val refresh = repository.refresh()
         if (refresh.successful) {
+            processPendingWidgetGeneration(repository, dependencies.widgetUpdater())
             return if (processPendingGeneration(repository, dependencies.notificationScheduler())) {
                 Result.success()
             } else if (runAttemptCount < MAX_RETRY_INDEX) {
@@ -52,6 +55,13 @@ class HolidaySyncWorker(
         } else {
             terminalFailure()
         }
+    }
+
+    private suspend fun processPendingWidgetGeneration(
+        repository: HolidayRepository,
+        updater: WidgetUpdater,
+    ) {
+        if (repository.pendingWidgetGeneration() != null) updater.requestUpdate()
     }
 
     private fun terminalFailure(): Result = if (inputData.getBoolean(INPUT_IS_PERIODIC, false)) {
@@ -82,6 +92,7 @@ class HolidaySyncWorker(
 interface HolidayWorkerEntryPoint {
     fun holidayRepository(): HolidayRepository
     fun notificationScheduler(): NotificationScheduler
+    fun widgetUpdater(): WidgetUpdater
 }
 
 @Singleton

@@ -82,7 +82,12 @@ class TodoListViewModel @Inject constructor(
         route.selectedDate?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
             ?: LocalDate.now(clock),
     )
-    private val selectedCategoryId = MutableStateFlow<String?>(null)
+    private val selectedCategoryId = MutableStateFlow(
+        route.selectedCategoryKey?.takeUnless { it == WIDGET_UNCATEGORIZED_KEY },
+    )
+    private val initialMode = MutableStateFlow(
+        route.initialMode?.let { value -> runCatching { TodoListMode.valueOf(value) }.getOrNull() },
+    )
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
 
@@ -124,7 +129,7 @@ class TodoListViewModel @Inject constructor(
         }
         TodoListUiState(
             isLoading = false,
-            mode = storedMode.toTodoListMode(),
+            mode = initialMode.value ?: storedMode.toTodoListMode(),
             selectedDate = content.date,
             isToday = content.date == today,
             showCompleted = showCompleted,
@@ -169,6 +174,7 @@ class TodoListViewModel @Inject constructor(
     }
 
     fun setMode(mode: TodoListMode) {
+        initialMode.value = null
         viewModelScope.launch { settingsRepository.setTodoListMode(mode.name) }
     }
 
@@ -284,6 +290,8 @@ class TodoListViewModel @Inject constructor(
         val holidaySnapshot: HolidaySnapshot,
     )
 }
+
+private const val WIDGET_UNCATEGORIZED_KEY = "__uncategorized__"
 
 private fun String.toTodoListMode(): TodoListMode =
     runCatching { TodoListMode.valueOf(this) }.getOrDefault(TodoListMode.DATE)

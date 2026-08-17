@@ -182,6 +182,7 @@ private class EmptyTodoRepository : TodoRepository {
         skipped: Boolean,
         operationId: String,
     ) = Result.success(Unit)
+    override suspend fun undoCompletion(operationId: String) = Result.success(Unit)
     override suspend fun archiveTodo(id: String) = Result.success(Unit)
     override suspend fun restoreTodo(id: String) = Result.success(Unit)
     override suspend fun deleteTodo(id: String) = Result.success(Unit)

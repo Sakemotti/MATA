@@ -72,6 +72,9 @@ class RoomHolidayRepositoryTest {
 
         repository.markNotificationGenerationProcessed(1)
         assertNull(repository.pendingNotificationGeneration())
+        assertEquals(1L, repository.pendingWidgetGeneration())
+        repository.markWidgetGenerationProcessed(1)
+        assertNull(repository.pendingWidgetGeneration())
         assertFalse(repository.needsRefresh())
 
         clock.advance(Duration.ofDays(8))
