@@ -9,6 +9,7 @@ enum class RecurrenceType(val code: String) {
     WEEKDAYS("weekdays"),
     SELECTED_WEEKDAYS("selected_weekdays"),
     MONTHLY_DAY("monthly_day"),
+    MONTHLY_NTH_WEEKDAYS("monthly_nth_weekdays"),
     MONTH_END("month_end"),
     EVERY_N_DAYS("every_n_days"),
     WEEKLY_COUNT("weekly_count"),
@@ -22,6 +23,13 @@ enum class RecurrenceType(val code: String) {
             entries.firstOrNull { it.code == value }
                 ?: runCatching { valueOf(value) }.getOrDefault(ONCE)
     }
+}
+
+data class MonthlyNthWeekday(
+    val ordinal: Int,
+    val dayOfWeek: DayOfWeek,
+) {
+    fun isValid(): Boolean = ordinal in 1..5
 }
 
 enum class TodoState(val code: String) {
@@ -41,12 +49,15 @@ data class RecurrenceRule(
     val type: RecurrenceType,
     val selectedWeekdays: Set<DayOfWeek> = emptySet(),
     val monthlyDay: Int? = null,
+    val monthlyNthWeekdays: Set<MonthlyNthWeekday> = emptySet(),
     val intervalDays: Int? = null,
     val requiredCount: Int? = null,
 ) {
     fun isValid(): Boolean = when (type) {
         RecurrenceType.SELECTED_WEEKDAYS -> selectedWeekdays.isNotEmpty()
         RecurrenceType.MONTHLY_DAY -> monthlyDay in 1..31
+        RecurrenceType.MONTHLY_NTH_WEEKDAYS ->
+            monthlyNthWeekdays.isNotEmpty() && monthlyNthWeekdays.all(MonthlyNthWeekday::isValid)
         RecurrenceType.EVERY_N_DAYS -> intervalDays in 1..999
         RecurrenceType.WEEKLY_COUNT -> requiredCount in 1..7
         RecurrenceType.MONTHLY_COUNT -> requiredCount in 1..31

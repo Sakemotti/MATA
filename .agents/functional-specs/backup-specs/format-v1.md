@@ -180,12 +180,13 @@ manifest.json
 | `weekdays` | `{}` |
 | `selected_weekdays` | `{ "weekdays": [曜日コード...] }` |
 | `monthly_day` | `{ "day": 1～31 }` |
+| `monthly_nth_weekdays` | `{ "nthWeekdays": [{ "ordinal": 1～5, "weekday": 曜日コード }...] }` |
 | `month_end` | `{}` |
 | `every_n_days` | `{ "intervalDays": 1以上 }` |
 | `weekly_count` | `{ "requiredCount": 1～7 }` |
 | `monthly_count` | `{ "requiredCount": 1～31 }` |
 
-曜日コードは`monday`から`sunday`までとし、重複を許可しない。`selected_weekdays`では月曜日から日曜日の順に格納する。
+曜日コードは`monday`から`sunday`までとし、重複を許可しない。`selected_weekdays`では月曜日から日曜日の順に格納する。`monthly_nth_weekdays`では`ordinal`、曜日の順で昇順に格納し、同じ組み合わせを重複させない。
 
 ## 10. notifications
 

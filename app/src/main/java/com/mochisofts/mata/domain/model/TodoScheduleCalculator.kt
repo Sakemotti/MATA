@@ -53,6 +53,10 @@ fun Todo.occursOn(date: LocalDate, holidays: Set<LocalDate> = emptySet()): Boole
             val targetDay = recurrenceRule.monthlyDay?.coerceAtMost(date.lengthOfMonth()) ?: return false
             date.dayOfMonth == targetDay
         }
+        RecurrenceType.MONTHLY_NTH_WEEKDAYS -> MonthlyNthWeekday(
+            ordinal = (date.dayOfMonth - 1) / 7 + 1,
+            dayOfWeek = date.dayOfWeek,
+        ) in recurrenceRule.monthlyNthWeekdays
         RecurrenceType.MONTH_END -> date.dayOfMonth == date.lengthOfMonth()
         RecurrenceType.EVERY_N_DAYS -> {
             val interval = recurrenceRule.intervalDays ?: return false

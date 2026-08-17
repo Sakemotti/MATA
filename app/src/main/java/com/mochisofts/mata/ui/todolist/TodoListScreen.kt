@@ -677,6 +677,7 @@ private fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
         R.string.todo_recurrence_monthly_day_format,
         todo.recurrenceRule.monthlyDay ?: 1,
     )
+    RecurrenceType.MONTHLY_NTH_WEEKDAYS -> stringResource(R.string.label_monthly_nth_weekdays)
     RecurrenceType.MONTH_END -> stringResource(R.string.label_month_end)
     RecurrenceType.EVERY_N_DAYS -> stringResource(
         R.string.todo_recurrence_every_n_days_format,

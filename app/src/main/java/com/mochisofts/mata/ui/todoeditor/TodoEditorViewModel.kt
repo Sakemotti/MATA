@@ -10,6 +10,7 @@ import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.HolidaySnapshot
+import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.NotificationValidationError
@@ -57,6 +58,7 @@ data class TodoEditorUiState(
     val endDate: LocalDate? = null,
     val recurrenceType: RecurrenceType = RecurrenceType.ONCE,
     val selectedWeekdays: Set<DayOfWeek> = emptySet(),
+    val monthlyNthWeekdays: Set<MonthlyNthWeekday> = emptySet(),
     val monthlyDay: Int = 1,
     val intervalDaysInput: String = "1",
     val weeklyCount: Int = 1,
@@ -90,6 +92,9 @@ data class TodoEditorUiState(
         get() = RecurrenceRule(
             type = recurrenceType,
             selectedWeekdays = selectedWeekdays,
+            monthlyNthWeekdays = monthlyNthWeekdays.takeIf {
+                recurrenceType == RecurrenceType.MONTHLY_NTH_WEEKDAYS
+            }.orEmpty(),
             monthlyDay = monthlyDay.takeIf { recurrenceType == RecurrenceType.MONTHLY_DAY },
             intervalDays = intervalDaysInput.toIntOrNull()
                 ?.takeIf { recurrenceType == RecurrenceType.EVERY_N_DAYS },
@@ -178,6 +183,7 @@ class TodoEditorViewModel @Inject constructor(
                         endDate = todo.endDate.takeUnless { todo.recurrenceType == RecurrenceType.ONCE },
                         recurrenceType = todo.recurrenceType,
                         selectedWeekdays = todo.recurrenceRule.selectedWeekdays,
+                        monthlyNthWeekdays = todo.recurrenceRule.monthlyNthWeekdays,
                         monthlyDay = todo.recurrenceRule.monthlyDay ?: todo.startDate.dayOfMonth,
                         intervalDaysInput = (todo.recurrenceRule.intervalDays ?: 1).toString(),
                         weeklyCount = todo.recurrenceRule.requiredCount ?: 1,
@@ -206,6 +212,18 @@ class TodoEditorViewModel @Inject constructor(
             } else {
                 selectedWeekdays
             },
+            monthlyNthWeekdays = if (
+                value == RecurrenceType.MONTHLY_NTH_WEEKDAYS && monthlyNthWeekdays.isEmpty()
+            ) {
+                setOf(
+                    MonthlyNthWeekday(
+                        ordinal = (startDate.dayOfMonth - 1) / 7 + 1,
+                        dayOfWeek = startDate.dayOfWeek,
+                    ),
+                )
+            } else {
+                monthlyNthWeekdays
+            },
             monthlyDay = if (value == RecurrenceType.MONTHLY_DAY && monthlyDay == 1) {
                 startDate.dayOfMonth
             } else {
@@ -219,6 +237,16 @@ class TodoEditorViewModel @Inject constructor(
                 selectedWeekdays - value
             } else {
                 selectedWeekdays + value
+            },
+        )
+    }
+    fun toggleMonthlyNthWeekday(ordinal: Int, dayOfWeek: DayOfWeek) = edit {
+        val value = MonthlyNthWeekday(ordinal, dayOfWeek)
+        copy(
+            monthlyNthWeekdays = if (value in monthlyNthWeekdays) {
+                monthlyNthWeekdays - value
+            } else {
+                monthlyNthWeekdays + value
             },
         )
     }

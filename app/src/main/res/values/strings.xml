@@ -38,6 +38,7 @@
     <string name="label_weekdays">平日のみ</string>
     <string name="label_selected_weekdays">曜日指定</string>
     <string name="label_monthly_day">毎月の指定日</string>
+    <string name="label_monthly_nth_weekdays">毎月 第X X曜日</string>
     <string name="label_month_end">毎月の月末</string>
     <string name="label_every_n_days">一定日数ごと</string>
     <string name="label_weekly_count">週X回</string>
@@ -254,6 +255,8 @@
     <string name="empty_category_todos">このカテゴリにTODOはありません</string>
     <string name="todo_due_time_format">期限 %1$d:%2$02d</string>
     <string name="todo_recurrence_monthly_day_format">毎月%1$d日</string>
+    <string name="todo_recurrence_monthly_nth_weekdays_format">毎月 %1$s</string>
+    <string name="todo_recurrence_nth_weekday_item_format">第%1$d %2$s曜日</string>
     <string name="todo_recurrence_every_n_days_format">%1$d日ごと</string>
     <string name="todo_recurrence_weekly_count_format">週%1$d回</string>
     <string name="todo_recurrence_monthly_count_format">月%1$d回</string>
@@ -277,6 +280,8 @@
     <string name="todo_editor_recurrence_sheet_title">繰り返し方式</string>
     <string name="todo_editor_selected_weekdays_label">実行する曜日</string>
     <string name="todo_editor_monthly_day_label">毎月の実行日</string>
+    <string name="todo_editor_monthly_nth_weekdays_label">実行する第X曜日（複数選択可）</string>
+    <string name="todo_editor_ordinal_format">第%1$d</string>
     <string name="todo_editor_interval_days_label">実行間隔</string>
     <string name="todo_editor_weekly_count_label">1週間の必要回数</string>
     <string name="todo_editor_monthly_count_label">1か月の必要回数</string>
