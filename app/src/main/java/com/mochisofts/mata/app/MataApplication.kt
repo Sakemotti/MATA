@@ -12,6 +12,7 @@ import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.domain.repository.EntitlementRepository
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +39,7 @@ class MataApplication : Application() {
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var clock: Clock
     @Inject lateinit var backupCoordinator: BackupCoordinator
+    @Inject lateinit var entitlementRepository: EntitlementRepository
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -48,6 +50,9 @@ class MataApplication : Application() {
         widgetUpdater.ensureScheduledIfWidgetsExist()
         applicationScope.launch {
             runCatching { widgetPreviewPublisher.publishIfNeeded() }
+        }
+        applicationScope.launch {
+            runCatching { entitlementRepository.start() }
         }
         applicationScope.launch {
             combine(

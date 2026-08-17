@@ -1,5 +1,8 @@
 package com.mochisofts.mata.ui.settings
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -70,6 +73,9 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.BillingOperation
+import com.mochisofts.mata.domain.model.BillingState
+import com.mochisofts.mata.domain.model.EntitlementState
 import com.mochisofts.mata.data.backup.BACKUP_MIME_TYPE
 import com.mochisofts.mata.data.backup.BackupOperationPhase
 import com.mochisofts.mata.data.backup.BackupOperationState
@@ -93,6 +99,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
     var showEndHourSheet by remember { mutableStateOf(false) }
     var showWeekStartSheet by remember { mutableStateOf(false) }
     var showThemeSheet by remember { mutableStateOf(false) }
@@ -320,6 +327,17 @@ fun SettingsScreen(
                                 )
                             },
                         )
+
+                        SettingsSectionHeader(R.string.settings_section_ads)
+                        BillingSettings(
+                            billing = state.billing,
+                            canLaunchPurchase = activity != null,
+                            onPurchase = {
+                                activity?.let(viewModel::purchaseAdRemoval)
+                            },
+                            onRetry = viewModel::retryBilling,
+                            onRestore = viewModel::restoreAdRemoval,
+                        )
                         Spacer(Modifier.height(32.dp))
                     }
                 }
@@ -515,6 +533,127 @@ private fun SettingsValueRow(
         },
         modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
     )
+}
+
+@Composable
+private fun BillingSettings(
+    billing: BillingState,
+    canLaunchPurchase: Boolean,
+    onPurchase: () -> Unit,
+    onRetry: () -> Unit,
+    onRestore: () -> Unit,
+) {
+    val operationInProgress = billing.operation != BillingOperation.IDLE
+    val product = billing.product
+    val entitlement = billing.entitlement
+    val status = when (entitlement.state) {
+        EntitlementState.UNKNOWN -> BillingRowStatus(
+            value = stringResource(R.string.settings_ads_loading),
+            description = stringResource(R.string.settings_ads_loading_description),
+            showProgress = true,
+        )
+        EntitlementState.NOT_PURCHASED -> if (product != null) {
+            BillingRowStatus(
+                value = product.formattedPrice,
+                description = stringResource(R.string.settings_ads_purchase_description),
+                actionLabel = stringResource(R.string.settings_ads_purchase_action),
+                actionEnabled = !operationInProgress && canLaunchPurchase,
+                onAction = onPurchase,
+                showProgress = operationInProgress,
+            )
+        } else {
+            BillingRowStatus(
+                value = stringResource(R.string.settings_ads_product_unavailable),
+                description = stringResource(R.string.settings_ads_product_retry_description),
+                actionLabel = stringResource(R.string.action_retry),
+                actionEnabled = !operationInProgress,
+                onAction = onRetry,
+                showProgress = operationInProgress,
+            )
+        }
+        EntitlementState.PENDING -> BillingRowStatus(
+            value = stringResource(R.string.settings_ads_purchase_pending),
+            description = stringResource(R.string.settings_ads_pending_description),
+            showProgress = operationInProgress,
+        )
+        EntitlementState.PURCHASED_UNACKNOWLEDGED,
+        EntitlementState.PURCHASED,
+        -> BillingRowStatus(
+            value = stringResource(R.string.settings_ads_removed),
+            description = stringResource(R.string.settings_ads_removed_description),
+            showProgress = operationInProgress,
+        )
+        EntitlementState.ERROR -> BillingRowStatus(
+            value = stringResource(R.string.settings_ads_connection_error),
+            description = stringResource(
+                if (entitlement.adsRemoved) {
+                    R.string.settings_ads_error_removed_description
+                } else {
+                    R.string.settings_ads_error_description
+                },
+            ),
+            actionLabel = stringResource(R.string.action_retry),
+            actionEnabled = !operationInProgress,
+            onAction = onRetry,
+            showProgress = operationInProgress,
+        )
+        EntitlementState.UNAVAILABLE -> BillingRowStatus(
+            value = stringResource(R.string.settings_ads_billing_unavailable),
+            description = stringResource(R.string.settings_ads_unavailable_description),
+            showProgress = operationInProgress,
+        )
+    }
+
+    BillingStatusRow(status)
+    HorizontalDivider()
+    SettingsValueRow(
+        title = stringResource(R.string.settings_ads_restore_title),
+        value = stringResource(R.string.settings_ads_restore_value),
+        description = stringResource(R.string.settings_ads_restore_description),
+        isSaving = billing.operation == BillingOperation.RESTORING,
+        enabled = !operationInProgress,
+        onClick = onRestore,
+    )
+}
+
+private data class BillingRowStatus(
+    val value: String,
+    val description: String,
+    val actionLabel: String? = null,
+    val actionEnabled: Boolean = false,
+    val onAction: () -> Unit = {},
+    val showProgress: Boolean = false,
+)
+
+@Composable
+private fun BillingStatusRow(status: BillingRowStatus) {
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.settings_ads_remove_title)) },
+        supportingContent = {
+            Column {
+                Text(status.value)
+                Text(status.description, style = MaterialTheme.typography.bodySmall)
+            }
+        },
+        trailingContent = {
+            if (status.showProgress) {
+                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+            } else if (status.actionLabel != null) {
+                TextButton(
+                    enabled = status.actionEnabled,
+                    onClick = status.onAction,
+                ) {
+                    Text(status.actionLabel)
+                }
+            }
+        },
+    )
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable
