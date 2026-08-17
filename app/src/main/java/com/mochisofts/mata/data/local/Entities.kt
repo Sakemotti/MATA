@@ -230,3 +230,19 @@ data class HolidayUpdateStateEntity(
     val widgetProcessed: Boolean,
     val createdAt: Long,
 )
+
+@Entity(tableName = "widget_instance_states")
+data class WidgetInstanceStateEntity(
+    @androidx.room.PrimaryKey val appWidgetId: Int,
+    val snapshotVersion: Int,
+    val snapshotJson: String?,
+    val lastSuccessAt: Long?,
+    val loadState: String,
+    val errorCode: String?,
+    val lastFailureAt: Long?,
+    val undoOperationId: String?,
+    val undoTodoTitle: String?,
+    val undoExpiresAt: Long?,
+    val nextRefreshAt: Long?,
+    val updatedAt: Long,
+)

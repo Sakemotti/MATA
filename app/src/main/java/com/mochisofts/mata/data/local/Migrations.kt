@@ -226,3 +226,26 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         )
     }
 }
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS widget_instance_states (
+                appWidgetId INTEGER NOT NULL PRIMARY KEY,
+                snapshotVersion INTEGER NOT NULL,
+                snapshotJson TEXT,
+                lastSuccessAt INTEGER,
+                loadState TEXT NOT NULL,
+                errorCode TEXT,
+                lastFailureAt INTEGER,
+                undoOperationId TEXT,
+                undoTodoTitle TEXT,
+                undoExpiresAt INTEGER,
+                nextRefreshAt INTEGER,
+                updatedAt INTEGER NOT NULL
+            )
+            """.trimIndent(),
+        )
+    }
+}

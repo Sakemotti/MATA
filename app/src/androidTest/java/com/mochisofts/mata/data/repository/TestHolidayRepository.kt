@@ -19,4 +19,8 @@ class TestHolidayRepository(
     override suspend fun pendingNotificationGeneration(): Long? = null
 
     override suspend fun markNotificationGenerationProcessed(generation: Long) = Unit
+
+    override suspend fun pendingWidgetGeneration(): Long? = null
+
+    override suspend fun markWidgetGenerationProcessed(generation: Long) = Unit
 }

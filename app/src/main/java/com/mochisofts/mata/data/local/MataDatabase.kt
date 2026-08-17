@@ -15,8 +15,9 @@ import androidx.room.RoomDatabase
         HolidayEntity::class,
         HolidayFetchStateEntity::class,
         HolidayUpdateStateEntity::class,
+        WidgetInstanceStateEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class MataDatabase : RoomDatabase() {
@@ -30,4 +31,5 @@ abstract class MataDatabase : RoomDatabase() {
     abstract fun holidayDao(): HolidayDao
     abstract fun holidayFetchStateDao(): HolidayFetchStateDao
     abstract fun holidayUpdateStateDao(): HolidayUpdateStateDao
+    abstract fun widgetInstanceStateDao(): WidgetInstanceStateDao
 }

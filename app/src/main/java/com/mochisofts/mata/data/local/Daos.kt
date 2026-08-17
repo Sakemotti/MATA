@@ -79,6 +79,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY sortOrder ASC")
     fun observeAll(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories ORDER BY sortOrder ASC")
+    suspend fun findAll(): List<CategoryEntity>
+
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun findById(id: String): CategoryEntity?
 
@@ -203,6 +206,18 @@ interface TodoDao {
 interface TodoExecutionDao {
     @Query("SELECT * FROM todo_executions")
     fun observeAll(): Flow<List<TodoExecutionEntity>>
+
+    @Query("SELECT * FROM todo_executions")
+    suspend fun findAll(): List<TodoExecutionEntity>
+
+    @Query(
+        """
+        SELECT * FROM todo_executions
+        WHERE logicalDate BETWEEN :startDate AND :endDate
+        ORDER BY logicalDate ASC, finalizedAt ASC, id ASC
+        """,
+    )
+    suspend fun findBetween(startDate: String, endDate: String): List<TodoExecutionEntity>
 
     @Query(
         "SELECT logicalDate, status FROM todo_executions " +
@@ -428,4 +443,22 @@ interface HolidayUpdateStateDao {
 
     @Upsert
     suspend fun upsert(state: HolidayUpdateStateEntity)
+}
+
+@Dao
+interface WidgetInstanceStateDao {
+    @Query("SELECT * FROM widget_instance_states ORDER BY appWidgetId ASC")
+    suspend fun findAll(): List<WidgetInstanceStateEntity>
+
+    @Query("SELECT * FROM widget_instance_states WHERE appWidgetId = :appWidgetId LIMIT 1")
+    suspend fun find(appWidgetId: Int): WidgetInstanceStateEntity?
+
+    @Upsert
+    suspend fun upsert(state: WidgetInstanceStateEntity)
+
+    @Query("DELETE FROM widget_instance_states WHERE appWidgetId = :appWidgetId")
+    suspend fun delete(appWidgetId: Int)
+
+    @Query("DELETE FROM widget_instance_states")
+    suspend fun deleteAll()
 }

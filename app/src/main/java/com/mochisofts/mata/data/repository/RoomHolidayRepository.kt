@@ -83,7 +83,9 @@ class RoomHolidayRepository @Inject constructor(
     override suspend fun currentSnapshot(): HolidaySnapshot = snapshot.first()
 
     override suspend fun needsRefresh(): Boolean {
-        if (updateStateDao.findCurrent()?.notificationProcessed == false) return true
+        updateStateDao.findCurrent()?.let { state ->
+            if (!state.notificationProcessed || !state.widgetProcessed) return true
+        }
         val years = supportedYears()
         val states = fetchStateDao.findForYears(years.toList()).associateBy { it.year }
         val now = clock.millis()
@@ -173,6 +175,19 @@ class RoomHolidayRepository @Inject constructor(
             val state = updateStateDao.findCurrent() ?: return@withTransaction
             if (state.generation == generation) {
                 updateStateDao.upsert(state.copy(notificationProcessed = true))
+            }
+        }
+    }
+
+    override suspend fun pendingWidgetGeneration(): Long? = updateStateDao.findCurrent()
+        ?.takeUnless(HolidayUpdateStateEntity::widgetProcessed)
+        ?.generation
+
+    override suspend fun markWidgetGenerationProcessed(generation: Long) {
+        database.withTransaction {
+            val state = updateStateDao.findCurrent() ?: return@withTransaction
+            if (state.generation == generation) {
+                updateStateDao.upsert(state.copy(widgetProcessed = true))
             }
         }
     }

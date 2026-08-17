@@ -62,18 +62,18 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MataAppViewModel by viewModels()
-    private var notificationNavigation by mutableStateOf<NotificationNavigation?>(null)
+    private var externalNavigation by mutableStateOf<ExternalNavigation?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        notificationNavigation = intent.toNotificationNavigation()
+        externalNavigation = intent.toExternalNavigation()
         enableEdgeToEdge()
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             MataTheme(appTheme = theme) {
                 MataApp(
-                    notificationNavigation = notificationNavigation,
-                    onNotificationHandled = { notificationNavigation = null },
+                    externalNavigation = externalNavigation,
+                    onExternalNavigationHandled = { externalNavigation = null },
                     onNotificationOpened = viewModel::notificationOpened,
                 )
             }
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        notificationNavigation = intent.toNotificationNavigation()
+        externalNavigation = intent.toExternalNavigation()
     }
 
     override fun onResume() {
@@ -96,13 +96,20 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_TODO_ID = "todo_id"
         const val EXTRA_LOGICAL_DATE = "logical_date"
         const val EXTRA_CANDIDATE_KEY = "candidate_key"
+        const val ACTION_OPEN_WIDGET = "com.mochisofts.mata.action.OPEN_WIDGET"
+        const val EXTRA_WIDGET_DATE = "widget_date"
+        const val EXTRA_WIDGET_MODE = "widget_mode"
+        const val EXTRA_WIDGET_CATEGORY_KEY = "widget_category_key"
+        const val WIDGET_MODE_DATE = "DATE"
+        const val WIDGET_MODE_CATEGORY = "CATEGORY"
+        const val WIDGET_UNCATEGORIZED_KEY = "__uncategorized__"
     }
 }
 
 @Composable
 private fun MataApp(
-    notificationNavigation: NotificationNavigation?,
-    onNotificationHandled: () -> Unit,
+    externalNavigation: ExternalNavigation?,
+    onExternalNavigationHandled: () -> Unit,
     onNotificationOpened: (String) -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -116,11 +123,24 @@ private fun MataApp(
         }
     }
 
-    LaunchedEffect(notificationNavigation) {
-        notificationNavigation?.let { request ->
-            navController.navigate(TodoListRoute(request.logicalDate)) { launchSingleTop = true }
-            onNotificationOpened(request.todoId)
-            onNotificationHandled()
+    LaunchedEffect(externalNavigation) {
+        externalNavigation?.let { request ->
+            val route = when (request) {
+                is ExternalNavigation.Notification -> {
+                    onNotificationOpened(request.todoId)
+                    TodoListRoute(selectedDate = request.logicalDate)
+                }
+                is ExternalNavigation.Widget -> TodoListRoute(
+                    selectedDate = request.selectedDate,
+                    initialMode = request.mode,
+                    selectedCategoryKey = request.categoryKey,
+                )
+            }
+            navController.navigate(route) {
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
+            }
+            onExternalNavigationHandled()
         }
     }
 
@@ -189,16 +209,28 @@ private fun MataApp(
     }
 }
 
-private data class NotificationNavigation(
-    val todoId: String,
-    val logicalDate: String,
-)
+private sealed interface ExternalNavigation {
+    data class Notification(val todoId: String, val logicalDate: String) : ExternalNavigation
+    data class Widget(
+        val selectedDate: String,
+        val mode: String,
+        val categoryKey: String?,
+    ) : ExternalNavigation
+}
 
-private fun Intent.toNotificationNavigation(): NotificationNavigation? {
-    if (action != MainActivity.ACTION_OPEN_NOTIFICATION) return null
-    val todoId = getStringExtra(MainActivity.EXTRA_TODO_ID) ?: return null
-    val logicalDate = getStringExtra(MainActivity.EXTRA_LOGICAL_DATE) ?: return null
-    return NotificationNavigation(todoId, logicalDate)
+private fun Intent.toExternalNavigation(): ExternalNavigation? = when (action) {
+    MainActivity.ACTION_OPEN_NOTIFICATION -> {
+        val todoId = getStringExtra(MainActivity.EXTRA_TODO_ID) ?: return null
+        val logicalDate = getStringExtra(MainActivity.EXTRA_LOGICAL_DATE) ?: return null
+        ExternalNavigation.Notification(todoId, logicalDate)
+    }
+    MainActivity.ACTION_OPEN_WIDGET -> {
+        val selectedDate = getStringExtra(MainActivity.EXTRA_WIDGET_DATE) ?: return null
+        val mode = getStringExtra(MainActivity.EXTRA_WIDGET_MODE) ?: MainActivity.WIDGET_MODE_DATE
+        val categoryKey = getStringExtra(MainActivity.EXTRA_WIDGET_CATEGORY_KEY)
+        ExternalNavigation.Widget(selectedDate, mode, categoryKey)
+    }
+    else -> null
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

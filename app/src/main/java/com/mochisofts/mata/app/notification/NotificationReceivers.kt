@@ -23,6 +23,7 @@ import com.mochisofts.mata.data.local.TodoNotificationDao
 import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
 import com.mochisofts.mata.data.notification.NotificationChannels
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.Todo
@@ -79,6 +80,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     @Inject lateinit var todoRepository: TodoRepository
     @Inject lateinit var notificationScheduler: NotificationScheduler
     @Inject lateinit var presenter: NotificationPresenter
+    @Inject lateinit var widgetUpdater: WidgetUpdater
     @Inject lateinit var clock: Clock
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -110,6 +112,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private suspend fun complete(todoId: String, date: LocalDate, notificationId: Int) {
         todoRepository.setCompleted(todoId, date, true)
             .onSuccess {
+                widgetUpdater.requestUpdate()
                 val todo = todoRepository.getTodo(todoId)
                 if (todo == null) {
                     presenter.cancel(notificationId)
@@ -131,7 +134,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
             return
         }
         todoRepository.setCompleted(todoId, date, false)
-            .onSuccess { presenter.cancel(notificationId) }
+            .onSuccess {
+                widgetUpdater.requestUpdate()
+                presenter.cancel(notificationId)
+            }
             .onFailure { presenter.showUndoFailed(notificationId) }
     }
 
