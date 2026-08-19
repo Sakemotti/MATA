@@ -43,4 +43,50 @@ class MataAdaptiveNavigationTest {
             mataNavigationTypeFor(widthDp = 1200f, heightDp = 900f),
         )
     }
+
+    @Test
+    fun expandedBoundaryDoesNotUseTwoPaneWhenUsableWidthIsTooSmall() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 840f,
+            heightDp = 900f,
+            destination = MataDestination.CALENDAR,
+        )
+
+        assertEquals(696f, result.availableContentWidthDp)
+        assertEquals(false, result.useTwoPane)
+    }
+
+    @Test
+    fun twoPaneStartsWhenUsableWidthReaches736Dp() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 880f,
+            heightDp = 900f,
+            destination = MataDestination.CALENDAR,
+        )
+
+        assertEquals(736f, result.availableContentWidthDp)
+        assertEquals(true, result.useTwoPane)
+    }
+
+    @Test
+    fun compactHeightPreventsTwoPane() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1600f,
+            heightDp = 479.99f,
+            destination = MataDestination.CALENDAR,
+        )
+
+        assertEquals(false, result.useTwoPane)
+    }
+
+    @Test
+    fun singleListDestinationNeverUsesTwoPane() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1600f,
+            heightDp = 900f,
+            destination = MataDestination.TODOS,
+        )
+
+        assertEquals(false, result.useTwoPane)
+    }
 }

@@ -189,13 +189,13 @@ fun CategoryListScreen(
         selected = MataDestination.CATEGORIES,
         drawerState = drawerState,
         onSelect = onDestination,
-    ) { navigationType ->
+    ) { layoutInfo ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.category_management_title)) },
                     navigationIcon = {
-                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
                                     Icons.Outlined.Menu,

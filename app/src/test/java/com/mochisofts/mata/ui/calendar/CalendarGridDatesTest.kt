@@ -25,4 +25,20 @@ class CalendarGridDatesTest {
         assertEquals(DayOfWeek.SUNDAY, dates.first().dayOfWeek)
         assertEquals(42, dates.size)
     }
+
+    @Test
+    fun minimumTwoPaneWidthKeepsBothPanesAtTheirMinimum() {
+        val widths = calendarPaneWidths(736f)
+
+        assertEquals(360f, widths.leftDp)
+        assertEquals(352f, widths.rightDp)
+    }
+
+    @Test
+    fun largerTwoPaneWidthDistributesRemainingSpaceToHistory() {
+        val widths = calendarPaneWidths(1_104f)
+
+        assertEquals(432f, widths.leftDp)
+        assertEquals(648f, widths.rightDp)
+    }
 }
