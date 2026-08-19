@@ -16,7 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -158,10 +158,12 @@ private fun MataApp(
             )
         }
         composable<TodoEditorRoute> {
-            TodoEditorScreen(
-                onBack = navController::popBackStack,
-                onSaved = { navController.popBackStack() },
-            )
+            MataContentFrame(maxWidth = 720.dp) {
+                TodoEditorScreen(
+                    onBack = navController::popBackStack,
+                    onSaved = { navController.popBackStack() },
+                )
+            }
         }
         composable<CalendarHistoryRoute> {
             CalendarHistoryScreen(onDestination = navigateToDestination)
@@ -173,21 +175,23 @@ private fun MataApp(
             )
         }
         composable<ArchivedTodoDetailRoute> {
-            ArchiveDetailScreen(
-                onBack = navController::popBackStack,
-                onFinished = { messageRes ->
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(ARCHIVE_RESULT_KEY, messageRes)
-                    navController.popBackStack()
-                },
-                onNotFound = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(ARCHIVE_RESULT_KEY, R.string.error_todo_not_found)
-                    navController.popBackStack()
-                },
-            )
+            MataContentFrame(maxWidth = 840.dp) {
+                ArchiveDetailScreen(
+                    onBack = navController::popBackStack,
+                    onFinished = { messageRes ->
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(ARCHIVE_RESULT_KEY, messageRes)
+                        navController.popBackStack()
+                    },
+                    onNotFound = {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(ARCHIVE_RESULT_KEY, R.string.error_todo_not_found)
+                        navController.popBackStack()
+                    },
+                )
+            }
         }
         composable<CategoryListRoute> {
             CategoryListScreen(
@@ -197,10 +201,12 @@ private fun MataApp(
             )
         }
         composable<CategoryEditorRoute> {
-            CategoryEditorScreen(
-                onBack = navController::popBackStack,
-                onSaved = { navController.popBackStack() },
-            )
+            MataContentFrame(maxWidth = 720.dp) {
+                CategoryEditorScreen(
+                    onBack = navController::popBackStack,
+                    onSaved = { navController.popBackStack() },
+                )
+            }
         }
         composable<SettingsRoute> {
             SettingsScreen(
@@ -254,27 +260,23 @@ private fun PlaceholderScreen(
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    ModalNavigationDrawer(
+    MataAdaptiveNavigation(
+        selected = destination,
         drawerState = drawerState,
-        drawerContent = {
-            MataNavigationDrawer(destination) { selected ->
-                scope.launch {
-                    drawerState.close()
-                    if (selected != destination) onDestination(selected)
-                }
-            }
-        },
-    ) {
+        onSelect = onDestination,
+    ) { navigationType ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(destination.labelRes)) },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Outlined.Menu,
-                                contentDescription = stringResource(R.string.content_description_open_menu),
-                            )
+                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(
+                                    Icons.Outlined.Menu,
+                                    contentDescription = stringResource(R.string.content_description_open_menu),
+                                )
+                            }
                         }
                     },
                 )

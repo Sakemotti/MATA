@@ -42,7 +42,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -70,8 +69,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
+import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataNavigationDrawer
+import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.BillingOperation
@@ -137,27 +137,23 @@ fun SettingsScreen(
         }
     }
 
-    ModalNavigationDrawer(
+    MataAdaptiveNavigation(
+        selected = MataDestination.SETTINGS,
         drawerState = drawerState,
-        drawerContent = {
-            MataNavigationDrawer(MataDestination.SETTINGS) { destination ->
-                scope.launch {
-                    drawerState.close()
-                    if (destination != MataDestination.SETTINGS) onDestination(destination)
-                }
-            }
-        },
-    ) {
+        onSelect = onDestination,
+    ) { navigationType ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.settings_title)) },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Outlined.Menu,
-                                contentDescription = stringResource(R.string.content_description_open_menu),
-                            )
+                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(
+                                    Icons.Outlined.Menu,
+                                    contentDescription = stringResource(R.string.content_description_open_menu),
+                                )
+                            }
                         }
                     },
                 )
