@@ -44,7 +44,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarDuration
@@ -82,8 +81,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
+import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataNavigationDrawer
+import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.domain.model.HistoryDayState
@@ -152,27 +152,23 @@ fun CalendarHistoryScreen(
         }
     }
 
-    ModalNavigationDrawer(
+    MataAdaptiveNavigation(
+        selected = MataDestination.CALENDAR,
         drawerState = drawerState,
-        drawerContent = {
-            MataNavigationDrawer(MataDestination.CALENDAR) { destination ->
-                scope.launch {
-                    drawerState.close()
-                    if (destination != MataDestination.CALENDAR) onDestination(destination)
-                }
-            }
-        },
-    ) {
+        onSelect = onDestination,
+    ) { navigationType ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.calendar_history_title)) },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Outlined.Menu,
-                                contentDescription = stringResource(R.string.content_description_open_menu),
-                            )
+                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(
+                                    Icons.Outlined.Menu,
+                                    contentDescription = stringResource(R.string.content_description_open_menu),
+                                )
+                            }
                         }
                     },
                     actions = {

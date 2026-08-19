@@ -42,7 +42,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -76,8 +75,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mochisofts.mata.ui.ads.MataBannerAd
 import com.mochisofts.mata.R
+import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataNavigationDrawer
+import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
@@ -162,27 +162,23 @@ fun TodoListScreen(
         }
     }
 
-    ModalNavigationDrawer(
+    MataAdaptiveNavigation(
+        selected = MataDestination.TODOS,
         drawerState = drawerState,
-        drawerContent = {
-            MataNavigationDrawer(MataDestination.TODOS) { destination ->
-                scope.launch {
-                    drawerState.close()
-                    if (destination != MataDestination.TODOS) onDestination(destination)
-                }
-            }
-        },
-    ) {
+        onSelect = onDestination,
+    ) { navigationType ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.todo_list_title)) },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Outlined.Menu,
-                                contentDescription = stringResource(R.string.content_description_open_menu),
-                            )
+                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(
+                                    Icons.Outlined.Menu,
+                                    contentDescription = stringResource(R.string.content_description_open_menu),
+                                )
+                            }
                         }
                     },
                     actions = {
@@ -215,8 +211,9 @@ fun TodoListScreen(
                     isForeground = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
                     isScreenVisible = true,
                     isImeVisible = imeVisible,
-                    hasOverlay = drawerState.currentValue != DrawerValue.Closed ||
-                        drawerState.targetValue != DrawerValue.Closed ||
+                    hasOverlay = (navigationType == MataNavigationType.MODAL_DRAWER &&
+                        (drawerState.currentValue != DrawerValue.Closed ||
+                            drawerState.targetValue != DrawerValue.Closed)) ||
                         showDatePicker ||
                         readOnlyOccurrence != null ||
                         archiveTarget != null ||

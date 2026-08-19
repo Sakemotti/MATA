@@ -47,7 +47,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -84,8 +83,9 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.mochisofts.mata.R
+import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataNavigationDrawer
+import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
@@ -137,17 +137,11 @@ fun ArchiveListScreen(
         }
     }
 
-    ModalNavigationDrawer(
+    MataAdaptiveNavigation(
+        selected = MataDestination.ARCHIVE,
         drawerState = drawerState,
-        drawerContent = {
-            MataNavigationDrawer(MataDestination.ARCHIVE) { destination ->
-                scope.launch {
-                    drawerState.close()
-                    if (destination != MataDestination.ARCHIVE) onDestination(destination)
-                }
-            }
-        },
-    ) {
+        onSelect = onDestination,
+    ) { navigationType ->
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -177,7 +171,7 @@ fun ArchiveListScreen(
                                     contentDescription = stringResource(R.string.content_description_close_search),
                                 )
                             }
-                        } else {
+                        } else if (navigationType == MataNavigationType.MODAL_DRAWER) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
                                     Icons.Outlined.Menu,
