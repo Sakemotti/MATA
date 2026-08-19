@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +72,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             MataTheme(appTheme = theme) {
+                LaunchedEffect(viewModel) {
+                    withFrameNanos { }
+                    viewModel.firstContentRendered(this@MainActivity)
+                }
                 MataApp(
                     externalNavigation = externalNavigation,
                     onExternalNavigationHandled = { externalNavigation = null },

@@ -11,6 +11,8 @@ import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.BillingEvent
 import com.mochisofts.mata.domain.model.BillingLaunchResult
 import com.mochisofts.mata.domain.model.BillingState
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
@@ -146,4 +148,11 @@ interface EntitlementRepository {
     suspend fun refresh()
     suspend fun restore()
     suspend fun launchPurchase(activity: Activity): BillingLaunchResult
+}
+
+interface AdsConsentRepository {
+    val state: StateFlow<AdsRuntimeState>
+    val events: Flow<AdsConsentEvent>
+    fun gatherConsent(activity: Activity)
+    fun showPrivacyOptions(activity: Activity)
 }

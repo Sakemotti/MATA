@@ -4,6 +4,8 @@ import android.app.Activity
 import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.BillingEvent
 import com.mochisofts.mata.domain.model.BillingLaunchResult
 import com.mochisofts.mata.domain.model.BillingProduct
@@ -13,6 +15,7 @@ import com.mochisofts.mata.domain.model.EntitlementStatus
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.REMOVE_ADS_PRODUCT_ID
 import com.mochisofts.mata.domain.repository.EntitlementRepository
+import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
@@ -39,6 +42,7 @@ class SettingsViewModelTest {
             repository,
             FakeNotificationScheduler(),
             entitlementRepository = FakeEntitlementRepository(),
+            adsConsentRepository = FakeAdsConsentRepository(),
         )
 
         assertFalse(viewModel.uiState.value.isLoading)
@@ -61,6 +65,7 @@ class SettingsViewModelTest {
             repository,
             FakeNotificationScheduler(),
             entitlementRepository = FakeEntitlementRepository(),
+            adsConsentRepository = FakeAdsConsentRepository(),
         )
 
         viewModel.setEndHour(4)
@@ -79,6 +84,7 @@ class SettingsViewModelTest {
             FakeSettingsRepository(),
             FakeNotificationScheduler(),
             entitlementRepository = entitlementRepository,
+            adsConsentRepository = FakeAdsConsentRepository(),
         )
         val billing = BillingState(
             entitlement = EntitlementStatus(
@@ -176,5 +182,13 @@ class SettingsViewModelTest {
         override suspend fun refresh() = Unit
         override suspend fun restore() = Unit
         override suspend fun launchPurchase(activity: Activity) = BillingLaunchResult.STARTED
+    }
+
+    private class FakeAdsConsentRepository : AdsConsentRepository {
+        override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
+        override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+
+        override fun gatherConsent(activity: Activity) = Unit
+        override fun showPrivacyOptions(activity: Activity) = Unit
     }
 }

@@ -18,6 +18,7 @@ import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -76,6 +77,7 @@ class TodoListViewModel @Inject constructor(
     holidayRepository: HolidayRepository,
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
+    adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<TodoListRoute>()
     private val selectedDate = MutableStateFlow(
@@ -90,6 +92,7 @@ class TodoListViewModel @Inject constructor(
     )
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
+    val adsRuntimeState = adsConsentRepository.state
 
     private val occurrenceFlow = selectedDate.flatMapLatest(todoRepository::observeOccurrences)
     private val todayOccurrenceFlow = todoRepository.observeOccurrences(LocalDate.now(clock))

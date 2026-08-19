@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+def debugAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
+def debugBannerAdUnitId = "ca-app-pub-3940256099942544/9214589741"
+def releaseAdMobAppId = providers.gradleProperty("MATA_ADMOB_APP_ID").orElse("").get()
+def releaseBannerAdUnitId = providers.gradleProperty("MATA_ADMOB_BANNER_AD_UNIT_ID").orElse("").get()
+
 android {
     namespace 'com.mochisofts.mata'
     compileSdk {
@@ -28,11 +33,17 @@ android {
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
+            manifestPlaceholders.admobAppId = debugAdMobAppId
+            buildConfigField "String", "ADMOB_APP_ID", "\"${debugAdMobAppId}\""
+            buildConfigField "String", "ADMOB_BANNER_AD_UNIT_ID", "\"${debugBannerAdUnitId}\""
         }
         release {
             optimization {
                 enable false
             }
+            manifestPlaceholders.admobAppId = releaseAdMobAppId ?: "missing-admob-app-id"
+            buildConfigField "String", "ADMOB_APP_ID", "\"${releaseAdMobAppId}\""
+            buildConfigField "String", "ADMOB_BANNER_AD_UNIT_ID", "\"${releaseBannerAdUnitId}\""
         }
     }
     compileOptions {
@@ -41,6 +52,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
     sourceSets {
         androidTest.assets.srcDir "$projectDir/schemas"
@@ -79,6 +91,8 @@ dependencies {
     implementation libs.androidx.glance.appwidget
     implementation libs.androidx.glance.material3
     implementation libs.google.play.billing
+    implementation libs.google.mobile.ads.next.gen
+    implementation libs.google.user.messaging.platform
     implementation libs.androidx.datastore.preferences
     implementation libs.androidx.hilt.navigation.compose
     implementation libs.hilt.android
@@ -98,4 +112,29 @@ dependencies {
     androidTestImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.paging.testing
     androidTestImplementation libs.androidx.compose.ui.test.junit4
+}
+
+def verifyReleaseAdMobConfiguration = tasks.register("verifyReleaseAdMobConfiguration") {
+    doLast {
+        def appIdPattern = ~/ca-app-pub-\d{16}~\d{10}/
+        def unitIdPattern = ~/ca-app-pub-\d{16}\/\d{10}/
+        if (!(releaseAdMobAppId ==~ appIdPattern) || releaseAdMobAppId == debugAdMobAppId) {
+            throw new GradleException(
+                "Release AdMob App ID is missing, invalid, or a test ID. " +
+                    "Set MATA_ADMOB_APP_ID in Gradle properties."
+            )
+        }
+        if (!(releaseBannerAdUnitId ==~ unitIdPattern) || releaseBannerAdUnitId == debugBannerAdUnitId) {
+            throw new GradleException(
+                "Release AdMob banner unit ID is missing, invalid, or a test ID. " +
+                    "Set MATA_ADMOB_BANNER_AD_UNIT_ID in Gradle properties."
+            )
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name == "preReleaseBuild") {
+        task.dependsOn(verifyReleaseAdMobConfiguration)
+    }
 }

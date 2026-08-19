@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.BillingEvent
 import com.mochisofts.mata.domain.model.BillingLaunchResult
 import com.mochisofts.mata.domain.model.BillingState
@@ -13,6 +15,7 @@ import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.EntitlementRepository
+import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.data.backup.BackupErrorCode
 import com.mochisofts.mata.data.backup.BackupOperationState
@@ -59,6 +62,7 @@ data class SettingsUiState(
     val savingSetting: SavingSetting? = null,
     val backupOperation: BackupOperationState = BackupOperationState(),
     val billing: BillingState = BillingState(),
+    val adsRuntime: AdsRuntimeState = AdsRuntimeState(),
 )
 
 sealed interface SettingsEffect {
@@ -72,6 +76,7 @@ class SettingsViewModel @Inject constructor(
     private val notificationScheduler: NotificationScheduler,
     private val backupCoordinator: BackupCoordinator? = null,
     private val entitlementRepository: EntitlementRepository,
+    private val adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -105,6 +110,20 @@ class SettingsViewModel @Inject constructor(
                     BillingEvent.USER_CANCELED -> null
                 }
                 if (message != null) effectsChannel.send(SettingsEffect.Message(message))
+            }
+        }
+        viewModelScope.launch {
+            adsConsentRepository.state.collect { adsRuntime ->
+                _uiState.update { it.copy(adsRuntime = adsRuntime) }
+            }
+        }
+        viewModelScope.launch {
+            adsConsentRepository.events.collect { event ->
+                if (event == AdsConsentEvent.PRIVACY_OPTIONS_ERROR) {
+                    effectsChannel.send(
+                        SettingsEffect.Message(R.string.settings_ads_privacy_options_error),
+                    )
+                }
             }
         }
         backupCoordinator?.let { coordinator ->
@@ -191,6 +210,10 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    fun showPrivacyOptions(activity: Activity) {
+        adsConsentRepository.showPrivacyOptions(activity)
     }
 
     fun suggestedBackupFileName(): String = backupCoordinator?.suggestedFileName().orEmpty()
