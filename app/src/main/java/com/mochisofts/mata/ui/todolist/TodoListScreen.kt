@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,12 +65,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.mochisofts.mata.ui.ads.MataBannerAd
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
@@ -97,6 +103,11 @@ fun TodoListScreen(
     viewModel: TodoListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val adsRuntimeState by viewModel.adsRuntimeState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -196,6 +207,20 @@ fun TodoListScreen(
                     onClick = onAddTodo,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text(stringResource(R.string.action_add_todo)) },
+                )
+            },
+            bottomBar = {
+                MataBannerAd(
+                    runtimeState = adsRuntimeState,
+                    isForeground = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
+                    isScreenVisible = true,
+                    isImeVisible = imeVisible,
+                    hasOverlay = drawerState.currentValue != DrawerValue.Closed ||
+                        drawerState.targetValue != DrawerValue.Closed ||
+                        showDatePicker ||
+                        readOnlyOccurrence != null ||
+                        archiveTarget != null ||
+                        deleteTarget != null,
                 )
             },
         ) { padding ->

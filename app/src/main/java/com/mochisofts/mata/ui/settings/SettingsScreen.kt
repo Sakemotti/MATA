@@ -73,6 +73,7 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationDrawer
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.BillingOperation
 import com.mochisofts.mata.domain.model.BillingState
 import com.mochisofts.mata.domain.model.EntitlementState
@@ -331,12 +332,16 @@ fun SettingsScreen(
                         SettingsSectionHeader(R.string.settings_section_ads)
                         BillingSettings(
                             billing = state.billing,
+                            adsRuntime = state.adsRuntime,
                             canLaunchPurchase = activity != null,
                             onPurchase = {
                                 activity?.let(viewModel::purchaseAdRemoval)
                             },
                             onRetry = viewModel::retryBilling,
                             onRestore = viewModel::restoreAdRemoval,
+                            onPrivacyOptions = {
+                                activity?.let(viewModel::showPrivacyOptions)
+                            },
                         )
                         Spacer(Modifier.height(32.dp))
                     }
@@ -538,10 +543,12 @@ private fun SettingsValueRow(
 @Composable
 private fun BillingSettings(
     billing: BillingState,
+    adsRuntime: AdsRuntimeState,
     canLaunchPurchase: Boolean,
     onPurchase: () -> Unit,
     onRetry: () -> Unit,
     onRestore: () -> Unit,
+    onPrivacyOptions: () -> Unit,
 ) {
     val operationInProgress = billing.operation != BillingOperation.IDLE
     val product = billing.product
@@ -614,6 +621,17 @@ private fun BillingSettings(
         enabled = !operationInProgress,
         onClick = onRestore,
     )
+    if (adsRuntime.privacyOptionsRequired) {
+        HorizontalDivider()
+        SettingsValueRow(
+            title = stringResource(R.string.settings_ads_privacy_options_title),
+            value = stringResource(R.string.settings_ads_privacy_options_value),
+            description = stringResource(R.string.settings_ads_privacy_options_description),
+            isSaving = adsRuntime.isShowingPrivacyOptions,
+            enabled = canLaunchPurchase && !adsRuntime.isShowingPrivacyOptions,
+            onClick = onPrivacyOptions,
+        )
+    }
 }
 
 private data class BillingRowStatus(

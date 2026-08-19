@@ -1,5 +1,6 @@
 package com.mochisofts.mata.app
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.domain.model.AppTheme
@@ -8,6 +9,7 @@ import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.EntitlementRepository
+import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.data.holiday.HolidayWorkScheduler
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +30,7 @@ class MataAppViewModel @Inject constructor(
     private val holidayWorkScheduler: HolidayWorkScheduler,
     private val widgetUpdater: WidgetUpdater,
     private val entitlementRepository: EntitlementRepository,
+    private val adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
     val theme: StateFlow<AppTheme> = settingsRepository.theme
         .catch { emit(AppTheme.SYSTEM) }
@@ -39,6 +42,10 @@ class MataAppViewModel @Inject constructor(
 
     fun notificationOpened(todoId: String) {
         viewModelScope.launch { notificationScheduler.reconcileTodo(todoId) }
+    }
+
+    fun firstContentRendered(activity: Activity) {
+        adsConsentRepository.gatherConsent(activity)
     }
 
     fun appResumed() {

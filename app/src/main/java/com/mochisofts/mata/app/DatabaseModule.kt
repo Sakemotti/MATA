@@ -36,6 +36,7 @@ import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
 import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
 import com.mochisofts.mata.data.billing.GooglePlayEntitlementRepository
+import com.mochisofts.mata.data.ads.GoogleAdsConsentRepository
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
@@ -45,6 +46,7 @@ import com.mochisofts.mata.domain.repository.HistoryRepository
 import com.mochisofts.mata.domain.repository.ArchiveRepository
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.EntitlementRepository
+import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -102,6 +104,12 @@ abstract class RepositoryModule {
     abstract fun bindEntitlementRepository(
         repository: GooglePlayEntitlementRepository,
     ): EntitlementRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdsConsentRepository(
+        repository: GoogleAdsConsentRepository,
+    ): AdsConsentRepository
 }
 
 @Module
