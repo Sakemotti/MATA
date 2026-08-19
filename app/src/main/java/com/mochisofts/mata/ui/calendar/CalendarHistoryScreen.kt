@@ -6,17 +6,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -61,6 +66,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -111,6 +117,38 @@ private sealed interface HistoryDialogItem {
     data class Period(val value: PeriodHistoryEntry) : HistoryDialogItem
 }
 
+private fun HistoryEntry.dialogKey(): String =
+    "execution:${id ?: "$todoId:$logicalDate:${state.name}"}"
+
+private fun PeriodHistoryEntry.dialogKey(): String = "period:$id"
+
+private fun CalendarHistoryUiState.findDialogItem(key: String?): HistoryDialogItem? {
+    if (key == null) return null
+    day?.entries?.firstOrNull { it.dialogKey() == key }?.let {
+        return HistoryDialogItem.Execution(it)
+    }
+    day?.periodResults?.firstOrNull { it.dialogKey() == key }?.let {
+        return HistoryDialogItem.Period(it)
+    }
+    return null
+}
+
+internal data class CalendarPaneWidths(
+    val leftDp: Float,
+    val rightDp: Float,
+)
+
+internal fun calendarPaneWidths(availableWidthDp: Float): CalendarPaneWidths {
+    require(availableWidthDp >= 736f)
+    val paneSpacingDp = 24f
+    val contentWidthDp = availableWidthDp - paneSpacingDp
+    val leftDp = (contentWidthDp * 0.4f).coerceIn(360f, 480f)
+    return CalendarPaneWidths(
+        leftDp = leftDp,
+        rightDp = contentWidthDp - leftDp,
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarHistoryScreen(
@@ -122,8 +160,10 @@ fun CalendarHistoryScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
-    var showMonthPicker by remember { mutableStateOf(false) }
-    var dialogItem by remember { mutableStateOf<HistoryDialogItem?>(null) }
+    var showMonthPicker by rememberSaveable { mutableStateOf(false) }
+    var dialogItemKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val dialogItem = state.findDialogItem(dialogItemKey)
+    val historyListState = rememberLazyListState()
     val undoMessage = stringResource(R.string.calendar_history_completion_undone)
     val undoLabel = stringResource(R.string.action_undo)
 
@@ -156,13 +196,13 @@ fun CalendarHistoryScreen(
         selected = MataDestination.CALENDAR,
         drawerState = drawerState,
         onSelect = onDestination,
-    ) { navigationType ->
+    ) { layoutInfo ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.calendar_history_title)) },
                     navigationIcon = {
-                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
                                     Icons.Outlined.Menu,
@@ -182,36 +222,21 @@ fun CalendarHistoryScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding)) {
-                MonthControls(
-                    state = state,
-                    onPrevious = viewModel::showPreviousMonth,
-                    onNext = viewModel::showNextMonth,
-                    onSelectMonth = { showMonthPicker = true },
-                )
-                WeekdayHeader(state.weekStart)
-                when {
-                    state.isMonthLoading -> Box(
-                        Modifier.fillMaxWidth().height(288.dp),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
-                    state.monthErrorRes != null -> ErrorArea(
-                        messageRes = state.monthErrorRes!!,
-                        onRetry = viewModel::refresh,
-                        modifier = Modifier.fillMaxWidth().height(288.dp),
-                    )
-                    else -> MonthGrid(state, viewModel::selectDate, viewModel::showPreviousMonth, viewModel::showNextMonth)
-                }
-                HorizontalDivider()
-                DayHistoryArea(
-                    state = state,
-                    onRetry = viewModel::refresh,
-                    onEntryClick = { dialogItem = HistoryDialogItem.Execution(it) },
-                    onPeriodClick = { dialogItem = HistoryDialogItem.Period(it) },
-                    onUndoCompletion = viewModel::undoCompletion,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            CalendarHistoryBody(
+                state = state,
+                useTwoPane = layoutInfo.useTwoPane,
+                outerMargin = layoutInfo.outerMarginDp.dp,
+                historyListState = historyListState,
+                onPreviousMonth = viewModel::showPreviousMonth,
+                onNextMonth = viewModel::showNextMonth,
+                onSelectMonth = { showMonthPicker = true },
+                onSelectDate = viewModel::selectDate,
+                onRetry = viewModel::refresh,
+                onEntryClick = { dialogItemKey = it.dialogKey() },
+                onPeriodClick = { dialogItemKey = it.dialogKey() },
+                onUndoCompletion = viewModel::undoCompletion,
+                modifier = Modifier.fillMaxSize().padding(padding),
+            )
         }
     }
 
@@ -224,7 +249,113 @@ fun CalendarHistoryScreen(
         )
     }
     dialogItem?.let { item ->
-        HistoryDetailDialog(item = item, onDismiss = { dialogItem = null })
+        HistoryDetailDialog(item = item, onDismiss = { dialogItemKey = null })
+    }
+}
+
+@Composable
+private fun CalendarHistoryBody(
+    state: CalendarHistoryUiState,
+    useTwoPane: Boolean,
+    outerMargin: androidx.compose.ui.unit.Dp,
+    historyListState: LazyListState,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onSelectMonth: () -> Unit,
+    onSelectDate: (LocalDate) -> Unit,
+    onRetry: () -> Unit,
+    onEntryClick: (HistoryEntry) -> Unit,
+    onPeriodClick: (PeriodHistoryEntry) -> Unit,
+    onUndoCompletion: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (useTwoPane) {
+        BoxWithConstraints(
+            modifier = modifier.padding(horizontal = outerMargin),
+        ) {
+            val paneSpacing = 24.dp
+            val paneWidths = calendarPaneWidths(maxWidth.value)
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(paneSpacing),
+            ) {
+                CalendarMonthPane(
+                    state = state,
+                    onPreviousMonth = onPreviousMonth,
+                    onNextMonth = onNextMonth,
+                    onSelectMonth = onSelectMonth,
+                    onSelectDate = onSelectDate,
+                    onRetry = onRetry,
+                    modifier = Modifier.width(paneWidths.leftDp.dp).fillMaxHeight(),
+                )
+                DayHistoryArea(
+                    state = state,
+                    onRetry = onRetry,
+                    onEntryClick = onEntryClick,
+                    onPeriodClick = onPeriodClick,
+                    onUndoCompletion = onUndoCompletion,
+                    listState = historyListState,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
+        }
+    } else {
+        Column(
+            modifier = modifier.padding(horizontal = outerMargin),
+        ) {
+            CalendarMonthPane(
+                state = state,
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
+                onSelectMonth = onSelectMonth,
+                onSelectDate = onSelectDate,
+                onRetry = onRetry,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            HorizontalDivider()
+            DayHistoryArea(
+                state = state,
+                onRetry = onRetry,
+                onEntryClick = onEntryClick,
+                onPeriodClick = onPeriodClick,
+                onUndoCompletion = onUndoCompletion,
+                listState = historyListState,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarMonthPane(
+    state: CalendarHistoryUiState,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onSelectMonth: () -> Unit,
+    onSelectDate: (LocalDate) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        MonthControls(
+            state = state,
+            onPrevious = onPreviousMonth,
+            onNext = onNextMonth,
+            onSelectMonth = onSelectMonth,
+        )
+        WeekdayHeader(state.weekStart)
+        when {
+            state.isMonthLoading -> Box(
+                Modifier.fillMaxWidth().height(288.dp),
+                contentAlignment = Alignment.Center,
+            ) { CircularProgressIndicator() }
+            state.monthErrorRes != null -> ErrorArea(
+                messageRes = requireNotNull(state.monthErrorRes),
+                onRetry = onRetry,
+                modifier = Modifier.fillMaxWidth().height(288.dp),
+            )
+            else -> MonthGrid(state, onSelectDate, onPreviousMonth, onNextMonth)
+        }
     }
 }
 
@@ -402,6 +533,7 @@ private fun DayHistoryArea(
     onEntryClick: (HistoryEntry) -> Unit,
     onPeriodClick: (PeriodHistoryEntry) -> Unit,
     onUndoCompletion: (String) -> Unit,
+    listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -412,7 +544,10 @@ private fun DayHistoryArea(
         state.day == null -> Unit
         else -> {
             val day = requireNotNull(state.day)
-            LazyColumn(modifier.fillMaxWidth()) {
+            LazyColumn(
+                modifier = modifier.fillMaxWidth(),
+                state = listState,
+            ) {
                 item {
                     DaySummaryHeader(day)
                 }

@@ -264,13 +264,13 @@ private fun PlaceholderScreen(
         selected = destination,
         drawerState = drawerState,
         onSelect = onDestination,
-    ) { navigationType ->
+    ) { layoutInfo ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(destination.labelRes)) },
                     navigationIcon = {
-                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
                                     Icons.Outlined.Menu,

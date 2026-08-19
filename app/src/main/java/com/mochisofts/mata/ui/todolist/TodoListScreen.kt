@@ -166,13 +166,13 @@ fun TodoListScreen(
         selected = MataDestination.TODOS,
         drawerState = drawerState,
         onSelect = onDestination,
-    ) { navigationType ->
+    ) { layoutInfo ->
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.todo_list_title)) },
                     navigationIcon = {
-                        if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
                                     Icons.Outlined.Menu,
@@ -211,7 +211,7 @@ fun TodoListScreen(
                     isForeground = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
                     isScreenVisible = true,
                     isImeVisible = imeVisible,
-                    hasOverlay = (navigationType == MataNavigationType.MODAL_DRAWER &&
+                    hasOverlay = (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER &&
                         (drawerState.currentValue != DrawerValue.Closed ||
                             drawerState.targetValue != DrawerValue.Closed)) ||
                         showDatePicker ||

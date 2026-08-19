@@ -141,7 +141,7 @@ fun ArchiveListScreen(
         selected = MataDestination.ARCHIVE,
         drawerState = drawerState,
         onSelect = onDestination,
-    ) { navigationType ->
+    ) { layoutInfo ->
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -171,7 +171,7 @@ fun ArchiveListScreen(
                                     contentDescription = stringResource(R.string.content_description_close_search),
                                 )
                             }
-                        } else if (navigationType == MataNavigationType.MODAL_DRAWER) {
+                        } else if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
                                     Icons.Outlined.Menu,

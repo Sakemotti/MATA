@@ -27,6 +27,15 @@ enum class MataNavigationType {
     PERMANENT_DRAWER,
 }
 
+data class MataAdaptiveLayoutInfo(
+    val navigationType: MataNavigationType,
+    val windowWidthDp: Float,
+    val windowHeightDp: Float,
+    val outerMarginDp: Float,
+    val availableContentWidthDp: Float,
+    val useTwoPane: Boolean,
+)
+
 internal fun mataNavigationTypeFor(
     widthDp: Float,
     heightDp: Float,
@@ -36,18 +45,66 @@ internal fun mataNavigationTypeFor(
     else -> MataNavigationType.PERMANENT_DRAWER
 }
 
+internal fun mataAdaptiveLayoutInfoFor(
+    widthDp: Float,
+    heightDp: Float,
+    destination: MataDestination,
+): MataAdaptiveLayoutInfo {
+    val navigationType = mataNavigationTypeFor(widthDp, heightDp)
+    val navigationWidthDp = when (navigationType) {
+        MataNavigationType.MODAL_DRAWER -> 0f
+        MataNavigationType.NAVIGATION_RAIL -> 80f
+        MataNavigationType.PERMANENT_DRAWER -> 240f
+    }
+    val outerMarginDp = when {
+        widthDp < 600f -> 16f
+        widthDp < 840f -> 24f
+        widthDp < 1200f -> 32f
+        else -> 48f
+    }
+    val maximumContentWidthDp = when (destination) {
+        MataDestination.CALENDAR -> 1200f
+        MataDestination.SETTINGS -> 720f
+        MataDestination.TODOS,
+        MataDestination.CATEGORIES,
+        MataDestination.ARCHIVE,
+        -> 840f
+    }
+    val framedContentWidthDp = (widthDp - navigationWidthDp)
+        .coerceAtLeast(0f)
+        .coerceAtMost(maximumContentWidthDp)
+    val availableContentWidthDp = (framedContentWidthDp - outerMarginDp * 2f)
+        .coerceAtLeast(0f)
+    val supportsTwoPane = destination == MataDestination.CALENDAR ||
+        destination == MataDestination.CATEGORIES ||
+        destination == MataDestination.ARCHIVE
+    return MataAdaptiveLayoutInfo(
+        navigationType = navigationType,
+        windowWidthDp = widthDp,
+        windowHeightDp = heightDp,
+        outerMarginDp = outerMarginDp,
+        availableContentWidthDp = availableContentWidthDp,
+        useTwoPane = supportsTwoPane &&
+            widthDp >= 840f &&
+            heightDp >= 480f &&
+            availableContentWidthDp >= 736f,
+    )
+}
+
 @Composable
 fun MataAdaptiveNavigation(
     selected: MataDestination,
     drawerState: DrawerState,
     onSelect: (MataDestination) -> Unit,
-    content: @Composable (MataNavigationType) -> Unit,
+    content: @Composable (MataAdaptiveLayoutInfo) -> Unit,
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val navigationType = mataNavigationTypeFor(
+        val layoutInfo = mataAdaptiveLayoutInfoFor(
             widthDp = maxWidth.value,
             heightDp = maxHeight.value,
+            destination = selected,
         )
+        val navigationType = layoutInfo.navigationType
         val contentWidth = when (selected) {
             MataDestination.CALENDAR -> 1200.dp
             MataDestination.SETTINGS -> 720.dp
@@ -81,7 +138,7 @@ fun MataAdaptiveNavigation(
                     },
                 ) {
                     MataContentFrame(maxWidth = contentWidth) {
-                        content(navigationType)
+                        content(layoutInfo)
                     }
                 }
             }
@@ -97,7 +154,7 @@ fun MataAdaptiveNavigation(
                         maxWidth = contentWidth,
                         modifier = Modifier.weight(1f),
                     ) {
-                        content(navigationType)
+                        content(layoutInfo)
                     }
                 }
             }
@@ -114,7 +171,7 @@ fun MataAdaptiveNavigation(
                     },
                 ) {
                     MataContentFrame(maxWidth = contentWidth) {
-                        content(navigationType)
+                        content(layoutInfo)
                     }
                 }
             }
