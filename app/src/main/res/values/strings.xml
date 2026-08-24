@@ -385,6 +385,11 @@
     <string name="dialog_delete_category_title">カテゴリを削除しますか？</string>
     <string name="dialog_delete_category_message">所属するTODOはカテゴリ未設定へ移動します。この操作は元に戻せません。</string>
 
+    <string name="category_two_pane_placeholder">カテゴリを選択するか、新しいカテゴリを追加してください</string>
+    <string name="category_added_message">カテゴリを追加しました</string>
+    <string name="category_updated_message">カテゴリを更新しました</string>
+    <string name="category_deleted_message">カテゴリを削除しました</string>
+
     <!-- Category icon names -->
     <string name="category_icon_category">カテゴリ</string>
     <string name="category_icon_home">家</string>

@@ -25,15 +25,19 @@ data class CategoryListUiState(
     val categories: List<Category> = emptyList(),
     val isReordering: Boolean = false,
     val isOrderSaving: Boolean = false,
+    val editor: CategoryEditorUiState? = null,
 )
 
 sealed interface CategoryListEffect {
     data class OrderSaved(val position: Int, val total: Int) : CategoryListEffect
+    data class CategorySaved(val isNew: Boolean) : CategoryListEffect
+    data object CategoryDeleted : CategoryListEffect
     data class Message(@StringRes val messageRes: Int) : CategoryListEffect
 }
 
 @HiltViewModel
 class CategoryListViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val repository: CategoryRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(CategoryListUiState())
@@ -43,6 +47,7 @@ class CategoryListViewModel @Inject constructor(
     val effects: Flow<CategoryListEffect> = effectsChannel.receiveAsFlow()
 
     private var persistedCategories: List<Category> = emptyList()
+    private var editorLoadRequest = 0
 
     init {
         viewModelScope.launch {
@@ -53,6 +58,10 @@ class CategoryListViewModel @Inject constructor(
                     else state.copy(categories = categories)
                 }
             }
+        }
+        when (savedStateHandle.get<String>(EDITOR_MODE_KEY)) {
+            EDITOR_MODE_NEW -> openNewEditor()
+            EDITOR_MODE_EDIT -> savedStateHandle.get<String>(EDITOR_CATEGORY_ID_KEY)?.let(::openEditor)
         }
     }
 
@@ -103,6 +112,145 @@ class CategoryListViewModel @Inject constructor(
         return true
     }
 
+    fun openNewEditor() {
+        editorLoadRequest += 1
+        savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_NEW
+        savedStateHandle[EDITOR_CATEGORY_ID_KEY] = null
+        _uiState.update {
+            it.copy(editor = CategoryEditorUiState(isLoading = false, isNew = true))
+        }
+    }
+
+    fun openEditor(categoryId: String) {
+        val request = ++editorLoadRequest
+        savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_EDIT
+        savedStateHandle[EDITOR_CATEGORY_ID_KEY] = categoryId
+        _uiState.update {
+            it.copy(
+                editor = CategoryEditorUiState(
+                    isLoading = true,
+                    isNew = false,
+                    categoryId = categoryId,
+                ),
+            )
+        }
+        viewModelScope.launch {
+            val category = repository.getCategory(categoryId)
+            if (request != editorLoadRequest) return@launch
+            _uiState.update { state ->
+                state.copy(
+                    editor = if (category == null) {
+                        state.editor?.copy(
+                            isLoading = false,
+                            errorMessageRes = R.string.error_category_not_found,
+                        )
+                    } else {
+                        CategoryEditorUiState(
+                            isLoading = false,
+                            isNew = false,
+                            categoryId = category.id,
+                            name = category.name,
+                            colorIndex = category.colorIndex,
+                            iconName = category.iconName,
+                            endHour = category.endHour,
+                        )
+                    },
+                )
+            }
+        }
+    }
+
+    fun closeEditor() {
+        editorLoadRequest += 1
+        savedStateHandle.remove<String>(EDITOR_MODE_KEY)
+        savedStateHandle.remove<String>(EDITOR_CATEGORY_ID_KEY)
+        _uiState.update { it.copy(editor = null) }
+    }
+
+    fun setEditorName(value: String) = editEditor { copy(name = value) }
+    fun setEditorColor(value: Int) = editEditor { copy(colorIndex = value) }
+    fun setEditorIcon(value: String) = editEditor { copy(iconName = value) }
+    fun setEditorEndHour(value: Int) = editEditor { copy(endHour = value) }
+
+    fun saveEditor() {
+        val editor = _uiState.value.editor ?: return
+        if (!editor.canSave || !editor.isDirty) return
+        _uiState.update {
+            it.copy(editor = it.editor?.copy(isSaving = true, errorMessageRes = null))
+        }
+        viewModelScope.launch {
+            repository.saveCategory(
+                id = editor.categoryId,
+                name = editor.name,
+                colorIndex = editor.colorIndex,
+                iconName = editor.iconName,
+                endHour = editor.endHour,
+            ).onSuccess { id ->
+                savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_EDIT
+                savedStateHandle[EDITOR_CATEGORY_ID_KEY] = id
+                _uiState.update { state ->
+                    state.copy(
+                        editor = state.editor?.copy(
+                            categoryId = id,
+                            isNew = false,
+                            isDirty = false,
+                            isSaving = false,
+                        ),
+                    )
+                }
+                effectsChannel.send(CategoryListEffect.CategorySaved(editor.isNew))
+            }.onFailure { throwable ->
+                _uiState.update { state ->
+                    state.copy(
+                        editor = state.editor?.copy(
+                            isSaving = false,
+                            errorMessageRes = throwable.toUserMessageRes(
+                                R.string.error_category_save_failed,
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteEditor() {
+        val categoryId = _uiState.value.editor?.categoryId ?: return
+        _uiState.update {
+            it.copy(editor = it.editor?.copy(isSaving = true, errorMessageRes = null))
+        }
+        viewModelScope.launch {
+            repository.deleteCategory(categoryId)
+                .onSuccess {
+                    closeEditor()
+                    effectsChannel.send(CategoryListEffect.CategoryDeleted)
+                }
+                .onFailure {
+                    _uiState.update { state ->
+                        state.copy(
+                            editor = state.editor?.copy(
+                                isSaving = false,
+                                errorMessageRes = R.string.error_category_delete_failed,
+                            ),
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun editEditor(
+        transform: CategoryEditorUiState.() -> CategoryEditorUiState,
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                editor = state.editor?.transform()?.copy(
+                    isDirty = true,
+                    errorMessageRes = null,
+                ),
+            )
+        }
+    }
+
     private fun persistOrder(categoryId: String) {
         val orderedCategories = _uiState.value.categories
         if (orderedCategories.map(Category::id) == persistedCategories.map(Category::id)) {
@@ -130,6 +278,13 @@ class CategoryListViewModel @Inject constructor(
                 }
         }
     }
+
+    private companion object {
+        const val EDITOR_MODE_KEY = "category_editor_mode"
+        const val EDITOR_CATEGORY_ID_KEY = "category_editor_category_id"
+        const val EDITOR_MODE_NEW = "new"
+        const val EDITOR_MODE_EDIT = "edit"
+    }
 }
 
 private fun <T> List<T>.move(fromIndex: Int, targetIndex: Int): List<T> =
@@ -138,6 +293,7 @@ private fun <T> List<T>.move(fromIndex: Int, targetIndex: Int): List<T> =
 data class CategoryEditorUiState(
     val isLoading: Boolean = true,
     val isNew: Boolean = true,
+    val categoryId: String? = null,
     val name: String = "",
     val colorIndex: Int = 8,
     val iconName: String = "Category",

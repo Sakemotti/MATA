@@ -1,5 +1,6 @@
 package com.mochisofts.mata.ui.category
 
+import androidx.lifecycle.SavedStateHandle
 import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.Category
@@ -24,7 +25,7 @@ class CategoryListViewModelTest {
     @Test
     fun dragOrder_isSavedAndReportsNewPosition() = runTest {
         val repository = FakeCategoryRepository(categories())
-        val viewModel = CategoryListViewModel(repository)
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
         runCurrent()
 
         assertTrue(viewModel.startReordering())
@@ -44,7 +45,7 @@ class CategoryListViewModelTest {
         val repository = FakeCategoryRepository(categories()).apply {
             reorderGate = CompletableDeferred()
         }
-        val viewModel = CategoryListViewModel(repository)
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
         runCurrent()
 
         assertTrue(viewModel.moveCategoryOneStep("b", -1))
@@ -61,7 +62,7 @@ class CategoryListViewModelTest {
         val repository = FakeCategoryRepository(categories()).apply {
             reorderResult = Result.failure(IllegalStateException("write failed"))
         }
-        val viewModel = CategoryListViewModel(repository)
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
         runCurrent()
 
         viewModel.startReordering()
@@ -75,6 +76,39 @@ class CategoryListViewModelTest {
             CategoryListEffect.Message(R.string.error_category_reorder_failed),
             viewModel.effects.first(),
         )
+    }
+
+    @Test
+    fun editorSave_keepsSavedCategorySelected() = runTest {
+        val repository = FakeCategoryRepository(categories())
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
+        runCurrent()
+
+        viewModel.openEditor("a")
+        runCurrent()
+        viewModel.setEditorName("Updated")
+        viewModel.saveEditor()
+        runCurrent()
+
+        assertEquals("a", viewModel.uiState.value.editor?.categoryId)
+        assertEquals("Updated", viewModel.uiState.value.editor?.name)
+        assertFalse(requireNotNull(viewModel.uiState.value.editor).isDirty)
+        assertEquals(CategoryListEffect.CategorySaved(isNew = false), viewModel.effects.first())
+    }
+
+    @Test
+    fun editorDelete_clearsSelection() = runTest {
+        val repository = FakeCategoryRepository(categories())
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
+        runCurrent()
+
+        viewModel.openEditor("a")
+        runCurrent()
+        viewModel.deleteEditor()
+        runCurrent()
+
+        assertEquals(null, viewModel.uiState.value.editor)
+        assertEquals(CategoryListEffect.CategoryDeleted, viewModel.effects.first())
     }
 
     private fun categories() = listOf(
@@ -109,7 +143,20 @@ private class FakeCategoryRepository(initialCategories: List<Category>) : Catego
         colorIndex: Int,
         iconName: String,
         endHour: Int,
-    ): Result<String> = Result.failure(UnsupportedOperationException())
+    ): Result<String> {
+        val savedId = id ?: "new"
+        val existing = categories.value.firstOrNull { it.id == savedId }
+        val saved = Category(
+            id = savedId,
+            name = name,
+            colorIndex = colorIndex,
+            iconName = iconName,
+            endHour = endHour,
+            sortOrder = existing?.sortOrder ?: categories.value.size,
+        )
+        categories.value = categories.value.filterNot { it.id == savedId } + saved
+        return Result.success(savedId)
+    }
 
     override suspend fun reorderCategories(orderedIds: List<String>): Result<Unit> {
         lastOrderedIds = orderedIds
@@ -122,6 +169,8 @@ private class FakeCategoryRepository(initialCategories: List<Category>) : Catego
         }
     }
 
-    override suspend fun deleteCategory(id: String): Result<Unit> =
-        Result.failure(UnsupportedOperationException())
+    override suspend fun deleteCategory(id: String): Result<Unit> {
+        categories.value = categories.value.filterNot { it.id == id }
+        return Result.success(Unit)
+    }
 }

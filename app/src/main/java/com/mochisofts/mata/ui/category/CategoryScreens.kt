@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -28,8 +29,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
@@ -49,6 +50,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -62,6 +64,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,6 +85,7 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -91,6 +95,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
+import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
@@ -103,8 +108,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryListScreen(
-    onAdd: () -> Unit,
-    onEdit: (String) -> Unit,
     onDestination: (MataDestination) -> Unit,
     viewModel: CategoryListViewModel = hiltViewModel(),
 ) {
@@ -121,6 +124,24 @@ fun CategoryListScreen(
     var draggedCategoryId by remember { mutableStateOf<String?>(null) }
     var draggedOffset by remember { mutableStateOf(0f) }
     var autoScrollDelta by remember { mutableStateOf(0f) }
+    var showDiscardDialog by remember { mutableStateOf(false) }
+    var showWideDeleteDialog by remember { mutableStateOf(false) }
+    var pendingEditorAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var useTwoPaneLayout by remember { mutableStateOf(false) }
+
+    fun runAfterDiscardCheck(action: () -> Unit) {
+        if (state.editor?.isSaving == true) return
+        if (state.editor?.isDirty == true) {
+            pendingEditorAction = action
+            showDiscardDialog = true
+        } else {
+            action()
+        }
+    }
+
+    fun requestCloseEditor() = runAfterDiscardCheck(viewModel::closeEditor)
+
+    BackHandler(enabled = state.editor != null, onBack = ::requestCloseEditor)
 
     fun updateAutoScroll(draggedCenter: Float) {
         val layoutInfo = listState.layoutInfo
@@ -164,6 +185,23 @@ fun CategoryListScreen(
                         ),
                     )
                 }
+                is CategoryListEffect.CategorySaved -> {
+                    if (!useTwoPaneLayout) viewModel.closeEditor()
+                    snackbarHostState.showSnackbar(
+                        resources.getString(
+                            if (effect.isNew) {
+                                R.string.category_added_message
+                            } else {
+                                R.string.category_updated_message
+                            },
+                        ),
+                    )
+                }
+                CategoryListEffect.CategoryDeleted -> {
+                    snackbarHostState.showSnackbar(
+                        resources.getString(R.string.category_deleted_message),
+                    )
+                }
                 is CategoryListEffect.Message -> {
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
@@ -188,8 +226,40 @@ fun CategoryListScreen(
     MataAdaptiveNavigation(
         selected = MataDestination.CATEGORIES,
         drawerState = drawerState,
-        onSelect = onDestination,
+        onSelect = { destination ->
+            runAfterDiscardCheck { onDestination(destination) }
+        },
     ) { layoutInfo ->
+        SideEffect { useTwoPaneLayout = layoutInfo.useTwoPane }
+        LaunchedEffect(layoutInfo.useTwoPane) {
+            if (draggedCategoryId != null) {
+                autoScrollDelta = 0f
+                draggedCategoryId = null
+                draggedOffset = 0f
+                viewModel.cancelReordering()
+            }
+        }
+
+        if (!layoutInfo.useTwoPane && state.editor != null) {
+            Box(Modifier.fillMaxSize()) {
+                CategoryEditorScaffold(
+                    state = requireNotNull(state.editor),
+                    onBack = ::requestCloseEditor,
+                    onNameChange = viewModel::setEditorName,
+                    onColorChange = viewModel::setEditorColor,
+                    onIconChange = viewModel::setEditorIcon,
+                    onEndHourChange = viewModel::setEditorEndHour,
+                    onSave = viewModel::saveEditor,
+                    onDelete = viewModel::deleteEditor,
+                )
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+            return@MataAdaptiveNavigation
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -204,95 +274,328 @@ fun CategoryListScreen(
                             }
                         }
                     },
+                    actions = {
+                        val editor = state.editor
+                        if (layoutInfo.useTwoPane && editor != null) {
+                            if (!editor.isNew) {
+                                IconButton(
+                                    onClick = { showWideDeleteDialog = true },
+                                    enabled = !editor.isSaving,
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Delete,
+                                        contentDescription = stringResource(
+                                            R.string.content_description_delete_category,
+                                        ),
+                                    )
+                                }
+                            }
+                            TextButton(
+                                onClick = viewModel::saveEditor,
+                                enabled = editor.canSave && editor.isDirty,
+                            ) { Text(stringResource(R.string.action_save)) }
+                        }
+                    },
                 )
             },
             floatingActionButton = {
-                ExtendedFloatingActionButton(
-                    onClick = onAdd,
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text(stringResource(R.string.action_add_category)) },
-                )
+                if (!layoutInfo.useTwoPane) {
+                    ExtendedFloatingActionButton(
+                        onClick = viewModel::openNewEditor,
+                        icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                        text = { Text(stringResource(R.string.action_add_category)) },
+                    )
+                }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { padding ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                state = listState,
-            ) {
-                item(key = "uncategorized") {
-                    ListItem(
-                        leadingContent = { Icon(Icons.Outlined.Category, contentDescription = null) },
-                        headlineContent = { Text(stringResource(R.string.label_uncategorized)) },
-                        supportingContent = {
-                            Column {
-                                Text(stringResource(R.string.category_default_end_time))
-                                Text(stringResource(R.string.category_use_common_setting))
-                            }
-                        },
+            if (layoutInfo.useTwoPane) {
+                CategoryTwoPaneContent(
+                    layoutInfo = layoutInfo,
+                    state = state,
+                    listState = listState,
+                    draggedCategoryId = draggedCategoryId,
+                    draggedOffset = draggedOffset,
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    onAdd = { runAfterDiscardCheck(viewModel::openNewEditor) },
+                    onEdit = { id -> runAfterDiscardCheck { viewModel.openEditor(id) } },
+                    onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
+                    onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
+                    onDragStart = { category ->
+                        if (viewModel.startReordering()) {
+                            draggedCategoryId = category.id
+                            draggedOffset = 0f
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                    },
+                    onDrag = { category, delta ->
+                        draggedOffset += delta
+                        moveDraggedCategory(category.id)
+                    },
+                    onDragEnd = { category ->
+                        autoScrollDelta = 0f
+                        draggedCategoryId = null
+                        draggedOffset = 0f
+                        viewModel.finishReordering(category.id)
+                    },
+                    onDragCancel = {
+                        autoScrollDelta = 0f
+                        draggedCategoryId = null
+                        draggedOffset = 0f
+                        viewModel.cancelReordering()
+                    },
+                    onCloseEditor = ::requestCloseEditor,
+                    viewModel = viewModel,
+                )
+            } else {
+                CategoryListContent(
+                    state = state,
+                    listState = listState,
+                    draggedCategoryId = draggedCategoryId,
+                    draggedOffset = draggedOffset,
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    onAdd = viewModel::openNewEditor,
+                    onEdit = viewModel::openEditor,
+                    onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
+                    onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
+                    onDragStart = { category ->
+                        if (viewModel.startReordering()) {
+                            draggedCategoryId = category.id
+                            draggedOffset = 0f
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                    },
+                    onDrag = { category, delta ->
+                        draggedOffset += delta
+                        moveDraggedCategory(category.id)
+                    },
+                    onDragEnd = { category ->
+                        autoScrollDelta = 0f
+                        draggedCategoryId = null
+                        draggedOffset = 0f
+                        viewModel.finishReordering(category.id)
+                    },
+                    onDragCancel = {
+                        autoScrollDelta = 0f
+                        draggedCategoryId = null
+                        draggedOffset = 0f
+                        viewModel.cancelReordering()
+                    },
+                )
+            }
+        }
+    }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showDiscardDialog = false
+                pendingEditorAction = null
+            },
+            title = { Text(stringResource(R.string.dialog_discard_changes_title)) },
+            text = { Text(stringResource(R.string.dialog_discard_changes_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardDialog = false
+                        val action = pendingEditorAction
+                        pendingEditorAction = null
+                        action?.invoke()
+                    },
+                ) { Text(stringResource(R.string.action_discard)) }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardDialog = false
+                        pendingEditorAction = null
+                    },
+                ) { Text(stringResource(R.string.action_continue_editing)) }
+            },
+        )
+    }
+    if (showWideDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showWideDeleteDialog = false },
+            title = { Text(stringResource(R.string.dialog_delete_category_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_category_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showWideDeleteDialog = false
+                        viewModel.deleteEditor()
+                    },
+                ) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWideDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+}
+
+internal data class CategoryPaneWidths(
+    val listWidthDp: Float,
+    val editorWidthDp: Float,
+)
+
+internal fun categoryPaneWidths(availableWidthDp: Float): CategoryPaneWidths {
+    val gap = 24f
+    val contentWidth = (availableWidthDp - gap).coerceAtLeast(0f)
+    val listWidth = (contentWidth * 0.42f).coerceIn(320f, 400f)
+    return CategoryPaneWidths(
+        listWidthDp = listWidth,
+        editorWidthDp = (contentWidth - listWidth).coerceAtLeast(392f),
+    )
+}
+
+@Composable
+private fun CategoryTwoPaneContent(
+    layoutInfo: MataAdaptiveLayoutInfo,
+    state: CategoryListUiState,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    draggedCategoryId: String?,
+    draggedOffset: Float,
+    modifier: Modifier,
+    onAdd: () -> Unit,
+    onEdit: (String) -> Unit,
+    onMoveUp: (String) -> Boolean,
+    onMoveDown: (String) -> Boolean,
+    onDragStart: (Category) -> Unit,
+    onDrag: (Category, Float) -> Unit,
+    onDragEnd: (Category) -> Unit,
+    onDragCancel: () -> Unit,
+    onCloseEditor: () -> Unit,
+    viewModel: CategoryListViewModel,
+) {
+    val widths = categoryPaneWidths(layoutInfo.availableContentWidthDp)
+    Row(
+        modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Box(Modifier.width(widths.listWidthDp.dp).fillMaxSize()) {
+            CategoryListContent(
+                state = state,
+                listState = listState,
+                draggedCategoryId = draggedCategoryId,
+                draggedOffset = draggedOffset,
+                modifier = Modifier.fillMaxSize(),
+                onAdd = onAdd,
+                onEdit = onEdit,
+                onMoveUp = onMoveUp,
+                onMoveDown = onMoveDown,
+                onDragStart = onDragStart,
+                onDrag = onDrag,
+                onDragEnd = onDragEnd,
+                onDragCancel = onDragCancel,
+            )
+            ExtendedFloatingActionButton(
+                onClick = onAdd,
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.action_add_category)) },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            )
+        }
+        Surface(
+            modifier = Modifier.width(widths.editorWidthDp.dp).fillMaxSize(),
+            tonalElevation = 1.dp,
+        ) {
+            val editor = state.editor
+            if (editor == null) {
+                Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(R.string.category_two_pane_placeholder),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                CategoryEditorScaffold(
+                    state = editor,
+                    onBack = onCloseEditor,
+                    onNameChange = viewModel::setEditorName,
+                    onColorChange = viewModel::setEditorColor,
+                    onIconChange = viewModel::setEditorIcon,
+                    onEndHourChange = viewModel::setEditorEndHour,
+                    onSave = viewModel::saveEditor,
+                    onDelete = viewModel::deleteEditor,
+                    showTopBar = false,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryListContent(
+    state: CategoryListUiState,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    draggedCategoryId: String?,
+    draggedOffset: Float,
+    modifier: Modifier,
+    onAdd: () -> Unit,
+    onEdit: (String) -> Unit,
+    onMoveUp: (String) -> Boolean,
+    onMoveDown: (String) -> Boolean,
+    onDragStart: (Category) -> Unit,
+    onDrag: (Category, Float) -> Unit,
+    onDragEnd: (Category) -> Unit,
+    onDragCancel: () -> Unit,
+) {
+    LazyColumn(modifier = modifier, state = listState) {
+        item(key = "uncategorized") {
+            ListItem(
+                leadingContent = { Icon(Icons.Outlined.Category, contentDescription = null) },
+                headlineContent = { Text(stringResource(R.string.label_uncategorized)) },
+                supportingContent = {
+                    Column {
+                        Text(stringResource(R.string.category_default_end_time))
+                        Text(stringResource(R.string.category_use_common_setting))
+                    }
+                },
+            )
+            HorizontalDivider()
+        }
+        if (state.categories.isEmpty()) {
+            item(key = "empty") {
+                Column(
+                    Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.category_empty_message))
+                    TextButton(onClick = onAdd) {
+                        Text(stringResource(R.string.action_add_category))
+                    }
+                }
+            }
+        } else {
+            items(state.categories, key = Category::id) { category ->
+                val index = state.categories.indexOfFirst { it.id == category.id }
+                val isDragging = draggedCategoryId == category.id
+                Column(Modifier.animateItem(placementSpec = tween(durationMillis = 200))) {
+                    CategoryListRow(
+                        category = category,
+                        index = index,
+                        total = state.categories.size,
+                        selected = state.editor?.categoryId == category.id,
+                        isDragging = isDragging,
+                        draggedOffset = if (isDragging) draggedOffset else 0f,
+                        reorderEnabled = !state.isOrderSaving,
+                        onClick = { onEdit(category.id) },
+                        onMoveUp = { onMoveUp(category.id) },
+                        onMoveDown = { onMoveDown(category.id) },
+                        onDragStart = { onDragStart(category) },
+                        onDrag = { onDrag(category, it) },
+                        onDragEnd = { onDragEnd(category) },
+                        onDragCancel = onDragCancel,
                     )
                     HorizontalDivider()
                 }
-                if (state.categories.isEmpty()) {
-                    item(key = "empty") {
-                        Column(
-                            Modifier.fillMaxWidth().padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(stringResource(R.string.category_empty_message))
-                            TextButton(onClick = onAdd) {
-                                Text(stringResource(R.string.action_add_category))
-                            }
-                        }
-                    }
-                } else {
-                    items(state.categories, key = Category::id) { category ->
-                        val index = state.categories.indexOfFirst { it.id == category.id }
-                        val isDragging = draggedCategoryId == category.id
-                        Column(
-                            Modifier.animateItem(placementSpec = tween(durationMillis = 200)),
-                        ) {
-                            CategoryListRow(
-                                category = category,
-                                index = index,
-                                total = state.categories.size,
-                                isDragging = isDragging,
-                                draggedOffset = if (isDragging) draggedOffset else 0f,
-                                reorderEnabled = !state.isOrderSaving,
-                                onClick = { onEdit(category.id) },
-                                onMoveUp = { viewModel.moveCategoryOneStep(category.id, -1) },
-                                onMoveDown = { viewModel.moveCategoryOneStep(category.id, 1) },
-                                onDragStart = {
-                                    if (viewModel.startReordering()) {
-                                        draggedCategoryId = category.id
-                                        draggedOffset = 0f
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    }
-                                },
-                                onDrag = { delta ->
-                                    draggedOffset += delta
-                                    moveDraggedCategory(category.id)
-                                },
-                                onDragEnd = {
-                                    autoScrollDelta = 0f
-                                    draggedCategoryId = null
-                                    draggedOffset = 0f
-                                    viewModel.finishReordering(category.id)
-                                },
-                                onDragCancel = {
-                                    autoScrollDelta = 0f
-                                    draggedCategoryId = null
-                                    draggedOffset = 0f
-                                    viewModel.cancelReordering()
-                                },
-                            )
-                            HorizontalDivider()
-                        }
-                    }
-                }
-                item { Spacer(Modifier.height(96.dp)) }
             }
         }
+        item { Spacer(Modifier.height(96.dp)) }
     }
 }
 
@@ -301,6 +604,7 @@ private fun CategoryListRow(
     category: Category,
     index: Int,
     total: Int,
+    selected: Boolean,
     isDragging: Boolean,
     draggedOffset: Float,
     reorderEnabled: Boolean,
@@ -350,6 +654,13 @@ private fun CategoryListRow(
         shadowElevation = elevation,
     ) {
         ListItem(
+            colors = ListItemDefaults.colors(
+                containerColor = if (selected) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    Color.Transparent
+                },
+            ),
             leadingContent = {
                 Box(
                     Modifier
@@ -397,7 +708,10 @@ private fun CategoryListRow(
             },
             modifier = Modifier
                 .clickable(enabled = !isDragging, onClick = onClick)
-                .semantics { stateDescription = positionLabel },
+                .semantics {
+                    this.selected = selected
+                    stateDescription = positionLabel
+                },
         )
     }
 }
@@ -444,7 +758,7 @@ fun CategoryEditorScreen(
                 navigationIcon = {
                     IconButton(onClick = ::requestBack) {
                         Icon(
-                            Icons.Outlined.ArrowBack,
+                            Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
                         )
                     }
@@ -577,6 +891,179 @@ fun CategoryEditorScreen(
             text = { Text(stringResource(R.string.dialog_delete_category_message)) },
             confirmButton = {
                 TextButton(onClick = { showDeleteDialog = false; viewModel.delete() }) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryEditorScaffold(
+    state: CategoryEditorUiState,
+    onBack: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onColorChange: (Int) -> Unit,
+    onIconChange: (String) -> Unit,
+    onEndHourChange: (Int) -> Unit,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+    showTopBar: Boolean = true,
+) {
+    var showDeleteDialog by remember(state.categoryId) { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            if (showTopBar) TopAppBar(
+                title = {
+                    Text(
+                        stringResource(
+                            if (state.isNew) {
+                                R.string.category_editor_add_title
+                            } else {
+                                R.string.category_editor_edit_title
+                            },
+                        ),
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
+                },
+                actions = {
+                    if (!state.isNew) {
+                        IconButton(
+                            onClick = { showDeleteDialog = true },
+                            enabled = !state.isSaving,
+                        ) {
+                            Icon(
+                                Icons.Outlined.Delete,
+                                contentDescription = stringResource(
+                                    R.string.content_description_delete_category,
+                                ),
+                            )
+                        }
+                    }
+                    TextButton(
+                        onClick = onSave,
+                        enabled = state.canSave && state.isDirty,
+                    ) { Text(stringResource(R.string.action_save)) }
+                },
+            )
+        },
+    ) { padding ->
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                CategoryPreview(state)
+                OutlinedTextField(
+                    value = state.name,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.category_name_required_label)) },
+                    supportingText = {
+                        Text(stringResource(R.string.character_counter_format, state.name.length, 30))
+                    },
+                    isError = state.name.length > 30,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    stringResource(R.string.category_color_label),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CategoryLightColors.chunked(4).forEach { rowColors ->
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            rowColors.forEach { color ->
+                                val index = CategoryLightColors.indexOf(color)
+                                ColorOption(
+                                    color = color,
+                                    label = stringResource(CategoryColorNameResIds[index]),
+                                    selected = state.colorIndex == index,
+                                    onClick = { onColorChange(index) },
+                                )
+                            }
+                        }
+                    }
+                }
+                Text(
+                    stringResource(R.string.category_icon_label),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(CategoryIconOptions, key = { it.id }) { option ->
+                        val label = stringResource(option.labelRes)
+                        OutlinedCard(
+                            onClick = { onIconChange(option.id) },
+                            border = if (state.iconName == option.id) {
+                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                            } else {
+                                CardDefaults.outlinedCardBorder()
+                            },
+                        ) {
+                            Column(
+                                Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Icon(option.imageVector, contentDescription = label)
+                                Text(label, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+                EndHourSelector(state.endHour, onEndHourChange)
+                Text(
+                    if (state.endHour == 0) {
+                        stringResource(R.string.category_day_boundary_midnight)
+                    } else {
+                        stringResource(
+                            R.string.category_day_boundary_format,
+                            state.endHour,
+                            state.endHour - 1,
+                        )
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                state.errorMessageRes?.let {
+                    Text(stringResource(it), color = MaterialTheme.colorScheme.error)
+                }
+                if (state.isSaving) CircularProgressIndicator()
+            }
+        }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.dialog_delete_category_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_category_message)) },
+            confirmButton = {
+                TextButton(onClick = { showDeleteDialog = false; onDelete() }) {
                     Text(stringResource(R.string.action_delete))
                 }
             },
