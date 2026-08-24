@@ -44,6 +44,7 @@ class MataApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        BuildVariantChecks.enable()
         NotificationChannels.create(this)
         startupCoordinator.start()
         applicationScope.launch {

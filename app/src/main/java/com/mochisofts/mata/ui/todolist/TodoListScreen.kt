@@ -60,7 +60,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -100,6 +102,8 @@ fun TodoListScreen(
     onAddTodo: () -> Unit,
     onEditTodo: (String) -> Unit,
     onDestination: (MataDestination) -> Unit,
+    contentReadinessEnabled: Boolean = true,
+    onContentReady: () -> Unit = {},
     viewModel: TodoListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -119,6 +123,14 @@ fun TodoListScreen(
     var readOnlyOccurrence by remember { mutableStateOf<TodoOccurrence?>(null) }
     var archiveTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
     var deleteTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
+    val currentOnContentReady by rememberUpdatedState(onContentReady)
+
+    LaunchedEffect(state.isLoading, contentReadinessEnabled) {
+        if (!state.isLoading && contentReadinessEnabled) {
+            withFrameNanos { }
+            currentOnContentReady()
+        }
+    }
 
     LaunchedEffect(viewModel, resources, completedMessage, undoLabel) {
         viewModel.effects.collect { effect ->
