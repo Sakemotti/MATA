@@ -2,12 +2,17 @@ package com.mochisofts.mata.ui.common
 
 import androidx.annotation.StringRes
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.common.AppFailure
 import com.mochisofts.mata.core.common.ValidationError
-import com.mochisofts.mata.core.common.ValidationException
+import com.mochisofts.mata.core.common.toAppFailure
 
 @StringRes
 fun Throwable.toUserMessageRes(@StringRes fallback: Int): Int =
-    when ((this as? ValidationException)?.error) {
+    toAppFailure().toUserMessageRes(fallback)
+
+@StringRes
+fun AppFailure.toUserMessageRes(@StringRes fallback: Int): Int =
+    when ((this as? AppFailure.Validation)?.error) {
         ValidationError.CATEGORY_NAME_REQUIRED -> R.string.error_category_name_required
         ValidationError.CATEGORY_NAME_TOO_LONG -> R.string.error_category_name_too_long
         ValidationError.CATEGORY_COLOR_INVALID -> R.string.error_category_color_invalid
