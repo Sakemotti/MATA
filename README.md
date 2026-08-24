@@ -7,7 +7,7 @@
 - Android Studio
 - JDK 17以上（Android Studio同梱JBRを利用可能）
 - Android SDK Platform 37.1
-- Gradle Wrapper 9.5.0
+- Gradle Wrapper 9.7.1
 - Android Gradle Plugin 9.3.1
 - Kotlin 2.2.10（AGP内蔵Kotlin）
 - Jetpack Compose / Material 3
@@ -60,8 +60,21 @@ macOS / Linux:
 GitHub Actionsは `main`、`feature/**` へのpushと、`main` 向けPull Requestで次を実行します。
 
 - 単体テスト
-- Android Lint
-- Debug APKビルド
+- Debug / Release Android Lint
+- Debug / Release APKビルド
+- Benchmark APKビルド
+- 署名ファイル、秘密鍵、アクセストークンの混入検査
+
+## 依存関係の更新
+
+依存バージョンはモジュールごとの`gradle.lockfile`で固定し、取得した成果物は
+`gradle/verification-metadata.xml`のSHA-256で検証します。依存を更新した場合は、
+次のコマンドでロックと検証メタデータを更新し、差分に意図しない成果物がないことを確認します。
+
+```powershell
+.\gradlew.bat :app:dependencies :benchmark:dependencies --write-locks
+.\gradlew.bat testDebugUnitTest lintDebug :app:lintRelease :app:assembleRelease :app:assembleBenchmark :benchmark:assembleBenchmarkRelease --write-verification-metadata sha256
+```
 
 ## 機密情報
 

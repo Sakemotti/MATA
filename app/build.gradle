@@ -156,3 +156,109 @@ tasks.configureEach { task ->
         task.dependsOn(verifyReleaseAdMobConfiguration)
     }
 }
+
+tasks.register("verifyReleaseManifestSecurity") {
+    group = "verification"
+    description = "Verifies the merged release manifest security surface."
+    dependsOn("processReleaseManifest")
+    inputs.file(
+        layout.buildDirectory.file(
+            "intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml"
+        )
+    )
+
+    doLast {
+        def factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+        factory.namespaceAware = true
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+        def manifest = factory.newDocumentBuilder().parse(inputs.files.singleFile)
+        def androidNamespace = "http://schemas.android.com/apk/res/android"
+        def androidAttribute = { node, name -> node.getAttributeNS(androidNamespace, name) }
+        def elements = { tag ->
+            def nodes = manifest.getElementsByTagName(tag)
+            (0..<nodes.length).collect { nodes.item(it) }
+        }
+
+        def applications = elements("application")
+        if (applications.size() != 1) {
+            throw new GradleException(
+                "Expected one application element, found ${applications.size()}."
+            )
+        }
+        def application = applications[0]
+        def requiredApplicationAttributes = [
+            allowBackup: "false",
+            dataExtractionRules: "@xml/data_extraction_rules",
+            fullBackupContent: "false",
+            networkSecurityConfig: "@xml/network_security_config",
+            usesCleartextTraffic: "false",
+        ]
+        requiredApplicationAttributes.each { name, expected ->
+            def actual = androidAttribute(application, name)
+            if (actual != expected) {
+                throw new GradleException(
+                    "Release manifest android:${name} must be ${expected}, but was ${actual}."
+                )
+            }
+        }
+        if (androidAttribute(application, "debuggable") == "true") {
+            throw new GradleException("Release application must not be debuggable.")
+        }
+
+        def manifestChildren = manifest.documentElement.childNodes
+        def actualPermissions = (0..<manifestChildren.length)
+            .collect { manifestChildren.item(it) }
+            .findAll {
+                it.nodeType == org.w3c.dom.Node.ELEMENT_NODE &&
+                    it.nodeName.startsWith("uses-permission")
+            }
+            .collect { androidAttribute(it, "name") }
+            .toSet()
+        def approvedPermissions = [
+            "android.permission.ACCESS_NETWORK_STATE",
+            "android.permission.FOREGROUND_SERVICE",
+            "android.permission.INTERNET",
+            "android.permission.POST_NOTIFICATIONS",
+            "android.permission.READ_BASIC_PHONE_STATE",
+            "android.permission.RECEIVE_BOOT_COMPLETED",
+            "android.permission.SCHEDULE_EXACT_ALARM",
+            "android.permission.WAKE_LOCK",
+            "com.android.vending.BILLING",
+            "com.google.android.gms.permission.AD_ID",
+            "com.mochisofts.mata.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        ] as Set
+        if (actualPermissions != approvedPermissions) {
+            throw new GradleException(
+                "Release permissions changed. Added: ${actualPermissions - approvedPermissions}; " +
+                    "removed: ${approvedPermissions - actualPermissions}."
+            )
+        }
+
+        def exportedComponents = ["activity", "activity-alias", "provider", "receiver", "service"]
+            .collectMany { tag ->
+                elements(tag)
+                    .findAll { androidAttribute(it, "exported") == "true" }
+                    .collect {
+                        "${tag}:${androidAttribute(it, "name")}:${androidAttribute(it, "permission")}"
+                    }
+            }
+            .toSet()
+        def approvedExportedComponents = [
+            "activity:com.mochisofts.mata.app.MainActivity:",
+            "receiver:androidx.profileinstaller.ProfileInstallReceiver:android.permission.DUMP",
+            "receiver:androidx.work.impl.diagnostics.DiagnosticsReceiver:android.permission.DUMP",
+            "receiver:com.mochisofts.mata.widget.TodayTodoWidgetReceiver:",
+            "service:androidx.glance.appwidget.GlanceRemoteViewsService:android.permission.BIND_REMOTEVIEWS",
+            "service:androidx.work.impl.background.systemjob.SystemJobService:android.permission.BIND_JOB_SERVICE",
+        ] as Set
+        if (exportedComponents != approvedExportedComponents) {
+            throw new GradleException(
+                "Release exported components changed. Added: " +
+                    "${exportedComponents - approvedExportedComponents}; removed: " +
+                    "${approvedExportedComponents - exportedComponents}."
+            )
+        }
+    }
+}
