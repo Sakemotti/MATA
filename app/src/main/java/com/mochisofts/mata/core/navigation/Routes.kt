@@ -7,6 +7,7 @@ data class TodoListRoute(
     val selectedDate: String? = null,
     val initialMode: String? = null,
     val selectedCategoryKey: String? = null,
+    val showTodoNotFound: Boolean = false,
 )
 
 @Serializable

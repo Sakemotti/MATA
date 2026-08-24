@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -66,8 +67,13 @@ class MainActivity : ComponentActivity() {
     private var externalNavigation by mutableStateOf<ExternalNavigation?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        externalNavigation = intent.toExternalNavigation()
+        externalNavigation = resolveExternalNavigationOnCreate(
+            restoringActivity = savedInstanceState != null,
+            restoredPending = savedInstanceState?.pendingExternalNavigation(),
+            intentRequest = intent.toExternalNavigation(),
+        )
         enableEdgeToEdge()
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
@@ -79,7 +85,7 @@ class MainActivity : ComponentActivity() {
                 MataApp(
                     externalNavigation = externalNavigation,
                     onExternalNavigationHandled = { externalNavigation = null },
-                    onNotificationOpened = viewModel::notificationOpened,
+                    resolveExternalNavigation = viewModel::resolveExternalNavigation,
                 )
             }
         }
@@ -89,6 +95,11 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         externalNavigation = intent.toExternalNavigation()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putPendingExternalNavigation(externalNavigation)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onResume() {
@@ -115,7 +126,7 @@ class MainActivity : ComponentActivity() {
 private fun MataApp(
     externalNavigation: ExternalNavigation?,
     onExternalNavigationHandled: () -> Unit,
-    onNotificationOpened: (String) -> Unit,
+    resolveExternalNavigation: suspend (ExternalNavigation) -> ExternalNavigationResolution,
     navController: NavHostController = rememberNavController(),
 ) {
     val navigateToDestination: (MataDestination) -> Unit = { destination ->
@@ -130,17 +141,8 @@ private fun MataApp(
 
     LaunchedEffect(externalNavigation) {
         externalNavigation?.let { request ->
-            val route = when (request) {
-                is ExternalNavigation.Notification -> {
-                    onNotificationOpened(request.todoId)
-                    TodoListRoute(selectedDate = request.logicalDate)
-                }
-                is ExternalNavigation.Widget -> TodoListRoute(
-                    selectedDate = request.selectedDate,
-                    initialMode = request.mode,
-                    selectedCategoryKey = request.categoryKey,
-                )
-            }
+            val route = runCatching { resolveExternalNavigation(request).route }
+                .getOrDefault(TodoListRoute())
             navController.navigate(route) {
                 popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 launchSingleTop = true
@@ -223,30 +225,6 @@ private fun MataApp(
             PlaceholderScreen(destination, navigateToDestination)
         }
     }
-}
-
-private sealed interface ExternalNavigation {
-    data class Notification(val todoId: String, val logicalDate: String) : ExternalNavigation
-    data class Widget(
-        val selectedDate: String,
-        val mode: String,
-        val categoryKey: String?,
-    ) : ExternalNavigation
-}
-
-private fun Intent.toExternalNavigation(): ExternalNavigation? = when (action) {
-    MainActivity.ACTION_OPEN_NOTIFICATION -> {
-        val todoId = getStringExtra(MainActivity.EXTRA_TODO_ID) ?: return null
-        val logicalDate = getStringExtra(MainActivity.EXTRA_LOGICAL_DATE) ?: return null
-        ExternalNavigation.Notification(todoId, logicalDate)
-    }
-    MainActivity.ACTION_OPEN_WIDGET -> {
-        val selectedDate = getStringExtra(MainActivity.EXTRA_WIDGET_DATE) ?: return null
-        val mode = getStringExtra(MainActivity.EXTRA_WIDGET_MODE) ?: MainActivity.WIDGET_MODE_DATE
-        val categoryKey = getStringExtra(MainActivity.EXTRA_WIDGET_CATEGORY_KEY)
-        ExternalNavigation.Widget(selectedDate, mode, categoryKey)
-    }
-    else -> null
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
