@@ -74,6 +74,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     private val viewModel: MataAppViewModel by viewModels()
     private var externalNavigation by mutableStateOf<ExternalNavigation?>(null)
+    private val oneShotFullyDrawnReporter = OneShotFullyDrawnReporter(::reportFullyDrawn)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -90,16 +91,18 @@ class MainActivity : ComponentActivity() {
             MataTheme(appTheme = theme) {
                 when (startupState) {
                     StartupState.Initializing -> StartupLoadingScreen()
-                    StartupState.Failed -> StartupErrorScreen(onRetry = viewModel::retryStartup)
+                    StartupState.Failed -> StartupErrorScreen(
+                        onRetry = viewModel::retryStartup,
+                        onContentReady = { markContentReady(initializeExternalServices = false) },
+                    )
                     is StartupState.Ready -> {
-                        LaunchedEffect(viewModel) {
-                            withFrameNanos { }
-                            viewModel.firstContentRendered(this@MainActivity)
-                        }
                         MataApp(
                             externalNavigation = externalNavigation,
                             onExternalNavigationHandled = { externalNavigation = null },
                             resolveExternalNavigation = viewModel::resolveExternalNavigation,
+                            onContentReady = {
+                                markContentReady(initializeExternalServices = true)
+                            },
                         )
                     }
                 }
@@ -121,6 +124,11 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.appResumed()
+    }
+
+    private fun markContentReady(initializeExternalServices: Boolean) {
+        if (!oneShotFullyDrawnReporter.report()) return
+        if (initializeExternalServices) viewModel.firstContentRendered(this)
     }
 
     companion object {
@@ -158,7 +166,14 @@ private fun StartupLoadingScreen() {
 }
 
 @Composable
-private fun StartupErrorScreen(onRetry: () -> Unit) {
+private fun StartupErrorScreen(
+    onRetry: () -> Unit,
+    onContentReady: () -> Unit,
+) {
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        onContentReady()
+    }
     Scaffold { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
@@ -196,6 +211,7 @@ private fun MataApp(
     externalNavigation: ExternalNavigation?,
     onExternalNavigationHandled: () -> Unit,
     resolveExternalNavigation: suspend (ExternalNavigation) -> ExternalNavigationResolution,
+    onContentReady: () -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
     val navigateToDestination: (MataDestination) -> Unit = { destination ->
@@ -226,6 +242,8 @@ private fun MataApp(
                 onAddTodo = { navController.navigate(TodoEditorRoute()) },
                 onEditTodo = { navController.navigate(TodoEditorRoute(it)) },
                 onDestination = navigateToDestination,
+                contentReadinessEnabled = externalNavigation == null,
+                onContentReady = onContentReady,
             )
         }
         composable<TodoEditorRoute> {

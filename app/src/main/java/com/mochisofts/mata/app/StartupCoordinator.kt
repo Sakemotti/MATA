@@ -1,6 +1,7 @@
 package com.mochisofts.mata.app
 
 import android.content.Context
+import android.util.Log
 import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.data.local.MataDatabase
@@ -36,6 +37,43 @@ internal data class StartupRecoveryResult(
 
 internal fun interface StartupRecovery {
     suspend fun recover(): StartupRecoveryResult
+}
+
+internal interface StartupDiagnostics {
+    fun started()
+    fun succeeded(durationMillis: Long, appVersionChanged: Boolean)
+    fun failed(durationMillis: Long)
+    fun retryRequested()
+}
+
+@Singleton
+internal class AndroidStartupDiagnostics @Inject constructor() : StartupDiagnostics {
+    override fun started() {
+        Log.i(TAG, "$EVENT_REQUIRED_START result=start")
+    }
+
+    override fun succeeded(durationMillis: Long, appVersionChanged: Boolean) {
+        Log.i(
+            TAG,
+            "$EVENT_REQUIRED_FINISH result=success duration_ms=$durationMillis " +
+                "app_version_changed=$appVersionChanged",
+        )
+    }
+
+    override fun failed(durationMillis: Long) {
+        Log.e(TAG, "$EVENT_REQUIRED_FINISH result=failure duration_ms=$durationMillis")
+    }
+
+    override fun retryRequested() {
+        Log.i(TAG, "$EVENT_REQUIRED_RETRY result=retry")
+    }
+
+    private companion object {
+        const val TAG = "MATA/Startup"
+        const val EVENT_REQUIRED_START = "STARTUP_REQUIRED_START"
+        const val EVENT_REQUIRED_FINISH = "STARTUP_REQUIRED_FINISH"
+        const val EVENT_REQUIRED_RETRY = "STARTUP_REQUIRED_RETRY"
+    }
 }
 
 @Singleton
@@ -80,6 +118,7 @@ internal class SuccessfulStartupVersionStore @Inject constructor(
 class StartupCoordinator @Inject internal constructor(
     private val recovery: StartupRecovery,
     @ApplicationCoroutineScope private val scope: CoroutineScope,
+    private val diagnostics: StartupDiagnostics,
 ) {
     private val mutableState = MutableStateFlow<StartupState>(StartupState.Initializing)
     internal val state: StateFlow<StartupState> = mutableState.asStateFlow()
@@ -89,14 +128,18 @@ class StartupCoordinator @Inject internal constructor(
     fun start() {
         if (mutableState.value is StartupState.Ready || activeJob?.isActive == true) return
         mutableState.value = StartupState.Initializing
+        val startedAtNanos = System.nanoTime()
+        diagnostics.started()
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 val result = recovery.recover()
                 mutableState.value = StartupState.Ready(result.appVersionChanged)
+                diagnostics.succeeded(elapsedMillis(startedAtNanos), result.appVersionChanged)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
                 mutableState.value = StartupState.Failed
+                diagnostics.failed(elapsedMillis(startedAtNanos))
             } finally {
                 clearCompletedJob()
             }
@@ -106,12 +149,22 @@ class StartupCoordinator @Inject internal constructor(
     }
 
     fun retry() {
-        if (mutableState.value == StartupState.Failed) start()
+        if (mutableState.value == StartupState.Failed) {
+            diagnostics.retryRequested()
+            start()
+        }
     }
 
     @Synchronized
     private fun clearCompletedJob() {
         activeJob = null
+    }
+
+    private fun elapsedMillis(startedAtNanos: Long): Long =
+        ((System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND).coerceAtLeast(0)
+
+    private companion object {
+        const val NANOS_PER_MILLISECOND = 1_000_000L
     }
 }
 
@@ -125,6 +178,10 @@ internal abstract class StartupBindingsModule {
     @Binds
     @Singleton
     abstract fun bindStartupRecovery(recovery: RequiredStartupRecovery): StartupRecovery
+
+    @Binds
+    @Singleton
+    abstract fun bindStartupDiagnostics(diagnostics: AndroidStartupDiagnostics): StartupDiagnostics
 }
 
 @Module

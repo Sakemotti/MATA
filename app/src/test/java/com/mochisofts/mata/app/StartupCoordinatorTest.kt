@@ -19,6 +19,7 @@ class StartupCoordinatorTest {
 
         assertEquals(1, fixture.recovery.callCount)
         assertEquals(StartupState.Ready(appVersionChanged = false), fixture.coordinator.state.value)
+        assertEquals(listOf("started", "succeeded:false"), fixture.diagnostics.events)
     }
 
     @Test
@@ -35,6 +36,10 @@ class StartupCoordinatorTest {
 
         assertEquals(2, fixture.recovery.callCount)
         assertEquals(StartupState.Ready(appVersionChanged = true), fixture.coordinator.state.value)
+        assertEquals(
+            listOf("started", "failed", "retry", "started", "succeeded:true"),
+            fixture.diagnostics.events,
+        )
     }
 
     @Test
@@ -46,6 +51,7 @@ class StartupCoordinatorTest {
 
         assertEquals(0, fixture.recovery.callCount)
         assertEquals(StartupState.Initializing, fixture.coordinator.state.value)
+        assertEquals(emptyList<String>(), fixture.diagnostics.events)
     }
 
     private class Fixture(
@@ -55,7 +61,8 @@ class StartupCoordinatorTest {
         private val dispatcher = StandardTestDispatcher()
         val scope = TestScope(dispatcher)
         val recovery = FakeStartupRecovery(failuresBeforeSuccess, appVersionChanged)
-        val coordinator = StartupCoordinator(recovery, scope)
+        val diagnostics = FakeStartupDiagnostics()
+        val coordinator = StartupCoordinator(recovery, scope, diagnostics)
     }
 
     private class FakeStartupRecovery(
@@ -72,6 +79,26 @@ class StartupCoordinatorTest {
                 error("Injected startup failure")
             }
             return StartupRecoveryResult(appVersionChanged)
+        }
+    }
+
+    private class FakeStartupDiagnostics : StartupDiagnostics {
+        val events = mutableListOf<String>()
+
+        override fun started() {
+            events += "started"
+        }
+
+        override fun succeeded(durationMillis: Long, appVersionChanged: Boolean) {
+            events += "succeeded:$appVersionChanged"
+        }
+
+        override fun failed(durationMillis: Long) {
+            events += "failed"
+        }
+
+        override fun retryRequested() {
+            events += "retry"
         }
     }
 }
