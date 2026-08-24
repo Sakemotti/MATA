@@ -61,6 +61,9 @@
     <string name="nav_archived_todos">アーカイブ済みTODO</string>
     <string name="nav_settings">設定</string>
     <string name="placeholder_screen_message">この画面は次の実装単位で追加します</string>
+    <string name="startup_loading_message">データを確認しています…</string>
+    <string name="startup_error_title">データを安全に開けませんでした</string>
+    <string name="startup_error_message">もう一度お試しください。再試行しても直らない場合は、アプリを終了してから再度開いてください。</string>
 
     <!-- Archived TODOs -->
     <string name="archive_title">アーカイブ済みTODO</string>

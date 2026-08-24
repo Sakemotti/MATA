@@ -8,10 +8,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -77,16 +86,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
+            val startupState by viewModel.startupState.collectAsStateWithLifecycle()
             MataTheme(appTheme = theme) {
-                LaunchedEffect(viewModel) {
-                    withFrameNanos { }
-                    viewModel.firstContentRendered(this@MainActivity)
+                when (startupState) {
+                    StartupState.Initializing -> StartupLoadingScreen()
+                    StartupState.Failed -> StartupErrorScreen(onRetry = viewModel::retryStartup)
+                    is StartupState.Ready -> {
+                        LaunchedEffect(viewModel) {
+                            withFrameNanos { }
+                            viewModel.firstContentRendered(this@MainActivity)
+                        }
+                        MataApp(
+                            externalNavigation = externalNavigation,
+                            onExternalNavigationHandled = { externalNavigation = null },
+                            resolveExternalNavigation = viewModel::resolveExternalNavigation,
+                        )
+                    }
                 }
-                MataApp(
-                    externalNavigation = externalNavigation,
-                    onExternalNavigationHandled = { externalNavigation = null },
-                    resolveExternalNavigation = viewModel::resolveExternalNavigation,
-                )
             }
         }
     }
@@ -119,6 +135,59 @@ class MainActivity : ComponentActivity() {
         const val WIDGET_MODE_DATE = "DATE"
         const val WIDGET_MODE_CATEGORY = "CATEGORY"
         const val WIDGET_UNCATEGORIZED_KEY = "__uncategorized__"
+    }
+}
+
+@Composable
+private fun StartupLoadingScreen() {
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = stringResource(R.string.startup_loading_message),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun StartupErrorScreen(onRetry: () -> Unit) {
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.error,
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = stringResource(R.string.startup_error_title),
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.startup_error_message),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onRetry) {
+                Text(stringResource(R.string.action_retry))
+            }
+        }
     }
 }
 

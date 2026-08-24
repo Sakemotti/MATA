@@ -24,6 +24,8 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 @Singleton
@@ -75,19 +77,25 @@ class BackupCoordinator @Inject constructor(
                 }
             }
             BackupOperationStatus.RUNNING -> {
-                val active = runCatching {
-                    WorkManager.getInstance(context).getWorkInfosForUniqueWork(WORK_NAME).get()
-                        .any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING }
-                }.getOrDefault(false)
-                if (!active) {
-                    if (current.type == BackupOperationType.RESTORE && files.data.exists()) {
-                        enqueue(operationId, BackupOperationType.RESTORE)
-                    } else {
-                        if (current.type == BackupOperationType.CREATE) deleteDocument(store.uri())
-                        releaseUri(store.uri())
-                        files.deleteAll()
-                        store.fail(BackupErrorCode.STORAGE_UNAVAILABLE)
+                val workManager = WorkManager.getInstance(context)
+                val activeWork = workManager.getWorkInfosForUniqueWork(WORK_NAME).get()
+                    .firstOrNull {
+                        operationId in it.tags &&
+                            (it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING)
                     }
+                if (current.type == BackupOperationType.RESTORE && files.data.exists()) {
+                    val workId = activeWork?.id ?: enqueue(operationId, BackupOperationType.RESTORE)
+                    workManager.getWorkInfoByIdFlow(workId)
+                        .filterNotNull()
+                        .first { it.state.isFinished }
+                    check(store.state.value.status != BackupOperationStatus.RUNNING) {
+                        "Interrupted restore did not reach a consistent state"
+                    }
+                } else if (activeWork == null) {
+                    if (current.type == BackupOperationType.CREATE) deleteDocument(store.uri())
+                    releaseUri(store.uri())
+                    files.deleteAll()
+                    store.fail(BackupErrorCode.STORAGE_UNAVAILABLE)
                 }
             }
             else -> Unit
@@ -109,7 +117,7 @@ class BackupCoordinator @Inject constructor(
         return true
     }
 
-    private fun enqueue(operationId: String, type: BackupOperationType) {
+    private fun enqueue(operationId: String, type: BackupOperationType): UUID {
         val request = OneTimeWorkRequestBuilder<BackupWorker>()
             .setInputData(
                 workDataOf(
@@ -120,6 +128,7 @@ class BackupCoordinator @Inject constructor(
             .addTag(operationId)
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
+        return request.id
     }
 
     private fun takeUriPermission(uri: Uri, type: BackupOperationType) {
