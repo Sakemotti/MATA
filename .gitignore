@@ -12,6 +12,7 @@
 /.idea/deploymentTargetSelector.xml
 .DS_Store
 /build
+/benchmark/build/
 /captures
 .externalNativeBuild
 .cxx

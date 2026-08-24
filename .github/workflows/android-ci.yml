@@ -36,3 +36,11 @@ jobs:
 
       - name: Verify Android project
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug --no-daemon --stacktrace
+
+      - name: Verify performance test APKs
+        run: >-
+          ./gradlew
+          :app:assembleBenchmark
+          :benchmark:assembleBenchmarkRelease
+          --no-daemon
+          --stacktrace
