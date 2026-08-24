@@ -170,7 +170,6 @@ private fun MataApp(
         }
         composable<ArchivedTodoListRoute> {
             ArchiveListScreen(
-                onOpenDetail = { navController.navigate(ArchivedTodoDetailRoute(it)) },
                 onDestination = navigateToDestination,
             )
         }
