@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MATA"
 include ':app'
+include ':benchmark'
