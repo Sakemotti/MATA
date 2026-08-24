@@ -20,8 +20,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
@@ -37,7 +39,15 @@ class MataAppViewModel @Inject constructor(
     private val adsConsentRepository: AdsConsentRepository,
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
+    private val startupCoordinator: StartupCoordinator,
 ) : ViewModel() {
+    internal val startupState = startupCoordinator.state
+    private var resumeJob: Job? = null
+
+    init {
+        startupCoordinator.start()
+    }
+
     val theme: StateFlow<AppTheme> = settingsRepository.theme
         .catch { emit(AppTheme.SYSTEM) }
         .stateIn(
@@ -107,8 +117,14 @@ class MataAppViewModel @Inject constructor(
         adsConsentRepository.gatherConsent(activity)
     }
 
+    fun retryStartup() {
+        startupCoordinator.retry()
+    }
+
     fun appResumed() {
-        viewModelScope.launch {
+        if (resumeJob?.isActive == true) return
+        resumeJob = viewModelScope.launch {
+            startupState.filterIsInstance<StartupState.Ready>().first()
             widgetUpdater.ensureScheduledIfWidgetsExist()
             if (runCatching { holidayRepository.needsRefresh() }.getOrDefault(false)) {
                 holidayWorkScheduler.enqueueImmediate()
