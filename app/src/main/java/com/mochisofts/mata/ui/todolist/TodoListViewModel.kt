@@ -94,6 +94,12 @@ class TodoListViewModel @Inject constructor(
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
     val adsRuntimeState = adsConsentRepository.state
 
+    init {
+        if (route.showTodoNotFound) {
+            effectsChannel.trySend(TodoListEffect.Message(R.string.error_todo_not_found))
+        }
+    }
+
     private val occurrenceFlow = selectedDate.flatMapLatest(todoRepository::observeOccurrences)
     private val todayOccurrenceFlow = todoRepository.observeOccurrences(LocalDate.now(clock))
 

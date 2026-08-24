@@ -385,7 +385,13 @@ private fun WidgetTodoRow(
                 .defaultWeight()
                 .clickable(
                     actionStartActivity(
-                        todoListIntent(context, item.logicalDate, MainActivity.WIDGET_MODE_DATE, null),
+                        todoListIntent(
+                            context = context,
+                            selectedDate = item.logicalDate,
+                            mode = MainActivity.WIDGET_MODE_DATE,
+                            selectedCategoryKey = null,
+                            todoId = item.todoId,
+                        ),
                     ),
                 ),
         ) {
@@ -466,11 +472,13 @@ private fun todoListIntent(
     selectedDate: String,
     mode: String,
     selectedCategoryKey: String?,
+    todoId: String? = null,
 ): Intent = Intent(context, MainActivity::class.java).apply {
     action = MainActivity.ACTION_OPEN_WIDGET
     putExtra(MainActivity.EXTRA_WIDGET_DATE, selectedDate)
     putExtra(MainActivity.EXTRA_WIDGET_MODE, mode)
     selectedCategoryKey?.let { putExtra(MainActivity.EXTRA_WIDGET_CATEGORY_KEY, it) }
+    todoId?.let { putExtra(MainActivity.EXTRA_TODO_ID, it) }
     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 }
 
