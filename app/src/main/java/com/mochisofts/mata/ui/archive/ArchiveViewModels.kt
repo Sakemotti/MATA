@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -49,6 +51,11 @@ data class ArchiveListUiState(
     val previewAction: ArchiveAction? = null,
     val loadingPreviewTodoId: String? = null,
     val runningTodoId: String? = null,
+    val selectedTodoId: String? = null,
+    val selectedItem: ArchivedTodoItem? = null,
+    val selectedSummary: ArchiveHistorySummary? = null,
+    val isDetailLoading: Boolean = false,
+    @StringRes val detailLoadErrorRes: Int? = null,
 )
 
 sealed interface ArchiveListEffect {
@@ -64,17 +71,49 @@ class ArchiveListViewModel @Inject constructor(
 ) : ViewModel() {
     private val searchActive = savedStateHandle.getStateFlow(KEY_SEARCH_ACTIVE, false)
     private val searchQuery = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
+    private val effectiveSearchQuery = searchQuery
+        .debounce(SEARCH_DEBOUNCE_MILLIS)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, searchQuery.value)
     private val sortOrder = settingsRepository.archiveSortOrder
         .stateIn(viewModelScope, SharingStarted.Eagerly, ArchiveSortOrder.NEWEST)
+    private val selectedTodoId = savedStateHandle.getStateFlow<String?>(KEY_SELECTED_TODO_ID, null)
     private val operationState = MutableStateFlow(OperationState())
     private val effectsChannel = Channel<ArchiveListEffect>(Channel.BUFFERED)
     val effects: Flow<ArchiveListEffect> = effectsChannel.receiveAsFlow()
 
     val todos: Flow<PagingData<ArchivedTodoItem>> = combine(
-        searchQuery.debounce(SEARCH_DEBOUNCE_MILLIS),
+        effectiveSearchQuery,
         sortOrder,
     ) { query, order -> query to order }
         .flatMapLatest { (query, order) -> repository.pagedTodos(query, order) }
+        .cachedIn(viewModelScope)
+
+    private val selectedDetail = selectedTodoId.flatMapLatest { todoId ->
+        if (todoId == null) {
+            flowOf(SelectedDetail())
+        } else {
+            combine(
+                repository.observeTodo(todoId),
+                repository.observeHistorySummary(todoId),
+            ) { item, summary ->
+                SelectedDetail(todoId = todoId, item = item, summary = summary)
+            }
+                .onStart { emit(SelectedDetail(todoId = todoId, isLoading = true)) }
+                .catch {
+                    emit(
+                        SelectedDetail(
+                            todoId = todoId,
+                            loadErrorRes = R.string.archive_detail_load_error,
+                        ),
+                    )
+                }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SelectedDetail())
+
+    val selectedHistory: Flow<PagingData<ArchivedHistoryItem>> = selectedTodoId
+        .flatMapLatest { todoId ->
+            if (todoId == null) flowOf(PagingData.empty()) else repository.pagedHistory(todoId)
+        }
         .cachedIn(viewModelScope)
 
     val uiState: StateFlow<ArchiveListUiState> = combine(
@@ -82,7 +121,8 @@ class ArchiveListViewModel @Inject constructor(
         searchQuery,
         sortOrder,
         operationState,
-    ) { active, query, order, operation ->
+        selectedDetail,
+    ) { active, query, order, operation, detail ->
         ArchiveListUiState(
             searchActive = active,
             searchQuery = query,
@@ -91,6 +131,11 @@ class ArchiveListViewModel @Inject constructor(
             previewAction = operation.action,
             loadingPreviewTodoId = operation.loadingPreviewTodoId,
             runningTodoId = operation.runningTodoId,
+            selectedTodoId = detail.todoId,
+            selectedItem = detail.item,
+            selectedSummary = detail.summary,
+            isDetailLoading = detail.isLoading,
+            detailLoadErrorRes = detail.loadErrorRes,
         )
     }.stateIn(
         viewModelScope,
@@ -112,6 +157,24 @@ class ArchiveListViewModel @Inject constructor(
             runCatching { ArchiveAction.valueOf(stored) }.getOrNull()
         }
         if (targetId != null && action != null) requestAction(targetId, action)
+        viewModelScope.launch {
+            combine(effectiveSearchQuery, selectedDetail) { query, detail -> query to detail }
+                .collect { (query, detail) ->
+                    if (
+                        detail.todoId != null &&
+                        !detail.isLoading &&
+                        detail.item == null &&
+                        detail.loadErrorRes == null &&
+                        operationState.value.runningTodoId != detail.todoId
+                    ) {
+                        closeDetail()
+                        effectsChannel.send(ArchiveListEffect.Message(R.string.error_todo_not_found))
+                        return@collect
+                    }
+                    val selectedItem = detail.item ?: return@collect
+                    if (!selectedItem.matchesSearch(query)) closeDetail()
+                }
+        }
     }
 
     fun openSearch() {
@@ -125,6 +188,14 @@ class ArchiveListViewModel @Inject constructor(
     fun closeSearch() {
         savedStateHandle[KEY_SEARCH_ACTIVE] = false
         savedStateHandle[KEY_SEARCH_QUERY] = ""
+    }
+
+    fun openDetail(todoId: String) {
+        savedStateHandle[KEY_SELECTED_TODO_ID] = todoId
+    }
+
+    fun closeDetail() {
+        savedStateHandle[KEY_SELECTED_TODO_ID] = null
     }
 
     fun setSortOrder(order: ArchiveSortOrder) {
@@ -174,6 +245,7 @@ class ArchiveListViewModel @Inject constructor(
                 ArchiveAction.DELETE -> repository.deletePermanently(preview.todoId)
             }
             result.onSuccess {
+                if (selectedTodoId.value == preview.todoId) closeDetail()
                 clearAction()
                 effectsChannel.send(
                     ArchiveListEffect.Message(
@@ -217,13 +289,30 @@ class ArchiveListViewModel @Inject constructor(
             get() = loadingPreviewTodoId != null || runningTodoId != null
     }
 
+    private data class SelectedDetail(
+        val todoId: String? = null,
+        val item: ArchivedTodoItem? = null,
+        val summary: ArchiveHistorySummary? = null,
+        val isLoading: Boolean = false,
+        @StringRes val loadErrorRes: Int? = null,
+    )
+
     private companion object {
         const val KEY_SEARCH_ACTIVE = "archive_search_active"
         const val KEY_SEARCH_QUERY = "archive_search_query"
         const val KEY_ACTION_TARGET = "archive_action_target"
         const val KEY_ACTION = "archive_action"
+        const val KEY_SELECTED_TODO_ID = "archive_selected_todo_id"
         const val SEARCH_DEBOUNCE_MILLIS = 300L
     }
+}
+
+private fun ArchivedTodoItem.matchesSearch(rawQuery: String): Boolean {
+    val query = rawQuery.trim()
+    if (query.isEmpty()) return true
+    return todo.title.contains(query, ignoreCase = true) ||
+        todo.description.contains(query, ignoreCase = true) ||
+        category?.name?.contains(query, ignoreCase = true) == true
 }
 
 data class ArchiveDetailUiState(

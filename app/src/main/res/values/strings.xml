@@ -65,6 +65,7 @@
     <!-- Archived TODOs -->
     <string name="archive_title">アーカイブ済みTODO</string>
     <string name="archive_detail_title">アーカイブ済みTODO詳細</string>
+    <string name="archive_two_pane_placeholder">TODOを選択してください</string>
     <string name="archive_search_hint">タイトル・説明・カテゴリを検索</string>
     <string name="archive_sort_description">並び順</string>
     <string name="archive_sort_newest">新しい順</string>
@@ -76,6 +77,7 @@
     <string name="archive_list_load_error">アーカイブ済みTODOを読み込めませんでした</string>
     <string name="archive_more_load_error">続きを読み込めませんでした</string>
     <string name="archive_history_load_error">履歴を読み込めませんでした</string>
+    <string name="archive_detail_load_error">アーカイブ済みTODOの詳細を読み込めませんでした</string>
     <string name="archive_row_actions">アーカイブ済みTODOの操作</string>
     <string name="archive_archived_at">アーカイブ日時 %1$s</string>
     <string name="archive_category_recurrence">%1$s・%2$s</string>

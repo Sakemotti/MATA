@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -46,6 +48,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -73,6 +76,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -84,6 +88,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataAdaptiveNavigation
+import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
@@ -113,20 +118,28 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArchiveListScreen(
-    onOpenDetail: (String) -> Unit,
     onDestination: (MataDestination) -> Unit,
     viewModel: ArchiveListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val todos = viewModel.todos.collectAsLazyPagingItems()
+    val history = viewModel.selectedHistory.collectAsLazyPagingItems()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val listState = rememberLazyListState()
+    val detailListState = rememberLazyListState()
     val resources = LocalResources.current
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var selectedHistory by remember { mutableStateOf<ArchivedHistoryItem?>(null) }
 
-    BackHandler(state.searchActive) { viewModel.closeSearch() }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { todos.refresh() }
+    BackHandler(state.selectedTodoId != null || state.searchActive) {
+        if (state.selectedTodoId != null) viewModel.closeDetail() else viewModel.closeSearch()
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        todos.refresh()
+        if (state.selectedTodoId != null) history.refresh()
+    }
     LaunchedEffect(viewModel, resources) {
         viewModel.effects.collect { effect ->
             when (effect) {
@@ -142,6 +155,23 @@ fun ArchiveListScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
+        if (!layoutInfo.useTwoPane && state.selectedTodoId != null) {
+            ArchiveSelectedDetail(
+                state = state,
+                history = history,
+                listState = detailListState,
+                showTopBar = true,
+                onBack = viewModel::closeDetail,
+                onAction = { action ->
+                    state.selectedTodoId?.let { viewModel.requestAction(it, action) }
+                },
+                onHistoryClick = { selectedHistory = it },
+                snackbarHostState = snackbarHostState,
+                modifier = Modifier.fillMaxSize(),
+            )
+            return@MataAdaptiveNavigation
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -225,16 +255,35 @@ fun ArchiveListScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { padding ->
-            ArchiveTodoList(
-                items = todos,
-                query = state.searchQuery.trim(),
-                loadingPreviewTodoId = state.loadingPreviewTodoId,
-                runningTodoId = state.runningTodoId,
-                onOpenDetail = onOpenDetail,
-                onAction = viewModel::requestAction,
-                onClearSearch = viewModel::closeSearch,
-                modifier = Modifier.fillMaxSize().padding(padding),
-            )
+            if (layoutInfo.useTwoPane) {
+                ArchiveTwoPaneContent(
+                    layoutInfo = layoutInfo,
+                    state = state,
+                    todos = todos,
+                    history = history,
+                    listState = listState,
+                    detailListState = detailListState,
+                    onOpenDetail = viewModel::openDetail,
+                    onAction = viewModel::requestAction,
+                    onClearSearch = viewModel::closeSearch,
+                    onCloseDetail = viewModel::closeDetail,
+                    onHistoryClick = { selectedHistory = it },
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                )
+            } else {
+                ArchiveTodoList(
+                    items = todos,
+                    query = state.searchQuery.trim(),
+                    selectedTodoId = null,
+                    loadingPreviewTodoId = state.loadingPreviewTodoId,
+                    runningTodoId = state.runningTodoId,
+                    listState = listState,
+                    onOpenDetail = viewModel::openDetail,
+                    onAction = viewModel::requestAction,
+                    onClearSearch = viewModel::closeSearch,
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                )
+            }
         }
     }
 
@@ -247,14 +296,163 @@ fun ArchiveListScreen(
             onDismiss = viewModel::dismissAction,
         )
     }
+    selectedHistory?.let { item ->
+        ArchiveHistoryDialog(item = item, onDismiss = { selectedHistory = null })
+    }
+}
+
+internal data class ArchivePaneWidths(
+    val listWidthDp: Float,
+    val detailWidthDp: Float,
+)
+
+internal fun archivePaneWidths(availableWidthDp: Float): ArchivePaneWidths {
+    val gap = 24f
+    val contentWidth = (availableWidthDp - gap).coerceAtLeast(0f)
+    val listWidth = (contentWidth * 0.42f).coerceIn(320f, 400f)
+    return ArchivePaneWidths(
+        listWidthDp = listWidth,
+        detailWidthDp = (contentWidth - listWidth).coerceAtLeast(392f),
+    )
+}
+
+@Composable
+private fun ArchiveTwoPaneContent(
+    layoutInfo: MataAdaptiveLayoutInfo,
+    state: ArchiveListUiState,
+    todos: LazyPagingItems<ArchivedTodoItem>,
+    history: LazyPagingItems<ArchivedHistoryItem>,
+    listState: LazyListState,
+    detailListState: LazyListState,
+    onOpenDetail: (String) -> Unit,
+    onAction: (String, ArchiveAction) -> Unit,
+    onClearSearch: () -> Unit,
+    onCloseDetail: () -> Unit,
+    onHistoryClick: (ArchivedHistoryItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val widths = archivePaneWidths(layoutInfo.availableContentWidthDp)
+    Row(
+        modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        ArchiveTodoList(
+            items = todos,
+            query = state.searchQuery.trim(),
+            selectedTodoId = state.selectedTodoId,
+            loadingPreviewTodoId = state.loadingPreviewTodoId,
+            runningTodoId = state.runningTodoId,
+            listState = listState,
+            onOpenDetail = onOpenDetail,
+            onAction = onAction,
+            onClearSearch = onClearSearch,
+            modifier = Modifier.width(widths.listWidthDp.dp).fillMaxSize(),
+        )
+        Surface(
+            modifier = Modifier.width(widths.detailWidthDp.dp).fillMaxSize(),
+            tonalElevation = 1.dp,
+        ) {
+            if (state.selectedTodoId == null) {
+                Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(R.string.archive_two_pane_placeholder),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                ArchiveSelectedDetail(
+                    state = state,
+                    history = history,
+                    listState = detailListState,
+                    showTopBar = false,
+                    onBack = onCloseDetail,
+                    onAction = { action -> onAction(state.selectedTodoId, action) },
+                    onHistoryClick = onHistoryClick,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ArchiveSelectedDetail(
+    state: ArchiveListUiState,
+    history: LazyPagingItems<ArchivedHistoryItem>,
+    listState: LazyListState,
+    showTopBar: Boolean,
+    onBack: () -> Unit,
+    onAction: (ArchiveAction) -> Unit,
+    onHistoryClick: (ArchivedHistoryItem) -> Unit,
+    modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState? = null,
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            if (showTopBar) {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.archive_detail_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
+                    },
+                )
+            }
+        },
+        bottomBar = {
+            state.selectedItem?.let {
+                ArchiveBottomActions(
+                    enabled = state.loadingPreviewTodoId == null && state.runningTodoId == null,
+                    loading = state.loadingPreviewTodoId != null || state.runningTodoId != null,
+                    onRestore = { onAction(ArchiveAction.RESTORE) },
+                    onDelete = { onAction(ArchiveAction.DELETE) },
+                )
+            }
+        },
+        snackbarHost = {
+            snackbarHostState?.let { SnackbarHost(it) }
+        },
+    ) { padding ->
+        when {
+            state.isDetailLoading -> Box(
+                Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center,
+            ) { CircularProgressIndicator() }
+            state.selectedItem != null -> ArchiveDetailContent(
+                item = state.selectedItem,
+                summary = state.selectedSummary,
+                history = history,
+                listState = listState,
+                onHistoryClick = onHistoryClick,
+                modifier = Modifier.fillMaxSize().padding(padding),
+            )
+            else -> Box(
+                Modifier.fillMaxSize().padding(padding).padding(32.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    stringResource(state.detailLoadErrorRes ?: R.string.error_todo_not_found),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
 }
 
 @Composable
 private fun ArchiveTodoList(
     items: LazyPagingItems<ArchivedTodoItem>,
     query: String,
+    selectedTodoId: String?,
     loadingPreviewTodoId: String?,
     runningTodoId: String?,
+    listState: LazyListState,
     onOpenDetail: (String) -> Unit,
     onAction: (String, ArchiveAction) -> Unit,
     onClearSearch: () -> Unit,
@@ -275,6 +473,7 @@ private fun ArchiveTodoList(
             } else {
                 LazyColumn(
                     modifier = modifier,
+                    state = listState,
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
                     items(
@@ -286,6 +485,7 @@ private fun ArchiveTodoList(
                         ArchivedTodoRow(
                             item = item,
                             busy = busy,
+                            selected = item.todo.id == selectedTodoId,
                             onClick = { onOpenDetail(item.todo.id) },
                             onAction = { action -> onAction(item.todo.id, action) },
                         )
@@ -313,6 +513,7 @@ private fun ArchiveTodoList(
 private fun ArchivedTodoRow(
     item: ArchivedTodoItem,
     busy: Boolean,
+    selected: Boolean,
     onClick: () -> Unit,
     onAction: (ArchiveAction) -> Unit,
 ) {
@@ -323,6 +524,13 @@ private fun ArchivedTodoRow(
     val archivedAt = formatEpochMillis(item.archivedAt)
     val semantics = listOf(item.todo.title, categoryName, recurrence, period, archivedAt).joinToString()
     ListItem(
+        colors = ListItemDefaults.colors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                Color.Transparent
+            },
+        ),
         headlineContent = {
             Text(item.todo.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
         },
@@ -364,7 +572,10 @@ private fun ArchivedTodoRow(
         },
         modifier = Modifier
             .alpha(if (busy) 0.6f else 1f)
-            .semantics { contentDescription = semantics }
+            .semantics {
+                contentDescription = semantics
+                this.selected = selected
+            }
             .clickable(enabled = !busy, onClick = onClick),
     )
 }
@@ -484,11 +695,16 @@ private fun ArchiveDetailContent(
     item: ArchivedTodoItem?,
     summary: ArchiveHistorySummary?,
     history: LazyPagingItems<ArchivedHistoryItem>,
+    listState: LazyListState = rememberLazyListState(),
     onHistoryClick: (ArchivedHistoryItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val archivedItem = item ?: return
-    LazyColumn(modifier, contentPadding = PaddingValues(bottom = 24.dp)) {
+    LazyColumn(
+        modifier = modifier,
+        state = listState,
+        contentPadding = PaddingValues(bottom = 24.dp),
+    ) {
         item { ArchiveSectionHeader(R.string.archive_section_todo) }
         item { ArchiveTodoDefinition(archivedItem) }
         item { ArchiveSectionHeader(R.string.archive_section_summary) }
