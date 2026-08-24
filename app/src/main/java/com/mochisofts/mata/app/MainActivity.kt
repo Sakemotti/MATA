@@ -195,8 +195,6 @@ private fun MataApp(
         }
         composable<CategoryListRoute> {
             CategoryListScreen(
-                onAdd = { navController.navigate(CategoryEditorRoute()) },
-                onEdit = { navController.navigate(CategoryEditorRoute(it)) },
                 onDestination = navigateToDestination,
             )
         }
