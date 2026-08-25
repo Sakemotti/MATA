@@ -143,6 +143,7 @@ class RoomTodoRepository @Inject constructor(
     private val runtimeStateDao: TodoRuntimeStateDao,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
+    private val widgetUpdater: WidgetUpdater,
     private val holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : TodoRepository {
@@ -322,6 +323,7 @@ class RoomTodoRepository @Inject constructor(
                 ),
             )
         }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(todoId) }
         todoId
     }
@@ -383,6 +385,7 @@ class RoomTodoRepository @Inject constructor(
             }
             updateAppliedRevision(todoEntity)
         }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(todoId) }
     }
 
@@ -429,6 +432,7 @@ class RoomTodoRepository @Inject constructor(
             }
             updateAppliedRevision(todoEntity)
         }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(todoId) }
     }
 
@@ -446,6 +450,7 @@ class RoomTodoRepository @Inject constructor(
             updateAppliedRevision(todo)
             todo.id
         }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(todoId) }
     }
 
@@ -457,6 +462,7 @@ class RoomTodoRepository @Inject constructor(
             todoDao.upsert(todo.copy(archivedAt = now, updatedAt = now))
             updateAppliedRevision(todo)
         }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.cancelTodo(id) }
     }
 
@@ -498,12 +504,18 @@ class RoomTodoRepository @Inject constructor(
                 ),
             )
         }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(id) }
     }
 
     override suspend fun deleteTodo(id: String): Result<Unit> = runCatching {
         database.withTransaction { todoDao.deleteById(id) }
+        requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.cancelTodo(id) }
+    }
+
+    private fun requestImmediateWidgetUpdate() {
+        runCatching { widgetUpdater.requestImmediateUpdate() }
     }
 
     private suspend fun createExecution(
