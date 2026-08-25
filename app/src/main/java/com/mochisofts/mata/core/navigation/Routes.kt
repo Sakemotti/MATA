@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TodoListRoute(
     val selectedDate: String? = null,
-    val initialMode: String? = null,
-    val selectedCategoryKey: String? = null,
     val showTodoNotFound: Boolean = false,
 )
 
 @Serializable
-data object CategoryTodoListRoute
+data class CategoryTodoListRoute(
+    val selectedCategoryKey: String? = null,
+)
 
 @Serializable
 data class TodoEditorRoute(val todoId: String? = null)

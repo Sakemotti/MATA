@@ -252,7 +252,7 @@ private fun MataApp(
         when (destination) {
             MataDestination.TODOS -> navController.navigate(TodoListRoute()) { launchSingleTop = true }
             MataDestination.CATEGORY_TODOS -> {
-                navController.navigate(CategoryTodoListRoute) { launchSingleTop = true }
+                navController.navigate(CategoryTodoListRoute()) { launchSingleTop = true }
             }
             MataDestination.CALENDAR -> navController.navigate(CalendarHistoryRoute) { launchSingleTop = true }
             MataDestination.CATEGORIES -> navController.navigate(CategoryListRoute) { launchSingleTop = true }
@@ -345,7 +345,7 @@ private fun MataApp(
                     navController.navigate(OpenSourceLicensesRoute) { launchSingleTop = true }
                 },
                 onRestoreCompleted = {
-                    navController.navigate(TodoListRoute(initialMode = MainActivity.WIDGET_MODE_DATE)) {
+                    navController.navigate(TodoListRoute()) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         launchSingleTop = true
                     }
