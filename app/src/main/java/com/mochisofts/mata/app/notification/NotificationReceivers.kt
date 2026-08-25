@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -116,12 +117,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 widgetUpdater.requestUpdate()
                 val todo = todoRepository.getTodo(todoId)
                 if (todo == null) {
-                    presenter.cancel(notificationId)
+                    presenter.cancel(todoId, date, notificationId)
                 } else {
                     presenter.showCompleted(todo, date, notificationId, clock.millis())
                 }
             }
-            .onFailure { presenter.showCompletionFailed(notificationId) }
+            .onFailure { presenter.showCompletionFailed(todoId, date, notificationId) }
     }
 
     private suspend fun undo(
@@ -131,15 +132,15 @@ class NotificationActionReceiver : BroadcastReceiver() {
         completedAt: Long,
     ) {
         if (completedAt <= 0 || clock.millis() - completedAt > UNDO_WINDOW_MILLIS) {
-            presenter.showUndoFailed(notificationId)
+            presenter.showUndoFailed(todoId, date, notificationId)
             return
         }
         todoRepository.setCompleted(todoId, date, false)
             .onSuccess {
                 widgetUpdater.requestUpdate()
-                presenter.cancel(notificationId)
+                presenter.cancel(todoId, date, notificationId)
             }
-            .onFailure { presenter.showUndoFailed(notificationId) }
+            .onFailure { presenter.showUndoFailed(todoId, date, notificationId) }
     }
 
     companion object {
@@ -316,7 +317,7 @@ class NotificationPresenter @Inject constructor(
                 actionIntent(NotificationActionReceiver.ACTION_COMPLETE, todo.id, logicalDate, notificationId),
             )
         }
-        manager.notify(NOTIFICATION_TAG, notificationId, builder.build())
+        manager.notify(reminderNotificationTag(todo.id, logicalDate), notificationId, builder.build())
         updateGroupSummary()
     }
 
@@ -342,25 +343,45 @@ class NotificationPresenter @Inject constructor(
             )
             .addAction(0, context.getString(R.string.action_undo), undoIntent)
             .build()
-        manager.notify(NOTIFICATION_TAG, notificationId, notification)
+        manager.notify(completedNotificationTag(todo.id, date), notificationId, notification)
         updateGroupSummary()
     }
 
     @SuppressLint("MissingPermission")
-    fun showCompletionFailed(notificationId: Int) = showFailure(
-        notificationId,
-        R.string.notification_completion_failed,
-    )
+    fun showCompletionFailed(todoId: String, date: LocalDate, notificationId: Int) =
+        showFailure(
+            tag = reminderNotificationTag(todoId, date),
+            notificationId = notificationId,
+            messageRes = R.string.notification_completion_failed,
+        )
 
     @SuppressLint("MissingPermission")
-    fun showUndoFailed(notificationId: Int) = showFailure(
-        notificationId,
-        R.string.notification_undo_failed,
-    )
+    fun showUndoFailed(todoId: String, date: LocalDate, notificationId: Int) =
+        showFailure(
+            tag = completedNotificationTag(todoId, date),
+            notificationId = notificationId,
+            messageRes = R.string.notification_undo_failed,
+        )
 
-    fun cancel(notificationId: Int) {
-        manager.cancel(NOTIFICATION_TAG, notificationId)
+    fun cancel(todoId: String, date: LocalDate, notificationId: Int) {
+        manager.cancel(LEGACY_NOTIFICATION_TAG, notificationId)
+        manager.cancel(reminderNotificationTag(todoId, date), notificationId)
+        manager.cancel(completedNotificationTag(todoId, date), notificationId)
         updateGroupSummary()
+    }
+
+    fun dismissReminders(todoId: String, logicalDates: Set<LocalDate>) {
+        if (logicalDates.isEmpty()) return
+        val tags = logicalDates.mapTo(mutableSetOf()) { reminderNotificationTag(todoId, it) }
+        cancelActiveNotifications { it in tags }
+    }
+
+    fun dismissTodo(todoId: String) {
+        cancelActiveNotifications { notificationTagBelongsToTodo(it, todoId) }
+    }
+
+    fun dismissLegacyNotifications() {
+        cancelActiveNotifications { it == LEGACY_NOTIFICATION_TAG }
     }
 
     fun refreshGroupSummary() {
@@ -368,10 +389,10 @@ class NotificationPresenter @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    private fun showFailure(notificationId: Int, messageRes: Int) {
+    private fun showFailure(tag: String, notificationId: Int, messageRes: Int) {
         if (!canPost()) return
         manager.notify(
-            NOTIFICATION_TAG,
+            tag,
             notificationId,
             NotificationCompat.Builder(context, NotificationChannels.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
@@ -382,11 +403,19 @@ class NotificationPresenter @Inject constructor(
         )
     }
 
+    private fun cancelActiveNotifications(predicate: (String?) -> Boolean) {
+        activeNotifications()
+            .filter { predicate(it.tag) }
+            .forEach { manager.cancel(it.tag, it.id) }
+        updateGroupSummary()
+    }
+
     @SuppressLint("MissingPermission")
     private fun updateGroupSummary() {
         if (!canPost()) return
-        val notificationManager = context.getSystemService(NotificationManager::class.java)
-        val count = notificationManager.activeNotifications.count { it.tag == NOTIFICATION_TAG }
+        val count = activeNotifications().count {
+            isMataIndividualNotificationTag(it.tag)
+        }
         if (count <= 1) {
             manager.cancel(SUMMARY_TAG, SUMMARY_ID)
             return
@@ -403,6 +432,10 @@ class NotificationPresenter @Inject constructor(
                 .build(),
         )
     }
+
+    private fun activeNotifications() = runCatching {
+        context.getSystemService(NotificationManager::class.java).activeNotifications.toList()
+    }.getOrDefault(emptyList())
 
     private fun deadlineText(deadline: ZonedDateTime, now: ZonedDateTime, boundary: Boolean): String {
         if (boundary) return context.getString(R.string.notification_day_boundary)
@@ -431,6 +464,7 @@ class NotificationPresenter @Inject constructor(
         purposeRequestCode(notificationId, 1),
         Intent(context, MainActivity::class.java)
             .setAction(MainActivity.ACTION_OPEN_NOTIFICATION)
+            .setData(notificationPendingIntentData(todoId, date, notificationId, "content"))
             .putExtra(MainActivity.EXTRA_TODO_ID, todoId)
             .putExtra(MainActivity.EXTRA_LOGICAL_DATE, date.toString())
             .putExtra(MainActivity.EXTRA_CANDIDATE_KEY, candidateKey)
@@ -449,6 +483,7 @@ class NotificationPresenter @Inject constructor(
         purposeRequestCode(notificationId, if (action == NotificationActionReceiver.ACTION_COMPLETE) 2 else 3),
         Intent(context, NotificationActionReceiver::class.java)
             .setAction(action)
+            .setData(notificationPendingIntentData(todoId, date, notificationId, action))
             .putExtra(NotificationActionReceiver.EXTRA_TODO_ID, todoId)
             .putExtra(NotificationActionReceiver.EXTRA_LOGICAL_DATE, date.toString())
             .putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
@@ -463,9 +498,22 @@ class NotificationPresenter @Inject constructor(
 
     private fun purposeRequestCode(base: Int, purpose: Int): Int = base * 4 + purpose
 
+    private fun notificationPendingIntentData(
+        todoId: String,
+        date: LocalDate,
+        notificationId: Int,
+        purpose: String,
+    ): Uri = Uri.Builder()
+        .scheme("mata")
+        .authority("notification")
+        .appendPath(todoId)
+        .appendPath(date.toString())
+        .appendPath(notificationId.toString())
+        .appendPath(purpose)
+        .build()
+
     private companion object {
         const val GROUP_KEY = "mata_todo_reminders"
-        const val NOTIFICATION_TAG = "mata_todo"
         const val SUMMARY_TAG = "mata_summary"
         const val SUMMARY_ID = 9_001
         const val DEFAULT_COLOR_INDEX = 8
@@ -479,5 +527,24 @@ class NotificationPresenter @Inject constructor(
         )
     }
 }
+
+private const val REMINDER_NOTIFICATION_TAG_PREFIX = "mata_todo:"
+private const val COMPLETED_NOTIFICATION_TAG_PREFIX = "mata_completed:"
+private const val LEGACY_NOTIFICATION_TAG = "mata_todo"
+
+internal fun reminderNotificationTag(todoId: String, logicalDate: LocalDate): String =
+    "$REMINDER_NOTIFICATION_TAG_PREFIX$todoId|$logicalDate"
+
+internal fun completedNotificationTag(todoId: String, logicalDate: LocalDate): String =
+    "$COMPLETED_NOTIFICATION_TAG_PREFIX$todoId|$logicalDate"
+
+internal fun isMataIndividualNotificationTag(tag: String?): Boolean =
+    tag == LEGACY_NOTIFICATION_TAG ||
+        tag?.startsWith(REMINDER_NOTIFICATION_TAG_PREFIX) == true ||
+        tag?.startsWith(COMPLETED_NOTIFICATION_TAG_PREFIX) == true
+
+internal fun notificationTagBelongsToTodo(tag: String?, todoId: String): Boolean =
+    tag?.startsWith("$REMINDER_NOTIFICATION_TAG_PREFIX$todoId|") == true ||
+        tag?.startsWith("$COMPLETED_NOTIFICATION_TAG_PREFIX$todoId|") == true
 
 private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

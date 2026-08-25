@@ -12,6 +12,7 @@ import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.mochisofts.mata.app.notification.NotificationAlarmReceiver
+import com.mochisofts.mata.app.notification.NotificationPresenter
 import com.mochisofts.mata.app.notification.NotificationReconcileReceiver
 import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.local.CategoryDao
@@ -55,6 +56,7 @@ class AndroidNotificationScheduler @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val holidayRepository: HolidayRepository,
     private val alarmGateway: AlarmGateway,
+    private val presenter: NotificationPresenter,
     private val clock: Clock,
 ) : NotificationScheduler {
     private val mutex = Mutex()
@@ -99,6 +101,7 @@ class AndroidNotificationScheduler @Inject constructor(
 
     private suspend fun reconcileAll(mode: AlarmReconciliationMode) {
         mutex.withLock {
+            presenter.dismissLegacyNotifications()
             val holidays = holidayRepository.currentSnapshot().dates
             val activeTodos = todoDao.findActiveWithNotifications()
             val activeIds = activeTodos.mapTo(mutableSetOf(), TodoEntity::id)
@@ -137,6 +140,7 @@ class AndroidNotificationScheduler @Inject constructor(
         val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }
             .mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
         val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
+        presenter.dismissReminders(todoId, actedDates)
         val now = ZonedDateTime.now(clock)
         val desiredCandidates = notificationEntities.mapNotNull { setting ->
             nextNotificationCandidate(
@@ -223,6 +227,7 @@ class AndroidNotificationScheduler @Inject constructor(
             alarmGateway.cancel(scheduled.candidateKey, scheduled.requestCode)
         }
         scheduledDao.deleteForTodo(todoId)
+        presenter.dismissTodo(todoId)
     }
 
     private suspend fun updateReconcileReceiver() {
