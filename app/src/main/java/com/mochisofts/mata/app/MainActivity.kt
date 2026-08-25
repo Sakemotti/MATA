@@ -30,9 +30,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
@@ -47,6 +51,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.window.layout.FoldingFeature
+import androidx.window.layout.WindowInfoTracker
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
@@ -90,22 +98,27 @@ class MainActivity : ComponentActivity() {
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             val startupState by viewModel.startupState.collectAsStateWithLifecycle()
-            MataTheme(appTheme = theme) {
-                when (startupState) {
-                    StartupState.Initializing -> StartupLoadingScreen()
-                    StartupState.Failed -> StartupErrorScreen(
-                        onRetry = viewModel::retryStartup,
-                        onContentReady = { markContentReady(initializeExternalServices = false) },
-                    )
-                    is StartupState.Ready -> {
-                        MataApp(
-                            externalNavigation = externalNavigation,
-                            onExternalNavigationHandled = { externalNavigation = null },
-                            resolveExternalNavigation = viewModel::resolveExternalNavigation,
+            val foldingFeatures by rememberFoldingFeatures(this)
+            CompositionLocalProvider(LocalMataFoldingFeatures provides foldingFeatures) {
+                MataTheme(appTheme = theme) {
+                    when (startupState) {
+                        StartupState.Initializing -> StartupLoadingScreen()
+                        StartupState.Failed -> StartupErrorScreen(
+                            onRetry = viewModel::retryStartup,
                             onContentReady = {
-                                markContentReady(initializeExternalServices = true)
+                                markContentReady(initializeExternalServices = false)
                             },
                         )
+                        is StartupState.Ready -> {
+                            MataApp(
+                                externalNavigation = externalNavigation,
+                                onExternalNavigationHandled = { externalNavigation = null },
+                                resolveExternalNavigation = viewModel::resolveExternalNavigation,
+                                onContentReady = {
+                                    markContentReady(initializeExternalServices = true)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -145,6 +158,18 @@ class MainActivity : ComponentActivity() {
         const val WIDGET_MODE_DATE = "DATE"
         const val WIDGET_MODE_CATEGORY = "CATEGORY"
         const val WIDGET_UNCATEGORIZED_KEY = "__uncategorized__"
+    }
+}
+
+@Composable
+private fun rememberFoldingFeatures(activity: ComponentActivity): State<List<FoldingFeature>> {
+    val tracker = remember(activity) { WindowInfoTracker.getOrCreate(activity) }
+    return produceState(initialValue = emptyList(), activity, tracker) {
+        activity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            tracker.windowLayoutInfo(activity).collect { layoutInfo ->
+                value = layoutInfo.displayFeatures.filterIsInstance<FoldingFeature>()
+            }
+        }
     }
 }
 

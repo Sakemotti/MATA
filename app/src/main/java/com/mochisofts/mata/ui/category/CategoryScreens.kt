@@ -470,10 +470,16 @@ private fun CategoryTwoPaneContent(
     onCloseEditor: () -> Unit,
     viewModel: CategoryListViewModel,
 ) {
-    val widths = categoryPaneWidths(layoutInfo.availableContentWidthDp)
+    val widths = layoutInfo.twoPaneHinge?.let { hinge ->
+        CategoryPaneWidths(
+            listWidthDp = hinge.startPaneWidthDp,
+            editorWidthDp = hinge.endPaneWidthDp,
+        )
+    } ?: categoryPaneWidths(layoutInfo.availableContentWidthDp)
+    val paneSpacing = (layoutInfo.twoPaneHinge?.gapDp ?: 24f).dp
     Row(
         modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(paneSpacing),
     ) {
         Box(Modifier.width(widths.listWidthDp.dp).fillMaxSize()) {
             CategoryListContent(

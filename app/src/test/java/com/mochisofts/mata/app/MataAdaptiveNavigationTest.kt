@@ -1,6 +1,8 @@
 package com.mochisofts.mata.app
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class MataAdaptiveNavigationTest {
@@ -89,4 +91,128 @@ class MataAdaptiveNavigationTest {
 
         assertEquals(false, result.useTwoPane)
     }
+
+    @Test
+    fun separatingVerticalHingeDefinesPhysicalTwoPaneGap() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1000f,
+            heightDp = 900f,
+            destination = MataDestination.CATEGORIES,
+            foldingFeatures = listOf(verticalFeature(leftDp = 500f, rightDp = 520f)),
+        )
+
+        assertEquals(true, result.useTwoPane)
+        assertEquals(null, result.safeContentRegion)
+        assertNotNull(result.twoPaneHinge)
+        assertEquals(346f, result.twoPaneHinge?.startPaneWidthDp)
+        assertEquals(24f, result.twoPaneHinge?.gapDp)
+        assertEquals(406f, result.twoPaneHinge?.endPaneWidthDp)
+    }
+
+    @Test
+    fun zeroWidthFoldKeepsControlsTwentyFourDpAway() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1000f,
+            heightDp = 900f,
+            destination = MataDestination.CALENDAR,
+            foldingFeatures = listOf(verticalFeature(leftDp = 510f, rightDp = 510f)),
+        )
+
+        assertEquals(true, result.useTwoPane)
+        assertEquals(24f, result.twoPaneHinge?.gapDp)
+    }
+
+    @Test
+    fun unbalancedVerticalHingeFallsBackToLargerSafeRegion() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1000f,
+            heightDp = 900f,
+            destination = MataDestination.ARCHIVE,
+            foldingFeatures = listOf(verticalFeature(leftDp = 300f, rightDp = 320f)),
+        )
+
+        assertEquals(false, result.useTwoPane)
+        assertNull(result.twoPaneHinge)
+        assertEquals(242f, result.safeContentRegion?.leftDp)
+        assertEquals(920f, result.safeContentRegion?.rightDp)
+        assertEquals(614f, result.availableContentWidthDp)
+    }
+
+    @Test
+    fun horizontalHingeUsesOneSafeRegionWithoutTabletopLayout() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1000f,
+            heightDp = 900f,
+            destination = MataDestination.CALENDAR,
+            foldingFeatures = listOf(
+                MataFoldingFeatureInfo(
+                    leftDp = 0f,
+                    topDp = 400f,
+                    rightDp = 1000f,
+                    bottomDp = 420f,
+                    orientation = MataFoldingOrientation.HORIZONTAL,
+                    isSeparating = true,
+                    isOccluding = false,
+                )
+            ),
+        )
+
+        assertEquals(false, result.useTwoPane)
+        assertEquals(422f, result.safeContentRegion?.topDp)
+        assertEquals(900f, result.safeContentRegion?.bottomDp)
+    }
+
+    @Test
+    fun flatNonOccludingFoldDoesNotChangeLayout() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 880f,
+            heightDp = 900f,
+            destination = MataDestination.CALENDAR,
+            foldingFeatures = listOf(
+                verticalFeature(
+                    leftDp = 440f,
+                    rightDp = 440f,
+                    isSeparating = false,
+                    isOccluding = false,
+                )
+            ),
+        )
+
+        assertEquals(true, result.useTwoPane)
+        assertNull(result.twoPaneHinge)
+        assertNull(result.safeContentRegion)
+    }
+
+    @Test
+    fun multipleHingesUseLargestContinuousRegion() {
+        val result = mataAdaptiveLayoutInfoFor(
+            widthDp = 1200f,
+            heightDp = 900f,
+            destination = MataDestination.CATEGORIES,
+            foldingFeatures = listOf(
+                verticalFeature(leftDp = 600f, rightDp = 600f),
+                verticalFeature(leftDp = 900f, rightDp = 900f),
+            ),
+        )
+
+        assertEquals(false, result.useTwoPane)
+        assertNull(result.twoPaneHinge)
+        assertEquals(0f, result.safeContentRegion?.leftDp)
+        assertEquals(348f, result.safeContentRegion?.rightDp)
+    }
+
+    private fun verticalFeature(
+        leftDp: Float,
+        rightDp: Float,
+        isSeparating: Boolean = true,
+        isOccluding: Boolean = false,
+    ) = MataFoldingFeatureInfo(
+        leftDp = leftDp,
+        topDp = 0f,
+        rightDp = rightDp,
+        bottomDp = 900f,
+        orientation = MataFoldingOrientation.VERTICAL,
+        isSeparating = isSeparating,
+        isOccluding = isOccluding,
+    )
 }
