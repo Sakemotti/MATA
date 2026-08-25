@@ -57,22 +57,23 @@ macOS / Linux:
 - `feature/<topic>`: 機能開発と仕様策定
 - 変更は可能な限りPull Requestを通して `main` へ統合する
 
-GitHub Actionsは `main` へのpush、`main` 向けPull Request、手動実行で次を並列に検証します。Pull Request作成前のfeatureブランチへのpushでは自動実行しません。
+GitHub Actionsは `main` 向けPull Requestで次を単一ジョブとして検証します。Pull Request作成前のfeatureブランチへのpushと、`main`へのマージ後のpushでは自動実行しません。
 
 - 単体テスト
-- Debug / Release Android Lint
-- Debug APK / Release検証用AABビルド
-- Benchmark APKビルド
+- Debug Android Lint / Debug APKビルド
+- Release Manifestのセキュリティ検査
 - 署名ファイル、秘密鍵、アクセストークンの混入検査
 
-Release検証ジョブは、AAB、R8 mapping、依存ライセンス一覧、最終Manifestと、
+Release Android Lint、Release検証用AABおよびBenchmark APKのビルドは、GitHub Actionsの
+`Android Release Verification`を`main`上で手動実行して検証します。Release検証ジョブは、
+AAB、R8 mapping、依存ライセンス一覧、最終Manifestと、
 各ファイルのSHA-256・`versionName`・`versionCode`・Git commit・ビルド日時を記録した
-メタデータを生成します。`main` 更新時と手動実行時には、これらを365日間保存します。
-Pull Requestではビルドと検査のみを行い、CI時間と保存容量を抑えます。このAABはCI検証専用の
+メタデータを生成し、これらを365日間保存します。通常のPull RequestではRelease成果物を生成せず、
+CI時間と保存容量を抑えます。このAABはCI検証専用の
 未署名成果物であり、Google Playへ公開する成果物には使用しません。公開用AABは保護された
 Release環境でUpload Keyにより署名します。
 
-Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
+Pull Requestの必須検証名は `Test, lint, and build` とします。同じPull Requestで新しいCIが開始された場合は古い実行を自動キャンセルします。手動Release検証も、新しい実行を開始した場合は古い実行を自動キャンセルします。
 
 ## 依存関係の更新
 

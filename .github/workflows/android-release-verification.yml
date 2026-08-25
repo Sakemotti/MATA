@@ -1,23 +1,21 @@
-name: Android CI
+name: Android Release Verification
 
 on:
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-ci-${{ github.event.pull_request.head.ref || github.ref_name }}
+  group: android-release-verification
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Test, lint, and build
+  verify_release:
+    name: Release and performance verification
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -47,7 +45,11 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
 
-      - name: Verify pull request
+      - name: Set build timestamp
+        shell: bash
+        run: echo "ORG_GRADLE_PROJECT_MATA_BUILD_TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Verify release and performance builds
         env:
           ORG_GRADLE_PROJECT_MATA_ADMOB_APP_ID: ca-app-pub-0000000000000001~0000000001
           ORG_GRADLE_PROJECT_MATA_ADMOB_BANNER_AD_UNIT_ID: ca-app-pub-0000000000000001/0000000001
@@ -55,9 +57,23 @@ jobs:
           ORG_GRADLE_PROJECT_MATA_TERMS_URL: https://mochisofts.com/mata/terms
         run: >-
           ./gradlew
-          testDebugUnitTest
-          lintDebug
-          assembleDebug
+          :app:lintRelease
+          :app:generateReleaseArtifactMetadata
           :app:verifyReleaseManifestSecurity
+          :app:assembleBenchmark
+          :benchmark:assembleBenchmarkRelease
           --no-daemon
           --stacktrace
+
+      - name: Upload release verification artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: mata-release-verification-${{ github.sha }}
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/release-metadata/release-metadata.json
+            app/build/outputs/mapping/release/mapping.txt
+            app/build/generated/aboutLibraries/release/res/raw/aboutlibraries.json
+            app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
+          if-no-files-found: error
+          retention-days: 365
