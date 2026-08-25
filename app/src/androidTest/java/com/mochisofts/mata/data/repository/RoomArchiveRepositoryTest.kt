@@ -6,6 +6,7 @@ import androidx.paging.testing.asSnapshot
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.PeriodResultEntity
@@ -14,6 +15,7 @@ import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.local.TodoNotificationEntity
 import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.ArchivedHistoryItem
@@ -67,6 +69,7 @@ class RoomArchiveRepositoryTest {
             runtimeStateDao = database.todoRuntimeStateDao(),
             settingsRepository = settings,
             notificationScheduler = scheduler,
+            widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
             holidayRepository = TestHolidayRepository(),
             clock = clock,
         )

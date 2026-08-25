@@ -40,19 +40,31 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @Singleton
 class WidgetUpdater @Inject constructor(
     @ApplicationContext private val context: Context,
     private val diagnostics: DiagnosticLogger,
 ) {
-    fun requestUpdate() {
+    fun requestUpdate() = enqueueUpdate(
+        workName = UPDATE_WORK_NAME,
+        initialDelayMillis = UPDATE_COALESCE_MILLIS,
+    )
+
+    fun requestImmediateUpdate() = enqueueUpdate(
+        workName = IMMEDIATE_UPDATE_WORK_NAME,
+        initialDelayMillis = 0,
+    )
+
+    private fun enqueueUpdate(workName: String, initialDelayMillis: Long) {
         val request = OneTimeWorkRequest.Builder(WidgetRefreshWorker::class.java)
-            .setInitialDelay(UPDATE_COALESCE_MILLIS, TimeUnit.MILLISECONDS)
+            .setInitialDelay(initialDelayMillis, TimeUnit.MILLISECONDS)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
-            UPDATE_WORK_NAME,
+            workName,
             ExistingWorkPolicy.REPLACE,
             request,
         )
@@ -129,6 +141,7 @@ class WidgetUpdater @Inject constructor(
 
     companion object {
         const val UPDATE_WORK_NAME = "widget-update"
+        const val IMMEDIATE_UPDATE_WORK_NAME = "widget-update-immediate"
         const val PERIODIC_WORK_NAME = "widget-periodic-reconcile"
         private const val UPDATE_COALESCE_MILLIS = 250L
     }
@@ -190,8 +203,13 @@ class WidgetRefreshCoordinator @Inject constructor(
     private val diagnostics: DiagnosticLogger,
 ) {
     private val glanceManager = GlanceAppWidgetManager(context)
+    private val serialExecutor = WidgetRefreshSerialExecutor()
 
-    suspend fun refreshAll(preferredAppWidgetId: Int? = null): Boolean {
+    suspend fun refreshAll(preferredAppWidgetId: Int? = null): Boolean = serialExecutor.run {
+        refreshAllSerially(preferredAppWidgetId)
+    }
+
+    private suspend fun refreshAllSerially(preferredAppWidgetId: Int?): Boolean {
         val operationId = diagnostics.newOperationId()
         val startedAt = SystemClock.elapsedRealtime()
         val ids = glanceManager
@@ -337,6 +355,12 @@ class WidgetRefreshCoordinator @Inject constructor(
             runCatching { TodayTodoWidget().update(context, id) }
         }
     }
+}
+
+internal class WidgetRefreshSerialExecutor {
+    private val mutex = Mutex()
+
+    suspend fun <T> run(block: suspend () -> T): T = mutex.withLock { block() }
 }
 
 @Singleton
