@@ -7,8 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.util.Log
+import android.os.SystemClock
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.work.BackoffPolicy
@@ -20,6 +19,12 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.mochisofts.mata.core.common.FailureCategory
+import com.mochisofts.mata.core.observability.DiagnosticEvent
+import com.mochisofts.mata.core.observability.DiagnosticEventCode
+import com.mochisofts.mata.core.observability.DiagnosticLevel
+import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.core.observability.DiagnosticResult
 import com.mochisofts.mata.data.local.WidgetInstanceStateDao
 import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
 import com.mochisofts.mata.domain.model.WidgetDisplayModel
@@ -39,6 +44,7 @@ import javax.inject.Singleton
 @Singleton
 class WidgetUpdater @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val diagnostics: DiagnosticLogger,
 ) {
     fun requestUpdate() {
         val request = OneTimeWorkRequest.Builder(WidgetRefreshWorker::class.java)
@@ -50,7 +56,13 @@ class WidgetUpdater @Inject constructor(
             ExistingWorkPolicy.REPLACE,
             request,
         )
-        WidgetDiagnostics.log(context, "one-time update enqueued")
+        diagnostics.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.WIDGET_UPDATE_ENQUEUED,
+                level = DiagnosticLevel.DEBUG,
+                result = DiagnosticResult.SUCCESS,
+            ),
+        )
     }
 
     fun startPeriodic() {
@@ -69,12 +81,24 @@ class WidgetUpdater @Inject constructor(
             ExistingPeriodicWorkPolicy.KEEP,
             request,
         )
-        WidgetDiagnostics.log(context, "periodic work enqueued")
+        diagnostics.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.WIDGET_PERIODIC_SCHEDULED,
+                level = DiagnosticLevel.INFO,
+                result = DiagnosticResult.SUCCESS,
+            ),
+        )
     }
 
     fun stopPeriodic() {
         WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_WORK_NAME)
-        WidgetDiagnostics.log(context, "periodic work cancelled")
+        diagnostics.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.WIDGET_PERIODIC_CANCELLED,
+                level = DiagnosticLevel.INFO,
+                result = DiagnosticResult.CANCELLED,
+            ),
+        )
     }
 
     fun scheduleUndoExpiry(appWidgetId: Int, expiresAt: Long) {
@@ -163,10 +187,13 @@ class WidgetRefreshCoordinator @Inject constructor(
     private val alarmScheduler: WidgetRefreshAlarmScheduler,
     private val holidayRepository: HolidayRepository,
     private val clock: Clock,
+    private val diagnostics: DiagnosticLogger,
 ) {
     private val glanceManager = GlanceAppWidgetManager(context)
 
     suspend fun refreshAll(preferredAppWidgetId: Int? = null): Boolean {
+        val operationId = diagnostics.newOperationId()
+        val startedAt = SystemClock.elapsedRealtime()
         val ids = glanceManager
             .getGlanceIds(TodayTodoWidget::class.java)
             .sortedBy {
@@ -178,6 +205,12 @@ class WidgetRefreshCoordinator @Inject constructor(
             holidayRepository.pendingWidgetGeneration()?.let {
                 holidayRepository.markWidgetGenerationProcessed(it)
             }
+            reportRefresh(
+                result = DiagnosticResult.SUCCESS,
+                count = 0,
+                startedAt = startedAt,
+                operationId = operationId,
+            )
             return true
         }
 
@@ -190,6 +223,13 @@ class WidgetRefreshCoordinator @Inject constructor(
             displayRepository.createSnapshot()
         } catch (_: Exception) {
             markFailure(ids, now, ERROR_DATA_LOAD)
+            reportRefresh(
+                result = DiagnosticResult.FAILURE,
+                count = ids.size,
+                startedAt = startedAt,
+                operationId = operationId,
+                failureCategory = FailureCategory.TEMPORARY_LOCAL,
+            )
             return false
         }
         val json = WidgetSnapshotJson.encode(model)
@@ -226,7 +266,6 @@ class WidgetRefreshCoordinator @Inject constructor(
                     ),
                 )
             }
-            WidgetDiagnostics.logState(context, stateDao.find(appWidgetId) ?: state)
         }
         stateDao.findAll().filter { state -> state.appWidgetId in activeIds }
             .forEach { state -> stateDao.upsert(state.copy(nextRefreshAt = nextRefreshAt)) }
@@ -236,7 +275,38 @@ class WidgetRefreshCoordinator @Inject constructor(
                 holidayRepository.markWidgetGenerationProcessed(it)
             }
         }
+        reportRefresh(
+            result = if (allSucceeded) DiagnosticResult.SUCCESS else DiagnosticResult.FAILURE,
+            count = ids.size,
+            startedAt = startedAt,
+            operationId = operationId,
+            failureCategory = FailureCategory.TEMPORARY_LOCAL.takeUnless { allSucceeded },
+        )
         return allSucceeded
+    }
+
+    private fun reportRefresh(
+        result: DiagnosticResult,
+        count: Int,
+        startedAt: Long,
+        operationId: String,
+        failureCategory: FailureCategory? = null,
+    ) {
+        diagnostics.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.WIDGET_REFRESH_FINISHED,
+                level = if (result == DiagnosticResult.SUCCESS) {
+                    DiagnosticLevel.INFO
+                } else {
+                    DiagnosticLevel.WARN
+                },
+                result = result,
+                failureCategory = failureCategory,
+                count = count,
+                durationMillis = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0),
+                operationId = operationId,
+            ),
+        )
     }
 
     private suspend fun markFailure(ids: List<GlanceId>, now: Long, errorCode: String) {
@@ -273,6 +343,7 @@ class WidgetRefreshCoordinator @Inject constructor(
 class WidgetRefreshAlarmScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clock: Clock,
+    private val diagnostics: DiagnosticLogger,
 ) {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
@@ -283,12 +354,24 @@ class WidgetRefreshAlarmScheduler @Inject constructor(
         }
         val safeTrigger = triggerAt.coerceAtLeast(clock.millis() + MIN_ALARM_DELAY_MILLIS)
         alarmManager.set(AlarmManager.RTC, safeTrigger, pendingIntent())
-        WidgetDiagnostics.log(context, "next alarm=$safeTrigger")
+        diagnostics.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.WIDGET_ALARM_SCHEDULED,
+                level = DiagnosticLevel.DEBUG,
+                result = DiagnosticResult.SUCCESS,
+            ),
+        )
     }
 
     fun cancel() {
         alarmManager.cancel(pendingIntent())
-        WidgetDiagnostics.log(context, "alarm cancelled")
+        diagnostics.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.WIDGET_ALARM_CANCELLED,
+                level = DiagnosticLevel.DEBUG,
+                result = DiagnosticResult.CANCELLED,
+            ),
+        )
     }
 
     private fun pendingIntent(): PendingIntent = PendingIntent.getBroadcast(
@@ -353,31 +436,3 @@ const val ERROR_COMPLETE = "widget_complete"
 const val ACTION_WIDGET_REFRESH = "com.mochisofts.mata.action.WIDGET_REFRESH"
 private const val INPUT_PERIODIC = "periodic"
 private const val INPUT_APP_WIDGET_ID = "app_widget_id"
-
-private object WidgetDiagnostics {
-    private const val TAG = "MataWidget"
-
-    fun log(context: Context, message: String) {
-        if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
-        Log.d(TAG, message)
-    }
-
-    fun logState(context: Context, state: WidgetInstanceStateEntity) {
-        if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
-        val options = AppWidgetManager.getInstance(context).getAppWidgetOptions(state.appWidgetId)
-        val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
-        val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-        val layout = when {
-            width < 180 -> "compact"
-            width >= 300 && height < 160 -> "wide"
-            else -> "standard"
-        }
-        Log.d(
-            TAG,
-            "id=${state.appWidgetId} size=${width}x$height layout=$layout " +
-                "snapshot=${state.snapshotVersion} lastSuccess=${state.lastSuccessAt} " +
-                "state=${state.loadState} error=${state.errorCode} " +
-                "next=${state.nextRefreshAt} undoUntil=${state.undoExpiresAt}",
-        )
-    }
-}
