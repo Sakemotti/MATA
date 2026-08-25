@@ -108,6 +108,7 @@ import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.PeriodHistoryEntry
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
 import java.time.DayOfWeek
@@ -791,6 +792,12 @@ private fun ArchiveTodoDefinition(item: ArchivedTodoItem) {
             stringResource(
                 if (todo.recurrenceType == RecurrenceType.WEEKDAYS) {
                     R.string.archive_holiday_excluded
+                } else if (todo.recurrenceRule.dayFilter == RecurrenceDayFilter.WEEKDAYS) {
+                    R.string.archive_holiday_excluded
+                } else if (
+                    todo.recurrenceRule.dayFilter == RecurrenceDayFilter.WEEKENDS_HOLIDAYS
+                ) {
+                    R.string.archive_holiday_included
                 } else {
                     R.string.archive_holiday_not_excluded
                 },
@@ -1222,15 +1229,20 @@ private fun recurrenceDescription(rule: RecurrenceRule): String = when (rule.typ
     RecurrenceType.ONCE -> stringResource(R.string.label_no_recurrence)
     RecurrenceType.DAILY -> stringResource(R.string.label_daily)
     RecurrenceType.WEEKDAYS -> stringResource(R.string.label_weekdays)
-    RecurrenceType.SELECTED_WEEKDAYS -> {
-        val labels = mutableListOf<String>()
-        DayOfWeek.entries.filter { it in rule.selectedWeekdays }.forEach { day ->
-            labels += weekdayLabel(day)
+    RecurrenceType.SELECTED_WEEKDAYS -> when (rule.dayFilter) {
+        RecurrenceDayFilter.WEEKDAYS -> stringResource(R.string.label_weekdays)
+        RecurrenceDayFilter.WEEKENDS_HOLIDAYS ->
+            stringResource(R.string.todo_editor_day_filter_weekends_holidays)
+        else -> {
+            val labels = mutableListOf<String>()
+            DayOfWeek.entries.filter { it in rule.selectedWeekdays }.forEach { day ->
+                labels += weekdayLabel(day)
+            }
+            stringResource(
+                R.string.archive_selected_weekdays_format,
+                labels.joinToString(stringResource(R.string.list_separator_middle_dot)),
+            )
         }
-        stringResource(
-            R.string.archive_selected_weekdays_format,
-            labels.joinToString(stringResource(R.string.list_separator_middle_dot)),
-        )
     }
     RecurrenceType.MONTHLY_DAY -> stringResource(
         R.string.todo_recurrence_monthly_day_format,
@@ -1256,10 +1268,32 @@ private fun recurrenceDescription(rule: RecurrenceRule): String = when (rule.typ
         R.string.todo_recurrence_every_n_days_format,
         rule.intervalDays ?: 1,
     )
-    RecurrenceType.WEEKLY_COUNT -> stringResource(
-        R.string.todo_recurrence_weekly_count_format,
-        rule.requiredCount ?: 1,
-    )
+    RecurrenceType.WEEKLY_COUNT -> {
+        val period = stringResource(
+            R.string.todo_recurrence_weekly_interval_count_format,
+            rule.periodWeeks,
+            rule.requiredCount ?: 1,
+        )
+        val filter = when (rule.dayFilter) {
+            RecurrenceDayFilter.ALL -> null
+            RecurrenceDayFilter.WEEKDAYS -> stringResource(R.string.label_weekdays)
+            RecurrenceDayFilter.WEEKENDS_HOLIDAYS ->
+                stringResource(R.string.todo_editor_day_filter_weekends_holidays)
+            RecurrenceDayFilter.CUSTOM -> {
+                val labels = mutableListOf<String>()
+                DayOfWeek.entries.filter { it in rule.selectedWeekdays }.forEach { day ->
+                    labels += weekdayLabel(day)
+                }
+                stringResource(
+                    R.string.archive_selected_weekdays_format,
+                    labels.joinToString(stringResource(R.string.list_separator_middle_dot)),
+                )
+            }
+        }
+        filter?.let {
+            stringResource(R.string.todo_recurrence_with_day_filter_format, period, it)
+        } ?: period
+    }
     RecurrenceType.MONTHLY_COUNT -> stringResource(
         R.string.todo_recurrence_monthly_count_format,
         rule.requiredCount ?: 1,

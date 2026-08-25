@@ -48,7 +48,7 @@ fun Todo.occursOn(date: LocalDate, holidays: Set<LocalDate> = emptySet()): Boole
         RecurrenceType.ONCE -> date == startDate
         RecurrenceType.DAILY -> true
         RecurrenceType.WEEKDAYS -> date.dayOfWeek in DayOfWeek.MONDAY..DayOfWeek.FRIDAY && date !in holidays
-        RecurrenceType.SELECTED_WEEKDAYS -> date.dayOfWeek in recurrenceRule.selectedWeekdays
+        RecurrenceType.SELECTED_WEEKDAYS -> recurrenceRule.matchesDayFilter(date, holidays)
         RecurrenceType.MONTHLY_DAY -> {
             val targetDay = recurrenceRule.monthlyDay?.coerceAtMost(date.lengthOfMonth()) ?: return false
             date.dayOfMonth == targetDay
@@ -62,9 +62,8 @@ fun Todo.occursOn(date: LocalDate, holidays: Set<LocalDate> = emptySet()): Boole
             val interval = recurrenceRule.intervalDays ?: return false
             ChronoUnit.DAYS.between(startDate, date) % interval == 0L
         }
-        RecurrenceType.WEEKLY_COUNT,
-        RecurrenceType.MONTHLY_COUNT,
-        -> true
+        RecurrenceType.WEEKLY_COUNT -> recurrenceRule.matchesDayFilter(date, holidays)
+        RecurrenceType.MONTHLY_COUNT -> true
     }
 }
 
@@ -102,8 +101,14 @@ fun Todo.recurrencePeriod(date: LocalDate, weekStart: DayOfWeek): RecurrencePeri
     when (recurrenceRule.type) {
         RecurrenceType.WEEKLY_COUNT -> {
             val daysFromStart = (date.dayOfWeek.value - weekStart.value + 7) % 7
-            naturalStart = date.minusDays(daysFromStart.toLong())
-            naturalEnd = naturalStart.plusDays(6)
+            val dateWeekStart = date.minusDays(daysFromStart.toLong())
+            val startDaysFromWeekStart = (startDate.dayOfWeek.value - weekStart.value + 7) % 7
+            val anchorWeekStart = startDate.minusDays(startDaysFromWeekStart.toLong())
+            val periodWeeks = recurrenceRule.periodWeeks.coerceIn(1, 52)
+            val weeksFromAnchor = ChronoUnit.WEEKS.between(anchorWeekStart, dateWeekStart)
+            val block = Math.floorDiv(weeksFromAnchor, periodWeeks.toLong())
+            naturalStart = anchorWeekStart.plusWeeks(block * periodWeeks)
+            naturalEnd = naturalStart.plusDays(periodWeeks * 7L - 1)
         }
         RecurrenceType.MONTHLY_COUNT -> {
             naturalStart = date.with(TemporalAdjusters.firstDayOfMonth())
@@ -118,6 +123,27 @@ fun Todo.recurrencePeriod(date: LocalDate, weekStart: DayOfWeek): RecurrencePeri
     val requiredCount = minOf(recurrenceRule.requiredCount ?: return null, activeDays)
     return RecurrencePeriod(effectiveStart, effectiveEnd, requiredCount)
 }
+
+fun RecurrenceRule.usesHolidayData(): Boolean =
+    type == RecurrenceType.WEEKDAYS ||
+        dayFilter == RecurrenceDayFilter.WEEKDAYS ||
+        dayFilter == RecurrenceDayFilter.WEEKENDS_HOLIDAYS
+
+private fun RecurrenceRule.matchesDayFilter(date: LocalDate, holidays: Set<LocalDate>): Boolean =
+    when (dayFilter) {
+        RecurrenceDayFilter.ALL -> {
+            if (type == RecurrenceType.SELECTED_WEEKDAYS) {
+                date.dayOfWeek in selectedWeekdays
+            } else {
+                true
+            }
+        }
+        RecurrenceDayFilter.WEEKDAYS ->
+            date.dayOfWeek.value <= DayOfWeek.FRIDAY.value && date !in holidays
+        RecurrenceDayFilter.WEEKENDS_HOLIDAYS ->
+            date.dayOfWeek.value >= DayOfWeek.SATURDAY.value || date in holidays
+        RecurrenceDayFilter.CUSTOM -> date.dayOfWeek in selectedWeekdays
+    }
 
 private operator fun ClosedRange<DayOfWeek>.contains(value: DayOfWeek): Boolean =
     value.value in start.value..endInclusive.value

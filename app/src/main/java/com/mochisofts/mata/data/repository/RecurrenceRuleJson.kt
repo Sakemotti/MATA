@@ -2,13 +2,14 @@ package com.mochisofts.mata.data.repository
 
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.time.DayOfWeek
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-private const val CURRENT_REPEAT_PARAMS_VERSION = 1
+internal const val CURRENT_REPEAT_PARAMS_VERSION = 1
 
 internal data class EncodedRecurrenceRule(
     val typeCode: String,
@@ -31,6 +32,8 @@ internal object RecurrenceRuleJson {
             monthlyDay = rule.monthlyDay,
             intervalDays = rule.intervalDays,
             requiredCount = rule.requiredCount,
+            periodWeeks = rule.periodWeeks,
+            dayFilter = rule.dayFilter.code,
         )
         return EncodedRecurrenceRule(
             typeCode = rule.type.code,
@@ -51,6 +54,8 @@ internal object RecurrenceRuleJson {
             monthlyDay = payload.monthlyDay,
             intervalDays = payload.intervalDays,
             requiredCount = payload.requiredCount,
+            periodWeeks = payload.periodWeeks,
+            dayFilter = RecurrenceDayFilter.fromStoredValue(payload.dayFilter),
         )
     }
 }
@@ -62,6 +67,8 @@ private data class RepeatParamsPayload(
     val monthlyDay: Int? = null,
     val intervalDays: Int? = null,
     val requiredCount: Int? = null,
+    val periodWeeks: Int = 1,
+    val dayFilter: String = RecurrenceDayFilter.ALL.code,
 )
 
 @Serializable

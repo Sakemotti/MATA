@@ -32,6 +32,19 @@ data class MonthlyNthWeekday(
     fun isValid(): Boolean = ordinal in 1..5
 }
 
+enum class RecurrenceDayFilter(val code: String) {
+    ALL("all"),
+    WEEKDAYS("weekdays"),
+    WEEKENDS_HOLIDAYS("weekends_holidays"),
+    CUSTOM("custom");
+
+    companion object {
+        fun fromStoredValue(value: String): RecurrenceDayFilter =
+            entries.firstOrNull { it.code == value }
+                ?: runCatching { valueOf(value) }.getOrDefault(ALL)
+    }
+}
+
 enum class TodoState(val code: String) {
     PENDING("pending"),
     COMPLETED("completed"),
@@ -52,14 +65,21 @@ data class RecurrenceRule(
     val monthlyNthWeekdays: Set<MonthlyNthWeekday> = emptySet(),
     val intervalDays: Int? = null,
     val requiredCount: Int? = null,
+    val periodWeeks: Int = 1,
+    val dayFilter: RecurrenceDayFilter = RecurrenceDayFilter.ALL,
 ) {
     fun isValid(): Boolean = when (type) {
-        RecurrenceType.SELECTED_WEEKDAYS -> selectedWeekdays.isNotEmpty()
+        RecurrenceType.SELECTED_WEEKDAYS ->
+            dayFilter == RecurrenceDayFilter.WEEKDAYS ||
+                dayFilter == RecurrenceDayFilter.WEEKENDS_HOLIDAYS ||
+                selectedWeekdays.isNotEmpty()
         RecurrenceType.MONTHLY_DAY -> monthlyDay in 1..31
         RecurrenceType.MONTHLY_NTH_WEEKDAYS ->
             monthlyNthWeekdays.isNotEmpty() && monthlyNthWeekdays.all(MonthlyNthWeekday::isValid)
         RecurrenceType.EVERY_N_DAYS -> intervalDays in 1..999
-        RecurrenceType.WEEKLY_COUNT -> requiredCount in 1..7
+        RecurrenceType.WEEKLY_COUNT ->
+            periodWeeks in 1..52 && requiredCount in 1..(periodWeeks * 7) &&
+                (dayFilter != RecurrenceDayFilter.CUSTOM || selectedWeekdays.isNotEmpty())
         RecurrenceType.MONTHLY_COUNT -> requiredCount in 1..31
         else -> true
     }

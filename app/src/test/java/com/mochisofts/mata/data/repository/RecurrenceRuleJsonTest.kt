@@ -2,6 +2,7 @@ package com.mochisofts.mata.data.repository
 
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
@@ -29,7 +30,13 @@ class RecurrenceRuleJsonTest {
             ),
             RecurrenceRule(RecurrenceType.MONTH_END),
             RecurrenceRule(RecurrenceType.EVERY_N_DAYS, intervalDays = 999),
-            RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 7),
+            RecurrenceRule(
+                RecurrenceType.WEEKLY_COUNT,
+                selectedWeekdays = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+                requiredCount = 1,
+                periodWeeks = 2,
+                dayFilter = RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+            ),
             RecurrenceRule(RecurrenceType.MONTHLY_COUNT, requiredCount = 31),
         )
 
@@ -45,5 +52,28 @@ class RecurrenceRuleJsonTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun legacyRules_defaultToOneWeekAndExistingWeekdaySemantics() {
+        assertEquals(
+            RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 3),
+            RecurrenceRuleJson.decode(
+                RecurrenceType.WEEKLY_COUNT.code,
+                1,
+                """{"requiredCount":3}""",
+            ),
+        )
+        assertEquals(
+            RecurrenceRule(
+                RecurrenceType.SELECTED_WEEKDAYS,
+                selectedWeekdays = setOf(DayOfWeek.MONDAY),
+            ),
+            RecurrenceRuleJson.decode(
+                RecurrenceType.SELECTED_WEEKDAYS.code,
+                1,
+                """{"selectedWeekdays":[1]}""",
+            ),
+        )
     }
 }

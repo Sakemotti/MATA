@@ -77,11 +77,13 @@ import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.nextOccurrences
 import com.mochisofts.mata.domain.model.recurrencePeriod
+import com.mochisofts.mata.domain.model.usesHolidayData
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -604,26 +606,25 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
     when (state.recurrenceType) {
         RecurrenceType.SELECTED_WEEKDAYS -> {
             Text(stringResource(R.string.todo_editor_selected_weekdays_label))
-            FlowRow(
-                modifier = Modifier.focusGroup(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DayOfWeek.entries.forEach { day ->
-                    FilterChip(
-                        selected = day in state.selectedWeekdays,
-                        onClick = { viewModel.toggleWeekday(day) },
-                        label = { Text(weekdayLabel(day)) },
-                        modifier = Modifier.mataClickablePointer(),
-                    )
-                }
-            }
-            if (state.selectedWeekdays.isEmpty()) {
-                Text(
-                    stringResource(R.string.error_todo_recurrence_rule_invalid),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+            DayFilterSelector(state, viewModel, allowAll = false)
+        }
+        RecurrenceType.WEEKLY_COUNT -> {
+            NumberSelector(
+                value = state.periodWeeks,
+                range = 1..52,
+                label = stringResource(R.string.todo_editor_period_weeks_label),
+                formatRes = R.string.todo_editor_week_count_format,
+                onSelect = viewModel::setPeriodWeeks,
+            )
+            NumberSelector(
+                value = state.weeklyCount,
+                range = 1..(state.periodWeeks * 7),
+                label = stringResource(R.string.todo_editor_weekly_count_label),
+                formatRes = R.string.todo_editor_count_format,
+                onSelect = viewModel::setWeeklyCount,
+            )
+            Text(stringResource(R.string.todo_editor_eligible_days_label))
+            DayFilterSelector(state, viewModel, allowAll = true)
         }
         RecurrenceType.MONTHLY_DAY -> NumberSelector(
             value = state.monthlyDay,
@@ -676,13 +677,6 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
         )
-        RecurrenceType.WEEKLY_COUNT -> NumberSelector(
-            value = state.weeklyCount,
-            range = 1..7,
-            label = stringResource(R.string.todo_editor_weekly_count_label),
-            formatRes = R.string.todo_editor_count_format,
-            onSelect = viewModel::setWeeklyCount,
-        )
         RecurrenceType.MONTHLY_COUNT -> NumberSelector(
             value = state.monthlyCount,
             range = 1..31,
@@ -691,6 +685,64 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
             onSelect = viewModel::setMonthlyCount,
         )
         else -> Unit
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DayFilterSelector(
+    state: TodoEditorUiState,
+    viewModel: TodoEditorViewModel,
+    allowAll: Boolean,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (allowAll) {
+            FilterChip(
+                selected = state.dayFilter == RecurrenceDayFilter.ALL,
+                onClick = { viewModel.setDayFilter(RecurrenceDayFilter.ALL) },
+                label = { Text(stringResource(R.string.todo_editor_day_filter_all)) },
+                modifier = Modifier.mataClickablePointer(),
+            )
+        }
+        FilterChip(
+            selected = state.dayFilter == RecurrenceDayFilter.WEEKDAYS,
+            onClick = { viewModel.setDayFilter(RecurrenceDayFilter.WEEKDAYS) },
+            label = { Text(stringResource(R.string.todo_editor_day_filter_weekdays)) },
+            modifier = Modifier.mataClickablePointer(),
+        )
+        FilterChip(
+            selected = state.dayFilter == RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+            onClick = { viewModel.setDayFilter(RecurrenceDayFilter.WEEKENDS_HOLIDAYS) },
+            label = { Text(stringResource(R.string.todo_editor_day_filter_weekends_holidays)) },
+            modifier = Modifier.mataClickablePointer(),
+        )
+        FilterChip(
+            selected = state.dayFilter == RecurrenceDayFilter.CUSTOM ||
+                (!allowAll && state.dayFilter == RecurrenceDayFilter.ALL),
+            onClick = { viewModel.setDayFilter(RecurrenceDayFilter.CUSTOM) },
+            label = { Text(stringResource(R.string.label_selected_weekdays)) },
+            modifier = Modifier.mataClickablePointer(),
+        )
+    }
+    FlowRow(
+        modifier = Modifier.focusGroup(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DayOfWeek.entries.forEach { day ->
+            FilterChip(
+                selected = day in state.selectedWeekdays,
+                onClick = { viewModel.toggleWeekday(day) },
+                label = { Text(weekdayLabel(day)) },
+                modifier = Modifier.mataClickablePointer(),
+            )
+        }
+    }
+    if (state.dayFilter == RecurrenceDayFilter.CUSTOM && state.selectedWeekdays.isEmpty()) {
+        Text(
+            stringResource(R.string.error_todo_recurrence_rule_invalid),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }
 
@@ -761,6 +813,9 @@ private fun SchedulePreview(state: TodoEditorUiState) {
                 ),
             )
         }
+        if (state.recurrenceRule.usesHolidayData()) {
+            HolidayDataStatus(state, setOf(previewFrom.year))
+        }
     } else {
         val dates = if (state.recurrenceRule.isValid()) {
             todo.nextOccurrences(previewFrom, 3, state.holidaySnapshot.dates)
@@ -772,45 +827,14 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         } else {
             dates.forEach { date -> Text(date.toJapaneseDate()) }
         }
-        if (state.recurrenceType == RecurrenceType.WEEKDAYS) {
+        if (state.recurrenceRule.usesHolidayData()) {
             val previewYears = (dates.map { it.year } + previewFrom.year).toSet()
-            val previewStatuses = previewYears.map(state.holidaySnapshot::statusFor).toSet()
-            val statusMessage = when {
-                HolidayYearStatus.FETCHING in previewStatuses -> {
-                    if (previewYears.all(state.holidaySnapshot::isDefinitive)) {
-                        R.string.holiday_data_refreshing
-                    } else {
-                        R.string.holiday_data_loading
-                    }
-                }
-                HolidayYearStatus.FAILED_WITHOUT_CACHE in previewStatuses ->
-                    R.string.holiday_data_provisional
-                HolidayYearStatus.UNAVAILABLE in previewStatuses -> R.string.holiday_data_unavailable
-                previewYears.any { year ->
-                    state.holidaySnapshot.statusFor(year) == HolidayYearStatus.OUT_OF_RANGE &&
-                        !state.holidaySnapshot.isDefinitive(year)
-                } -> R.string.holiday_data_out_of_range
-                HolidayYearStatus.FAILED_WITH_CACHE in previewStatuses ->
-                    R.string.holiday_data_failed_with_cache
-                HolidayYearStatus.AVAILABLE_STALE in previewStatuses -> R.string.holiday_data_stale
-                else -> null
-            }
-            statusMessage?.let { messageRes ->
-                Text(
-                    stringResource(messageRes),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (
-                        HolidayYearStatus.FAILED_WITHOUT_CACHE in previewStatuses ||
-                        HolidayYearStatus.FAILED_WITH_CACHE in previewStatuses
-                    ) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-            }
+            HolidayDataStatus(state, previewYears)
             val scanEnd = dates.lastOrNull() ?: previewFrom.plusDays(30)
-            state.holidaySnapshot.namesByDate
+            if (
+                state.recurrenceType == RecurrenceType.WEEKDAYS ||
+                state.dayFilter == RecurrenceDayFilter.WEEKDAYS
+            ) state.holidaySnapshot.namesByDate
                 .asSequence()
                 .filter { (date, _) ->
                     date in previewFrom..scanEnd && date.dayOfWeek.value <= 5 &&
@@ -830,6 +854,45 @@ private fun SchedulePreview(state: TodoEditorUiState) {
                     )
                 }
         }
+    }
+}
+
+@Composable
+private fun HolidayDataStatus(state: TodoEditorUiState, previewYears: Set<Int>) {
+    val previewStatuses = previewYears.map(state.holidaySnapshot::statusFor).toSet()
+    val statusMessage = when {
+        HolidayYearStatus.FETCHING in previewStatuses -> {
+            if (previewYears.all(state.holidaySnapshot::isDefinitive)) {
+                R.string.holiday_data_refreshing
+            } else {
+                R.string.holiday_data_loading
+            }
+        }
+        HolidayYearStatus.FAILED_WITHOUT_CACHE in previewStatuses ->
+            R.string.holiday_data_provisional
+        HolidayYearStatus.UNAVAILABLE in previewStatuses -> R.string.holiday_data_unavailable
+        previewYears.any { year ->
+            state.holidaySnapshot.statusFor(year) == HolidayYearStatus.OUT_OF_RANGE &&
+                !state.holidaySnapshot.isDefinitive(year)
+        } -> R.string.holiday_data_out_of_range
+        HolidayYearStatus.FAILED_WITH_CACHE in previewStatuses ->
+            R.string.holiday_data_failed_with_cache
+        HolidayYearStatus.AVAILABLE_STALE in previewStatuses -> R.string.holiday_data_stale
+        else -> null
+    }
+    statusMessage?.let { messageRes ->
+        Text(
+            stringResource(messageRes),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (
+                HolidayYearStatus.FAILED_WITHOUT_CACHE in previewStatuses ||
+                HolidayYearStatus.FAILED_WITH_CACHE in previewStatuses
+            ) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }
 

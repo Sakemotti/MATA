@@ -10,10 +10,10 @@ import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.HolidayYearStatus
-import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.usesHolidayData
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
@@ -152,7 +152,7 @@ class TodoListViewModel @Inject constructor(
             holidayName = content.holidaySnapshot.holidayName(content.date),
             holidayStatus = content.holidaySnapshot.statusFor(content.date.year)
                 .takeIf {
-                    content.todos.any { todo -> todo.recurrenceType == RecurrenceType.WEEKDAYS }
+                    content.todos.any { todo -> todo.recurrenceRule.usesHolidayData() }
                 },
             holidayDataAvailable = content.holidaySnapshot.isDefinitive(content.date.year),
         )

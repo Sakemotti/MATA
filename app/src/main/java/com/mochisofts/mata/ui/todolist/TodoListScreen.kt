@@ -95,6 +95,7 @@ import com.mochisofts.mata.core.designsystem.MataStatusType
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.HolidayYearStatus
@@ -759,7 +760,12 @@ private fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
     RecurrenceType.ONCE -> todo.startDate.toJapaneseDate(stringResource(R.string.date_pattern_short))
     RecurrenceType.DAILY -> stringResource(R.string.label_daily)
     RecurrenceType.WEEKDAYS -> stringResource(R.string.label_weekdays)
-    RecurrenceType.SELECTED_WEEKDAYS -> stringResource(R.string.label_selected_weekdays)
+    RecurrenceType.SELECTED_WEEKDAYS -> when (todo.recurrenceRule.dayFilter) {
+        RecurrenceDayFilter.WEEKDAYS -> stringResource(R.string.label_weekdays)
+        RecurrenceDayFilter.WEEKENDS_HOLIDAYS ->
+            stringResource(R.string.todo_editor_day_filter_weekends_holidays)
+        else -> stringResource(R.string.label_selected_weekdays)
+    }
     RecurrenceType.MONTHLY_DAY -> stringResource(
         R.string.todo_recurrence_monthly_day_format,
         todo.recurrenceRule.monthlyDay ?: 1,
@@ -770,10 +776,23 @@ private fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
         R.string.todo_recurrence_every_n_days_format,
         todo.recurrenceRule.intervalDays ?: 1,
     )
-    RecurrenceType.WEEKLY_COUNT -> stringResource(
-        R.string.todo_recurrence_weekly_count_format,
-        todo.recurrenceRule.requiredCount ?: 1,
-    )
+    RecurrenceType.WEEKLY_COUNT -> {
+        val period = stringResource(
+            R.string.todo_recurrence_weekly_interval_count_format,
+            todo.recurrenceRule.periodWeeks,
+            todo.recurrenceRule.requiredCount ?: 1,
+        )
+        val filter = when (todo.recurrenceRule.dayFilter) {
+            RecurrenceDayFilter.ALL -> null
+            RecurrenceDayFilter.WEEKDAYS -> stringResource(R.string.label_weekdays)
+            RecurrenceDayFilter.WEEKENDS_HOLIDAYS ->
+                stringResource(R.string.todo_editor_day_filter_weekends_holidays)
+            RecurrenceDayFilter.CUSTOM -> stringResource(R.string.label_selected_weekdays)
+        }
+        filter?.let {
+            stringResource(R.string.todo_recurrence_with_day_filter_format, period, it)
+        } ?: period
+    }
     RecurrenceType.MONTHLY_COUNT -> stringResource(
         R.string.todo_recurrence_monthly_count_format,
         todo.recurrenceRule.requiredCount ?: 1,

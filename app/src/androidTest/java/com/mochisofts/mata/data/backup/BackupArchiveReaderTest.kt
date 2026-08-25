@@ -29,6 +29,18 @@ class BackupArchiveReaderTest {
     }
 
     @Test
+    fun previousVersionEmptyBackup_remainsAccepted() = runTest {
+        val data = EMPTY_DATA_V1.toByteArray(Charsets.UTF_8)
+        val backup = archive(data, sha256(data), formatVersion = 1, minimumReaderVersion = 1)
+        val output = temporaryDataFile()
+
+        val result = BackupArchiveReader().extractAndValidate(ByteArrayInputStream(backup), output)
+
+        assertEquals(1, result.manifest.formatVersion)
+        output.delete()
+    }
+
+    @Test
     fun mismatchedDigest_isRejectedBeforeRestore() = runTest {
         val data = EMPTY_DATA.toByteArray(Charsets.UTF_8)
         val backup = archive(data, "0".repeat(64))
@@ -41,9 +53,14 @@ class BackupArchiveReaderTest {
         output.delete()
     }
 
-    private fun archive(data: ByteArray, sha: String): ByteArray {
+    private fun archive(
+        data: ByteArray,
+        sha: String,
+        formatVersion: Int = BACKUP_FORMAT_VERSION,
+        minimumReaderVersion: Int = BACKUP_FORMAT_VERSION,
+    ): ByteArray {
         val manifest = """
-            {"formatId":"com.mochisofts.mata.backup","formatVersion":1,"minimumReaderVersion":1,"backupId":"00000000-0000-0000-0000-000000000001","createdAt":1,"appVersionName":"1.0","appVersionCode":1,"roomSchemaVersion":7,"data":{"sha256":"$sha","uncompressedBytes":${data.size}},"counts":{"categories":0,"todos":0,"notifications":0,"executions":0,"periodResults":0,"runtimeStates":0}}
+            {"formatId":"com.mochisofts.mata.backup","formatVersion":$formatVersion,"minimumReaderVersion":$minimumReaderVersion,"backupId":"00000000-0000-0000-0000-000000000001","createdAt":1,"appVersionName":"1.0","appVersionCode":1,"roomSchemaVersion":7,"data":{"sha256":"$sha","uncompressedBytes":${data.size}},"counts":{"categories":0,"todos":0,"notifications":0,"executions":0,"periodResults":0,"runtimeStates":0}}
         """.trimIndent().toByteArray(Charsets.UTF_8)
         return ByteArrayOutputStream().also { output ->
             ZipOutputStream(output).use { zip ->
@@ -69,6 +86,7 @@ class BackupArchiveReaderTest {
 
     private companion object {
         const val ENTRY_TIME = 1_700_000_000_000L
-        const val EMPTY_DATA = """{"formatVersion":1,"settings":{"uncategorizedEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
+        const val EMPTY_DATA = """{"formatVersion":2,"settings":{"uncategorizedEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
+        const val EMPTY_DATA_V1 = """{"formatVersion":1,"settings":{"uncategorizedEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
     }
 }

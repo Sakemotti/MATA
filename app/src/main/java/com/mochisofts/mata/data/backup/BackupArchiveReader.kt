@@ -12,11 +12,13 @@ import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.repository.HistorySnapshotJson
 import com.mochisofts.mata.data.repository.HistorySnapshotV1
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.data.repository.CURRENT_REPEAT_PARAMS_VERSION
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -127,7 +129,13 @@ class BackupArchiveReader @Inject constructor() {
             if (manifest.dataSha256 != actualSha || manifest.dataUncompressedBytes != measuredBytes) {
                 invalid("data.json digest mismatch")
             }
-            val parsed = parseData(dataFile, manifest.counts, null, onProgress)
+            val parsed = parseData(
+                dataFile,
+                manifest.counts,
+                manifest.formatVersion,
+                null,
+                onProgress,
+            )
             BackupSummary(manifest, parsed.archivedTodoCount)
         } catch (error: BackupFormatException) {
             dataFile.delete()
@@ -143,7 +151,13 @@ class BackupArchiveReader @Inject constructor() {
         manifest: BackupManifest,
         sink: BackupDataSink,
         onProgress: (BackupOperationPhase, Int?) -> Unit = { _, _ -> },
-    ): ParsedBackupData = parseData(dataFile, manifest.counts, sink, onProgress)
+    ): ParsedBackupData = parseData(
+        dataFile,
+        manifest.counts,
+        manifest.formatVersion,
+        sink,
+        onProgress,
+    )
 
     private fun readManifest(bytes: ByteArray): BackupManifest = strictReader(ByteArrayInputStream(bytes)).use {
         it.beginObject()
@@ -153,7 +167,9 @@ class BackupArchiveReader @Inject constructor() {
         val formatVersion = it.strictInt()
         it.expectName("minimumReaderVersion")
         val minimumReaderVersion = it.strictInt()
-        if (formatVersion != BACKUP_FORMAT_VERSION || minimumReaderVersion > BACKUP_FORMAT_VERSION) {
+        if (formatVersion !in MIN_SUPPORTED_BACKUP_FORMAT_VERSION..BACKUP_FORMAT_VERSION ||
+            minimumReaderVersion > BACKUP_FORMAT_VERSION
+        ) {
             throw BackupFormatException(BackupErrorCode.UNSUPPORTED_VERSION, "Unsupported backup version")
         }
         it.expectName("backupId")
@@ -190,19 +206,21 @@ class BackupArchiveReader @Inject constructor() {
             dataSha256 = sha,
             dataUncompressedBytes = bytesCount,
             counts = counts,
+            formatVersion = formatVersion,
         )
     }
 
     private suspend fun parseData(
         file: File,
         expectedCounts: BackupCounts,
+        expectedFormatVersion: Int,
         sink: BackupDataSink?,
         onProgress: (BackupOperationPhase, Int?) -> Unit,
     ): ParsedBackupData = strictReader(FileInputStream(file)).use { reader ->
         val validation = ValidationContext(expectedCounts)
         reader.beginObject()
         reader.expectName("formatVersion")
-        if (reader.strictInt() != BACKUP_FORMAT_VERSION) invalid("data.json version mismatch")
+        if (reader.strictInt() != expectedFormatVersion) invalid("data.json version mismatch")
         reader.expectName("settings")
         val settings = reader.readSettings()
         reader.expectName("categories")
@@ -216,7 +234,7 @@ class BackupArchiveReader @Inject constructor() {
         reader.expectName("todos")
         reader.beginArray()
         while (reader.hasNext()) {
-            val entity = reader.readTodo(validation)
+            val entity = reader.readTodo(validation, expectedFormatVersion)
             sink?.todo(entity)
             validation.progress(onProgress)
         }
@@ -307,7 +325,7 @@ class BackupArchiveReader @Inject constructor() {
         return CategoryEntity(id, name, normalizedName, color, icon, endHour, sort, createdAt, updatedAt)
     }
 
-    private fun JsonReader.readTodo(context: ValidationContext): TodoEntity {
+    private fun JsonReader.readTodo(context: ValidationContext, formatVersion: Int): TodoEntity {
         beginObject()
         expectName("id")
         val id = uuid()
@@ -330,12 +348,12 @@ class BackupArchiveReader @Inject constructor() {
         val type = RecurrenceType.entries.firstOrNull { it.code == typeCode } ?: invalid("Invalid repeat type")
         expectName("repeatParamsVersion")
         val paramsVersion = strictInt()
-        if (paramsVersion != 1) throw BackupFormatException(
+        if (paramsVersion !in 1..CURRENT_REPEAT_PARAMS_VERSION) throw BackupFormatException(
             BackupErrorCode.UNSUPPORTED_VERSION,
             "Unsupported repeat parameters",
         )
         expectName("repeatParams")
-        val rule = readRepeatParams(type)
+        val rule = readRepeatParams(type, formatVersion)
         if (!rule.isValid()) invalid("Invalid repeat parameters")
         val encoded = RecurrenceRuleJson.encode(rule)
         expectName("deadlineMinute")
@@ -381,21 +399,31 @@ class BackupArchiveReader @Inject constructor() {
         )
     }
 
-    private fun JsonReader.readRepeatParams(type: RecurrenceType): RecurrenceRule {
+    private fun JsonReader.readRepeatParams(
+        type: RecurrenceType,
+        formatVersion: Int,
+    ): RecurrenceRule {
         beginObject()
         val rule = when (type) {
             RecurrenceType.SELECTED_WEEKDAYS -> {
+                val dayFilter = if (formatVersion >= 2) {
+                    expectName("dayFilter")
+                    recurrenceDayFilter(strictString(), allowAll = false)
+                } else {
+                    RecurrenceDayFilter.CUSTOM
+                }
                 expectName("weekdays")
                 beginArray()
                 val days = mutableListOf<DayOfWeek>()
                 while (hasNext()) days += weekday(strictString())
                 endArray()
-                if (days.isEmpty() || days.distinct().size != days.size ||
+                if ((dayFilter == RecurrenceDayFilter.CUSTOM && days.isEmpty()) ||
+                    days.distinct().size != days.size ||
                     days != days.sortedBy(DayOfWeek::getValue)
                 ) {
                     invalid("Invalid weekday list")
                 }
-                RecurrenceRule(type, selectedWeekdays = days.toSet())
+                RecurrenceRule(type, selectedWeekdays = days.toSet(), dayFilter = dayFilter)
             }
             RecurrenceType.MONTHLY_DAY -> {
                 expectName("day")
@@ -429,9 +457,45 @@ class BackupArchiveReader @Inject constructor() {
                 expectName("intervalDays")
                 RecurrenceRule(type, intervalDays = strictInt())
             }
-            RecurrenceType.WEEKLY_COUNT,
-            RecurrenceType.MONTHLY_COUNT,
-            -> {
+            RecurrenceType.WEEKLY_COUNT -> {
+                val periodWeeks = if (formatVersion >= 2) {
+                    expectName("periodWeeks")
+                    strictInt()
+                } else {
+                    1
+                }
+                expectName("requiredCount")
+                val requiredCount = strictInt()
+                val dayFilter = if (formatVersion >= 2) {
+                    expectName("dayFilter")
+                    recurrenceDayFilter(strictString(), allowAll = true)
+                } else {
+                    RecurrenceDayFilter.ALL
+                }
+                val days = if (formatVersion >= 2) {
+                    expectName("weekdays")
+                    beginArray()
+                    val values = mutableListOf<DayOfWeek>()
+                    while (hasNext()) values += weekday(strictString())
+                    endArray()
+                    if (values.distinct().size != values.size ||
+                        values != values.sortedBy(DayOfWeek::getValue)
+                    ) {
+                        invalid("Invalid weekday list")
+                    }
+                    values.toSet()
+                } else {
+                    emptySet()
+                }
+                RecurrenceRule(
+                    type,
+                    selectedWeekdays = days,
+                    requiredCount = requiredCount,
+                    periodWeeks = periodWeeks,
+                    dayFilter = dayFilter,
+                )
+            }
+            RecurrenceType.MONTHLY_COUNT -> {
                 expectName("requiredCount")
                 RecurrenceRule(type, requiredCount = strictInt())
             }
@@ -439,6 +503,15 @@ class BackupArchiveReader @Inject constructor() {
         }
         requireObjectEnd()
         return rule
+    }
+
+    private fun recurrenceDayFilter(value: String, allowAll: Boolean): RecurrenceDayFilter {
+        val filter = RecurrenceDayFilter.entries.firstOrNull { it.code == value }
+            ?: invalid("Invalid recurrence day filter")
+        if (!allowAll && filter == RecurrenceDayFilter.ALL) {
+            invalid("All-days filter is invalid for weekday selection")
+        }
+        return filter
     }
 
     private fun JsonReader.readNotification(context: ValidationContext): TodoNotificationEntity {

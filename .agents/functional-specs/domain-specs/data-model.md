@@ -114,16 +114,16 @@ repeatTypeには次の安定コードを使用する。
 | 毎月 第X X曜日 | monthly_nth_weekdays |
 | 毎月の月末 | month_end |
 | 一定日数ごと | every_n_days |
-| 週X回 | weekly_count |
+| N週間にX回 | weekly_count |
 | 月X回 | monthly_count |
 
 repeatParamsJsonには、選択した方式に必要な値だけを保存する。
 
-- selected_weekdays: 曜日コードの重複しない配列
+- selected_weekdays: 対象日条件コードと曜日コードの重複しない配列。既存データで対象日条件がない場合は任意曜日として扱う
 - monthly_day: 1～31
 - monthly_nth_weekdays: 第1～第5と曜日コードの重複しない組み合わせ配列
 - every_n_days: 1以上の日数
-- weekly_count: 1～7
+- weekly_count: 期間週数1～52、必要回数1～期間週数×7、対象日条件、任意曜日。既存データで追加値がない場合は期間週数1・すべての日として扱う
 - monthly_count: 1～31
 - その他: 空オブジェクト
 
