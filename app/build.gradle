@@ -16,6 +16,8 @@ def debugPrivacyPolicyUrl = "https://mochisofts.com/mata/privacy"
 def debugTermsUrl = "https://mochisofts.com/mata/terms"
 def releasePrivacyPolicyUrl = providers.gradleProperty("MATA_PRIVACY_POLICY_URL").orElse("").get()
 def releaseTermsUrl = providers.gradleProperty("MATA_TERMS_URL").orElse("").get()
+def releaseVersionCode = 1
+def releaseVersionName = "1.0.0"
 
 android {
     namespace 'com.mochisofts.mata'
@@ -29,8 +31,8 @@ android {
         applicationId "com.mochisofts.mata"
         minSdk 26
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        versionCode releaseVersionCode
+        versionName releaseVersionName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -195,9 +197,131 @@ def verifyReleaseLegalUrls = tasks.register("verifyReleaseLegalUrls") {
     }
 }
 
+def configuredReleaseNamespace = android.namespace
+def configuredReleaseApplicationId = android.defaultConfig.applicationId
+def verifyReleaseVersionConfiguration = tasks.register("verifyReleaseVersionConfiguration") {
+    group = "verification"
+    description = "Verifies the public application ID and semantic release version."
+    doLast {
+        if (configuredReleaseNamespace != "com.mochisofts.mata" ||
+            configuredReleaseApplicationId != "com.mochisofts.mata") {
+            throw new GradleException("Release namespace and application ID must be com.mochisofts.mata.")
+        }
+        if (!(releaseVersionName ==~ /\d+\.\d+\.\d+/)) {
+            throw new GradleException(
+                "Release versionName must use MAJOR.MINOR.PATCH, but was ${releaseVersionName}."
+            )
+        }
+        if (releaseVersionCode < 1) {
+            throw new GradleException("Release versionCode must be a positive integer.")
+        }
+    }
+}
+
 tasks.configureEach { task ->
     if (task.name == "preReleaseBuild") {
-        task.dependsOn(verifyReleaseAdMobConfiguration, verifyReleaseLegalUrls)
+        task.dependsOn(
+            verifyReleaseAdMobConfiguration,
+            verifyReleaseLegalUrls,
+            verifyReleaseVersionConfiguration,
+        )
+    }
+}
+
+def releaseGitCommit = providers.environmentVariable("GITHUB_SHA")
+    .orElse(providers.gradleProperty("MATA_GIT_COMMIT"))
+    .orElse(
+        providers.exec {
+            workingDir(rootDir)
+            commandLine("git", "rev-parse", "HEAD")
+        }.standardOutput.asText.map { it.trim() }
+    )
+def releaseBuildTimestamp = providers.gradleProperty("MATA_BUILD_TIMESTAMP")
+    .orElse(providers.provider { java.time.Instant.now().toString() })
+def releaseBundle = layout.buildDirectory.file("outputs/bundle/release/app-release.aab")
+def releaseMapping = layout.buildDirectory.file("outputs/mapping/release/mapping.txt")
+def releaseLicenseList = layout.buildDirectory.file(
+    "generated/aboutLibraries/release/res/raw/aboutlibraries.json"
+)
+def releaseManifest = layout.buildDirectory.file(
+    "intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml"
+)
+def releaseMetadata = layout.buildDirectory.file(
+    "outputs/release-metadata/release-metadata.json"
+)
+def releaseRootPath = rootProject.layout.projectDirectory.asFile.absolutePath
+
+tasks.register("generateReleaseArtifactMetadata") {
+    group = "verification"
+    description = "Builds the verification AAB and records checksums and release identity."
+    dependsOn("bundleRelease", verifyReleaseVersionConfiguration)
+    inputs.files(releaseBundle, releaseMapping, releaseLicenseList, releaseManifest)
+    inputs.property("applicationId", "com.mochisofts.mata")
+    inputs.property("versionName", releaseVersionName)
+    inputs.property("versionCode", releaseVersionCode)
+    inputs.property("gitCommit", releaseGitCommit)
+    inputs.property("buildTimestamp", releaseBuildTimestamp)
+    outputs.file(releaseMetadata)
+
+    doLast {
+        def commit = releaseGitCommit.get()
+        if (!(commit ==~ /[0-9a-fA-F]{40,64}/)) {
+            throw new GradleException("Release Git commit must be a full hexadecimal commit ID.")
+        }
+        def timestamp
+        try {
+            timestamp = java.time.Instant.parse(releaseBuildTimestamp.get()).toString()
+        } catch (Exception ignored) {
+            throw new GradleException("MATA_BUILD_TIMESTAMP must be an ISO-8601 UTC timestamp.")
+        }
+
+        def requiredArtifacts = [
+            [type: "androidAppBundle", file: releaseBundle.get().asFile],
+            [type: "r8Mapping", file: releaseMapping.get().asFile],
+            [type: "openSourceLicenses", file: releaseLicenseList.get().asFile],
+            [type: "mergedManifest", file: releaseManifest.get().asFile],
+        ]
+        requiredArtifacts.each { artifact ->
+            if (!artifact.file.isFile()) {
+                throw new GradleException("Release artifact is missing: ${artifact.file}")
+            }
+        }
+        def sha256 = { File file ->
+            def digest = java.security.MessageDigest.getInstance("SHA-256")
+            file.withInputStream { input ->
+                def buffer = new byte[8192]
+                int count
+                while ((count = input.read(buffer)) != -1) {
+                    digest.update(buffer, 0, count)
+                }
+            }
+            digest.digest().encodeHex().toString()
+        }
+        def rootPath = java.nio.file.Paths.get(releaseRootPath)
+        def metadata = [
+            schemaVersion: 1,
+            publishable: false,
+            purpose: "CI verification only; production publication requires Upload Key signing.",
+            applicationId: "com.mochisofts.mata",
+            versionName: releaseVersionName,
+            versionCode: releaseVersionCode,
+            gitCommit: commit.toLowerCase(java.util.Locale.ROOT),
+            buildTimestamp: timestamp,
+            artifacts: requiredArtifacts.collect { artifact ->
+                [
+                    type: artifact.type,
+                    path: rootPath.relativize(artifact.file.toPath()).toString().replace('\\', '/'),
+                    bytes: artifact.file.length(),
+                    sha256: sha256(artifact.file),
+                ]
+            },
+        ]
+        def output = releaseMetadata.get().asFile
+        output.parentFile.mkdirs()
+        output.setText(
+            groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata)) + "\n",
+            "UTF-8",
+        )
     }
 }
 

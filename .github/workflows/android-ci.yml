@@ -52,18 +52,21 @@ jobs:
             admob_banner_id: ""
             privacy_policy_url: ""
             terms_url: ""
+            upload_release_artifacts: false
           - name: Release verification
-            tasks: :app:lintRelease :app:assembleRelease :app:verifyReleaseManifestSecurity
+            tasks: :app:lintRelease :app:generateReleaseArtifactMetadata :app:verifyReleaseManifestSecurity
             admob_app_id: ca-app-pub-0000000000000001~0000000001
             admob_banner_id: ca-app-pub-0000000000000001/0000000001
             privacy_policy_url: https://mochisofts.com/mata/privacy
             terms_url: https://mochisofts.com/mata/terms
+            upload_release_artifacts: true
           - name: Performance APK verification
             tasks: :app:assembleBenchmark :benchmark:assembleBenchmarkRelease
             admob_app_id: ""
             admob_banner_id: ""
             privacy_policy_url: ""
             terms_url: ""
+            upload_release_artifacts: false
 
     steps:
       - name: Checkout
@@ -81,6 +84,10 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
 
+      - name: Set build timestamp
+        shell: bash
+        run: echo "ORG_GRADLE_PROJECT_MATA_BUILD_TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
       - name: Run ${{ matrix.name }}
         env:
           ORG_GRADLE_PROJECT_MATA_ADMOB_APP_ID: ${{ matrix.admob_app_id }}
@@ -88,6 +95,20 @@ jobs:
           ORG_GRADLE_PROJECT_MATA_PRIVACY_POLICY_URL: ${{ matrix.privacy_policy_url }}
           ORG_GRADLE_PROJECT_MATA_TERMS_URL: ${{ matrix.terms_url }}
         run: ./gradlew ${{ matrix.tasks }} --no-daemon --stacktrace
+
+      - name: Upload Release verification artifacts
+        if: matrix.upload_release_artifacts && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mata-release-verification-${{ github.sha }}
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/release-metadata/release-metadata.json
+            app/build/outputs/mapping/release/mapping.txt
+            app/build/generated/aboutLibraries/release/res/raw/aboutlibraries.json
+            app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
+          if-no-files-found: error
+          retention-days: 365
 
   verify:
     name: Test, lint, and build
