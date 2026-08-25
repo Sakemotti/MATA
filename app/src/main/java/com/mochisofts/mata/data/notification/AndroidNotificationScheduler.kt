@@ -84,12 +84,20 @@ class AndroidNotificationScheduler @Inject constructor(
 
     override suspend fun reconcileTodo(todoId: String) {
         mutex.withLock {
-            reconcileTodoLocked(todoId, holidayRepository.currentSnapshot().dates)
+            reconcileTodoLocked(
+                todoId = todoId,
+                holidays = holidayRepository.currentSnapshot().dates,
+                mode = AlarmReconciliationMode.INCREMENTAL,
+            )
             updateReconcileReceiver()
         }
     }
 
-    override suspend fun reconcileAll() {
+    override suspend fun reconcileAll() = reconcileAll(AlarmReconciliationMode.INCREMENTAL)
+
+    override suspend fun rebuildAll() = reconcileAll(AlarmReconciliationMode.REBUILD_OS_REGISTRATIONS)
+
+    private suspend fun reconcileAll(mode: AlarmReconciliationMode) {
         mutex.withLock {
             val holidays = holidayRepository.currentSnapshot().dates
             val activeTodos = todoDao.findActiveWithNotifications()
@@ -97,7 +105,7 @@ class AndroidNotificationScheduler @Inject constructor(
             scheduledDao.findTodoIds().filterNot(activeIds::contains).forEach { todoId ->
                 cancelTodoLocked(todoId)
             }
-            activeTodos.forEach { reconcileTodoLocked(it.id, holidays) }
+            activeTodos.forEach { reconcileTodoLocked(it.id, holidays, mode) }
             updateReconcileReceiver()
         }
     }
@@ -109,7 +117,11 @@ class AndroidNotificationScheduler @Inject constructor(
         }
     }
 
-    private suspend fun reconcileTodoLocked(todoId: String, holidays: Set<LocalDate>) {
+    private suspend fun reconcileTodoLocked(
+        todoId: String,
+        holidays: Set<LocalDate>,
+        mode: AlarmReconciliationMode,
+    ) {
         val entity = todoDao.findById(todoId)
         val notificationEntities = notificationDao.findForTodo(todoId)
         if (entity == null || entity.archivedAt != null || notificationEntities.isEmpty()) {
@@ -154,11 +166,13 @@ class AndroidNotificationScheduler @Inject constructor(
             val previous = existing.firstOrNull { it.candidateKey == key }
             val exact = state.canScheduleExactAlarms
             val desiredMode = if (exact) MODE_EXACT else MODE_INEXACT
-            if (
-                previous?.state == STATE_SCHEDULED &&
-                previous.triggerAt == candidate.triggerAt.toInstant().toEpochMilli() &&
-                previous.schedulingMode == desiredMode &&
-                state.canPostNotifications
+            if (canReuseScheduledAlarm(
+                    previous = previous,
+                    desiredTriggerAt = candidate.triggerAt.toInstant().toEpochMilli(),
+                    desiredMode = desiredMode,
+                    canPostNotifications = state.canPostNotifications,
+                    reconciliationMode = mode,
+                )
             ) {
                 return@forEach
             }
@@ -263,6 +277,24 @@ class AndroidNotificationScheduler @Inject constructor(
         const val FAILURE_ALARM = "alarm_registration"
     }
 }
+
+internal enum class AlarmReconciliationMode {
+    INCREMENTAL,
+    REBUILD_OS_REGISTRATIONS,
+}
+
+internal fun canReuseScheduledAlarm(
+    previous: ScheduledNotificationEntity?,
+    desiredTriggerAt: Long,
+    desiredMode: String,
+    canPostNotifications: Boolean,
+    reconciliationMode: AlarmReconciliationMode,
+): Boolean =
+    reconciliationMode == AlarmReconciliationMode.INCREMENTAL &&
+        previous?.state == AndroidNotificationScheduler.STATE_SCHEDULED &&
+        previous.triggerAt == desiredTriggerAt &&
+        previous.schedulingMode == desiredMode &&
+        canPostNotifications
 
 @Singleton
 class AndroidAlarmGateway @Inject constructor(
