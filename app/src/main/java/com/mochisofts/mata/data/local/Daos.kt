@@ -465,6 +465,9 @@ interface ScheduledNotificationDao {
     @Query("SELECT DISTINCT todoId FROM scheduled_notifications")
     suspend fun findTodoIds(): List<String>
 
+    @Query("SELECT COUNT(*) FROM scheduled_notifications WHERE state = :state")
+    suspend fun countByState(state: String): Int
+
     @Query("SELECT COALESCE(MAX(requestCode), 9999) FROM scheduled_notifications")
     suspend fun maxRequestCode(): Int
 

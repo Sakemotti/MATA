@@ -101,6 +101,7 @@ interface NotificationScheduler {
     fun systemState(): NotificationSystemState
     suspend fun reconcileTodo(todoId: String)
     suspend fun reconcileAll()
+    suspend fun rebuildAll() = reconcileAll()
     suspend fun cancelTodo(todoId: String)
 }
 

@@ -22,6 +22,7 @@ import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoNotificationDao
 import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
 import com.mochisofts.mata.data.notification.NotificationChannels
+import com.mochisofts.mata.data.notification.NotificationReconcileWorkScheduler
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.NotificationRelation
@@ -155,17 +156,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
 @AndroidEntryPoint
 class NotificationReconcileReceiver : BroadcastReceiver() {
-    @Inject lateinit var scheduler: NotificationScheduler
+    @Inject lateinit var workScheduler: NotificationReconcileWorkScheduler
 
     override fun onReceive(context: Context, intent: Intent) {
-        val pendingResult = goAsync()
-        receiverScope.launch {
-            try {
-                scheduler.reconcileAll()
-            } finally {
-                pendingResult.finish()
-            }
-        }
+        workScheduler.enqueueRebuild()
     }
 }
 
