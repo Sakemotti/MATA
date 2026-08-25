@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DrawerValue
@@ -492,6 +493,7 @@ private fun CalendarDayCell(
         }
     }
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+    val textColor = calendarDayTextColor(selected, MaterialTheme.colorScheme)
     val borderColor = if (current) MaterialTheme.colorScheme.primary else Color.Transparent
     Column(
         modifier
@@ -511,6 +513,7 @@ private fun CalendarDayCell(
     ) {
         Text(
             date.dayOfMonth.toString(),
+            color = textColor,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected || current) FontWeight.Bold else FontWeight.Normal,
         )
@@ -521,6 +524,7 @@ private fun CalendarDayCell(
                     summary.completedCount,
                     summary.plannedCount,
                 ),
+                color = textColor,
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
@@ -541,6 +545,9 @@ private fun CalendarDayCell(
         }
     }
 }
+
+internal fun calendarDayTextColor(selected: Boolean, colorScheme: ColorScheme): Color =
+    if (selected) colorScheme.onPrimaryContainer else Color.Unspecified
 
 @Composable
 private fun DayHistoryArea(
