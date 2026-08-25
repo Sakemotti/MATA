@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -101,6 +102,8 @@ import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.Category
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -549,7 +552,10 @@ private fun CategoryListContent(
     onDragEnd: (Category) -> Unit,
     onDragCancel: () -> Unit,
 ) {
-    LazyColumn(modifier = modifier, state = listState) {
+    LazyColumn(
+        modifier = modifier.mataPageKeyScroll(listState),
+        state = listState,
+    ) {
         item(key = "uncategorized") {
             ListItem(
                 leadingContent = { Icon(Icons.Outlined.Category, contentDescription = null) },
@@ -696,6 +702,7 @@ private fun CategoryListRow(
                             contentDescription = reorderLabel
                             customActions = accessibilityActions
                         }
+                        .mataClickablePointer(reorderEnabled)
                         .pointerInput(category.id, reorderEnabled) {
                             if (!reorderEnabled) return@pointerInput
                             detectDragGesturesAfterLongPress(
@@ -713,6 +720,7 @@ private fun CategoryListRow(
                 }
             },
             modifier = Modifier
+                .mataClickablePointer(enabled = !isDragging)
                 .clickable(enabled = !isDragging, onClick = onClick)
                 .semantics {
                     this.selected = selected
@@ -816,7 +824,7 @@ fun CategoryEditorScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     CategoryLightColors.chunked(4).forEach { rowColors ->
                         Row(
-                            Modifier.fillMaxWidth(),
+                            Modifier.fillMaxWidth().focusGroup(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             rowColors.forEach { color ->
@@ -832,11 +840,15 @@ fun CategoryEditorScreen(
                     }
                 }
                 Text(stringResource(R.string.category_icon_label), style = MaterialTheme.typography.titleMedium)
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(
+                    modifier = Modifier.focusGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     items(CategoryIconOptions, key = { it.id }) { option ->
                         val label = stringResource(option.labelRes)
                         OutlinedCard(
                             onClick = { viewModel.setIcon(option.id) },
+                            modifier = Modifier.mataClickablePointer(),
                             border = if (state.iconName == option.id) {
                                 BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                             } else {
@@ -1001,7 +1013,7 @@ private fun CategoryEditorScaffold(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     CategoryLightColors.chunked(4).forEach { rowColors ->
                         Row(
-                            Modifier.fillMaxWidth(),
+                            Modifier.fillMaxWidth().focusGroup(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             rowColors.forEach { color ->
@@ -1020,11 +1032,15 @@ private fun CategoryEditorScaffold(
                     stringResource(R.string.category_icon_label),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(
+                    modifier = Modifier.focusGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     items(CategoryIconOptions, key = { it.id }) { option ->
                         val label = stringResource(option.labelRes)
                         OutlinedCard(
                             onClick = { onIconChange(option.id) },
+                            modifier = Modifier.mataClickablePointer(),
                             border = if (state.iconName == option.id) {
                                 BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                             } else {
@@ -1112,6 +1128,7 @@ private fun ColorOption(
 ) {
     OutlinedCard(
         onClick = onClick,
+        modifier = Modifier.mataClickablePointer(),
         border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else color),
     ) {
         Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
@@ -1144,6 +1161,7 @@ private fun EndHourSelector(value: Int, onSelect: (Int) -> Unit) {
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
+                .mataClickablePointer()
                 .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(

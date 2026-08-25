@@ -25,7 +25,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -73,6 +75,8 @@ import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.BillingOperation
@@ -186,11 +190,13 @@ fun SettingsScreen(
                 else -> {
                     val settingsEnabled = state.savingSetting == null &&
                         !state.backupOperation.blocksDataChanges
+                    val scrollState = rememberScrollState()
                     Column(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .verticalScroll(rememberScrollState()),
+                            .mataPageKeyScroll(scrollState)
+                            .verticalScroll(scrollState),
                     ) {
                         SettingsSectionHeader(R.string.settings_section_general)
                         SettingsValueRow(
@@ -607,7 +613,9 @@ private fun SettingsValueRow(
                 Icon(Icons.Outlined.ChevronRight, contentDescription = null)
             }
         },
-        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+        modifier = Modifier
+            .mataClickablePointer(enabled)
+            .clickable(enabled = enabled, onClick = onClick),
     )
 }
 
@@ -779,12 +787,14 @@ private fun ShowCompletedRow(
                 Switch(checked = checked, onCheckedChange = null)
             }
         },
-        modifier = Modifier.toggleable(
-            value = checked,
-            enabled = enabled,
-            role = Role.Switch,
-            onValueChange = onCheckedChange,
-        ),
+        modifier = Modifier
+            .mataClickablePointer(enabled)
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
     )
 }
 
@@ -798,13 +808,21 @@ private fun <T> SelectionBottomSheet(
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 520.dp)
+                .selectableGroup()
+                .mataPageKeyScroll(listState),
+            state = listState,
+        ) {
             items(options) { option ->
                 val isSelected = option == selected
                 ListItem(
@@ -812,11 +830,13 @@ private fun <T> SelectionBottomSheet(
                     trailingContent = {
                         if (isSelected) Icon(Icons.Outlined.Check, contentDescription = null)
                     },
-                    modifier = Modifier.selectable(
-                        selected = isSelected,
-                        role = Role.RadioButton,
-                        onClick = { onSelect(option) },
-                    ),
+                    modifier = Modifier
+                        .mataClickablePointer()
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.RadioButton,
+                            onClick = { onSelect(option) },
+                        ),
                 )
                 HorizontalDivider()
             }

@@ -17,11 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
 
 enum class MataDestination(@StringRes val labelRes: Int) {
     TODOS(R.string.nav_todo_list),
@@ -46,20 +50,24 @@ fun MataNavigationDrawerContent(
     selected: MataDestination,
     onSelect: (MataDestination) -> Unit,
 ) {
-    Text(
-        text = stringResource(R.string.app_name),
-        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
-    )
-    HorizontalDivider()
-    MataDestination.entries.forEach { destination ->
-        NavigationDrawerItem(
-            label = { Text(stringResource(destination.labelRes)) },
-            selected = destination == selected,
-            onClick = { onSelect(destination) },
-            icon = { Icon(destination.icon, contentDescription = null) },
-            modifier = Modifier.padding(horizontal = 12.dp),
+    Column(Modifier.fillMaxWidth().focusGroup()) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
         )
+        HorizontalDivider()
+        MataDestination.entries.forEach { destination ->
+            NavigationDrawerItem(
+                label = { Text(stringResource(destination.labelRes)) },
+                selected = destination == selected,
+                onClick = { onSelect(destination) },
+                icon = { Icon(destination.icon, contentDescription = null) },
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .mataClickablePointer(),
+            )
+        }
     }
 }
 
@@ -70,7 +78,7 @@ fun MataNavigationRail(
     modifier: Modifier = Modifier,
 ) {
     NavigationRail(
-        modifier = modifier,
+        modifier = modifier.focusGroup(),
     ) {
         Spacer(Modifier.height(12.dp))
         MataDestination.entries.forEach { destination ->
@@ -80,6 +88,7 @@ fun MataNavigationRail(
                 icon = { Icon(destination.icon, contentDescription = null) },
                 label = { Text(stringResource(destination.labelRes)) },
                 alwaysShowLabel = true,
+                modifier = Modifier.mataClickablePointer(),
             )
         }
     }

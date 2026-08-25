@@ -93,6 +93,8 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
@@ -478,7 +480,7 @@ private fun ArchiveTodoList(
                 ArchiveEmptyArea(query, onClearSearch, modifier)
             } else {
                 LazyColumn(
-                    modifier = modifier,
+                    modifier = modifier.mataPageKeyScroll(listState),
                     state = listState,
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
@@ -582,6 +584,7 @@ private fun ArchivedTodoRow(
                 contentDescription = semantics
                 this.selected = selected
             }
+            .mataClickablePointer(enabled = !busy)
             .clickable(enabled = !busy, onClick = onClick),
     )
 }
@@ -707,7 +710,7 @@ private fun ArchiveDetailContent(
 ) {
     val archivedItem = item ?: return
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.mataPageKeyScroll(listState),
         state = listState,
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
@@ -853,7 +856,7 @@ private fun ArchiveHistoryRow(item: ArchivedHistoryItem, onClick: () -> Unit) {
                 },
                 leadingContent = { ExecutionStateIcon(entry.state) },
                 trailingContent = { SnapshotCategoryIcon(entry.snapshot) },
-                modifier = Modifier.clickable(onClick = onClick),
+                modifier = Modifier.mataClickablePointer().clickable(onClick = onClick),
             )
         }
         is ArchivedHistoryItem.Period -> {
@@ -876,7 +879,7 @@ private fun ArchiveHistoryRow(item: ArchivedHistoryItem, onClick: () -> Unit) {
                 },
                 leadingContent = { Icon(Icons.Outlined.History, null) },
                 trailingContent = { SnapshotCategoryIcon(entry.snapshot) },
-                modifier = Modifier.clickable(onClick = onClick),
+                modifier = Modifier.mataClickablePointer().clickable(onClick = onClick),
             )
         }
     }

@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -70,6 +75,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
@@ -488,6 +495,7 @@ private fun DateField(
                 .semantics {
                     contentDescription = fieldContentDescription
                 }
+                .mataClickablePointer()
                 .clickable(role = Role.Button, onClick = onClick),
         )
     }
@@ -506,7 +514,9 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
             readOnly = true,
             label = { Text(stringResource(R.string.label_category)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .mataClickablePointer()
                 .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -547,6 +557,7 @@ private fun RecurrenceSelector(value: RecurrenceType, onClick: () -> Unit) {
                 .semantics {
                     contentDescription = fieldContentDescription
                 }
+                .mataClickablePointer()
                 .clickable(role = Role.Button, onClick = onClick),
         )
     }
@@ -559,21 +570,30 @@ private fun RecurrenceBottomSheet(
     onSelect: (RecurrenceType) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Text(
             stringResource(R.string.todo_editor_recurrence_sheet_title),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
-        RecurrenceType.entries.forEach { type ->
-            ListItem(
-                headlineContent = { Text(recurrenceLabel(type)) },
-                trailingContent = {
-                    if (type == selected) Text(stringResource(R.string.label_completed))
-                },
-                modifier = Modifier.clickable { onSelect(type) },
-            )
-            HorizontalDivider()
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 520.dp)
+                .mataPageKeyScroll(listState),
+            state = listState,
+        ) {
+            items(RecurrenceType.entries) { type ->
+                ListItem(
+                    headlineContent = { Text(recurrenceLabel(type)) },
+                    trailingContent = {
+                        if (type == selected) Text(stringResource(R.string.label_completed))
+                    },
+                    modifier = Modifier.mataClickablePointer().clickable { onSelect(type) },
+                )
+                HorizontalDivider()
+            }
         }
     }
 }
@@ -584,12 +604,16 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
     when (state.recurrenceType) {
         RecurrenceType.SELECTED_WEEKDAYS -> {
             Text(stringResource(R.string.todo_editor_selected_weekdays_label))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                modifier = Modifier.focusGroup(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 DayOfWeek.entries.forEach { day ->
                     FilterChip(
                         selected = day in state.selectedWeekdays,
                         onClick = { viewModel.toggleWeekday(day) },
                         label = { Text(weekdayLabel(day)) },
+                        modifier = Modifier.mataClickablePointer(),
                     )
                 }
             }
@@ -616,7 +640,10 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(top = 8.dp),
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    modifier = Modifier.focusGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     DayOfWeek.entries.forEach { dayOfWeek ->
                         FilterChip(
                             selected = state.monthlyNthWeekdays.any {
@@ -626,6 +653,7 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
                                 viewModel.toggleMonthlyNthWeekday(ordinal, dayOfWeek)
                             },
                             label = { Text(weekdayLabel(dayOfWeek)) },
+                            modifier = Modifier.mataClickablePointer(),
                         )
                     }
                 }
@@ -683,7 +711,9 @@ private fun NumberSelector(
             readOnly = true,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .mataClickablePointer()
                 .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
