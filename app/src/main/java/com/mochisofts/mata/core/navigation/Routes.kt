@@ -11,6 +11,9 @@ data class TodoListRoute(
 )
 
 @Serializable
+data object CategoryTodoListRoute
+
+@Serializable
 data class TodoEditorRoute(val todoId: String? = null)
 
 @Serializable

@@ -82,14 +82,17 @@ class MataAdaptiveNavigationTest {
     }
 
     @Test
-    fun singleListDestinationNeverUsesTwoPane() {
-        val result = mataAdaptiveLayoutInfoFor(
-            widthDp = 1600f,
-            heightDp = 900f,
-            destination = MataDestination.TODOS,
-        )
+    fun todoListDestinationsNeverUseTwoPane() {
+        listOf(MataDestination.TODOS, MataDestination.CATEGORY_TODOS).forEach { destination ->
+            val result = mataAdaptiveLayoutInfoFor(
+                widthDp = 1600f,
+                heightDp = 900f,
+                destination = destination,
+            )
 
-        assertEquals(false, result.useTwoPane)
+            assertEquals(false, result.useTwoPane)
+            assertEquals(744f, result.availableContentWidthDp)
+        }
     }
 
     @Test

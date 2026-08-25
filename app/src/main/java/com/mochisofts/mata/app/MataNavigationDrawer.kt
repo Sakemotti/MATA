@@ -1,6 +1,7 @@
 package com.mochisofts.mata.app
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -29,6 +30,7 @@ import com.mochisofts.mata.core.designsystem.mataClickablePointer
 
 enum class MataDestination(@StringRes val labelRes: Int) {
     TODOS(R.string.nav_todo_list),
+    CATEGORY_TODOS(R.string.nav_category_todo_list),
     CALENDAR(R.string.nav_calendar_history),
     CATEGORIES(R.string.nav_category_management),
     ARCHIVE(R.string.nav_archived_todos),
@@ -97,6 +99,7 @@ fun MataNavigationRail(
 private val MataDestination.icon
     get() = when (this) {
         MataDestination.TODOS -> Icons.Outlined.Checklist
+        MataDestination.CATEGORY_TODOS -> Icons.AutoMirrored.Outlined.ViewList
         MataDestination.CALENDAR -> Icons.Outlined.CalendarMonth
         MataDestination.CATEGORIES -> Icons.Outlined.Category
         MataDestination.ARCHIVE -> Icons.Outlined.Archive

@@ -54,6 +54,7 @@ import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.designsystem.mataUsesDarkTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
+import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
 import com.mochisofts.mata.core.navigation.CalendarHistoryRoute
 import com.mochisofts.mata.core.navigation.ArchivedTodoDetailRoute
 import com.mochisofts.mata.core.navigation.ArchivedTodoListRoute
@@ -63,6 +64,7 @@ import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
 import com.mochisofts.mata.ui.category.CategoryListScreen
+import com.mochisofts.mata.ui.categorytodolist.CategoryTodoListScreen
 import com.mochisofts.mata.ui.calendar.CalendarHistoryScreen
 import com.mochisofts.mata.ui.archive.ARCHIVE_RESULT_KEY
 import com.mochisofts.mata.ui.archive.ArchiveDetailScreen
@@ -249,6 +251,9 @@ private fun MataApp(
     val navigateToDestination: (MataDestination) -> Unit = { destination ->
         when (destination) {
             MataDestination.TODOS -> navController.navigate(TodoListRoute()) { launchSingleTop = true }
+            MataDestination.CATEGORY_TODOS -> {
+                navController.navigate(CategoryTodoListRoute) { launchSingleTop = true }
+            }
             MataDestination.CALENDAR -> navController.navigate(CalendarHistoryRoute) { launchSingleTop = true }
             MataDestination.CATEGORIES -> navController.navigate(CategoryListRoute) { launchSingleTop = true }
             MataDestination.ARCHIVE -> navController.navigate(ArchivedTodoListRoute) { launchSingleTop = true }
@@ -276,6 +281,13 @@ private fun MataApp(
                 onDestination = navigateToDestination,
                 contentReadinessEnabled = externalNavigation == null,
                 onContentReady = onContentReady,
+            )
+        }
+        composable<CategoryTodoListRoute> {
+            CategoryTodoListScreen(
+                onAddTodo = { navController.navigate(TodoEditorRoute()) },
+                onEditTodo = { navController.navigate(TodoEditorRoute(it)) },
+                onDestination = navigateToDestination,
             )
         }
         composable<TodoEditorRoute> {
