@@ -50,14 +50,20 @@ jobs:
             tasks: testDebugUnitTest lintDebug assembleDebug
             admob_app_id: ""
             admob_banner_id: ""
+            privacy_policy_url: ""
+            terms_url: ""
           - name: Release verification
             tasks: :app:lintRelease :app:assembleRelease :app:verifyReleaseManifestSecurity
             admob_app_id: ca-app-pub-0000000000000001~0000000001
             admob_banner_id: ca-app-pub-0000000000000001/0000000001
+            privacy_policy_url: https://mochisofts.com/mata/privacy
+            terms_url: https://mochisofts.com/mata/terms
           - name: Performance APK verification
             tasks: :app:assembleBenchmark :benchmark:assembleBenchmarkRelease
             admob_app_id: ""
             admob_banner_id: ""
+            privacy_policy_url: ""
+            terms_url: ""
 
     steps:
       - name: Checkout
@@ -79,6 +85,8 @@ jobs:
         env:
           ORG_GRADLE_PROJECT_MATA_ADMOB_APP_ID: ${{ matrix.admob_app_id }}
           ORG_GRADLE_PROJECT_MATA_ADMOB_BANNER_AD_UNIT_ID: ${{ matrix.admob_banner_id }}
+          ORG_GRADLE_PROJECT_MATA_PRIVACY_POLICY_URL: ${{ matrix.privacy_policy_url }}
+          ORG_GRADLE_PROJECT_MATA_TERMS_URL: ${{ matrix.terms_url }}
         run: ./gradlew ${{ matrix.tasks }} --no-daemon --stacktrace
 
   verify:
