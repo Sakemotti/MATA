@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.Library
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -152,7 +154,10 @@ fun OpenSourceLicensesScreen(onBack: () -> Unit) {
                             ),
                         )
                     } else {
-                        LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
+                        ) {
                             items(filteredLibraries, key = Library::uniqueId) { library ->
                                 LicenseLibraryRow(
                                     library = library,
@@ -188,19 +193,27 @@ private fun LicenseLibraryRow(library: Library, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(library.name) },
         supportingContent = { Text(supportingText) },
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .mataClickablePointer()
+            .clickable(onClick = onClick),
     )
 }
 
 @Composable
 private fun LicenseDetailDialog(library: Library, onDismiss: () -> Unit) {
+    val scrollState = rememberScrollState()
     val body = licenseBodyOrNull(library.licenses.map { it.licenseContent })
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.licenses_detail_title, library.name)) },
         text = {
             Box(
-                Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()),
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp)
+                    .mataPageKeyScroll(scrollState)
+                    .verticalScroll(scrollState),
             ) {
                 Text(
                     text = body ?: stringResource(R.string.licenses_body_load_error),

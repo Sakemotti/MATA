@@ -3,6 +3,7 @@ package com.mochisofts.mata.ui.calendar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -93,6 +94,8 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
 import com.mochisofts.mata.domain.model.HistoryEntry
@@ -371,7 +374,7 @@ private fun MonthControls(
     onSelectMonth: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 8.dp),
+        Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 8.dp).focusGroup(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -422,6 +425,7 @@ private fun MonthGrid(
     Column(
         Modifier
             .fillMaxWidth()
+            .focusGroup()
             .pointerInput(state.displayedMonth) {
                 detectHorizontalDragGestures(
                     onDragStart = { dragAmount = 0f },
@@ -498,6 +502,7 @@ private fun CalendarDayCell(
                 contentDescription = semanticsLabel
                 if (!enabled) disabled()
             }
+            .mataClickablePointer(enabled)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -549,7 +554,7 @@ private fun DayHistoryArea(
         else -> {
             val day = requireNotNull(state.day)
             LazyColumn(
-                modifier = modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth().mataPageKeyScroll(listState),
                 state = listState,
             ) {
                 item {
@@ -686,7 +691,7 @@ private fun HistoryEntryRow(
             }
         },
         trailingContent = { CategorySnapshotIcon(entry.snapshot) },
-        modifier = Modifier.clickable { onClick(entry) },
+        modifier = Modifier.mataClickablePointer().clickable { onClick(entry) },
     )
 }
 
@@ -729,7 +734,7 @@ private fun PeriodResultRow(entry: PeriodHistoryEntry, onClick: (PeriodHistoryEn
             )
         },
         trailingContent = { CategorySnapshotIcon(entry.snapshot) },
-        modifier = Modifier.clickable { onClick(entry) },
+        modifier = Modifier.mataClickablePointer().clickable { onClick(entry) },
     )
 }
 
@@ -779,6 +784,7 @@ private fun HistoryStateIcon(state: HistoryDayState, modifier: Modifier = Modifi
 
 @Composable
 private fun HistoryDetailDialog(item: HistoryDialogItem, onDismiss: () -> Unit) {
+    val scrollState = rememberScrollState()
     val snapshot = when (item) {
         is HistoryDialogItem.Execution -> item.value.snapshot
         is HistoryDialogItem.Period -> item.value.snapshot
@@ -788,7 +794,10 @@ private fun HistoryDetailDialog(item: HistoryDialogItem, onDismiss: () -> Unit) 
         title = { Text(snapshot.title) },
         text = {
             Column(
-                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                Modifier
+                    .fillMaxWidth()
+                    .mataPageKeyScroll(scrollState)
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (snapshot.description.isNotBlank()) Text(snapshot.description)

@@ -30,7 +30,8 @@
             android:name=".app.MainActivity"
             android:exported="true"
             android:launchMode="standard"
-            android:theme="@style/Theme.MATA.Starting">
+            android:theme="@style/Theme.MATA.Starting"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

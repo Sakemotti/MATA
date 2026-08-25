@@ -1,6 +1,7 @@
 package com.mochisofts.mata.ui.todoeditor
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.domain.model.MAX_NOTIFICATIONS_PER_TODO
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
@@ -116,14 +118,16 @@ fun NotificationEditorSection(
                         )
                     }
                 },
-                modifier = Modifier.clickable {
-                    draft = NotificationDraft(
-                        id = notification.id,
-                        relation = notification.relation,
-                        amountInput = notification.amount.toString(),
-                        unit = notification.unit,
-                    )
-                },
+                modifier = Modifier
+                    .mataClickablePointer()
+                    .clickable {
+                        draft = NotificationDraft(
+                            id = notification.id,
+                            relation = notification.relation,
+                            amountInput = notification.amount.toString(),
+                            unit = notification.unit,
+                        )
+                    },
             )
         }
     }
@@ -185,13 +189,19 @@ fun NotificationEditorSection(
                     ),
                     style = MaterialTheme.typography.titleLarge,
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    modifier = Modifier.focusGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     NotificationRelation.entries.forEach { relation ->
                         FilterChip(
                             selected = currentDraft.relation == relation,
                             onClick = { draft = currentDraft.copy(relation = relation) },
                             enabled = relation != NotificationRelation.AFTER || state.dueMinutes != null,
                             label = { Text(relationName(relation)) },
+                            modifier = Modifier.mataClickablePointer(
+                                relation != NotificationRelation.AFTER || state.dueMinutes != null,
+                            ),
                         )
                     }
                 }
@@ -209,12 +219,16 @@ fun NotificationEditorSection(
                         singleLine = true,
                         isError = NotificationValidationError.INVALID_AMOUNT in errors,
                     )
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(
+                        modifier = Modifier.focusGroup(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         NotificationUnit.entries.forEach { unit ->
                             FilterChip(
                                 selected = currentDraft.unit == unit,
                                 onClick = { draft = currentDraft.copy(unit = unit) },
                                 label = { Text(unitName(unit)) },
+                                modifier = Modifier.mataClickablePointer(),
                             )
                         }
                     }

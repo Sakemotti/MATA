@@ -2,6 +2,7 @@ package com.mochisofts.mata.ui.todolist
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -80,6 +82,8 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
+import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
@@ -486,7 +490,11 @@ private fun DateMode(
             ),
         )
     } else {
-        LazyColumn(Modifier.fillMaxSize()) {
+        val listState = rememberLazyListState()
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
+            state = listState,
+        ) {
             items(state.occurrences, key = { "${it.todo.id}:${it.logicalDate}" }) { occurrence ->
                 TodoOccurrenceRow(
                     occurrence = occurrence,
@@ -520,6 +528,7 @@ private fun CategoryMode(
             .fillMaxWidth()
             .height(56.dp)
             .horizontalScroll(rememberScrollState())
+            .focusGroup()
             .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -527,19 +536,25 @@ private fun CategoryMode(
             selected = state.selectedCategoryId == null,
             onClick = { onSelectCategory(null) },
             label = { Text(stringResource(R.string.label_uncategorized)) },
+            modifier = Modifier.mataClickablePointer(),
         )
         state.categories.forEach { category ->
             FilterChip(
                 selected = state.selectedCategoryId == category.id,
                 onClick = { onSelectCategory(category.id) },
                 label = { Text(category.name) },
+                modifier = Modifier.mataClickablePointer(),
             )
         }
     }
     if (state.categoryItems.isEmpty()) {
         EmptyTodos(stringResource(R.string.empty_category_todos))
     } else {
-        LazyColumn(Modifier.fillMaxSize()) {
+        val listState = rememberLazyListState()
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
+            state = listState,
+        ) {
             items(state.categoryItems, key = { it.todo.id }) { item ->
                 val occurrence = item.occurrence
                 ListItem(
@@ -567,7 +582,9 @@ private fun CategoryMode(
                             onDelete = { onDelete(item.todo) },
                         )
                     },
-                    modifier = Modifier.clickable { onEdit(item.todo.id) },
+                    modifier = Modifier
+                        .mataClickablePointer()
+                        .clickable { onEdit(item.todo.id) },
                 )
                 HorizontalDivider()
             }
@@ -653,7 +670,9 @@ private fun TodoOccurrenceRow(
         } else {
             null
         },
-        modifier = Modifier.clickable { onOpen(occurrence) },
+        modifier = Modifier
+            .mataClickablePointer()
+            .clickable { onOpen(occurrence) },
     )
 }
 
