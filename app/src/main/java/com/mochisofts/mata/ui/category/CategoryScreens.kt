@@ -32,7 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
@@ -56,7 +56,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -100,10 +99,12 @@ import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
-import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.domain.model.Category
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -255,7 +256,7 @@ fun CategoryListScreen(
                     onSave = viewModel::saveEditor,
                     onDelete = viewModel::deleteEditor,
                 )
-                SnackbarHost(
+                MataSnackbarHost(
                     hostState = snackbarHostState,
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
@@ -310,7 +311,7 @@ fun CategoryListScreen(
                     )
                 }
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
             if (layoutInfo.useTwoPane) {
                 CategoryTwoPaneContent(
@@ -558,7 +559,7 @@ private fun CategoryListContent(
     ) {
         item(key = "uncategorized") {
             ListItem(
-                leadingContent = { Icon(Icons.Outlined.Category, contentDescription = null) },
+                leadingContent = { Icon(Icons.Outlined.Block, contentDescription = null) },
                 headlineContent = { Text(stringResource(R.string.label_uncategorized)) },
                 supportingContent = {
                     Column {
@@ -628,6 +629,7 @@ private fun CategoryListRow(
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
+    val categoryColor = mataCategoryColor(category.colorIndex)
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 6.dp else 0.dp,
         animationSpec = tween(durationMillis = 150),
@@ -678,13 +680,13 @@ private fun CategoryListRow(
                     Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(CategoryLightColors[category.colorIndex].copy(alpha = 0.14f)),
+                        .background(categoryColor.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         categoryIcon(category.iconName),
                         contentDescription = iconLabel,
-                        tint = CategoryLightColors[category.colorIndex],
+                        tint = categoryColor,
                     )
                 }
             },
@@ -738,6 +740,7 @@ fun CategoryEditorScreen(
     viewModel: CategoryEditorViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val categoryColors = MaterialTheme.mataColors.categoryColors
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -822,15 +825,16 @@ fun CategoryEditorScreen(
                 )
                 Text(stringResource(R.string.category_color_label), style = MaterialTheme.typography.titleMedium)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CategoryLightColors.chunked(4).forEach { rowColors ->
+                    categoryColors.chunked(4).forEach { rowColors ->
                         Row(
                             Modifier.fillMaxWidth().focusGroup(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             rowColors.forEach { color ->
-                                val index = CategoryLightColors.indexOf(color)
+                                val index = categoryColors.indexOf(color)
                                 ColorOption(
                                     color = color,
+                                    contentColor = MaterialTheme.mataColors.onCategoryColors[index],
                                     label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { viewModel.setColor(index) },
@@ -848,7 +852,9 @@ fun CategoryEditorScreen(
                         val label = stringResource(option.labelRes)
                         OutlinedCard(
                             onClick = { viewModel.setIcon(option.id) },
-                            modifier = Modifier.mataClickablePointer(),
+                            modifier = Modifier
+                                .mataClickablePointer()
+                                .semantics { selected = state.iconName == option.id },
                             border = if (state.iconName == option.id) {
                                 BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                             } else {
@@ -859,7 +865,7 @@ fun CategoryEditorScreen(
                                 Modifier.padding(12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Icon(option.imageVector, contentDescription = label)
+                                Icon(option.imageVector, contentDescription = null)
                                 Text(label, style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -935,6 +941,7 @@ private fun CategoryEditorScaffold(
     showTopBar: Boolean = true,
 ) {
     var showDeleteDialog by remember(state.categoryId) { mutableStateOf(false) }
+    val categoryColors = MaterialTheme.mataColors.categoryColors
 
     Scaffold(
         topBar = {
@@ -1011,15 +1018,16 @@ private fun CategoryEditorScaffold(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CategoryLightColors.chunked(4).forEach { rowColors ->
+                    categoryColors.chunked(4).forEach { rowColors ->
                         Row(
                             Modifier.fillMaxWidth().focusGroup(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             rowColors.forEach { color ->
-                                val index = CategoryLightColors.indexOf(color)
+                                val index = categoryColors.indexOf(color)
                                 ColorOption(
                                     color = color,
+                                    contentColor = MaterialTheme.mataColors.onCategoryColors[index],
                                     label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { onColorChange(index) },
@@ -1040,7 +1048,9 @@ private fun CategoryEditorScaffold(
                         val label = stringResource(option.labelRes)
                         OutlinedCard(
                             onClick = { onIconChange(option.id) },
-                            modifier = Modifier.mataClickablePointer(),
+                            modifier = Modifier
+                                .mataClickablePointer()
+                                .semantics { selected = state.iconName == option.id },
                             border = if (state.iconName == option.id) {
                                 BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                             } else {
@@ -1051,7 +1061,7 @@ private fun CategoryEditorScaffold(
                                 Modifier.padding(12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Icon(option.imageVector, contentDescription = label)
+                                Icon(option.imageVector, contentDescription = null)
                                 Text(label, style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -1100,13 +1110,14 @@ private fun CategoryEditorScaffold(
 
 @Composable
 private fun CategoryPreview(state: CategoryEditorUiState) {
+    val categoryColor = mataCategoryColor(state.colorIndex)
     Card(Modifier.fillMaxWidth()) {
         ListItem(
             leadingContent = {
                 Icon(
                     categoryIcon(state.iconName),
                     contentDescription = null,
-                    tint = CategoryLightColors[state.colorIndex],
+                    tint = categoryColor,
                 )
             },
             headlineContent = {
@@ -1122,13 +1133,19 @@ private fun CategoryPreview(state: CategoryEditorUiState) {
 @Composable
 private fun ColorOption(
     color: Color,
+    contentColor: Color,
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
     OutlinedCard(
         onClick = onClick,
-        modifier = Modifier.mataClickablePointer(),
+        modifier = Modifier
+            .mataClickablePointer()
+            .semantics {
+                contentDescription = label
+                this.selected = selected
+            },
         border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else color),
     ) {
         Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
@@ -1139,8 +1156,8 @@ private fun ColorOption(
                 if (selected) {
                     Icon(
                         Icons.Outlined.Check,
-                        contentDescription = stringResource(R.string.content_description_selected_option, label),
-                        tint = Color.White,
+                        contentDescription = null,
+                        tint = contentColor,
                     )
                 }
             }

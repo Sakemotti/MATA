@@ -1,8 +1,10 @@
 package com.mochisofts.mata.app
 
 import android.content.Intent
+import android.graphics.Color as AndroidColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -26,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -48,6 +51,7 @@ import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.mataUsesDarkTheme
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
 import com.mochisofts.mata.core.navigation.CalendarHistoryRoute
@@ -88,6 +92,18 @@ class MainActivity : ComponentActivity() {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             val startupState by viewModel.startupState.collectAsStateWithLifecycle()
             val foldingFeatures by rememberFoldingFeatures(this)
+            val darkTheme = mataUsesDarkTheme(theme)
+            SideEffect {
+                val systemBarStyle = if (darkTheme) {
+                    SystemBarStyle.dark(AndroidColor.TRANSPARENT)
+                } else {
+                    SystemBarStyle.light(AndroidColor.TRANSPARENT, AndroidColor.TRANSPARENT)
+                }
+                enableEdgeToEdge(
+                    statusBarStyle = systemBarStyle,
+                    navigationBarStyle = systemBarStyle,
+                )
+            }
             CompositionLocalProvider(LocalMataFoldingFeatures provides foldingFeatures) {
                 MataTheme(appTheme = theme) {
                     when (startupState) {

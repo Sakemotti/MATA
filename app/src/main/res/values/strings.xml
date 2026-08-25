@@ -410,7 +410,6 @@
     <string name="category_end_hour_label">一日の終了時刻</string>
     <string name="category_day_boundary_midnight">カレンダー日と同じ0:00から23:59までを1日として扱います</string>
     <string name="category_day_boundary_format">%1$d:00の場合、翌日の%2$d:59までを前日分として扱います</string>
-    <string name="content_description_selected_option">%1$s、選択中</string>
     <string name="dialog_discard_changes_title">変更を破棄しますか？</string>
     <string name="dialog_discard_changes_message">入力した内容は保存されません。</string>
     <string name="dialog_delete_category_title">カテゴリを削除しますか？</string>
