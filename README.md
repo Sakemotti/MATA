@@ -57,7 +57,7 @@ macOS / Linux:
 - `feature/<topic>`: 機能開発と仕様策定
 - 変更は可能な限りPull Requestを通して `main` へ統合する
 
-GitHub Actionsは `main` と `feature/**` へのpush、`main` 向けPull Request、手動実行で次を並列に検証します。
+GitHub Actionsは `main` へのpush、`main` 向けPull Request、手動実行で次を並列に検証します。Pull Request作成前のfeatureブランチへのpushでは自動実行しません。
 
 - 単体テスト
 - Debug / Release Android Lint
@@ -65,7 +65,7 @@ GitHub Actionsは `main` と `feature/**` へのpush、`main` 向けPull Request
 - Benchmark APKビルド
 - 署名ファイル、秘密鍵、アクセストークンの混入検査
 
-Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じfeatureブランチでpushとPull RequestのCIが重なった場合は古い実行を自動キャンセルし、二重のフル実行を防ぎます。
+Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
 
 ## 依存関係の更新
 
