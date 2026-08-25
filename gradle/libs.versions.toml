@@ -31,6 +31,7 @@ profileinstaller = "1.4.1"
 uiautomator = "2.4.0"
 testRunner = "1.7.0"
 aboutLibraries = "15.1.1"
+windowManager = "1.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -77,6 +78,7 @@ kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
+androidx-window = { group = "androidx.window", name = "window", version.ref = "windowManager" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

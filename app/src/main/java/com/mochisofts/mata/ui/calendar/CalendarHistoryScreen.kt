@@ -87,6 +87,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
+import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
@@ -224,8 +225,7 @@ fun CalendarHistoryScreen(
         ) { padding ->
             CalendarHistoryBody(
                 state = state,
-                useTwoPane = layoutInfo.useTwoPane,
-                outerMargin = layoutInfo.outerMarginDp.dp,
+                layoutInfo = layoutInfo,
                 historyListState = historyListState,
                 onPreviousMonth = viewModel::showPreviousMonth,
                 onNextMonth = viewModel::showNextMonth,
@@ -256,8 +256,7 @@ fun CalendarHistoryScreen(
 @Composable
 private fun CalendarHistoryBody(
     state: CalendarHistoryUiState,
-    useTwoPane: Boolean,
-    outerMargin: androidx.compose.ui.unit.Dp,
+    layoutInfo: MataAdaptiveLayoutInfo,
     historyListState: LazyListState,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
@@ -269,12 +268,17 @@ private fun CalendarHistoryBody(
     onUndoCompletion: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (useTwoPane) {
+    if (layoutInfo.useTwoPane) {
         BoxWithConstraints(
-            modifier = modifier.padding(horizontal = outerMargin),
+            modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
         ) {
-            val paneSpacing = 24.dp
-            val paneWidths = calendarPaneWidths(maxWidth.value)
+            val paneSpacing = (layoutInfo.twoPaneHinge?.gapDp ?: 24f).dp
+            val paneWidths = layoutInfo.twoPaneHinge?.let { hinge ->
+                CalendarPaneWidths(
+                    leftDp = hinge.startPaneWidthDp,
+                    rightDp = hinge.endPaneWidthDp,
+                )
+            } ?: calendarPaneWidths(maxWidth.value)
             Row(
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(paneSpacing),
@@ -301,7 +305,7 @@ private fun CalendarHistoryBody(
         }
     } else {
         Column(
-            modifier = modifier.padding(horizontal = outerMargin),
+            modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
         ) {
             CalendarMonthPane(
                 state = state,

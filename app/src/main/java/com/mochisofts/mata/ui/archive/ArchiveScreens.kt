@@ -331,10 +331,16 @@ private fun ArchiveTwoPaneContent(
     onHistoryClick: (ArchivedHistoryItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val widths = archivePaneWidths(layoutInfo.availableContentWidthDp)
+    val widths = layoutInfo.twoPaneHinge?.let { hinge ->
+        ArchivePaneWidths(
+            listWidthDp = hinge.startPaneWidthDp,
+            detailWidthDp = hinge.endPaneWidthDp,
+        )
+    } ?: archivePaneWidths(layoutInfo.availableContentWidthDp)
+    val paneSpacing = (layoutInfo.twoPaneHinge?.gapDp ?: 24f).dp
     Row(
         modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(paneSpacing),
     ) {
         ArchiveTodoList(
             items = todos,
