@@ -1,8 +1,13 @@
 package com.mochisofts.mata.app
 
 import android.content.Context
-import android.util.Log
 import com.mochisofts.mata.BuildConfig
+import com.mochisofts.mata.core.common.FailureCategory
+import com.mochisofts.mata.core.observability.DiagnosticEvent
+import com.mochisofts.mata.core.observability.DiagnosticEventCode
+import com.mochisofts.mata.core.observability.DiagnosticLevel
+import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.core.observability.DiagnosticResult
 import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.data.local.MataDatabase
 import dagger.Binds
@@ -47,32 +52,60 @@ internal interface StartupDiagnostics {
 }
 
 @Singleton
-internal class AndroidStartupDiagnostics @Inject constructor() : StartupDiagnostics {
-    override fun started() {
-        Log.i(TAG, "$EVENT_REQUIRED_START result=start")
-    }
+internal class AndroidStartupDiagnostics @Inject constructor(
+    private val logger: DiagnosticLogger,
+) : StartupDiagnostics {
+    private var operationId: String? = null
 
-    override fun succeeded(durationMillis: Long, appVersionChanged: Boolean) {
-        Log.i(
-            TAG,
-            "$EVENT_REQUIRED_FINISH result=success duration_ms=$durationMillis " +
-                "app_version_changed=$appVersionChanged",
+    override fun started() {
+        val currentOperationId = logger.newOperationId()
+        operationId = currentOperationId
+        logger.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.STARTUP_REQUIRED_START,
+                level = DiagnosticLevel.INFO,
+                operationId = currentOperationId,
+            ),
         )
     }
 
+    override fun succeeded(durationMillis: Long, appVersionChanged: Boolean) {
+        logger.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.STARTUP_REQUIRED_FINISH,
+                level = DiagnosticLevel.INFO,
+                result = DiagnosticResult.SUCCESS,
+                count = if (appVersionChanged) 1 else 0,
+                durationMillis = durationMillis,
+                operationId = operationId,
+            ),
+        )
+        operationId = null
+    }
+
     override fun failed(durationMillis: Long) {
-        Log.e(TAG, "$EVENT_REQUIRED_FINISH result=failure duration_ms=$durationMillis")
+        logger.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.STARTUP_REQUIRED_FINISH,
+                level = DiagnosticLevel.ERROR,
+                result = DiagnosticResult.FAILURE,
+                failureCategory = FailureCategory.UNEXPECTED,
+                durationMillis = durationMillis,
+                operationId = operationId,
+            ),
+        )
+        operationId = null
     }
 
     override fun retryRequested() {
-        Log.i(TAG, "$EVENT_REQUIRED_RETRY result=retry")
-    }
-
-    private companion object {
-        const val TAG = "MATA/Startup"
-        const val EVENT_REQUIRED_START = "STARTUP_REQUIRED_START"
-        const val EVENT_REQUIRED_FINISH = "STARTUP_REQUIRED_FINISH"
-        const val EVENT_REQUIRED_RETRY = "STARTUP_REQUIRED_RETRY"
+        logger.record(
+            DiagnosticEvent(
+                code = DiagnosticEventCode.STARTUP_REQUIRED_RETRY,
+                level = DiagnosticLevel.WARN,
+                result = DiagnosticResult.RETRY,
+                failureCategory = FailureCategory.TEMPORARY_LOCAL,
+            ),
+        )
     }
 }
 

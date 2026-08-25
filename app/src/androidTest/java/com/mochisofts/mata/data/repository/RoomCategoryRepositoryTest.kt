@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.widget.WidgetUpdater
@@ -40,7 +41,7 @@ class RoomCategoryRepositoryTest {
                 ZoneId.of("Asia/Tokyo"),
             ),
             notificationScheduler = CategoryTestNotificationScheduler(),
-            widgetUpdater = WidgetUpdater(context),
+            widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
         )
         listOf("a", "b", "c").forEachIndexed { index, id ->
             database.categoryDao().upsert(category(id, index))
