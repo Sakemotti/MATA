@@ -55,6 +55,7 @@ import com.mochisofts.mata.core.navigation.CalendarHistoryRoute
 import com.mochisofts.mata.core.navigation.ArchivedTodoDetailRoute
 import com.mochisofts.mata.core.navigation.ArchivedTodoListRoute
 import com.mochisofts.mata.core.navigation.PlaceholderRoute
+import com.mochisofts.mata.core.navigation.OpenSourceLicensesRoute
 import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
@@ -65,6 +66,7 @@ import com.mochisofts.mata.ui.archive.ARCHIVE_RESULT_KEY
 import com.mochisofts.mata.ui.archive.ArchiveDetailScreen
 import com.mochisofts.mata.ui.archive.ArchiveListScreen
 import com.mochisofts.mata.ui.settings.SettingsScreen
+import com.mochisofts.mata.ui.settings.OpenSourceLicensesScreen
 import com.mochisofts.mata.ui.todoeditor.TodoEditorScreen
 import com.mochisofts.mata.ui.todolist.TodoListScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -297,6 +299,9 @@ private fun MataApp(
         composable<SettingsRoute> {
             SettingsScreen(
                 onDestination = navigateToDestination,
+                onOpenSourceLicenses = {
+                    navController.navigate(OpenSourceLicensesRoute) { launchSingleTop = true }
+                },
                 onRestoreCompleted = {
                     navController.navigate(TodoListRoute(initialMode = MainActivity.WIDGET_MODE_DATE)) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -304,6 +309,11 @@ private fun MataApp(
                     }
                 },
             )
+        }
+        composable<OpenSourceLicensesRoute> {
+            MataContentFrame(maxWidth = 840.dp) {
+                OpenSourceLicensesScreen(onBack = navController::popBackStack)
+            }
         }
         composable<PlaceholderRoute> { entry ->
             val route = entry.toRoute<PlaceholderRoute>()

@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
+import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
@@ -91,6 +92,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     onDestination: (MataDestination) -> Unit,
+    onOpenSourceLicenses: () -> Unit,
     onRestoreCompleted: () -> Unit = { onDestination(MataDestination.TODOS) },
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -339,6 +341,79 @@ fun SettingsScreen(
                                 activity?.let(viewModel::showPrivacyOptions)
                             },
                         )
+
+                        SettingsSectionHeader(R.string.settings_section_app_info)
+                        SettingsStaticRow(
+                            title = stringResource(R.string.settings_app_name_title),
+                            value = stringResource(R.string.app_name),
+                            description = stringResource(R.string.settings_app_name_description),
+                        )
+                        HorizontalDivider()
+                        SettingsStaticRow(
+                            title = stringResource(R.string.settings_version_title),
+                            value = if (BuildConfig.DEBUG) {
+                                stringResource(
+                                    R.string.settings_version_debug_format,
+                                    BuildConfig.VERSION_NAME,
+                                )
+                            } else {
+                                BuildConfig.VERSION_NAME
+                            },
+                            description = stringResource(R.string.settings_version_description),
+                        )
+                        HorizontalDivider()
+                        SettingsValueRow(
+                            title = stringResource(R.string.settings_licenses_title),
+                            value = stringResource(R.string.settings_licenses_value),
+                            description = stringResource(R.string.settings_licenses_description),
+                            isSaving = false,
+                            enabled = true,
+                            onClick = onOpenSourceLicenses,
+                        )
+                        HorizontalDivider()
+                        SettingsValueRow(
+                            title = stringResource(R.string.settings_privacy_policy_title),
+                            value = stringResource(R.string.settings_privacy_policy_value),
+                            description = stringResource(R.string.settings_privacy_policy_description),
+                            isSaving = false,
+                            enabled = true,
+                            onClick = {
+                                if (!openLegalDocument(
+                                        context,
+                                        BuildConfig.PRIVACY_POLICY_URL,
+                                        PRIVACY_POLICY_PATH,
+                                    )
+                                ) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            resources.getString(R.string.settings_external_link_error),
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                        HorizontalDivider()
+                        SettingsValueRow(
+                            title = stringResource(R.string.settings_terms_title),
+                            value = stringResource(R.string.settings_terms_value),
+                            description = stringResource(R.string.settings_terms_description),
+                            isSaving = false,
+                            enabled = true,
+                            onClick = {
+                                if (!openLegalDocument(
+                                        context,
+                                        BuildConfig.TERMS_URL,
+                                        TERMS_PATH,
+                                    )
+                                ) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            resources.getString(R.string.settings_external_link_error),
+                                        )
+                                    }
+                                }
+                            },
+                        )
                         Spacer(Modifier.height(32.dp))
                     }
                 }
@@ -533,6 +608,23 @@ private fun SettingsValueRow(
             }
         },
         modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+    )
+}
+
+@Composable
+private fun SettingsStaticRow(
+    title: String,
+    value: String,
+    description: String,
+) {
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = {
+            Column {
+                Text(value)
+                Text(description, style = MaterialTheme.typography.bodySmall)
+            }
+        },
     )
 }
 

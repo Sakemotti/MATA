@@ -23,6 +23,9 @@ data class CategoryEditorRoute(val categoryId: String? = null)
 data object SettingsRoute
 
 @Serializable
+data object OpenSourceLicensesRoute
+
+@Serializable
 data object CalendarHistoryRoute
 
 @Serializable
