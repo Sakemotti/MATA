@@ -11,11 +11,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,7 +38,6 @@ import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -53,7 +51,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -80,6 +77,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,9 +90,12 @@ import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
-import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
+import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
@@ -224,7 +225,7 @@ fun CalendarHistoryScreen(
                     },
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
             CalendarHistoryBody(
                 state = state,
@@ -353,13 +354,13 @@ private fun CalendarMonthPane(
         WeekdayHeader(state.weekStart)
         when {
             state.isMonthLoading -> Box(
-                Modifier.fillMaxWidth().height(288.dp),
+                Modifier.fillMaxWidth().heightIn(min = 288.dp),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
             state.monthErrorRes != null -> ErrorArea(
                 messageRes = requireNotNull(state.monthErrorRes),
                 onRetry = onRetry,
-                modifier = Modifier.fillMaxWidth().height(288.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 288.dp),
             )
             else -> MonthGrid(state, onSelectDate, onPreviousMonth, onNextMonth)
         }
@@ -374,7 +375,7 @@ private fun MonthControls(
     onSelectMonth: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 8.dp).focusGroup(),
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 8.dp).focusGroup(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -450,7 +451,7 @@ private fun MonthGrid(
                         today = state.today,
                         summary = state.month.summaries[date],
                         onClick = { onSelectDate(date) },
-                        modifier = Modifier.weight(1f).aspectRatio(1.18f),
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                     )
                 }
             }
@@ -500,6 +501,7 @@ private fun CalendarDayCell(
             .alpha(if (inMonth && enabled) 1f else 0.48f)
             .semantics {
                 contentDescription = semanticsLabel
+                this.selected = selected
                 if (!enabled) disabled()
             }
             .mataClickablePointer(enabled)
@@ -526,7 +528,12 @@ private fun CalendarDayCell(
         Row(verticalAlignment = Alignment.CenterVertically) {
             summary?.state?.let { HistoryStateIcon(it, Modifier.size(13.dp)) }
             if (summary?.hasAchievedPeriod == true) {
-                Icon(Icons.Filled.CheckCircle, null, Modifier.size(10.dp), tint = MaterialTheme.colorScheme.primary)
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    null,
+                    Modifier.size(10.dp),
+                    tint = MaterialTheme.mataColors.statusSuccess,
+                )
             }
             if (summary?.hasUnachievedPeriod == true) {
                 Icon(Icons.Filled.Error, null, Modifier.size(10.dp), tint = MaterialTheme.colorScheme.error)
@@ -681,7 +688,7 @@ private fun HistoryEntryRow(
         },
         leadingContent = {
             if (entry.canUndoCompletion && entry.id != null) {
-                Checkbox(
+                MataCompletionCheckbox(
                     checked = true,
                     enabled = busyExecutionId == null,
                     onCheckedChange = { checked -> if (!checked) onUndoCompletion(entry.id) },
@@ -730,7 +737,11 @@ private fun PeriodResultRow(entry: PeriodHistoryEntry, onClick: (PeriodHistoryEn
                 contentDescription = stringResource(
                     if (entry.achieved) R.string.label_achieved else R.string.label_unachieved,
                 ),
-                tint = if (entry.achieved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                tint = if (entry.achieved) {
+                    MaterialTheme.mataColors.statusSuccess
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
             )
         },
         trailingContent = { CategorySnapshotIcon(entry.snapshot) },
@@ -740,15 +751,13 @@ private fun PeriodResultRow(entry: PeriodHistoryEntry, onClick: (PeriodHistoryEn
 
 @Composable
 private fun CategorySnapshotIcon(snapshot: HistoryTodoSnapshot) {
-    val color = CategoryLightColors.getOrElse(snapshot.categoryColorIndex ?: 15) {
-        CategoryLightColors.last()
-    }
+    val color = mataCategoryColor(snapshot.categoryColorIndex)
     Box(
         Modifier.size(32.dp).background(color.copy(alpha = 0.16f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            categoryIcon(snapshot.categoryIconName ?: "Category"),
+            categoryIcon(snapshot.categoryIconName ?: "CategoryOff"),
             contentDescription = snapshot.categoryName ?: stringResource(R.string.label_uncategorized),
             tint = color,
             modifier = Modifier.size(18.dp),
@@ -776,7 +785,7 @@ private fun HistoryStateIcon(state: HistoryDayState, modifier: Modifier = Modifi
     }
     val tint = when (state) {
         HistoryDayState.IN_PROGRESS -> MaterialTheme.colorScheme.secondary
-        HistoryDayState.COMPLETED -> MaterialTheme.colorScheme.primary
+        HistoryDayState.COMPLETED -> MaterialTheme.mataColors.statusSuccess
         HistoryDayState.UNACHIEVED -> MaterialTheme.colorScheme.error
     }
     Icon(icon, contentDescription = null, tint = tint, modifier = modifier)

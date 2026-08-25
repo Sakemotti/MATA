@@ -51,7 +51,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -91,10 +90,12 @@ import com.mochisofts.mata.app.MataAdaptiveNavigation
 import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
-import com.mochisofts.mata.core.designsystem.CategoryLightColors
 import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
@@ -255,7 +256,7 @@ fun ArchiveListScreen(
                     },
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
             if (layoutInfo.useTwoPane) {
                 ArchiveTwoPaneContent(
@@ -424,7 +425,7 @@ private fun ArchiveSelectedDetail(
             }
         },
         snackbarHost = {
-            snackbarHostState?.let { SnackbarHost(it) }
+            snackbarHostState?.let { MataSnackbarHost(it) }
         },
     ) { padding ->
         when {
@@ -668,7 +669,7 @@ fun ArchiveDetailScreen(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { MataSnackbarHost(snackbarHostState) },
     ) { padding ->
         when {
             state.isLoading -> Box(
@@ -1098,9 +1099,7 @@ private fun PeriodDialogDetails(entry: PeriodHistoryEntry) {
 
 @Composable
 private fun ArchiveCategoryIcon(item: ArchivedTodoItem) {
-    val color = CategoryLightColors.getOrElse(item.category?.colorIndex ?: 15) {
-        CategoryLightColors.last()
-    }
+    val color = mataCategoryColor(item.category?.colorIndex)
     Box(
         Modifier.size(40.dp).background(color.copy(alpha = 0.16f), MaterialTheme.shapes.large),
         contentAlignment = Alignment.Center,
@@ -1115,9 +1114,7 @@ private fun ArchiveCategoryIcon(item: ArchivedTodoItem) {
 
 @Composable
 private fun SnapshotCategoryIcon(snapshot: HistoryTodoSnapshot) {
-    val color = CategoryLightColors.getOrElse(snapshot.categoryColorIndex ?: 15) {
-        CategoryLightColors.last()
-    }
+    val color = mataCategoryColor(snapshot.categoryColorIndex)
     Icon(
         categoryIcon(snapshot.categoryIconName ?: DEFAULT_CATEGORY_ICON),
         contentDescription = snapshot.categoryName ?: stringResource(R.string.label_uncategorized),
@@ -1132,7 +1129,12 @@ private fun ExecutionStateIcon(state: TodoState) {
         TodoState.SKIPPED -> Icons.Outlined.SkipNext
         TodoState.MISSED, TodoState.PENDING -> Icons.Outlined.ErrorOutline
     }
-    Icon(icon, contentDescription = todoStateLabel(state))
+    val tint = when (state) {
+        TodoState.COMPLETED -> MaterialTheme.mataColors.statusSuccess
+        TodoState.SKIPPED -> MaterialTheme.colorScheme.onSurfaceVariant
+        TodoState.MISSED, TodoState.PENDING -> MaterialTheme.colorScheme.error
+    }
+    Icon(icon, contentDescription = todoStateLabel(state), tint = tint)
 }
 
 @Composable
@@ -1337,4 +1339,4 @@ private fun formatEpochMillis(value: Long): String = Instant.ofEpochMilli(value)
     .atZone(ZoneId.systemDefault())
     .format(DateTimeFormatter.ofPattern(stringResource(R.string.date_time_pattern), Locale.JAPANESE))
 
-private const val DEFAULT_CATEGORY_ICON = "Category"
+private const val DEFAULT_CATEGORY_ICON = "CategoryOff"

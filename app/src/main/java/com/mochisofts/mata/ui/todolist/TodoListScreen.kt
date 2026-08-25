@@ -6,11 +6,14 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,11 +30,11 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material3.AssistChip
+import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -45,7 +48,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
@@ -70,6 +72,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,6 +88,11 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.MataCategoryLabel
+import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
+import com.mochisofts.mata.core.designsystem.MataStatusLabel
+import com.mochisofts.mata.core.designsystem.MataStatusType
+import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
@@ -213,7 +222,7 @@ fun TodoListScreen(
                     },
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { MataSnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 ExtendedFloatingActionButton(
                     onClick = onAddTodo,
@@ -526,7 +535,7 @@ private fun CategoryMode(
     Row(
         Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .heightIn(min = 56.dp)
             .horizontalScroll(rememberScrollState())
             .focusGroup()
             .padding(horizontal = 12.dp),
@@ -557,6 +566,7 @@ private fun CategoryMode(
         ) {
             items(state.categoryItems, key = { it.todo.id }) { item ->
                 val occurrence = item.occurrence
+                val occurrenceState = occurrence?.state?.let { stringResource(it.labelRes()) }
                 ListItem(
                     headlineContent = { Text(item.todo.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                     supportingContent = {
@@ -566,7 +576,7 @@ private fun CategoryMode(
                     },
                     leadingContent = {
                         if (occurrence != null) {
-                            Checkbox(
+                            MataCompletionCheckbox(
                                 checked = occurrence.state == TodoState.COMPLETED,
                                 onCheckedChange = if (occurrence.state == TodoState.PENDING) {
                                     { checked -> if (checked) onComplete(occurrence) }
@@ -583,6 +593,9 @@ private fun CategoryMode(
                         )
                     },
                     modifier = Modifier
+                        .semantics {
+                            occurrenceState?.let { stateDescription = it }
+                        }
                         .mataClickablePointer()
                         .clickable { onEdit(item.todo.id) },
                 )
@@ -593,6 +606,7 @@ private fun CategoryMode(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TodoOccurrenceRow(
     occurrence: TodoOccurrence,
@@ -605,6 +619,7 @@ private fun TodoOccurrenceRow(
     onOpen: (TodoOccurrence) -> Unit,
 ) {
     val completed = occurrence.state == TodoState.COMPLETED
+    val occurrenceState = stringResource(occurrence.state.labelRes())
     ListItem(
         headlineContent = {
             Text(
@@ -628,15 +643,15 @@ private fun TodoOccurrenceRow(
                         ),
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                occurrence.category?.name
-                                    ?: stringResource(R.string.label_uncategorized),
-                            )
-                        },
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    MataCategoryLabel(
+                        name = occurrence.category?.name
+                            ?: stringResource(R.string.label_uncategorized),
+                        iconName = occurrence.category?.iconName ?: "CategoryOff",
+                        colorIndex = occurrence.category?.colorIndex,
                     )
                     occurrence.todo.dueMinutes?.let { minutes ->
                         Text(
@@ -647,11 +662,29 @@ private fun TodoOccurrenceRow(
                             ),
                         )
                     }
+                    when (occurrence.state) {
+                        TodoState.COMPLETED -> MataStatusLabel(
+                            text = stringResource(R.string.label_completed),
+                            icon = Icons.Outlined.CheckCircle,
+                            type = MataStatusType.SUCCESS,
+                        )
+                        TodoState.SKIPPED -> MataStatusLabel(
+                            text = stringResource(R.string.label_skipped),
+                            icon = Icons.Outlined.SkipNext,
+                            type = MataStatusType.NEUTRAL,
+                        )
+                        TodoState.MISSED -> MataStatusLabel(
+                            text = stringResource(R.string.label_missed),
+                            icon = Icons.Outlined.ErrorOutline,
+                            type = MataStatusType.ERROR,
+                        )
+                        TodoState.PENDING -> Unit
+                    }
                 }
             }
         },
         leadingContent = {
-            Checkbox(
+            MataCompletionCheckbox(
                 checked = completed,
                 onCheckedChange = if (canComplete && !completed) {
                     { checked -> if (checked) onComplete(occurrence) }
@@ -671,6 +704,7 @@ private fun TodoOccurrenceRow(
             null
         },
         modifier = Modifier
+            .semantics { stateDescription = occurrenceState }
             .mataClickablePointer()
             .clickable { onOpen(occurrence) },
     )

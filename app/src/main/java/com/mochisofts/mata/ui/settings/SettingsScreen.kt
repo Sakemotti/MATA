@@ -45,7 +45,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -77,6 +76,7 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.BillingOperation
@@ -164,7 +164,7 @@ fun SettingsScreen(
                     },
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
             when {
                 state.isLoading -> {
