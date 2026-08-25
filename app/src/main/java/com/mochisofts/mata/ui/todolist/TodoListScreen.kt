@@ -1,8 +1,8 @@
 package com.mochisofts.mata.ui.todolist
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +13,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -41,7 +39,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,8 +48,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -72,8 +67,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -88,11 +85,13 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
-import com.mochisofts.mata.core.designsystem.MataCategoryLabel
 import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataCategoryColor
+import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
@@ -208,7 +207,7 @@ fun TodoListScreen(
                         }
                     },
                     actions = {
-                        if (state.mode == TodoListMode.DATE && state.isToday) {
+                        if (state.isToday) {
                             IconButton(onClick = { viewModel.setShowCompleted(!state.showCompleted) }) {
                                 Icon(
                                     if (state.showCompleted) Icons.Outlined.CheckCircle else Icons.Outlined.Check,
@@ -248,59 +247,29 @@ fun TodoListScreen(
             },
         ) { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
-                TabRow(selectedTabIndex = state.mode.ordinal) {
-                    TodoListMode.entries.forEach { mode ->
-                        Tab(
-                            selected = state.mode == mode,
-                            onClick = { viewModel.setMode(mode) },
-                            text = {
-                                Text(
-                                    stringResource(
-                                        if (mode == TodoListMode.DATE) {
-                                            R.string.todo_list_tab_date
-                                        } else {
-                                            R.string.todo_list_tab_category
-                                        },
-                                    ),
-                                )
-                            },
-                        )
-                    }
-                }
                 HolidayDataStatus(state)
-                when (state.mode) {
-                    TodoListMode.DATE -> DateMode(
-                        state = state,
-                        onPrevious = viewModel::selectPreviousDate,
-                        onNext = viewModel::selectNextDate,
-                        onToday = viewModel::selectToday,
-                        onPickDate = { showDatePicker = true },
-                        onComplete = viewModel::complete,
-                        onSkip = viewModel::skip,
-                        onArchive = { occurrence ->
-                            archiveTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
-                        },
-                        onDelete = { occurrence ->
-                            deleteTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
-                        },
-                        onOpen = { occurrence ->
-                            if (state.selectedDate.isBefore(LocalDate.now())) {
-                                readOnlyOccurrence = occurrence
-                            } else {
-                                onEditTodo(occurrence.todo.id)
-                            }
-                        },
-                    )
-                    TodoListMode.CATEGORY -> CategoryMode(
-                        state = state,
-                        onSelectCategory = viewModel::selectCategory,
-                        onComplete = viewModel::complete,
-                        onEdit = onEditTodo,
-                        onSkip = viewModel::skip,
-                        onArchive = { todo -> archiveTarget = TodoActionTarget(todo.id, todo.title) },
-                        onDelete = { todo -> deleteTarget = TodoActionTarget(todo.id, todo.title) },
-                    )
-                }
+                DateMode(
+                    state = state,
+                    onPrevious = viewModel::selectPreviousDate,
+                    onNext = viewModel::selectNextDate,
+                    onToday = viewModel::selectToday,
+                    onPickDate = { showDatePicker = true },
+                    onComplete = viewModel::complete,
+                    onSkip = viewModel::skip,
+                    onArchive = { occurrence ->
+                        archiveTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+                    },
+                    onDelete = { occurrence ->
+                        deleteTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+                    },
+                    onOpen = { occurrence ->
+                        if (state.selectedDate.isBefore(LocalDate.now())) {
+                            readOnlyOccurrence = occurrence
+                        } else {
+                            onEditTodo(occurrence.todo.id)
+                        }
+                    },
+                )
             }
         }
     }
@@ -489,7 +458,7 @@ private fun DateMode(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.message_loading))
         }
-    } else if (state.occurrences.isEmpty()) {
+    } else if (state.groups.isEmpty()) {
         EmptyTodos(
             stringResource(
                 if (state.isToday) {
@@ -505,18 +474,27 @@ private fun DateMode(
             modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
             state = listState,
         ) {
-            items(state.occurrences, key = { "${it.todo.id}:${it.logicalDate}" }) { occurrence ->
-                TodoOccurrenceRow(
-                    occurrence = occurrence,
-                    canComplete = state.isToday,
-                    showActions = !state.selectedDate.isBefore(LocalDate.now()),
-                    onComplete = onComplete,
-                    onSkip = onSkip,
-                    onArchive = onArchive,
-                    onDelete = onDelete,
-                    onOpen = onOpen,
-                )
-                HorizontalDivider()
+            state.groups.forEach { group ->
+                item(key = "category:${group.category?.id ?: "uncategorized"}") {
+                    TodoCategoryHeader(group.category)
+                    HorizontalDivider()
+                }
+                items(
+                    items = group.occurrences,
+                    key = { "${it.todo.id}:${it.logicalDate}" },
+                ) { occurrence ->
+                    TodoOccurrenceRow(
+                        occurrence = occurrence,
+                        canComplete = state.isToday,
+                        showActions = !state.selectedDate.isBefore(LocalDate.now()),
+                        onComplete = onComplete,
+                        onSkip = onSkip,
+                        onArchive = onArchive,
+                        onDelete = onDelete,
+                        onOpen = onOpen,
+                    )
+                    HorizontalDivider()
+                }
             }
             item { Spacer(Modifier.height(96.dp)) }
         }
@@ -524,86 +502,32 @@ private fun DateMode(
 }
 
 @Composable
-private fun CategoryMode(
-    state: TodoListUiState,
-    onSelectCategory: (String?) -> Unit,
-    onComplete: (TodoOccurrence) -> Unit,
-    onEdit: (String) -> Unit,
-    onSkip: (TodoOccurrence) -> Unit,
-    onArchive: (Todo) -> Unit,
-    onDelete: (Todo) -> Unit,
+private fun TodoCategoryHeader(
+    category: Category?,
 ) {
+    val name = category?.name ?: stringResource(R.string.label_uncategorized)
+    val color = mataCategoryColor(category?.colorIndex)
     Row(
-        Modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .horizontalScroll(rememberScrollState())
-            .focusGroup()
-            .padding(horizontal = 12.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .semantics { heading() }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        FilterChip(
-            selected = state.selectedCategoryId == null,
-            onClick = { onSelectCategory(null) },
-            label = { Text(stringResource(R.string.label_uncategorized)) },
-            modifier = Modifier.mataClickablePointer(),
+        Icon(
+            imageVector = categoryIcon(category?.iconName ?: "CategoryOff"),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = color,
         )
-        state.categories.forEach { category ->
-            FilterChip(
-                selected = state.selectedCategoryId == category.id,
-                onClick = { onSelectCategory(category.id) },
-                label = { Text(category.name) },
-                modifier = Modifier.mataClickablePointer(),
-            )
-        }
-    }
-    if (state.categoryItems.isEmpty()) {
-        EmptyTodos(stringResource(R.string.empty_category_todos))
-    } else {
-        val listState = rememberLazyListState()
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
-            state = listState,
-        ) {
-            items(state.categoryItems, key = { it.todo.id }) { item ->
-                val occurrence = item.occurrence
-                val occurrenceState = occurrence?.state?.let { stringResource(it.labelRes()) }
-                ListItem(
-                    headlineContent = { Text(item.todo.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = {
-                        Text(
-                            recurrenceSummary(item.todo),
-                        )
-                    },
-                    leadingContent = {
-                        if (occurrence != null) {
-                            MataCompletionCheckbox(
-                                checked = occurrence.state == TodoState.COMPLETED,
-                                onCheckedChange = if (occurrence.state == TodoState.PENDING) {
-                                    { checked -> if (checked) onComplete(occurrence) }
-                                } else null,
-                            )
-                        }
-                    },
-                    trailingContent = {
-                        TodoActionMenu(
-                            canSkip = occurrence?.state == TodoState.PENDING,
-                            onSkip = occurrence?.let { { onSkip(it) } },
-                            onArchive = { onArchive(item.todo) },
-                            onDelete = { onDelete(item.todo) },
-                        )
-                    },
-                    modifier = Modifier
-                        .semantics {
-                            occurrenceState?.let { stateDescription = it }
-                        }
-                        .mataClickablePointer()
-                        .clickable { onEdit(item.todo.id) },
-                )
-                HorizontalDivider()
-            }
-            item { Spacer(Modifier.height(96.dp)) }
-        }
+        Text(
+            text = name,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleSmall,
+        )
     }
 }
 
@@ -648,12 +572,6 @@ private fun TodoOccurrenceRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    MataCategoryLabel(
-                        name = occurrence.category?.name
-                            ?: stringResource(R.string.label_uncategorized),
-                        iconName = occurrence.category?.iconName ?: "CategoryOff",
-                        colorIndex = occurrence.category?.colorIndex,
-                    )
                     occurrence.todo.dueMinutes?.let { minutes ->
                         Text(
                             stringResource(
@@ -662,7 +580,7 @@ private fun TodoOccurrenceRow(
                                 minutes % 60,
                             ),
                         )
-                    }
+                    } ?: Text(stringResource(R.string.todo_due_none))
                     when (occurrence.state) {
                         TodoState.COMPLETED -> MataStatusLabel(
                             text = stringResource(R.string.label_completed),

@@ -86,13 +86,7 @@ class MataAppViewModel @Inject constructor(
                 } else {
                     null
                 }
-                ExternalNavigationResolution(
-                    TodoListRoute(
-                        selectedDate = request.selectedDate.toString(),
-                        initialMode = request.mode,
-                        selectedCategoryKey = categoryKey,
-                    ),
-                )
+                ExternalNavigationResolution(resolvedWidgetRoute(request, categoryKey))
             }
         }
     }
@@ -107,10 +101,7 @@ class MataAppViewModel @Inject constructor(
         if (requestedCategory != null) {
             return requestedCategory.id
         }
-        return categoryRepository.observeCategories().first()
-            .firstOrNull()
-            ?.id
-            ?: MainActivity.WIDGET_UNCATEGORIZED_KEY
+        return MainActivity.WIDGET_UNCATEGORIZED_KEY
     }
 
     fun firstContentRendered(activity: Activity) {

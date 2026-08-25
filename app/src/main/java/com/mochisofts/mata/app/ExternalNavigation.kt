@@ -2,6 +2,7 @@ package com.mochisofts.mata.app
 
 import android.content.Intent
 import android.os.Bundle
+import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
 import java.time.LocalDate
 import java.util.UUID
@@ -24,8 +25,17 @@ internal sealed interface ExternalNavigation {
 }
 
 internal data class ExternalNavigationResolution(
-    val route: TodoListRoute,
+    val route: Any,
 )
+
+internal fun resolvedWidgetRoute(
+    request: ExternalNavigation.Widget,
+    selectedCategoryKey: String?,
+): Any = if (request.mode == MainActivity.WIDGET_MODE_CATEGORY) {
+    CategoryTodoListRoute(selectedCategoryKey = selectedCategoryKey)
+} else {
+    TodoListRoute(selectedDate = request.selectedDate.toString())
+}
 
 internal fun parseExternalNavigation(
     action: String?,

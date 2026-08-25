@@ -300,8 +300,6 @@
     <string name="action_add_todo">TODOを追加</string>
     <string name="content_description_show_completed_todos">完了済みTODOを表示</string>
     <string name="content_description_hide_completed_todos">完了済みTODOを非表示</string>
-    <string name="todo_list_tab_date">日付</string>
-    <string name="todo_list_tab_category">カテゴリ</string>
     <string name="message_todo_completed">TODOを完了しました</string>
     <string name="message_todo_skipped">TODOをスキップしました</string>
     <string name="message_todo_archived">TODOをアーカイブしました</string>
@@ -317,6 +315,7 @@
     <string name="empty_selected_date_todos">この日のTODOはありません</string>
     <string name="empty_category_todos">このカテゴリにTODOはありません</string>
     <string name="todo_due_time_format">期限 %1$d:%2$02d</string>
+    <string name="todo_due_none">期限設定なし</string>
     <string name="todo_recurrence_monthly_day_format">毎月%1$d日</string>
     <string name="todo_recurrence_monthly_nth_weekdays_format">毎月 %1$s</string>
     <string name="todo_recurrence_nth_weekday_item_format">第%1$d %2$s曜日</string>

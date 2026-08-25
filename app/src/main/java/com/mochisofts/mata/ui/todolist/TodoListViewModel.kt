@@ -14,7 +14,6 @@ import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.usesHolidayData
-import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -35,26 +34,17 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class TodoListMode {
-    DATE,
-    CATEGORY,
-}
-
-data class CategoryTodoItem(
-    val todo: Todo,
-    val occurrence: TodoOccurrence?,
+data class TodoOccurrenceGroup(
+    val category: Category?,
+    val occurrences: List<TodoOccurrence>,
 )
 
 data class TodoListUiState(
     val isLoading: Boolean = true,
-    val mode: TodoListMode = TodoListMode.DATE,
     val selectedDate: LocalDate = LocalDate.MIN,
     val isToday: Boolean = true,
     val showCompleted: Boolean = false,
-    val occurrences: List<TodoOccurrence> = emptyList(),
-    val categories: List<Category> = emptyList(),
-    val selectedCategoryId: String? = null,
-    val categoryItems: List<CategoryTodoItem> = emptyList(),
+    val groups: List<TodoOccurrenceGroup> = emptyList(),
     val holidayName: String? = null,
     val holidayStatus: HolidayYearStatus? = null,
     val holidayDataAvailable: Boolean = false,
@@ -73,7 +63,6 @@ sealed interface TodoListEffect {
 class TodoListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val todoRepository: TodoRepository,
-    categoryRepository: CategoryRepository,
     holidayRepository: HolidayRepository,
     private val settingsRepository: SettingsRepository,
     private val clock: Clock,
@@ -83,12 +72,6 @@ class TodoListViewModel @Inject constructor(
     private val selectedDate = MutableStateFlow(
         route.selectedDate?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
             ?: LocalDate.now(clock),
-    )
-    private val selectedCategoryId = MutableStateFlow(
-        route.selectedCategoryKey?.takeUnless { it == WIDGET_UNCATEGORIZED_KEY },
-    )
-    private val initialMode = MutableStateFlow(
-        route.initialMode?.let { value -> runCatching { TodoListMode.valueOf(value) }.getOrNull() },
     )
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
@@ -101,54 +84,40 @@ class TodoListViewModel @Inject constructor(
     }
 
     private val occurrenceFlow = selectedDate.flatMapLatest(todoRepository::observeOccurrences)
-    private val todayOccurrenceFlow = todoRepository.observeOccurrences(LocalDate.now(clock))
 
     private val baseContent = combine(
         occurrenceFlow,
-        todayOccurrenceFlow,
         todoRepository.observeTodos(),
-        categoryRepository.observeCategories(),
         holidayRepository.snapshot,
-    ) { occurrences, todayOccurrences, todos, categories, holidaySnapshot ->
-        BaseContent(occurrences, todayOccurrences, todos, categories, holidaySnapshot)
+    ) { occurrences, todos, holidaySnapshot ->
+        BaseContent(occurrences, todos, holidaySnapshot)
     }
 
-    private val content = combine(baseContent, selectedDate, selectedCategoryId) { base, date, categoryId ->
+    private val content = combine(baseContent, selectedDate) { base, date ->
         Content(
             base.occurrences,
-            base.todayOccurrences,
             base.todos,
-            base.categories,
             base.holidaySnapshot,
             date,
-            categoryId,
         )
     }
 
     val uiState: StateFlow<TodoListUiState> = combine(
         content,
         settingsRepository.showCompleted,
-        settingsRepository.todoListMode,
-    ) { content, showCompleted, storedMode ->
+        settingsRepository.uncategorizedEndHour,
+    ) { content, showCompleted, uncategorizedEndHour ->
         val today = LocalDate.now(clock)
-        val currentOccurrences = content.todayOccurrences.associateBy { it.todo.id }
         val visibleOccurrences = content.occurrences.filter { occurrence ->
             occurrence.state != TodoState.SKIPPED &&
                 (content.date != today || showCompleted || occurrence.state != TodoState.COMPLETED)
         }
         TodoListUiState(
             isLoading = false,
-            mode = initialMode.value ?: storedMode.toTodoListMode(),
             selectedDate = content.date,
             isToday = content.date == today,
             showCompleted = showCompleted,
-            occurrences = visibleOccurrences,
-            categories = content.categories,
-            selectedCategoryId = content.categoryId,
-            categoryItems = content.todos
-                .filter { it.categoryId == content.categoryId }
-                .map { todo -> CategoryTodoItem(todo, currentOccurrences[todo.id]) }
-                .filter { item -> item.occurrence?.state != TodoState.SKIPPED },
+            groups = buildTodoOccurrenceGroups(visibleOccurrences, uncategorizedEndHour),
             holidayName = content.holidaySnapshot.holidayName(content.date),
             holidayStatus = content.holidaySnapshot.statusFor(content.date.year)
                 .takeIf {
@@ -176,15 +145,6 @@ class TodoListViewModel @Inject constructor(
 
     fun selectDate(date: LocalDate) {
         selectedDate.value = date
-    }
-
-    fun selectCategory(id: String?) {
-        selectedCategoryId.value = id
-    }
-
-    fun setMode(mode: TodoListMode) {
-        initialMode.value = null
-        viewModelScope.launch { settingsRepository.setTodoListMode(mode.name) }
     }
 
     fun setShowCompleted(value: Boolean) {
@@ -283,24 +243,49 @@ class TodoListViewModel @Inject constructor(
 
     private data class Content(
         val occurrences: List<TodoOccurrence>,
-        val todayOccurrences: List<TodoOccurrence>,
         val todos: List<Todo>,
-        val categories: List<Category>,
         val holidaySnapshot: HolidaySnapshot,
         val date: LocalDate,
-        val categoryId: String?,
     )
 
     private data class BaseContent(
         val occurrences: List<TodoOccurrence>,
-        val todayOccurrences: List<TodoOccurrence>,
         val todos: List<Todo>,
-        val categories: List<Category>,
         val holidaySnapshot: HolidaySnapshot,
     )
 }
 
-private const val WIDGET_UNCATEGORIZED_KEY = "__uncategorized__"
+internal fun buildTodoOccurrenceGroups(
+    occurrences: List<TodoOccurrence>,
+    uncategorizedEndHour: Int,
+): List<TodoOccurrenceGroup> = occurrences
+    .groupBy { occurrence -> occurrence.category?.id }
+    .map { (_, items) ->
+        val category = items.firstOrNull()?.category
+        TodoOccurrenceGroup(
+            category = category,
+            occurrences = items.sortedWith(
+                compareBy<TodoOccurrence> {
+                    it.effectiveDueMinutes(uncategorizedEndHour)
+                }.thenBy { it.todo.createdAt }
+                    .thenBy { it.todo.id },
+            ),
+        )
+    }
+    .sortedWith(
+        compareBy<TodoOccurrenceGroup> { it.category?.sortOrder ?: -1 }
+            .thenBy { it.category?.id.orEmpty() },
+    )
 
-private fun String.toTodoListMode(): TodoListMode =
-    runCatching { TodoListMode.valueOf(this) }.getOrDefault(TodoListMode.DATE)
+private fun TodoOccurrence.effectiveDueMinutes(uncategorizedEndHour: Int): Int {
+    val endHour = category?.endHour ?: uncategorizedEndHour
+    val due = todo.dueMinutes ?: endHour * MINUTES_PER_HOUR
+    return due + if (todo.dueMinutes == null || due < endHour * MINUTES_PER_HOUR) {
+        MINUTES_PER_DAY
+    } else {
+        0
+    }
+}
+
+private const val MINUTES_PER_HOUR = 60
+private const val MINUTES_PER_DAY = 1_440

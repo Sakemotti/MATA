@@ -1,11 +1,43 @@
 package com.mochisofts.mata.app
 
+import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
+import com.mochisofts.mata.core.navigation.TodoListRoute
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ExternalNavigationTest {
+    @Test
+    fun widgetRoutesDateAndCategoryToTheirIndependentScreens() {
+        val date = LocalDate.of(2026, 8, 24)
+
+        assertEquals(
+            TodoListRoute(selectedDate = date.toString()),
+            resolvedWidgetRoute(
+                ExternalNavigation.Widget(
+                    selectedDate = date,
+                    mode = MainActivity.WIDGET_MODE_DATE,
+                    categoryKey = null,
+                    todoId = null,
+                ),
+                selectedCategoryKey = null,
+            ),
+        )
+        assertEquals(
+            CategoryTodoListRoute(selectedCategoryKey = CATEGORY_ID),
+            resolvedWidgetRoute(
+                ExternalNavigation.Widget(
+                    selectedDate = date,
+                    mode = MainActivity.WIDGET_MODE_CATEGORY,
+                    categoryKey = CATEGORY_ID,
+                    todoId = null,
+                ),
+                selectedCategoryKey = CATEGORY_ID,
+            ),
+        )
+    }
+
     @Test
     fun validNotification_isParsedWithTypedDate() {
         val request = parseExternalNavigation(

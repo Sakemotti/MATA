@@ -3,6 +3,9 @@ package com.mochisofts.mata.ui.categorytodolist
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.mochisofts.mata.app.MainActivity
+import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
@@ -39,8 +42,14 @@ class CategoryTodoListViewModel @Inject constructor(
     clock: Clock,
     adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
+    private val route = savedStateHandle.toRoute<CategoryTodoListRoute>()
     private val selectedCategoryId =
-        savedStateHandle.getStateFlow<String?>(SELECTED_CATEGORY_ID_KEY, null)
+        savedStateHandle.getStateFlow(
+            SELECTED_CATEGORY_ID_KEY,
+            route.selectedCategoryKey?.takeUnless {
+                it == MainActivity.WIDGET_UNCATEGORIZED_KEY
+            },
+        )
 
     val adsRuntimeState = adsConsentRepository.state
 
