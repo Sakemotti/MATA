@@ -56,6 +56,7 @@
 
     <!-- Navigation -->
     <string name="nav_todo_list">TODO一覧</string>
+    <string name="nav_category_todo_list">カテゴリ別TODO</string>
     <string name="nav_calendar_history">カレンダー履歴</string>
     <string name="nav_category_management">カテゴリ管理</string>
     <string name="nav_archived_todos">アーカイブ済みTODO</string>
@@ -295,6 +296,7 @@
 
     <!-- TODO list -->
     <string name="todo_list_title">TODO</string>
+    <string name="category_todo_list_title">カテゴリ別TODO</string>
     <string name="action_add_todo">TODOを追加</string>
     <string name="content_description_show_completed_todos">完了済みTODOを表示</string>
     <string name="content_description_hide_completed_todos">完了済みTODOを非表示</string>

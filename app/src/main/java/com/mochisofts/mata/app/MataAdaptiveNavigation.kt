@@ -108,6 +108,7 @@ internal fun mataAdaptiveLayoutInfoFor(
         MataDestination.CALENDAR -> 1200f
         MataDestination.SETTINGS -> 720f
         MataDestination.TODOS,
+        MataDestination.CATEGORY_TODOS,
         MataDestination.CATEGORIES,
         MataDestination.ARCHIVE,
         -> 840f
@@ -338,6 +339,7 @@ fun MataAdaptiveNavigation(
             MataDestination.CALENDAR -> 1200.dp
             MataDestination.SETTINGS -> 720.dp
             MataDestination.TODOS,
+            MataDestination.CATEGORY_TODOS,
             MataDestination.CATEGORIES,
             MataDestination.ARCHIVE,
             -> 840.dp

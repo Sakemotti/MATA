@@ -15,7 +15,7 @@ Android Large Screen App QualityのTier 2「Large screen optimized」を初回�
 | 文書 | 内容 |
 | --- | --- |
 | [ウィンドウ分類・ナビゲーション仕様](window-classes-and-navigation.md) | 対応範囲、サイズクラス、余白、コンテンツ幅、ナビゲーション |
-| [画面別適応レイアウト仕様](screen-layouts.md) | 6画面と共通UIの幅別構成 |
+| [画面別適応レイアウト仕様](screen-layouts.md) | 7画面と共通UIの幅別構成 |
 | [Insets・折りたたみ・入力仕様](insets-foldables-and-input.md) | Edge-to-edge、IME、ヒンジ、キーボード、ポインター、状態復元 |
 | [試験・公開判定仕様](testing-and-release.md) | 境界値、端末、入力、アクセシビリティ、公開条件 |
 

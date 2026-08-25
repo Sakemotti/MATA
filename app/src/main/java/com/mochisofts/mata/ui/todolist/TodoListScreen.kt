@@ -756,7 +756,7 @@ private fun LocalDate.toJapaneseDate(pattern: String): String =
     format(DateTimeFormatter.ofPattern(pattern, Locale.JAPANESE))
 
 @Composable
-private fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
+internal fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
     RecurrenceType.ONCE -> todo.startDate.toJapaneseDate(stringResource(R.string.date_pattern_short))
     RecurrenceType.DAILY -> stringResource(R.string.label_daily)
     RecurrenceType.WEEKDAYS -> stringResource(R.string.label_weekdays)
@@ -800,7 +800,7 @@ private fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {
 }
 
 @StringRes
-private fun TodoState.labelRes(): Int = when (this) {
+internal fun TodoState.labelRes(): Int = when (this) {
     TodoState.PENDING -> R.string.label_pending
     TodoState.COMPLETED -> R.string.label_completed
     TodoState.SKIPPED -> R.string.label_skipped
