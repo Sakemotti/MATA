@@ -14,7 +14,6 @@ import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.repository.toDomain
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceProgress
-import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.WidgetCategoryGroup
 import com.mochisofts.mata.domain.model.WidgetDisplayModel
@@ -24,6 +23,7 @@ import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
+import com.mochisofts.mata.domain.model.usesHolidayData
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -149,7 +149,7 @@ internal fun buildWidgetDisplayModel(
             completedCount = progress?.completedCount,
             requiredCount = progress?.period?.requiredCount,
         )
-        if (todo.recurrenceType == RecurrenceType.WEEKDAYS &&
+        if (todo.recurrenceRule.usesHolidayData() &&
             !holidayState.isDefinitive(targetDate.year)
         ) {
             provisional = true

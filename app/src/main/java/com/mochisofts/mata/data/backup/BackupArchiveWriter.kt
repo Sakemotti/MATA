@@ -21,6 +21,7 @@ import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.OutputStream
@@ -215,6 +216,13 @@ class BackupArchiveWriter @Inject constructor(
         name("repeatParams").beginObject()
         when (rule.type) {
             RecurrenceType.SELECTED_WEEKDAYS -> {
+                name("dayFilter").value(
+                    if (rule.dayFilter == RecurrenceDayFilter.ALL) {
+                        RecurrenceDayFilter.CUSTOM.code
+                    } else {
+                        rule.dayFilter.code
+                    },
+                )
                 name("weekdays").beginArray()
                 rule.selectedWeekdays.sortedBy(DayOfWeek::getValue).forEach { value(it.backupCode()) }
                 endArray()
@@ -233,9 +241,16 @@ class BackupArchiveWriter @Inject constructor(
                 endArray()
             }
             RecurrenceType.EVERY_N_DAYS -> name("intervalDays").value(rule.intervalDays!!.toLong())
-            RecurrenceType.WEEKLY_COUNT,
-            RecurrenceType.MONTHLY_COUNT,
-            -> name("requiredCount").value(rule.requiredCount!!.toLong())
+            RecurrenceType.WEEKLY_COUNT -> {
+                name("periodWeeks").value(rule.periodWeeks.toLong())
+                name("requiredCount").value(rule.requiredCount!!.toLong())
+                name("dayFilter").value(rule.dayFilter.code)
+                name("weekdays").beginArray()
+                rule.selectedWeekdays.sortedBy(DayOfWeek::getValue).forEach { value(it.backupCode()) }
+                endArray()
+            }
+            RecurrenceType.MONTHLY_COUNT ->
+                name("requiredCount").value(rule.requiredCount!!.toLong())
             else -> Unit
         }
         endObject()

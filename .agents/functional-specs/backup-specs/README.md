@@ -7,8 +7,10 @@
 
 ## 文書一覧
 
+- [バックアップ形式バージョン2](format-v2.md)
+  - 現行形式。N週間にX回の期間週数と対象日条件、曜日プリセットを追加
 - [バックアップ形式バージョン1](format-v1.md)
-  - `.mata-backup`のZIP構造、`manifest.json`、`data.json`、型、並び順、互換性
+  - 旧形式。`.mata-backup`の基本ZIP構造、`manifest.json`、`data.json`、型、並び順
 - [バックアップ作成仕様](create-backup.md)
   - Storage Access Framework、整合スナップショット、ストリーミング出力、長時間処理、失敗時の回復
 - [バックアップ復元仕様](restore-backup.md)
@@ -43,4 +45,3 @@
 - [Access documents and other files from shared storage](https://developer.android.com/training/data-storage/shared/documents-files)
 - [Persistent work](https://developer.android.com/develop/background-work/background-tasks/persistent)
 - [Support for long-running workers](https://developer.android.com/develop/background-work/background-tasks/persistent/how-to/long-running)
-

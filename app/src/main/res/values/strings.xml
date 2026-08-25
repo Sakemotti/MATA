@@ -41,7 +41,7 @@
     <string name="label_monthly_nth_weekdays">毎月 第X X曜日</string>
     <string name="label_month_end">毎月の月末</string>
     <string name="label_every_n_days">一定日数ごと</string>
-    <string name="label_weekly_count">週X回</string>
+    <string name="label_weekly_count">N週間にX回</string>
     <string name="label_monthly_count">月X回</string>
     <string name="label_not_set">設定なし</string>
     <string name="character_counter_format">%1$d / %2$d</string>
@@ -95,6 +95,7 @@
     <string name="archive_label_recurrence">繰り返し設定</string>
     <string name="archive_label_holiday">祝日除外</string>
     <string name="archive_holiday_excluded">除外する</string>
+    <string name="archive_holiday_included">実行日に含める</string>
     <string name="archive_holiday_not_excluded">除外しない</string>
     <string name="archive_label_due">期限時刻</string>
     <string name="archive_due_none">期限設定なし</string>
@@ -266,7 +267,7 @@
     <string name="settings_end_hour_title">一日の終了時刻</string>
     <string name="settings_end_hour_description">カテゴリ未設定のTODOに適用します</string>
     <string name="settings_week_start_title">週の開始曜日</string>
-    <string name="settings_week_start_description">週X回TODOの期間区切りに使用します</string>
+    <string name="settings_week_start_description">N週間にX回TODOの期間区切りに使用します</string>
     <string name="settings_show_completed_title">完了済みTODOを表示</string>
     <string name="settings_show_completed_description">今日のTODO一覧に完了済みを表示します</string>
     <string name="settings_theme_title">テーマ</string>
@@ -318,7 +319,8 @@
     <string name="todo_recurrence_monthly_nth_weekdays_format">毎月 %1$s</string>
     <string name="todo_recurrence_nth_weekday_item_format">第%1$d %2$s曜日</string>
     <string name="todo_recurrence_every_n_days_format">%1$d日ごと</string>
-    <string name="todo_recurrence_weekly_count_format">週%1$d回</string>
+    <string name="todo_recurrence_weekly_interval_count_format">%1$d週間に%2$d回</string>
+    <string name="todo_recurrence_with_day_filter_format">%1$s・%2$s</string>
     <string name="todo_recurrence_monthly_count_format">月%1$d回</string>
     <string name="todo_recurrence_progress_format">%1$d / %2$d回</string>
 
@@ -343,7 +345,13 @@
     <string name="todo_editor_monthly_nth_weekdays_label">実行する第X曜日（複数選択可）</string>
     <string name="todo_editor_ordinal_format">第%1$d</string>
     <string name="todo_editor_interval_days_label">実行間隔</string>
-    <string name="todo_editor_weekly_count_label">1週間の必要回数</string>
+    <string name="todo_editor_period_weeks_label">繰り返し期間</string>
+    <string name="todo_editor_week_count_format">%1$d週間</string>
+    <string name="todo_editor_weekly_count_label">期間内の必要回数</string>
+    <string name="todo_editor_eligible_days_label">実行できる日</string>
+    <string name="todo_editor_day_filter_all">すべての日</string>
+    <string name="todo_editor_day_filter_weekdays">平日</string>
+    <string name="todo_editor_day_filter_weekends_holidays">土日祝</string>
     <string name="todo_editor_monthly_count_label">1か月の必要回数</string>
     <string name="todo_editor_day_count_format">%1$d日</string>
     <string name="unit_day">日</string>
@@ -512,12 +520,12 @@
         <item quantity="other">未処理の通知が%d件あります</item>
     </plurals>
     <string name="holiday_data_stale">祝日情報の更新期限を過ぎています。保存済みの情報を使用します</string>
-    <string name="holiday_data_loading">祝日情報を取得しています。完了までは平日の予定を暫定表示します</string>
+    <string name="holiday_data_loading">祝日情報を取得しています。完了までは予定を暫定表示します</string>
     <string name="holiday_data_refreshing">保存済みの祝日情報を使用しながら更新しています</string>
-    <string name="holiday_data_unavailable">祝日情報が未取得のため、平日の予定は暫定表示です</string>
-    <string name="holiday_data_provisional">祝日情報を取得できないため、平日の予定は暫定表示です</string>
+    <string name="holiday_data_unavailable">祝日情報が未取得のため、予定は暫定表示です</string>
+    <string name="holiday_data_provisional">祝日情報を取得できないため、予定は暫定表示です</string>
     <string name="holiday_data_failed_with_cache">祝日情報の更新に失敗しました。保存済みの情報を使用します</string>
-    <string name="holiday_data_out_of_range">祝日情報の取得対象範囲外のため、平日の予定は暫定表示です</string>
+    <string name="holiday_data_out_of_range">祝日情報の取得対象範囲外のため、予定は暫定表示です</string>
     <string name="holiday_name_format">祝日：%1$s</string>
     <string name="todo_editor_excluded_holiday_format">%1$s（%2$s）は実行日から除外</string>
     <string name="widget_name">今日のTODO</string>

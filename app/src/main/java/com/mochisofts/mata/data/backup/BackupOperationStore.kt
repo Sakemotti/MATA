@@ -122,6 +122,10 @@ class BackupOperationStore @Inject constructor(
                         periodResults = preferences.getInt(KEY_PERIOD_RESULTS, 0),
                         runtimeStates = preferences.getInt(KEY_RUNTIME_STATES, 0),
                     ),
+                    formatVersion = preferences.getInt(
+                        KEY_FORMAT_VERSION,
+                        MIN_SUPPORTED_BACKUP_FORMAT_VERSION,
+                    ),
                 ),
                 archivedTodoCount = preferences.getInt(KEY_ARCHIVED_TODOS, 0),
             )
@@ -148,6 +152,7 @@ class BackupOperationStore @Inject constructor(
         .putString(KEY_APP_VERSION_NAME, summary.manifest.appVersionName)
         .putLong(KEY_APP_VERSION_CODE, summary.manifest.appVersionCode)
         .putInt(KEY_ROOM_VERSION, summary.manifest.roomSchemaVersion)
+        .putInt(KEY_FORMAT_VERSION, summary.manifest.formatVersion)
         .putString(KEY_DATA_SHA, summary.manifest.dataSha256)
         .putLong(KEY_DATA_BYTES, summary.manifest.dataUncompressedBytes)
         .putInt(KEY_CATEGORIES, summary.manifest.counts.categories)
@@ -175,6 +180,7 @@ class BackupOperationStore @Inject constructor(
         const val KEY_APP_VERSION_NAME = "app_version_name"
         const val KEY_APP_VERSION_CODE = "app_version_code"
         const val KEY_ROOM_VERSION = "room_version"
+        const val KEY_FORMAT_VERSION = "format_version"
         const val KEY_DATA_SHA = "data_sha"
         const val KEY_DATA_BYTES = "data_bytes"
         const val KEY_CATEGORIES = "categories"

@@ -15,6 +15,7 @@ import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.NotificationValidationError
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
@@ -62,6 +63,8 @@ data class TodoEditorUiState(
     val monthlyDay: Int = 1,
     val intervalDaysInput: String = "1",
     val weeklyCount: Int = 1,
+    val periodWeeks: Int = 1,
+    val dayFilter: RecurrenceDayFilter = RecurrenceDayFilter.ALL,
     val monthlyCount: Int = 1,
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val dueMinutes: Int? = null,
@@ -91,7 +94,10 @@ data class TodoEditorUiState(
     val recurrenceRule: RecurrenceRule
         get() = RecurrenceRule(
             type = recurrenceType,
-            selectedWeekdays = selectedWeekdays,
+            selectedWeekdays = selectedWeekdays.takeIf {
+                recurrenceType == RecurrenceType.SELECTED_WEEKDAYS ||
+                    recurrenceType == RecurrenceType.WEEKLY_COUNT
+            }.orEmpty(),
             monthlyNthWeekdays = monthlyNthWeekdays.takeIf {
                 recurrenceType == RecurrenceType.MONTHLY_NTH_WEEKDAYS
             }.orEmpty(),
@@ -103,6 +109,13 @@ data class TodoEditorUiState(
                 RecurrenceType.MONTHLY_COUNT -> monthlyCount
                 else -> null
             },
+            periodWeeks = periodWeeks.takeIf {
+                recurrenceType == RecurrenceType.WEEKLY_COUNT
+            } ?: 1,
+            dayFilter = dayFilter.takeIf {
+                recurrenceType == RecurrenceType.SELECTED_WEEKDAYS ||
+                    recurrenceType == RecurrenceType.WEEKLY_COUNT
+            } ?: RecurrenceDayFilter.ALL,
         )
 
     val canSave: Boolean
@@ -187,6 +200,8 @@ class TodoEditorViewModel @Inject constructor(
                         monthlyDay = todo.recurrenceRule.monthlyDay ?: todo.startDate.dayOfMonth,
                         intervalDaysInput = (todo.recurrenceRule.intervalDays ?: 1).toString(),
                         weeklyCount = todo.recurrenceRule.requiredCount ?: 1,
+                        periodWeeks = todo.recurrenceRule.periodWeeks,
+                        dayFilter = todo.recurrenceRule.dayFilter,
                         monthlyCount = todo.recurrenceRule.requiredCount ?: 1,
                         dueMinutes = todo.dueMinutes,
                         notifications = todo.notifications,
@@ -205,6 +220,13 @@ class TodoEditorViewModel @Inject constructor(
     fun setRecurrence(value: RecurrenceType) = edit {
         copy(
             recurrenceType = value,
+            dayFilter = when {
+                value == RecurrenceType.SELECTED_WEEKDAYS &&
+                    recurrenceType != RecurrenceType.SELECTED_WEEKDAYS -> RecurrenceDayFilter.CUSTOM
+                value == RecurrenceType.WEEKLY_COUNT &&
+                    recurrenceType != RecurrenceType.WEEKLY_COUNT -> RecurrenceDayFilter.ALL
+                else -> dayFilter
+            },
             selectedWeekdays = if (
                 value == RecurrenceType.SELECTED_WEEKDAYS && selectedWeekdays.isEmpty()
             ) {
@@ -233,10 +255,26 @@ class TodoEditorViewModel @Inject constructor(
     }
     fun toggleWeekday(value: DayOfWeek) = edit {
         copy(
+            dayFilter = RecurrenceDayFilter.CUSTOM,
             selectedWeekdays = if (value in selectedWeekdays) {
                 selectedWeekdays - value
             } else {
                 selectedWeekdays + value
+            },
+        )
+    }
+    fun setDayFilter(value: RecurrenceDayFilter) = edit {
+        copy(
+            dayFilter = value,
+            selectedWeekdays = when (value) {
+                RecurrenceDayFilter.WEEKDAYS -> DayOfWeek.entries
+                    .filterTo(mutableSetOf()) { it.value <= DayOfWeek.FRIDAY.value }
+                RecurrenceDayFilter.WEEKENDS_HOLIDAYS -> setOf(
+                    DayOfWeek.SATURDAY,
+                    DayOfWeek.SUNDAY,
+                )
+                RecurrenceDayFilter.CUSTOM -> selectedWeekdays.ifEmpty { setOf(startDate.dayOfWeek) }
+                RecurrenceDayFilter.ALL -> emptySet()
             },
         )
     }
@@ -255,6 +293,9 @@ class TodoEditorViewModel @Inject constructor(
         copy(intervalDaysInput = value.filter(Char::isDigit).take(3))
     }
     fun setWeeklyCount(value: Int) = edit { copy(weeklyCount = value) }
+    fun setPeriodWeeks(value: Int) = edit {
+        copy(periodWeeks = value, weeklyCount = weeklyCount.coerceAtMost(value * 7))
+    }
     fun setMonthlyCount(value: Int) = edit { copy(monthlyCount = value) }
     fun setDueMinutes(value: Int?) = edit { copy(dueMinutes = value) }
 

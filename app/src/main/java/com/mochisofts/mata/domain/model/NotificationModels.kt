@@ -179,15 +179,17 @@ fun Todo.nextOccurrenceOnOrAfter(
     val candidate = when (recurrenceRule.type) {
         RecurrenceType.ONCE -> startDate.takeUnless { it.isBefore(from) }
         RecurrenceType.DAILY,
-        RecurrenceType.WEEKLY_COUNT,
         RecurrenceType.MONTHLY_COUNT,
         -> from
+        RecurrenceType.WEEKLY_COUNT -> generateSequence(from) { it.plusDays(1) }
+            .take(370)
+            .firstOrNull { occursOn(it, holidays) }
         RecurrenceType.WEEKDAYS -> generateSequence(from) { it.plusDays(1) }
             .take(370)
             .firstOrNull { it.dayOfWeek.value <= DayOfWeek.FRIDAY.value && it !in holidays }
         RecurrenceType.SELECTED_WEEKDAYS -> generateSequence(from) { it.plusDays(1) }
-            .take(7)
-            .firstOrNull { it.dayOfWeek in recurrenceRule.selectedWeekdays }
+            .take(370)
+            .firstOrNull { occursOn(it, holidays) }
         RecurrenceType.MONTHLY_DAY -> {
             val requestedDay = recurrenceRule.monthlyDay ?: return null
             var month = YearMonth.from(from)

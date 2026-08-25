@@ -79,6 +79,31 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
+    fun weekdayPresets_distinguishWeekdaysFromWeekendsAndHolidays() {
+        val mondayHoliday = LocalDate.of(2026, 8, 10)
+        val saturday = LocalDate.of(2026, 8, 15)
+        val weekdays = todo(
+            mondayHoliday,
+            saturday,
+            RecurrenceRule(
+                RecurrenceType.SELECTED_WEEKDAYS,
+                dayFilter = RecurrenceDayFilter.WEEKDAYS,
+            ),
+        )
+        val weekendsAndHolidays = weekdays.copy(
+            recurrenceRule = RecurrenceRule(
+                RecurrenceType.SELECTED_WEEKDAYS,
+                dayFilter = RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+            ),
+        )
+
+        assertFalse(weekdays.occursOn(mondayHoliday, setOf(mondayHoliday)))
+        assertTrue(weekendsAndHolidays.occursOn(mondayHoliday, setOf(mondayHoliday)))
+        assertTrue(weekendsAndHolidays.occursOn(saturday, emptySet()))
+        assertFalse(weekendsAndHolidays.occursOn(mondayHoliday.plusDays(1), emptySet()))
+    }
+
+    @Test
     fun monthlyRules_handleMissingDaysAndLeapYear() {
         val monthly31 = todo(
             LocalDate.of(2024, 1, 1),
@@ -172,6 +197,38 @@ class TodoScheduleCalculatorTest {
             ),
             todo.recurrencePeriod(LocalDate.of(2026, 8, 13), DayOfWeek.MONDAY),
         )
+    }
+
+    @Test
+    fun weeklyCount_supportsMultiWeekPeriodsAndEligibleDayFilter() {
+        val start = LocalDate.of(2026, 8, 12)
+        val holiday = LocalDate.of(2026, 8, 14)
+        val scheduled = todo(
+            start = start,
+            end = null,
+            rule = RecurrenceRule(
+                RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 1,
+                periodWeeks = 2,
+                dayFilter = RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+            ),
+        )
+
+        assertEquals(
+            RecurrencePeriod(
+                startDate = start,
+                endDate = LocalDate.of(2026, 8, 23),
+                requiredCount = 1,
+            ),
+            scheduled.recurrencePeriod(start, DayOfWeek.MONDAY),
+        )
+        assertEquals(
+            LocalDate.of(2026, 8, 24),
+            scheduled.recurrencePeriod(LocalDate.of(2026, 8, 30), DayOfWeek.MONDAY)?.startDate,
+        )
+        assertTrue(scheduled.occursOn(holiday, setOf(holiday)))
+        assertTrue(scheduled.occursOn(LocalDate.of(2026, 8, 15), emptySet()))
+        assertFalse(scheduled.occursOn(LocalDate.of(2026, 8, 13), emptySet()))
     }
 
     @Test
