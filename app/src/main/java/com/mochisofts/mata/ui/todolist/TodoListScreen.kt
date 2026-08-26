@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -188,18 +187,14 @@ fun TodoListScreen(
                         }
                     },
                     actions = {
-                        if (state.isToday) {
-                            IconButton(onClick = { viewModel.setShowCompleted(!state.showCompleted) }) {
-                                Icon(
-                                    if (state.showCompleted) Icons.Outlined.CheckCircle else Icons.Outlined.Check,
-                                    contentDescription = if (state.showCompleted) {
-                                        stringResource(R.string.content_description_hide_completed_todos)
-                                    } else {
-                                        stringResource(R.string.content_description_show_completed_todos)
-                                    },
-                                )
-                            }
-                        }
+                        TodoListTopBarActions(
+                            isToday = state.isToday,
+                            showCompleted = state.showCompleted,
+                            onToggleCompleted = {
+                                viewModel.setShowCompleted(!state.showCompleted)
+                            },
+                            onToday = viewModel::selectToday,
+                        )
                     },
                 )
             },
@@ -233,7 +228,6 @@ fun TodoListScreen(
                     state = state,
                     onPrevious = viewModel::selectPreviousDate,
                     onNext = viewModel::selectNextDate,
-                    onToday = viewModel::selectToday,
                     onPickDate = { showDatePicker = true },
                     onComplete = viewModel::complete,
                     onSkip = viewModel::skip,
@@ -327,6 +321,32 @@ fun TodoListScreen(
 }
 
 @Composable
+internal fun TodoListTopBarActions(
+    isToday: Boolean,
+    showCompleted: Boolean,
+    onToggleCompleted: () -> Unit,
+    onToday: () -> Unit,
+) {
+    if (isToday) {
+        TextButton(onClick = onToggleCompleted) {
+            Text(
+                stringResource(
+                    if (showCompleted) {
+                        R.string.content_description_hide_completed_todos
+                    } else {
+                        R.string.content_description_show_completed_todos
+                    },
+                ),
+            )
+        }
+    } else {
+        TextButton(onClick = onToday) {
+            Text(stringResource(R.string.action_return_to_today))
+        }
+    }
+}
+
+@Composable
 private fun HolidayDataStatus(state: TodoListUiState) {
     state.holidayName?.let { name ->
         Text(
@@ -377,7 +397,6 @@ private fun DateMode(
     state: TodoListUiState,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    onToday: () -> Unit,
     onPickDate: () -> Unit,
     onComplete: (TodoOccurrence) -> Unit,
     onSkip: (TodoOccurrence) -> Unit,
@@ -412,11 +431,6 @@ private fun DateMode(
                 Icons.Outlined.ChevronRight,
                 contentDescription = stringResource(R.string.content_description_next_day),
             )
-        }
-    }
-    if (!state.isToday) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            TextButton(onClick = onToday) { Text(stringResource(R.string.action_return_to_today)) }
         }
     }
     if (state.isLoading) {
