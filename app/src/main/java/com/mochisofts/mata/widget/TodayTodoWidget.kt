@@ -52,7 +52,6 @@ import androidx.glance.unit.ColorProvider
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MainActivity
 import com.mochisofts.mata.core.common.ValidationException
-import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.WidgetInstanceStateDao
 import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
 import com.mochisofts.mata.data.widget.ERROR_COMPLETE
@@ -78,7 +77,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -355,45 +353,28 @@ private fun WidgetTodoRow(
     item: WidgetTodoItem,
     compact: Boolean,
 ) {
+    val actionIntent = widgetTodoActionIntent(
+        context = context,
+        request = WidgetTodoActionRequest(
+            todoId = item.todoId,
+            logicalDate = LocalDate.parse(item.logicalDate),
+            expectedRevision = item.definitionRevision,
+            appWidgetId = appWidgetId,
+            snapshotVersion = snapshotVersion,
+        ),
+    )
     Row(
-        modifier = GlanceModifier.fillMaxWidth().padding(vertical = if (compact) 2.dp else 4.dp),
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .clickable(actionStartActivity(actionIntent))
+            .padding(
+                horizontal = if (compact) 4.dp else 8.dp,
+                vertical = if (compact) 10.dp else 12.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            provider = ImageProvider(R.drawable.ic_widget_unchecked),
-            contentDescription = context.getString(
-                R.string.widget_complete_content_description,
-                item.title,
-            ),
-            modifier = GlanceModifier
-                .size(48.dp)
-                .padding(12.dp)
-                .clickable(
-                    actionRunCallback<CompleteTodoWidgetAction>(
-                        actionParametersOf(
-                            WidgetActionKeys.todoId to item.todoId,
-                            WidgetActionKeys.logicalDate to item.logicalDate,
-                            WidgetActionKeys.definitionRevision to item.definitionRevision,
-                            WidgetActionKeys.appWidgetId to appWidgetId,
-                            WidgetActionKeys.snapshotVersion to snapshotVersion,
-                        ),
-                    ),
-                ),
-        )
         Column(
-            modifier = GlanceModifier
-                .defaultWeight()
-                .clickable(
-                    actionStartActivity(
-                        todoListIntent(
-                            context = context,
-                            selectedDate = item.logicalDate,
-                            mode = MainActivity.WIDGET_MODE_DATE,
-                            selectedCategoryKey = null,
-                            todoId = item.todoId,
-                        ),
-                    ),
-                ),
+            modifier = GlanceModifier.defaultWeight(),
         ) {
             Text(
                 text = item.title,
@@ -483,70 +464,7 @@ private fun todoListIntent(
 }
 
 object WidgetActionKeys {
-    val todoId = ActionParameters.Key<String>("todo_id")
-    val logicalDate = ActionParameters.Key<String>("logical_date")
-    val definitionRevision = ActionParameters.Key<Int>("definition_revision")
     val appWidgetId = ActionParameters.Key<Int>("app_widget_id")
-    val snapshotVersion = ActionParameters.Key<Int>("snapshot_version")
-}
-
-class CompleteTodoWidgetAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val todoId = parameters[WidgetActionKeys.todoId] ?: return
-        val logicalDate = parameters[WidgetActionKeys.logicalDate]?.let {
-            runCatching { LocalDate.parse(it) }.getOrNull()
-        } ?: return
-        val expectedRevision = parameters[WidgetActionKeys.definitionRevision] ?: return
-        val snapshotVersion = parameters[WidgetActionKeys.snapshotVersion] ?: return
-        val appWidgetId = parameters[WidgetActionKeys.appWidgetId] ?: return
-        if (runCatching { GlanceAppWidgetManager(context).getAppWidgetId(glanceId) }.getOrNull() !=
-            appWidgetId
-        ) return
-        val dependencies = widgetActionEntryPoint(context)
-        if (snapshotVersion != WidgetDisplayModel.CURRENT_VERSION) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-            return
-        }
-        val currentTodo = dependencies.todoRepository().getTodo(todoId)
-        if (currentTodo == null || currentTodo.archivedAt != null ||
-            currentTodo.definitionRevision < expectedRevision
-        ) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-            return
-        }
-
-        val operationId = UUID.randomUUID().toString()
-        val result = dependencies.todoRepository().setCompleted(
-            todoId = todoId,
-            logicalDate = logicalDate,
-            completed = true,
-            operationId = operationId,
-        )
-        if (result.isSuccess) {
-            if (dependencies.executionDao().findByOperationId(operationId) != null) {
-                val now = dependencies.clock().millis()
-                val expiresAt = now + UNDO_DURATION_MILLIS
-                val previous = dependencies.widgetStateDao().find(appWidgetId)
-                dependencies.widgetStateDao().upsert(
-                    (previous ?: emptyWidgetState(appWidgetId, now)).copy(
-                        undoOperationId = operationId,
-                        undoTodoTitle = currentTodo.title,
-                        undoExpiresAt = expiresAt,
-                        updatedAt = now,
-                    ),
-                )
-                dependencies.widgetUpdater().scheduleUndoExpiry(appWidgetId, expiresAt)
-            }
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-            return
-        }
-
-        if (result.exceptionOrNull() is ValidationException) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-        } else {
-            markActionFailure(context, glanceId, appWidgetId, dependencies)
-        }
-    }
 }
 
 class UndoWidgetCompletionAction : ActionCallback {
@@ -620,7 +538,6 @@ private fun WidgetInstanceStateEntity.clearUndo(now: Long) = copy(
 @InstallIn(SingletonComponent::class)
 interface WidgetActionEntryPoint {
     fun todoRepository(): TodoRepository
-    fun executionDao(): TodoExecutionDao
     fun widgetStateDao(): WidgetInstanceStateDao
     fun refreshCoordinator(): WidgetRefreshCoordinator
     fun widgetUpdater(): WidgetUpdater
@@ -736,5 +653,3 @@ private val DARK_CATEGORY_COLORS = longArrayOf(
     0xFFA5D6A7, 0xFFC5E1A5, 0xFFE6EE9C, 0xFFFFF59D,
     0xFFFFCC80, 0xFFFFAB91, 0xFFBCAAA4, 0xFFB0BEC5,
 )
-
-private const val UNDO_DURATION_MILLIS = 15_000L
