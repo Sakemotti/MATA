@@ -4,10 +4,13 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.WorkManager
+import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
@@ -40,6 +43,7 @@ import org.junit.runner.RunWith
 class RoomHistoryRepositoryTest {
     private lateinit var database: MataDatabase
     private lateinit var repository: RoomHistoryRepository
+    private lateinit var workManager: WorkManager
     private val date = LocalDate.of(2026, 8, 11)
 
     @Before
@@ -48,6 +52,8 @@ class RoomHistoryRepositoryTest {
         database = Room.inMemoryDatabaseBuilder(context, MataDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        workManager = WorkManager.getInstance(context)
+        workManager.cancelUniqueWork(WidgetUpdater.IMMEDIATE_UPDATE_WORK_NAME).result.get()
         repository = RoomHistoryRepository(
             database = database,
             todoDao = database.todoDao(),
@@ -57,6 +63,7 @@ class RoomHistoryRepositoryTest {
             todoRepository = EmptyTodoRepository(),
             settingsRepository = CalendarSettingsRepository(),
             notificationScheduler = NoOpNotificationScheduler(),
+            widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
             clock = Clock.fixed(
                 Instant.parse("2026-08-11T03:00:00Z"),
                 ZoneId.of("Asia/Tokyo"),
@@ -133,9 +140,12 @@ class RoomHistoryRepositoryTest {
         val token = repository.undoAction(execution.id).getOrThrow()
         assertEquals(TodoState.COMPLETED, token.state)
         assertNull(database.todoExecutionDao().findById(execution.id))
+        val undoUpdateWorkIds = immediateUpdateWorkIds()
+        assertTrue(undoUpdateWorkIds.isNotEmpty())
 
         repository.restoreAction(token).getOrThrow()
         assertNotNull(database.todoExecutionDao().findById(execution.id))
+        assertTrue(immediateUpdateWorkIds().any { it !in undoUpdateWorkIds })
 
         database.todoExecutionDao().deleteById(execution.id)
         val skippedExecution = execution.copy(
@@ -159,6 +169,11 @@ class RoomHistoryRepositoryTest {
             database.todoExecutionDao().findById(skippedExecution.id)?.status,
         )
     }
+
+    private fun immediateUpdateWorkIds() =
+        workManager.getWorkInfosForUniqueWork(WidgetUpdater.IMMEDIATE_UPDATE_WORK_NAME)
+            .get()
+            .map { it.id }
 }
 
 private class CalendarSettingsRepository : SettingsRepository {

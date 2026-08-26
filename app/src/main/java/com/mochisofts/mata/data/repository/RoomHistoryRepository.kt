@@ -14,6 +14,7 @@ import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryEntry
@@ -57,6 +58,7 @@ class RoomHistoryRepository @Inject constructor(
     private val todoRepository: TodoRepository,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
+    private val widgetUpdater: WidgetUpdater,
     private val clock: Clock,
 ) : HistoryRepository {
     private val operationMutex = Mutex()
@@ -102,6 +104,7 @@ class RoomHistoryRepository @Inject constructor(
                     execution.toUndoToken()
                 }
                 todoIdToReconcile?.let { runCatching { notificationScheduler.reconcileTodo(it) } }
+                runCatching { widgetUpdater.requestImmediateUpdate() }
                 token
             }
         }
@@ -120,6 +123,7 @@ class RoomHistoryRepository @Inject constructor(
                 if (todo.archivedAt == null) todoIdToReconcile = todo.id
             }
             todoIdToReconcile?.let { runCatching { notificationScheduler.reconcileTodo(it) } }
+            runCatching { widgetUpdater.requestImmediateUpdate() }
         }
     }
 
