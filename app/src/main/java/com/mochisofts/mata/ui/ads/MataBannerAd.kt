@@ -71,10 +71,13 @@ fun MataBannerAd(
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val requestedWidth = maxWidth.coerceAtMost(840.dp).value.toInt()
-        var stableWidth by remember { mutableIntStateOf(0) }
-        LaunchedEffect(canLoad, requestedWidth, runtimeState.consentRevision) {
-            stableWidth = 0
-            if (canLoad && requestedWidth > 0) {
+        var stableWidth by remember { mutableIntStateOf(requestedWidth) }
+        LaunchedEffect(canLoad, requestedWidth) {
+            if (!canLoad || requestedWidth <= 0) {
+                stableWidth = 0
+            } else if (stableWidth <= 0) {
+                stableWidth = requestedWidth
+            } else if (stableWidth != requestedWidth) {
                 delay(300)
                 stableWidth = requestedWidth
             }
@@ -99,37 +102,42 @@ private fun BannerAdHost(widthDp: Int, consentRevision: Long) {
         AdSize.getLargeAnchoredAdaptiveBannerAdSize(activity, widthDp)
     }
     val adView = remember(activity, widthDp, consentRevision) { AdView(activity) }
-    var loadedSize by remember(adView) { mutableStateOf<AdSize?>(null) }
+    var loadState by remember(adView) { mutableStateOf(BannerLoadState.LOADING) }
 
     DisposableEffect(adView) {
         onDispose { adView.destroy() }
     }
     LaunchedEffect(adView, adSize) {
-        loadedSize = null
+        loadState = BannerLoadState.LOADING
         val request = BannerAdRequest.Builder(BuildConfig.ADMOB_BANNER_AD_UNIT_ID, adSize).build()
         adView.loadAd(
             request,
             object : AdLoadCallback<BannerAd> {
                 override fun onAdLoaded(ad: BannerAd) {
-                    scope.launch { loadedSize = ad.getAdSize() }
+                    scope.launch { loadState = BannerLoadState.LOADED }
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    scope.launch { loadedSize = null }
+                    scope.launch { loadState = BannerLoadState.FAILED }
                 }
             },
         )
     }
 
-    val size = loadedSize
     AndroidView(
         factory = { adView },
-        modifier = if (size == null) {
+        modifier = if (loadState == BannerLoadState.FAILED) {
             Modifier.size(0.dp)
         } else {
-            Modifier.width(size.width.dp).height(size.height.dp)
+            Modifier.width(adSize.width.dp).height(adSize.height.dp)
         },
     )
+}
+
+private enum class BannerLoadState {
+    LOADING,
+    LOADED,
+    FAILED,
 }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
