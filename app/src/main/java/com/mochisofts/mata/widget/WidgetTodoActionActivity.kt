@@ -52,6 +52,8 @@ import com.mochisofts.mata.data.widget.activeAppWidgetIds
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Todo
+import com.mochisofts.mata.domain.model.TodoOccurrence
+import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.WidgetDisplayModel
 import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
@@ -70,6 +72,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -379,14 +382,21 @@ internal class WidgetTodoActionCoordinator @Inject constructor(
         ) {
             throw WidgetTodoActionUnavailableException()
         }
-        val todo = todoRepository.getTodo(request.todoId)
-        if (!todo.isAvailableFor(request)) throw WidgetTodoActionUnavailableException()
-        return checkNotNull(todo)
+        val occurrence = todoRepository.observeOccurrences(request.logicalDate)
+            .first()
+            .firstOrNull { it.isAvailableFor(request) }
+            ?: throw WidgetTodoActionUnavailableException()
+        return occurrence.todo
     }
 }
 
-internal fun Todo?.isAvailableFor(request: WidgetTodoActionRequest): Boolean =
-    this != null && archivedAt == null && definitionRevision >= request.expectedRevision
+internal fun TodoOccurrence.isAvailableFor(request: WidgetTodoActionRequest): Boolean =
+    todo.id == request.todoId &&
+        todo.archivedAt == null &&
+        todo.definitionRevision >= request.expectedRevision &&
+        logicalDate == request.logicalDate &&
+        state == TodoState.PENDING &&
+        progress?.isAchieved != true
 
 internal class WidgetTodoActionUnavailableException : IllegalStateException()
 
