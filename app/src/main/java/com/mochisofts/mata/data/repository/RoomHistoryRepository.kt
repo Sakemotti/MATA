@@ -14,7 +14,7 @@ import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
-import com.mochisofts.mata.domain.model.CompletionUndoToken
+import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryEntry
 import com.mochisofts.mata.domain.model.HistoryMonth
@@ -89,7 +89,7 @@ class RoomHistoryRepository @Inject constructor(
         }
     }
 
-    override suspend fun undoCompletion(executionId: String): Result<CompletionUndoToken> =
+    override suspend fun undoAction(executionId: String): Result<HistoryActionUndoToken> =
         runCatching {
             operationMutex.withLock {
                 var todoIdToReconcile: String? = null
@@ -106,7 +106,7 @@ class RoomHistoryRepository @Inject constructor(
             }
         }
 
-    override suspend fun restoreCompletion(token: CompletionUndoToken): Result<Unit> = runCatching {
+    override suspend fun restoreAction(token: HistoryActionUndoToken): Result<Unit> = runCatching {
         operationMutex.withLock {
             var todoIdToReconcile: String? = null
             database.withTransaction {
@@ -177,7 +177,7 @@ class RoomHistoryRepository @Inject constructor(
                         actedAt = execution.actedAt,
                         finalizedAt = execution.finalizedAt,
                         snapshot = snapshot,
-                        canUndoCompletion = execution.status == TodoState.COMPLETED.code &&
+                        canUndoAction = TodoState.fromStoredValue(execution.status) in UNDOABLE_STATES &&
                             todo?.let {
                                 isUndoEligible(
                                     execution = execution,
@@ -234,8 +234,8 @@ class RoomHistoryRepository @Inject constructor(
     }
 
     private suspend fun validateUndoEligibility(execution: TodoExecutionEntity): TodoEntity {
-        if (TodoState.fromStoredValue(execution.status) != TodoState.COMPLETED) {
-            throw ValidationException(ValidationError.HISTORY_COMPLETION_NOT_UNDOABLE)
+        if (TodoState.fromStoredValue(execution.status) !in UNDOABLE_STATES) {
+            throw ValidationException(ValidationError.HISTORY_ACTION_NOT_UNDOABLE)
         }
         val todo = todoDao.findById(execution.todoId)
             ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
@@ -251,7 +251,7 @@ class RoomHistoryRepository @Inject constructor(
                 now = ZonedDateTime.now(clock),
             )
         ) {
-            throw ValidationException(ValidationError.HISTORY_COMPLETION_NOT_UNDOABLE)
+            throw ValidationException(ValidationError.HISTORY_ACTION_NOT_UNDOABLE)
         }
         return todo
     }
@@ -385,7 +385,7 @@ class RoomHistoryRepository @Inject constructor(
             weekStart = weekStart,
             createdAt = todo.createdAt,
         ),
-        canUndoCompletion = false,
+        canUndoAction = false,
     )
 
     private fun historyEntryComparator(): Comparator<HistoryEntry> =
@@ -402,11 +402,12 @@ class RoomHistoryRepository @Inject constructor(
             .thenBy { it.snapshot.createdAt }
             .thenBy { it.id.orEmpty() }
 
-    private fun TodoExecutionEntity.toUndoToken() = CompletionUndoToken(
+    private fun TodoExecutionEntity.toUndoToken() = HistoryActionUndoToken(
         id = id,
         operationId = operationId,
         todoId = todoId,
         logicalDate = LocalDate.parse(logicalDate),
+        state = TodoState.fromStoredValue(status),
         actedAt = actedAt ?: finalizedAt,
         finalizedAt = finalizedAt,
         definitionRevision = definitionRevision,
@@ -414,12 +415,12 @@ class RoomHistoryRepository @Inject constructor(
         snapshotJson = snapshotJson,
     )
 
-    private fun CompletionUndoToken.toEntity() = TodoExecutionEntity(
+    private fun HistoryActionUndoToken.toEntity() = TodoExecutionEntity(
         id = id,
         operationId = operationId,
         todoId = todoId,
         logicalDate = logicalDate.toString(),
-        status = TodoState.COMPLETED.code,
+        status = state.code,
         actedAt = actedAt,
         finalizedAt = finalizedAt,
         definitionRevision = definitionRevision,
@@ -443,3 +444,5 @@ private val TodoState.historySectionOrder: Int
         TodoState.SKIPPED -> 1
         TodoState.COMPLETED -> 2
     }
+
+private val UNDOABLE_STATES = setOf(TodoState.COMPLETED, TodoState.SKIPPED)

@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
-import androidx.glance.Button
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -52,7 +51,6 @@ import androidx.glance.unit.ColorProvider
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MainActivity
 import com.mochisofts.mata.core.common.ValidationException
-import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.WidgetInstanceStateDao
 import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
 import com.mochisofts.mata.data.widget.ERROR_COMPLETE
@@ -78,7 +76,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -252,30 +249,6 @@ private fun WidgetModelContent(
         if (model.holidayDataProvisional) {
             StatusText(context.getString(R.string.widget_holiday_provisional), WidgetColors.onSurfaceVariant)
         }
-        val undoOperationId = state?.undoOperationId
-        if (undoOperationId != null && (state.undoExpiresAt ?: 0) > System.currentTimeMillis()) {
-            Row(
-                modifier = GlanceModifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = context.getString(
-                        R.string.widget_completed_format,
-                        state.undoTodoTitle.orEmpty(),
-                    ),
-                    style = TextStyle(color = WidgetColors.onSurface, fontSize = 12.sp),
-                    modifier = GlanceModifier.defaultWeight(),
-                    maxLines = 1,
-                )
-                Button(
-                    text = context.getString(R.string.widget_undo),
-                    onClick = actionRunCallback<UndoWidgetCompletionAction>(
-                        actionParametersOf(WidgetActionKeys.appWidgetId to appWidgetId),
-                    ),
-                )
-            }
-        }
-
         if (model.groups.isEmpty()) {
             Box(
                 modifier = GlanceModifier
@@ -515,59 +488,17 @@ class CompleteTodoWidgetAction : ActionCallback {
             return
         }
 
-        val operationId = UUID.randomUUID().toString()
         val result = dependencies.todoRepository().setCompleted(
             todoId = todoId,
             logicalDate = logicalDate,
             completed = true,
-            operationId = operationId,
         )
         if (result.isSuccess) {
-            if (dependencies.executionDao().findByOperationId(operationId) != null) {
-                val now = dependencies.clock().millis()
-                val expiresAt = now + UNDO_DURATION_MILLIS
-                val previous = dependencies.widgetStateDao().find(appWidgetId)
-                dependencies.widgetStateDao().upsert(
-                    (previous ?: emptyWidgetState(appWidgetId, now)).copy(
-                        undoOperationId = operationId,
-                        undoTodoTitle = currentTodo.title,
-                        undoExpiresAt = expiresAt,
-                        updatedAt = now,
-                    ),
-                )
-                dependencies.widgetUpdater().scheduleUndoExpiry(appWidgetId, expiresAt)
-            }
             dependencies.refreshCoordinator().refreshAll(appWidgetId)
             return
         }
 
         if (result.exceptionOrNull() is ValidationException) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-        } else {
-            markActionFailure(context, glanceId, appWidgetId, dependencies)
-        }
-    }
-}
-
-class UndoWidgetCompletionAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val appWidgetId = parameters[WidgetActionKeys.appWidgetId] ?: return
-        if (runCatching { GlanceAppWidgetManager(context).getAppWidgetId(glanceId) }.getOrNull() !=
-            appWidgetId
-        ) return
-        val dependencies = widgetActionEntryPoint(context)
-        val state = dependencies.widgetStateDao().find(appWidgetId) ?: return
-        val operationId = state.undoOperationId ?: return
-        val now = dependencies.clock().millis()
-        if ((state.undoExpiresAt ?: 0) <= now) {
-            dependencies.widgetStateDao().upsert(state.clearUndo(now))
-            TodayTodoWidget().update(context, glanceId)
-            return
-        }
-        val result = dependencies.todoRepository().undoCompletion(operationId)
-        if (result.isSuccess || result.exceptionOrNull() is ValidationException) {
-            dependencies.widgetStateDao().upsert(state.clearUndo(now))
-            dependencies.widgetUpdater().cancelUndoExpiry(appWidgetId)
             dependencies.refreshCoordinator().refreshAll(appWidgetId)
         } else {
             markActionFailure(context, glanceId, appWidgetId, dependencies)
@@ -609,21 +540,12 @@ private fun emptyWidgetState(appWidgetId: Int, now: Long) = WidgetInstanceStateE
     updatedAt = now,
 )
 
-private fun WidgetInstanceStateEntity.clearUndo(now: Long) = copy(
-    undoOperationId = null,
-    undoTodoTitle = null,
-    undoExpiresAt = null,
-    updatedAt = now,
-)
-
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface WidgetActionEntryPoint {
     fun todoRepository(): TodoRepository
-    fun executionDao(): TodoExecutionDao
     fun widgetStateDao(): WidgetInstanceStateDao
     fun refreshCoordinator(): WidgetRefreshCoordinator
-    fun widgetUpdater(): WidgetUpdater
     fun clock(): Clock
 }
 
@@ -656,7 +578,6 @@ class TodayTodoWidgetReceiver : GlanceAppWidgetReceiver() {
                 val dependencies = widgetEntryPoint(context)
                 appWidgetIds.forEach { appWidgetId ->
                     dependencies.widgetStateDao().delete(appWidgetId)
-                    dependencies.widgetUpdater().cancelUndoExpiry(appWidgetId)
                 }
             } finally {
                 pendingResult.finish()
@@ -736,5 +657,3 @@ private val DARK_CATEGORY_COLORS = longArrayOf(
     0xFFA5D6A7, 0xFFC5E1A5, 0xFFE6EE9C, 0xFFFFF59D,
     0xFFFFCC80, 0xFFFFAB91, 0xFFBCAAA4, 0xFFB0BEC5,
 )
-
-private const val UNDO_DURATION_MILLIS = 15_000L

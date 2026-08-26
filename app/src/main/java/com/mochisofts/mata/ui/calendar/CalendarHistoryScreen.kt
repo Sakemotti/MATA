@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -170,28 +171,33 @@ fun CalendarHistoryScreen(
     var dialogItemKey by rememberSaveable { mutableStateOf<String?>(null) }
     val dialogItem = state.findDialogItem(dialogItemKey)
     val historyListState = rememberLazyListState()
-    val undoMessage = stringResource(R.string.calendar_history_completion_undone)
+    val completionUndoneMessage = stringResource(R.string.calendar_history_completion_undone)
+    val skipUndoneMessage = stringResource(R.string.calendar_history_skip_undone)
     val undoLabel = stringResource(R.string.action_undo)
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-    LaunchedEffect(viewModel, resources, undoMessage, undoLabel) {
+    LaunchedEffect(viewModel, resources, completionUndoneMessage, skipUndoneMessage, undoLabel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is CalendarHistoryEffect.Message -> {
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
-                is CalendarHistoryEffect.CompletionUndone -> {
+                is CalendarHistoryEffect.ActionUndone -> {
                     val result = withTimeoutOrNull(5_000) {
                         snackbarHostState.showSnackbar(
-                            message = undoMessage,
+                            message = if (effect.token.state == TodoState.SKIPPED) {
+                                skipUndoneMessage
+                            } else {
+                                completionUndoneMessage
+                            },
                             actionLabel = undoLabel,
                             withDismissAction = true,
                             duration = SnackbarDuration.Indefinite,
                         )
                     }
                     if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.restoreCompletion(effect.token)
+                        viewModel.restoreAction(effect.token)
                     }
                 }
             }
@@ -239,7 +245,7 @@ fun CalendarHistoryScreen(
                 onRetry = viewModel::refresh,
                 onEntryClick = { dialogItemKey = it.dialogKey() },
                 onPeriodClick = { dialogItemKey = it.dialogKey() },
-                onUndoCompletion = viewModel::undoCompletion,
+                onUndoAction = viewModel::undoAction,
                 modifier = Modifier.fillMaxSize().padding(padding),
             )
         }
@@ -270,7 +276,7 @@ private fun CalendarHistoryBody(
     onRetry: () -> Unit,
     onEntryClick: (HistoryEntry) -> Unit,
     onPeriodClick: (PeriodHistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (layoutInfo.useTwoPane) {
@@ -302,7 +308,7 @@ private fun CalendarHistoryBody(
                     onRetry = onRetry,
                     onEntryClick = onEntryClick,
                     onPeriodClick = onPeriodClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     listState = historyListState,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
@@ -327,7 +333,7 @@ private fun CalendarHistoryBody(
                 onRetry = onRetry,
                 onEntryClick = onEntryClick,
                 onPeriodClick = onPeriodClick,
-                onUndoCompletion = onUndoCompletion,
+                onUndoAction = onUndoAction,
                 listState = historyListState,
                 modifier = Modifier.weight(1f),
             )
@@ -555,7 +561,7 @@ private fun DayHistoryArea(
     onRetry: () -> Unit,
     onEntryClick: (HistoryEntry) -> Unit,
     onPeriodClick: (PeriodHistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
@@ -581,21 +587,21 @@ private fun DayHistoryArea(
                     titleRes = R.string.label_unfinished,
                     entries = unfinished,
                     onEntryClick = onEntryClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     busyExecutionId = state.busyExecutionId,
                 )
                 historySection(
                     titleRes = R.string.label_skipped,
                     entries = day.entries.filter { it.state == TodoState.SKIPPED },
                     onEntryClick = onEntryClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     busyExecutionId = state.busyExecutionId,
                 )
                 historySection(
                     titleRes = R.string.label_completed,
                     entries = day.entries.filter { it.state == TodoState.COMPLETED },
                     onEntryClick = onEntryClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     busyExecutionId = state.busyExecutionId,
                 )
                 if (day.periodResults.isNotEmpty()) {
@@ -622,13 +628,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historySection(
     @androidx.annotation.StringRes titleRes: Int,
     entries: List<HistoryEntry>,
     onEntryClick: (HistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
     busyExecutionId: String?,
 ) {
     if (entries.isEmpty()) return
     item { SectionTitle(stringResource(titleRes)) }
     items(entries, key = { "entry:${it.id ?: "pending:${it.todoId}:${it.logicalDate}"}" }) { entry ->
-        HistoryEntryRow(entry, busyExecutionId, onEntryClick, onUndoCompletion)
+        HistoryEntryRow(entry, busyExecutionId, onEntryClick, onUndoAction)
         HorizontalDivider()
     }
 }
@@ -670,7 +676,7 @@ private fun HistoryEntryRow(
     entry: HistoryEntry,
     busyExecutionId: String?,
     onClick: (HistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
 ) {
     ListItem(
         headlineContent = {
@@ -694,14 +700,26 @@ private fun HistoryEntryRow(
             }
         },
         leadingContent = {
-            if (entry.canUndoCompletion && entry.id != null) {
-                MataCompletionCheckbox(
-                    checked = true,
-                    enabled = busyExecutionId == null,
-                    onCheckedChange = { checked -> if (!checked) onUndoCompletion(entry.id) },
-                )
-            } else {
-                HistoryEntryIcon(entry.state)
+            when {
+                entry.canUndoAction && entry.id != null && entry.state == TodoState.COMPLETED -> {
+                    MataCompletionCheckbox(
+                        checked = true,
+                        enabled = busyExecutionId == null,
+                        onCheckedChange = { checked -> if (!checked) onUndoAction(entry.id) },
+                    )
+                }
+                entry.canUndoAction && entry.id != null && entry.state == TodoState.SKIPPED -> {
+                    IconButton(
+                        onClick = { onUndoAction(entry.id) },
+                        enabled = busyExecutionId == null,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Restore,
+                            contentDescription = stringResource(R.string.content_description_undo_skip),
+                        )
+                    }
+                }
+                else -> HistoryEntryIcon(entry.state)
             }
         },
         trailingContent = { CategorySnapshotIcon(entry.snapshot) },

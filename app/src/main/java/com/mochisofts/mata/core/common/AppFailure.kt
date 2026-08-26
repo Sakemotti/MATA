@@ -118,7 +118,7 @@ private fun ValidationError.failureCategory(): FailureCategory = when (this) {
     ValidationError.TODO_NOT_ACTIVE,
     ValidationError.TODO_ACTION_DATE_INVALID,
     ValidationError.TODO_ACTION_CANNOT_UNDO,
-    ValidationError.HISTORY_COMPLETION_NOT_UNDOABLE,
+    ValidationError.HISTORY_ACTION_NOT_UNDOABLE,
     -> FailureCategory.BUSINESS_RULE
 
     else -> FailureCategory.INPUT
