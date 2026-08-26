@@ -11,15 +11,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -83,7 +87,6 @@ class WidgetTodoActionActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setFinishOnTouchOutside(true)
         val request = intent.toWidgetTodoActionRequest()
         if (request == null) {
             finish()
@@ -125,8 +128,49 @@ internal fun WidgetTodoActionDialog(
     onSkip: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .pointerInput(onCancel) {
+                    detectTapGestures { onCancel() }
+                }
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            WidgetTodoActionDialogSurface(
+                state = state,
+                onComplete = onComplete,
+                onSkip = onSkip,
+                onCancel = onCancel,
+            )
+        }
+        MataBannerAd(
+            runtimeState = adsRuntime,
+            isForeground = isForeground,
+            isScreenVisible = true,
+            isImeVisible = false,
+            hasOverlay = false,
+            applyBottomSafeInset = true,
+        )
+    }
+}
+
+@Composable
+private fun WidgetTodoActionDialogSurface(
+    state: WidgetTodoActionUiState,
+    onComplete: () -> Unit,
+    onSkip: () -> Unit,
+    onCancel: () -> Unit,
+) {
     Surface(
-        modifier = Modifier.fillMaxWidth().widthIn(max = 560.dp),
+        modifier = Modifier
+            .widthIn(max = 560.dp)
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures { /* Consume taps inside the dialog surface. */ }
+            },
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
@@ -163,14 +207,6 @@ internal fun WidgetTodoActionDialog(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
-            Spacer(Modifier.height(12.dp))
-            MataBannerAd(
-                runtimeState = adsRuntime,
-                isForeground = isForeground,
-                isScreenVisible = true,
-                isImeVisible = false,
-                hasOverlay = false,
-            )
             Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
