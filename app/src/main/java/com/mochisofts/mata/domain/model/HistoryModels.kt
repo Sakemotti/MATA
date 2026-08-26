@@ -37,7 +37,7 @@ data class HistoryEntry(
     val actedAt: Long?,
     val finalizedAt: Long?,
     val snapshot: HistoryTodoSnapshot,
-    val canUndoCompletion: Boolean,
+    val canUndoAction: Boolean,
 )
 
 data class PeriodHistoryEntry(
@@ -74,11 +74,12 @@ data class HistoryDay(
     val periodResults: List<PeriodHistoryEntry>,
 )
 
-data class CompletionUndoToken(
+data class HistoryActionUndoToken(
     val id: String,
     val operationId: String,
     val todoId: String,
     val logicalDate: LocalDate,
+    val state: TodoState,
     val actedAt: Long,
     val finalizedAt: Long,
     val definitionRevision: Int,

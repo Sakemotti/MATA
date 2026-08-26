@@ -45,8 +45,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -109,7 +107,6 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.runtime.rememberCoroutineScope
 
 private data class TodoActionTarget(val id: String, val title: String)
@@ -136,7 +133,6 @@ fun TodoListScreen(
     val resources = LocalResources.current
     val completedMessage = stringResource(R.string.message_todo_completed)
     val skippedMessage = stringResource(R.string.message_todo_skipped)
-    val undoLabel = stringResource(R.string.action_undo)
     var showDatePicker by remember { mutableStateOf(false) }
     var readOnlyOccurrence by remember { mutableStateOf<TodoOccurrence?>(null) }
     var archiveTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
@@ -150,37 +146,17 @@ fun TodoListScreen(
         }
     }
 
-    LaunchedEffect(viewModel, resources, completedMessage, undoLabel) {
+    LaunchedEffect(viewModel, resources, completedMessage, skippedMessage) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is TodoListEffect.Message -> {
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
-                is TodoListEffect.Completed -> {
-                    val result = withTimeoutOrNull(5_000) {
-                        snackbarHostState.showSnackbar(
-                            message = completedMessage,
-                            actionLabel = undoLabel,
-                            withDismissAction = true,
-                            duration = SnackbarDuration.Indefinite,
-                        )
-                    }
-                    if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.undoCompletion(effect.todoId, effect.logicalDate)
-                    }
+                TodoListEffect.Completed -> {
+                    snackbarHostState.showSnackbar(completedMessage)
                 }
-                is TodoListEffect.Skipped -> {
-                    val result = withTimeoutOrNull(5_000) {
-                        snackbarHostState.showSnackbar(
-                            message = skippedMessage,
-                            actionLabel = undoLabel,
-                            withDismissAction = true,
-                            duration = SnackbarDuration.Indefinite,
-                        )
-                    }
-                    if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.undoSkip(effect.todoId, effect.logicalDate)
-                    }
+                TodoListEffect.Skipped -> {
+                    snackbarHostState.showSnackbar(skippedMessage)
                 }
                 TodoListEffect.Archived -> {
                     snackbarHostState.showSnackbar(resources.getString(R.string.message_todo_archived))

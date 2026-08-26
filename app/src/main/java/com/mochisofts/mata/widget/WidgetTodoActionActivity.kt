@@ -43,12 +43,7 @@ import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.core.designsystem.MataTheme
-import com.mochisofts.mata.data.local.TodoExecutionDao
-import com.mochisofts.mata.data.local.WidgetInstanceStateDao
-import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
-import com.mochisofts.mata.data.widget.LOAD_LOADING
 import com.mochisofts.mata.data.widget.WidgetRefreshCoordinator
-import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.data.widget.activeAppWidgetIds
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AppTheme
@@ -62,7 +57,6 @@ import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.Clock
 import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
@@ -303,11 +297,7 @@ internal class WidgetTodoActionViewModel @Inject constructor(
 internal class WidgetTodoActionCoordinator @Inject constructor(
     @ApplicationContext private val context: Context,
     private val todoRepository: TodoRepository,
-    private val executionDao: TodoExecutionDao,
-    private val widgetStateDao: WidgetInstanceStateDao,
-    private val widgetUpdater: WidgetUpdater,
     private val refreshCoordinator: WidgetRefreshCoordinator,
-    private val clock: Clock,
 ) {
     suspend fun load(request: WidgetTodoActionRequest): Result<String> {
         val result = runCatching { currentTodo(request).title }
@@ -318,7 +308,7 @@ internal class WidgetTodoActionCoordinator @Inject constructor(
     }
 
     suspend fun perform(request: WidgetTodoActionRequest, action: WidgetTodoAction): Result<Unit> {
-        val todo = runCatching { currentTodo(request) }.getOrElse { throwable ->
+        runCatching { currentTodo(request) }.getOrElse { throwable ->
             runCatching { refreshCoordinator.refreshAll(request.appWidgetId) }
             return Result.failure(throwable)
         }
@@ -343,9 +333,6 @@ internal class WidgetTodoActionCoordinator @Inject constructor(
             }
             return result
         }
-        if (action == WidgetTodoAction.COMPLETE) {
-            runCatching { recordCompletionUndo(request.appWidgetId, operationId, todo.title) }
-        }
         runCatching { refreshCoordinator.refreshAll(request.appWidgetId) }
         return Result.success(Unit)
     }
@@ -359,22 +346,6 @@ internal class WidgetTodoActionCoordinator @Inject constructor(
         val todo = todoRepository.getTodo(request.todoId)
         if (!todo.isAvailableFor(request)) throw WidgetTodoActionUnavailableException()
         return checkNotNull(todo)
-    }
-
-    private suspend fun recordCompletionUndo(appWidgetId: Int, operationId: String, title: String) {
-        if (executionDao.findByOperationId(operationId) == null) return
-        val now = clock.millis()
-        val expiresAt = now + WIDGET_UNDO_DURATION_MILLIS
-        val previous = widgetStateDao.find(appWidgetId)
-        widgetStateDao.upsert(
-            (previous ?: emptyWidgetActionState(appWidgetId, now)).copy(
-                undoOperationId = operationId,
-                undoTodoTitle = title,
-                undoExpiresAt = expiresAt,
-                updatedAt = now,
-            ),
-        )
-        widgetUpdater.scheduleUndoExpiry(appWidgetId, expiresAt)
     }
 }
 
@@ -424,25 +395,9 @@ private fun Intent.toWidgetTodoActionRequest(): WidgetTodoActionRequest? {
     )
 }
 
-private fun emptyWidgetActionState(appWidgetId: Int, now: Long) = WidgetInstanceStateEntity(
-    appWidgetId = appWidgetId,
-    snapshotVersion = WidgetDisplayModel.CURRENT_VERSION,
-    snapshotJson = null,
-    lastSuccessAt = null,
-    loadState = LOAD_LOADING,
-    errorCode = null,
-    lastFailureAt = null,
-    undoOperationId = null,
-    undoTodoTitle = null,
-    undoExpiresAt = null,
-    nextRefreshAt = null,
-    updatedAt = now,
-)
-
 private const val ACTION_WIDGET_TODO = "com.mochisofts.mata.action.WIDGET_TODO"
 private const val EXTRA_TODO_ID = "widget_action_todo_id"
 private const val EXTRA_LOGICAL_DATE = "widget_action_logical_date"
 private const val EXTRA_DEFINITION_REVISION = "widget_action_definition_revision"
 private const val EXTRA_APP_WIDGET_ID = "widget_action_app_widget_id"
 private const val EXTRA_SNAPSHOT_VERSION = "widget_action_snapshot_version"
-private const val WIDGET_UNDO_DURATION_MILLIS = 15_000L

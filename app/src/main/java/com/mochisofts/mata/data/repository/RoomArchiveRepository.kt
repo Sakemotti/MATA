@@ -181,7 +181,7 @@ class RoomArchiveRepository @Inject constructor(
                     actedAt = actedAt,
                     finalizedAt = finalizedAt,
                     snapshot = snapshot,
-                    canUndoCompletion = false,
+                    canUndoAction = false,
                 ),
             )
         } else {
