@@ -227,8 +227,6 @@
     <string name="settings_ads_privacy_options_value">設定を確認</string>
     <string name="settings_ads_privacy_options_description">Googleが提供する画面で広告に関する選択を変更します</string>
     <string name="settings_ads_privacy_options_error">プライバシー設定を表示できませんでした</string>
-    <string name="settings_archived_todos_description">復元または完全削除するTODOを管理します</string>
-    <string name="settings_open_management">管理画面を開く</string>
     <string name="backup_create_title">バックアップを作成</string>
     <string name="backup_create_value">ファイルに保存</string>
     <string name="backup_create_description">TODO、カテゴリ、履歴、一般設定を保存します</string>
