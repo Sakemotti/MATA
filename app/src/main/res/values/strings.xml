@@ -266,7 +266,7 @@
     <string name="backup_restore_rolled_back">復元できなかったため、元のデータへ戻しました</string>
     <string name="backup_operation_error">バックアップ処理に失敗しました</string>
     <string name="settings_end_hour_title">一日の終了時刻</string>
-    <string name="settings_end_hour_description">カテゴリ未設定のTODOに適用します</string>
+    <string name="settings_end_hour_description">すべてのTODOに適用します</string>
     <string name="settings_week_start_title">週の開始曜日</string>
     <string name="settings_week_start_description">N週間にX回TODOの期間区切りに使用します</string>
     <string name="settings_show_completed_title">完了済みTODOを表示</string>
