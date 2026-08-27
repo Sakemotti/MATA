@@ -22,8 +22,8 @@ class WidgetDisplayModelTest {
     private val now = ZonedDateTime.of(2026, 8, 18, 2, 30, 0, 0, ZoneId.of("Asia/Tokyo"))
 
     @Test
-    fun groupsByEachLogicalDate_sortsAndOmitsActedTodos() {
-        val work = category("work", "仕事", endHour = 4, sortOrder = 0)
+    fun groupsByGlobalLogicalDate_sortsAndOmitsActedTodos() {
+        val work = category("work", "仕事", legacyEndHour = 0, sortOrder = 0)
         val done = todo("done", "完了済み", work.id, dueMinutes = 60)
         val source = WidgetSourceData(
             todos = listOf(
@@ -37,10 +37,11 @@ class WidgetDisplayModelTest {
             holidays = emptySet(),
         )
 
-        val model = build(source)
+        val model = build(source, dayEndHour = 4)
 
         assertEquals(listOf(null, work.id), model.groups.map { it.categoryId })
-        assertEquals("2026-08-18", model.groups[0].logicalDate)
+        assertEquals("2026-08-17", model.groups[0].logicalDate)
+        assertEquals("8/17分", model.groups[0].logicalDateLabel)
         assertEquals("2026-08-17", model.groups[1].logicalDate)
         assertEquals("8/17分", model.groups[1].logicalDateLabel)
         assertEquals(listOf("early", "late"), model.groups[1].items.map { it.todoId })
@@ -114,10 +115,11 @@ class WidgetDisplayModelTest {
         source: WidgetSourceData,
         holidayState: HolidaySnapshot = HolidaySnapshot(),
         currentTime: ZonedDateTime = now,
+        dayEndHour: Int = 0,
     ) = buildWidgetDisplayModel(
         now = currentTime,
         source = source,
-        uncategorizedEndHour = 0,
+        dayEndHour = dayEndHour,
         weekStart = DayOfWeek.MONDAY,
         holidayState = holidayState,
         uncategorizedName = "カテゴリ未設定",
@@ -127,13 +129,13 @@ class WidgetDisplayModelTest {
         },
     )
 
-    private fun category(id: String, name: String, endHour: Int, sortOrder: Int) = CategoryEntity(
+    private fun category(id: String, name: String, legacyEndHour: Int, sortOrder: Int) = CategoryEntity(
         id = id,
         name = name,
         normalizedName = name,
         colorIndex = 4,
         iconName = "Work",
-        endHour = endHour,
+        legacyEndHour = legacyEndHour,
         sortOrder = sortOrder,
         createdAt = 1,
     )

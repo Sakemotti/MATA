@@ -77,7 +77,7 @@ class RoomCategoryRepositoryTest {
         normalizedName = id,
         colorIndex = 0,
         iconName = "Category",
-        endHour = 0,
+        legacyEndHour = 0,
         sortOrder = sortOrder,
         createdAt = 1L,
         updatedAt = 1L,

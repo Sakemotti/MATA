@@ -222,11 +222,11 @@ class BackupArchiveReader @Inject constructor() {
         reader.expectName("formatVersion")
         if (reader.strictInt() != expectedFormatVersion) invalid("data.json version mismatch")
         reader.expectName("settings")
-        val settings = reader.readSettings()
+        val settings = reader.readSettings(expectedFormatVersion)
         reader.expectName("categories")
         reader.beginArray()
         while (reader.hasNext()) {
-            val entity = reader.readCategory(validation)
+            val entity = reader.readCategory(validation, expectedFormatVersion)
             sink?.category(entity)
             validation.progress(onProgress)
         }
@@ -277,9 +277,9 @@ class BackupArchiveReader @Inject constructor() {
         ParsedBackupData(settings, validation.actualCounts(), validation.archivedTodoCount)
     }
 
-    private fun JsonReader.readSettings(): BackupSettings {
+    private fun JsonReader.readSettings(formatVersion: Int): BackupSettings {
         beginObject()
-        expectName("uncategorizedEndHour")
+        expectName(if (formatVersion >= 3) "dayEndHour" else "uncategorizedEndHour")
         val endHour = strictInt().also { if (it !in 0..23) invalid("Invalid end hour") }
         expectName("weekStartDay")
         val weekStart = weekday(strictString())
@@ -292,7 +292,10 @@ class BackupArchiveReader @Inject constructor() {
         return BackupSettings(endHour, weekStart, showCompleted, theme)
     }
 
-    private fun JsonReader.readCategory(context: ValidationContext): CategoryEntity {
+    private fun JsonReader.readCategory(
+        context: ValidationContext,
+        formatVersion: Int,
+    ): CategoryEntity {
         beginObject()
         expectName("id")
         val id = uuid()
@@ -312,8 +315,10 @@ class BackupArchiveReader @Inject constructor() {
         expectName("sortOrder")
         val sort = strictInt()
         if (sort != context.categories) invalid("Category order must be contiguous")
-        expectName("endHour")
-        val endHour = strictInt().also { if (it !in 0..23) invalid("Invalid category end hour") }
+        if (formatVersion < 3) {
+            expectName("endHour")
+            strictInt().also { if (it !in 0..23) invalid("Invalid category end hour") }
+        }
         expectName("createdAt")
         val createdAt = strictLong()
         expectName("updatedAt")
@@ -322,7 +327,17 @@ class BackupArchiveReader @Inject constructor() {
         requireObjectEnd()
         if (!context.categoryIds.add(id)) invalid("Duplicate category ID")
         context.categories++
-        return CategoryEntity(id, name, normalizedName, color, icon, endHour, sort, createdAt, updatedAt)
+        return CategoryEntity(
+            id = id,
+            name = name,
+            normalizedName = normalizedName,
+            colorIndex = color,
+            iconName = icon,
+            legacyEndHour = 0,
+            sortOrder = sort,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
     }
 
     private fun JsonReader.readTodo(context: ValidationContext, formatVersion: Int): TodoEntity {

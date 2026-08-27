@@ -42,10 +42,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -252,7 +249,6 @@ fun CategoryListScreen(
                     onNameChange = viewModel::setEditorName,
                     onColorChange = viewModel::setEditorColor,
                     onIconChange = viewModel::setEditorIcon,
-                    onEndHourChange = viewModel::setEditorEndHour,
                     onSave = viewModel::saveEditor,
                     onDelete = viewModel::deleteEditor,
                 )
@@ -527,7 +523,6 @@ private fun CategoryTwoPaneContent(
                     onNameChange = viewModel::setEditorName,
                     onColorChange = viewModel::setEditorColor,
                     onIconChange = viewModel::setEditorIcon,
-                    onEndHourChange = viewModel::setEditorEndHour,
                     onSave = viewModel::saveEditor,
                     onDelete = viewModel::deleteEditor,
                     showTopBar = false,
@@ -692,9 +687,6 @@ private fun CategoryListRow(
             },
             headlineContent = {
                 Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            },
-            supportingContent = {
-                Text(stringResource(R.string.category_end_time_format, category.endHour))
             },
             trailingContent = {
                 Box(
@@ -871,20 +863,6 @@ fun CategoryEditorScreen(
                         }
                     }
                 }
-                EndHourSelector(state.endHour, viewModel::setEndHour)
-                Text(
-                    if (state.endHour == 0) {
-                        stringResource(R.string.category_day_boundary_midnight)
-                    } else {
-                        stringResource(
-                            R.string.category_day_boundary_format,
-                            state.endHour,
-                            state.endHour - 1,
-                        )
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -935,7 +913,6 @@ private fun CategoryEditorScaffold(
     onNameChange: (String) -> Unit,
     onColorChange: (Int) -> Unit,
     onIconChange: (String) -> Unit,
-    onEndHourChange: (Int) -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
     showTopBar: Boolean = true,
@@ -1067,20 +1044,6 @@ private fun CategoryEditorScaffold(
                         }
                     }
                 }
-                EndHourSelector(state.endHour, onEndHourChange)
-                Text(
-                    if (state.endHour == 0) {
-                        stringResource(R.string.category_day_boundary_midnight)
-                    } else {
-                        stringResource(
-                            R.string.category_day_boundary_format,
-                            state.endHour,
-                            state.endHour - 1,
-                        )
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -1123,9 +1086,6 @@ private fun CategoryPreview(state: CategoryEditorUiState) {
             headlineContent = {
                 Text(state.name.ifBlank { stringResource(R.string.category_name_preview) })
             },
-            supportingContent = {
-                Text(stringResource(R.string.category_end_time_format, state.endHour))
-            },
         )
     }
 }
@@ -1160,36 +1120,6 @@ private fun ColorOption(
                         tint = contentColor,
                     )
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun EndHourSelector(value: Int, onSelect: (Int) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = stringResource(R.string.hour_format, value),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(R.string.category_end_hour_label)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .mataClickablePointer()
-                .menuAnchor(androidx.compose.material3.MenuAnchorType.PrimaryNotEditable),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            (0..23).forEach { hour ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.hour_format, hour)) },
-                    onClick = { onSelect(hour); expanded = false },
-                )
             }
         }
     }

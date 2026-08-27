@@ -23,7 +23,7 @@
 
 ## 3. DataStore
 
-- Preferences DataStoreをテーマ、週開始、カテゴリなし終了時刻、完了済み表示など小規模設定に使用する。
+- Preferences DataStoreをテーマ、週開始、アプリ共通終了時刻、完了済み表示など小規模設定に使用する。
 - Key、型、既定値を単一のSettingsDataSourceに集約する。
 - UIはDataStoreを直接参照せずSettingsRepositoryのFlowを購読する。
 - 複数設定を一貫して変える必要がある場合は1回の`edit`で更新する。

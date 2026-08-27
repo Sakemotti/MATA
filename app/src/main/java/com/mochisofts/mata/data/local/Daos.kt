@@ -25,7 +25,6 @@ data class ArchivedTodoRow(
     val categoryName: String?,
     val categoryColorIndex: Int?,
     val categoryIconName: String?,
-    val categoryEndHour: Int?,
     val categorySortOrder: Int?,
 )
 
@@ -71,7 +70,6 @@ data class ArchiveHistoryRow(
     val currentCategoryColorIndex: Int?,
     val currentCategoryIconName: String?,
     val currentCategorySortOrder: Int?,
-    val currentCategoryEndHour: Int?,
 )
 
 @Dao
@@ -130,7 +128,6 @@ interface TodoDao {
             categories.name AS categoryName,
             categories.colorIndex AS categoryColorIndex,
             categories.iconName AS categoryIconName,
-            categories.endHour AS categoryEndHour,
             categories.sortOrder AS categorySortOrder
         FROM todos
         LEFT JOIN categories ON categories.id = todos.categoryId
@@ -146,7 +143,6 @@ interface TodoDao {
             categories.name AS categoryName,
             categories.colorIndex AS categoryColorIndex,
             categories.iconName AS categoryIconName,
-            categories.endHour AS categoryEndHour,
             categories.sortOrder AS categorySortOrder
         FROM todos
         LEFT JOIN categories ON categories.id = todos.categoryId
@@ -165,7 +161,6 @@ interface TodoDao {
             categories.name AS categoryName,
             categories.colorIndex AS categoryColorIndex,
             categories.iconName AS categoryIconName,
-            categories.endHour AS categoryEndHour,
             categories.sortOrder AS categorySortOrder
         FROM todos
         LEFT JOIN categories ON categories.id = todos.categoryId
@@ -184,7 +179,6 @@ interface TodoDao {
             categories.name AS categoryName,
             categories.colorIndex AS categoryColorIndex,
             categories.iconName AS categoryIconName,
-            categories.endHour AS categoryEndHour,
             categories.sortOrder AS categorySortOrder
         FROM todos
         LEFT JOIN categories ON categories.id = todos.categoryId
@@ -323,8 +317,7 @@ interface TodoExecutionDao {
             categories.name AS currentCategoryName,
             categories.colorIndex AS currentCategoryColorIndex,
             categories.iconName AS currentCategoryIconName,
-            categories.sortOrder AS currentCategorySortOrder,
-            categories.endHour AS currentCategoryEndHour
+            categories.sortOrder AS currentCategorySortOrder
         FROM archive_history
         INNER JOIN todos ON todos.id = archive_history.todoId
         LEFT JOIN categories ON categories.id = todos.categoryId

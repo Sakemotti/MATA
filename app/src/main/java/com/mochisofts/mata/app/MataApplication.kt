@@ -64,14 +64,14 @@ class MataApplication : Application() {
         combine(
             todoRepository.observeOccurrences(LocalDate.now(clock)),
             categoryRepository.observeCategories(),
-            settingsRepository.uncategorizedEndHour,
+            settingsRepository.dayEndHour,
             settingsRepository.weekStart,
             settingsRepository.theme,
         ) { occurrences, categories, endHour, weekStart, theme ->
             WidgetInvalidationState(
                 occurrenceCount = occurrences.size,
                 categoryFingerprint = categories.hashCode(),
-                uncategorizedEndHour = endHour,
+                dayEndHour = endHour,
                 weekStartValue = weekStart.value,
                 themeCode = theme.code,
             )
@@ -97,7 +97,7 @@ class MataApplication : Application() {
 private data class WidgetInvalidationState(
     val occurrenceCount: Int,
     val categoryFingerprint: Int,
-    val uncategorizedEndHour: Int,
+    val dayEndHour: Int,
     val weekStartValue: Int,
     val themeCode: String,
 )

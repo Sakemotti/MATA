@@ -405,7 +405,6 @@
     <string name="category_default_end_time">一日の終了 0:00</string>
     <string name="category_use_common_setting">設定画面の共通値を使用</string>
     <string name="category_empty_message">カテゴリを追加してTODOを整理しましょう</string>
-    <string name="category_end_time_format">一日の終了 %1$d:00</string>
     <string name="category_reorder_handle">%1$sを並べ替え</string>
     <string name="category_move_up">上へ移動</string>
     <string name="category_move_down">下へ移動</string>
@@ -418,9 +417,8 @@
     <string name="category_color_label">色</string>
     <string name="category_icon_label">アイコン</string>
     <string name="category_name_preview">カテゴリ名</string>
-    <string name="category_end_hour_label">一日の終了時刻</string>
-    <string name="category_day_boundary_midnight">カレンダー日と同じ0:00から23:59までを1日として扱います</string>
-    <string name="category_day_boundary_format">%1$d:00の場合、翌日の%2$d:59までを前日分として扱います</string>
+    <string name="day_boundary_midnight">カレンダー日と同じ0:00から23:59までを1日として扱います</string>
+    <string name="day_boundary_format">%1$d:00の場合、翌日の%2$d:59までを前日分として扱います</string>
     <string name="dialog_discard_changes_title">変更を破棄しますか？</string>
     <string name="dialog_discard_changes_message">入力した内容は保存されません。</string>
     <string name="dialog_delete_category_title">カテゴリを削除しますか？</string>
@@ -468,7 +466,6 @@
     <string name="error_category_name_required">カテゴリ名を入力してください</string>
     <string name="error_category_name_too_long">カテゴリ名は30文字以内で入力してください</string>
     <string name="error_category_color_invalid">色を選択してください</string>
-    <string name="error_category_end_hour_invalid">一日の終了時刻が不正です</string>
     <string name="error_category_name_duplicate">同じ名前のカテゴリがあります</string>
     <string name="error_category_not_found">カテゴリが見つかりません</string>
     <string name="error_category_save_failed">カテゴリを保存できませんでした</string>

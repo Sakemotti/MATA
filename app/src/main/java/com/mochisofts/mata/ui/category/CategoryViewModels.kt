@@ -152,7 +152,6 @@ class CategoryListViewModel @Inject constructor(
                             name = category.name,
                             colorIndex = category.colorIndex,
                             iconName = category.iconName,
-                            endHour = category.endHour,
                         )
                     },
                 )
@@ -170,7 +169,6 @@ class CategoryListViewModel @Inject constructor(
     fun setEditorName(value: String) = editEditor { copy(name = value) }
     fun setEditorColor(value: Int) = editEditor { copy(colorIndex = value) }
     fun setEditorIcon(value: String) = editEditor { copy(iconName = value) }
-    fun setEditorEndHour(value: Int) = editEditor { copy(endHour = value) }
 
     fun saveEditor() {
         val editor = _uiState.value.editor ?: return
@@ -184,7 +182,6 @@ class CategoryListViewModel @Inject constructor(
                 name = editor.name,
                 colorIndex = editor.colorIndex,
                 iconName = editor.iconName,
-                endHour = editor.endHour,
             ).onSuccess { id ->
                 savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_EDIT
                 savedStateHandle[EDITOR_CATEGORY_ID_KEY] = id
@@ -297,7 +294,6 @@ data class CategoryEditorUiState(
     val name: String = "",
     val colorIndex: Int = 8,
     val iconName: String = "Category",
-    val endHour: Int = 0,
     val isDirty: Boolean = false,
     val isSaving: Boolean = false,
     @StringRes val errorMessageRes: Int? = null,
@@ -338,7 +334,6 @@ class CategoryEditorViewModel @Inject constructor(
                         name = category.name,
                         colorIndex = category.colorIndex,
                         iconName = category.iconName,
-                        endHour = category.endHour,
                     )
                 }
             }
@@ -348,7 +343,6 @@ class CategoryEditorViewModel @Inject constructor(
     fun setName(value: String) = edit { copy(name = value) }
     fun setColor(value: Int) = edit { copy(colorIndex = value) }
     fun setIcon(value: String) = edit { copy(iconName = value) }
-    fun setEndHour(value: Int) = edit { copy(endHour = value) }
 
     fun save() {
         val state = _uiState.value
@@ -360,7 +354,6 @@ class CategoryEditorViewModel @Inject constructor(
                 name = state.name,
                 colorIndex = state.colorIndex,
                 iconName = state.iconName,
-                endHour = state.endHour,
             ).onSuccess { id ->
                 effectsChannel.send(CategoryEditorEffect.Saved(id, route.categoryId == null))
             }.onFailure { throwable ->

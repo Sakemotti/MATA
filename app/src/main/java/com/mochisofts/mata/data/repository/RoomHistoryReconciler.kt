@@ -54,7 +54,7 @@ class RoomHistoryReconciler @Inject constructor(
         return mutex.withLock {
             val now = ZonedDateTime.now(clock)
             val weekStart = settingsRepository.weekStart.first()
-            val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+            val dayEndHour = settingsRepository.dayEndHour.first()
             val holidays = holidayRepository.currentSnapshot().dates
             var generated = 0
             var hasMore = false
@@ -64,13 +64,11 @@ class RoomHistoryReconciler @Inject constructor(
                     hasMore = true
                     break
                 }
-                val category = todo.categoryId?.let { categoryDao.findById(it) }
-                val endHour = category?.endHour ?: uncategorizedEndHour
-                val currentLogicalDate = logicalDate(now, endHour)
+                val currentLogicalDate = logicalDate(now, dayEndHour)
                 val outcome = if (todo.toDomain().recurrenceType.isCountBased) {
                     reconcileCountBased(
                         todo = todo,
-                        endHour = endHour,
+                        endHour = dayEndHour,
                         currentLogicalDate = currentLogicalDate,
                         weekStart = weekStart,
                         limit = maxRecords - generated,
@@ -78,7 +76,7 @@ class RoomHistoryReconciler @Inject constructor(
                 } else {
                     reconcileOccurrences(
                         todo = todo,
-                        endHour = endHour,
+                        endHour = dayEndHour,
                         currentLogicalDate = currentLogicalDate,
                         weekStart = weekStart,
                         limit = maxRecords - generated,
