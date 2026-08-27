@@ -63,7 +63,6 @@ class CategoryTodoListViewModelTest {
         name = id,
         colorIndex = 0,
         iconName = "Category",
-        endHour = 0,
         sortOrder = sortOrder,
     )
 

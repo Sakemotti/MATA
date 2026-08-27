@@ -30,7 +30,7 @@ RoomはWALを使用する。UIからDAOを直接呼ばず、Repositoryを経由�
 
 次の小規模な設定はDataStoreへ保存する。
 
-- カテゴリ未設定TODOの一日の終了時刻
+- 全TODOに適用する一日の終了時刻
 - 週の開始曜日
 - 完了済みTODOの表示有無
 - テーマ
@@ -59,7 +59,7 @@ Kotlinのenum ordinalは永続値として使用しない。文字列コード�
 
 - TodoEntity.categoryIdがnullの場合にカテゴリ未設定として扱う。
 - 名前、色、アイコン、表示順はアプリ内の固定値とする。
-- 一日の終了時刻はDataStoreの共通終了時刻を参照する。
+- 一日の終了時刻は他のすべてのTODOと同じくDataStoreの共通終了時刻を参照する。
 - 一覧では常にユーザーカテゴリより前に表示する。
 - ユーザーカテゴリ削除時は、所属する通常・アーカイブ済みTODOのcategoryIdをnullへ変更する。
 
@@ -75,11 +75,11 @@ Kotlinのenum ordinalは永続値として使用しない。文字列コード�
 | colorIndex | 整数 | 固定16色パレットの0～15 |
 | iconKey | 文字列 | 安定したMaterial Icon識別子 |
 | sortOrder | 整数 | ユーザーカテゴリ内の0始まり連番 |
-| endHour | 整数 | 0～23 |
+| endHour | 整数 | 旧バージョン互換のため物理列だけを残す。新規・更新時は0とし、業務ロジックでは参照しない |
 | createdAt | Epochミリ秒 | 作成時点 |
 | updatedAt | Epochミリ秒 | 最終更新時点 |
 
-normalizedNameには一意制約を設ける。並べ替え後は1トランザクションでsortOrderを連番へ振り直す。
+normalizedNameには一意制約を設ける。並べ替え後は1トランザクションでsortOrderを連番へ振り直す。カテゴリ別終了時刻は廃止し、Roomの既存`endHour`列は安全なデータ移行のための互換列としてのみ保持する。
 
 ### 5.2 TodoEntity
 

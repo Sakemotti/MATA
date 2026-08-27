@@ -122,7 +122,6 @@ class CategoryListViewModelTest {
         name = id.uppercase(),
         colorIndex = 0,
         iconName = "Category",
-        endHour = 0,
         sortOrder = sortOrder,
     )
 }
@@ -142,7 +141,6 @@ private class FakeCategoryRepository(initialCategories: List<Category>) : Catego
         name: String,
         colorIndex: Int,
         iconName: String,
-        endHour: Int,
     ): Result<String> {
         val savedId = id ?: "new"
         val existing = categories.value.firstOrNull { it.id == savedId }
@@ -151,7 +149,6 @@ private class FakeCategoryRepository(initialCategories: List<Category>) : Catego
             name = name,
             colorIndex = colorIndex,
             iconName = iconName,
-            endHour = endHour,
             sortOrder = existing?.sortOrder ?: categories.value.size,
         )
         categories.value = categories.value.filterNot { it.id == savedId } + saved

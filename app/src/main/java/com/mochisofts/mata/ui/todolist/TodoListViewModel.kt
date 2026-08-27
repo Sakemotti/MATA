@@ -105,8 +105,8 @@ class TodoListViewModel @Inject constructor(
     val uiState: StateFlow<TodoListUiState> = combine(
         content,
         settingsRepository.showCompleted,
-        settingsRepository.uncategorizedEndHour,
-    ) { content, showCompleted, uncategorizedEndHour ->
+        settingsRepository.dayEndHour,
+    ) { content, showCompleted, dayEndHour ->
         val today = LocalDate.now(clock)
         val visibleOccurrences = content.occurrences.filter { occurrence ->
             occurrence.state != TodoState.SKIPPED &&
@@ -117,7 +117,7 @@ class TodoListViewModel @Inject constructor(
             selectedDate = content.date,
             isToday = content.date == today,
             showCompleted = showCompleted,
-            groups = buildTodoOccurrenceGroups(visibleOccurrences, uncategorizedEndHour),
+            groups = buildTodoOccurrenceGroups(visibleOccurrences, dayEndHour),
             holidayName = content.holidaySnapshot.holidayName(content.date),
             holidayStatus = content.holidaySnapshot.statusFor(content.date.year)
                 .takeIf {
@@ -257,7 +257,7 @@ class TodoListViewModel @Inject constructor(
 
 internal fun buildTodoOccurrenceGroups(
     occurrences: List<TodoOccurrence>,
-    uncategorizedEndHour: Int,
+    dayEndHour: Int,
 ): List<TodoOccurrenceGroup> = occurrences
     .groupBy { occurrence -> occurrence.category?.id }
     .map { (_, items) ->
@@ -266,7 +266,7 @@ internal fun buildTodoOccurrenceGroups(
             category = category,
             occurrences = items.sortedWith(
                 compareBy<TodoOccurrence> {
-                    it.effectiveDueMinutes(uncategorizedEndHour)
+                    it.effectiveDueMinutes(dayEndHour)
                 }.thenBy { it.todo.createdAt }
                     .thenBy { it.todo.id },
             ),
@@ -277,10 +277,9 @@ internal fun buildTodoOccurrenceGroups(
             .thenBy { it.category?.id.orEmpty() },
     )
 
-private fun TodoOccurrence.effectiveDueMinutes(uncategorizedEndHour: Int): Int {
-    val endHour = category?.endHour ?: uncategorizedEndHour
-    val due = todo.dueMinutes ?: endHour * MINUTES_PER_HOUR
-    return due + if (todo.dueMinutes == null || due < endHour * MINUTES_PER_HOUR) {
+private fun TodoOccurrence.effectiveDueMinutes(dayEndHour: Int): Int {
+    val due = todo.dueMinutes ?: dayEndHour * MINUTES_PER_HOUR
+    return due + if (todo.dueMinutes == null || due < dayEndHour * MINUTES_PER_HOUR) {
         MINUTES_PER_DAY
     } else {
         0

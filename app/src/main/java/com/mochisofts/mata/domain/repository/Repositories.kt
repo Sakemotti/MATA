@@ -39,7 +39,6 @@ interface CategoryRepository {
         name: String,
         colorIndex: Int,
         iconName: String,
-        endHour: Int,
     ): Result<String>
     suspend fun reorderCategories(orderedIds: List<String>): Result<Unit>
     suspend fun deleteCategory(id: String): Result<Unit>
@@ -81,7 +80,7 @@ interface TodoRepository {
 interface SettingsRepository {
     val showCompleted: Flow<Boolean>
     val todoListMode: Flow<String>
-    val uncategorizedEndHour: Flow<Int>
+    val dayEndHour: Flow<Int>
     val weekStart: Flow<DayOfWeek>
     val theme: Flow<AppTheme>
     val notificationPermissionRequested: Flow<Boolean>
@@ -89,7 +88,7 @@ interface SettingsRepository {
         get() = flowOf(ArchiveSortOrder.NEWEST)
     suspend fun setShowCompleted(value: Boolean)
     suspend fun setTodoListMode(value: String)
-    suspend fun setUncategorizedEndHour(value: Int)
+    suspend fun setDayEndHour(value: Int)
     suspend fun setWeekStart(value: DayOfWeek)
     suspend fun setTheme(value: AppTheme)
     suspend fun setNotificationPermissionRequested(value: Boolean)

@@ -66,13 +66,11 @@ class RoomCategoryRepository @Inject constructor(
         name: String,
         colorIndex: Int,
         iconName: String,
-        endHour: Int,
     ): Result<String> = runCatching {
         val trimmedName = name.trim()
         validate(trimmedName.isNotEmpty(), ValidationError.CATEGORY_NAME_REQUIRED)
         validate(trimmedName.length <= 30, ValidationError.CATEGORY_NAME_TOO_LONG)
         validate(colorIndex in 0..15, ValidationError.CATEGORY_COLOR_INVALID)
-        validate(endHour in 0..23, ValidationError.CATEGORY_END_HOUR_INVALID)
 
         val categoryId = id ?: UUID.randomUUID().toString()
         val normalizedName = normalizeName(trimmedName)
@@ -88,7 +86,7 @@ class RoomCategoryRepository @Inject constructor(
                     normalizedName = normalizedName,
                     colorIndex = colorIndex,
                     iconName = iconName,
-                    endHour = endHour,
+                    legacyEndHour = 0,
                     sortOrder = existing?.sortOrder ?: categoryDao.nextSortOrder(),
                     createdAt = existing?.createdAt ?: clock.millis(),
                     updatedAt = clock.millis(),
@@ -152,14 +150,14 @@ class RoomTodoRepository @Inject constructor(
             todoDao.observeActive(),
             categoryDao.observeAll(),
             executionDao.observeAll(),
-            settingsRepository.uncategorizedEndHour,
+            settingsRepository.dayEndHour,
             settingsRepository.weekStart,
-        ) { todoEntities, categoryEntities, executionEntities, uncategorizedEndHour, weekStart ->
+        ) { todoEntities, categoryEntities, executionEntities, dayEndHour, weekStart ->
             OccurrenceInputs(
                 todos = todoEntities,
                 categories = categoryEntities,
                 executions = executionEntities,
-                uncategorizedEndHour = uncategorizedEndHour,
+                dayEndHour = dayEndHour,
                 weekStart = weekStart,
             )
         }
@@ -173,9 +171,8 @@ class RoomTodoRepository @Inject constructor(
             input.todos.mapNotNull { entity ->
                 val todo = entity.toDomain()
                 val categoryEntity = entity.categoryId?.let(categories::get)
-                val endHour = categoryEntity?.endHour ?: input.uncategorizedEndHour
                 val targetDate = if (selectedDate == today) {
-                    logicalDate(now, endHour)
+                    logicalDate(now, input.dayEndHour)
                 } else {
                     selectedDate
                 }
@@ -199,7 +196,7 @@ class RoomTodoRepository @Inject constructor(
                     progress = progress,
                 )
             }.sortedWith(
-                compareBy<TodoOccurrence> { occurrence -> occurrence.effectiveDueMinutes() }
+                compareBy<TodoOccurrence> { occurrence -> occurrence.effectiveDueMinutes(input.dayEndHour) }
                     .thenBy { it.category?.sortOrder ?: -1 }
                     .thenBy { it.todo.createdAt },
             )
@@ -210,7 +207,7 @@ class RoomTodoRepository @Inject constructor(
         val todos: List<TodoEntity>,
         val categories: List<CategoryEntity>,
         val executions: List<TodoExecutionEntity>,
-        val uncategorizedEndHour: Int,
+        val dayEndHour: Int,
         val weekStart: java.time.DayOfWeek,
     )
 
@@ -245,14 +242,13 @@ class RoomTodoRepository @Inject constructor(
         if (categoryId != null && category == null) {
             throw ValidationException(ValidationError.TODO_CATEGORY_NOT_FOUND)
         }
+        val dayEndHour = settingsRepository.dayEndHour.first()
         if (id == null) {
-            val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
-            val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), endHour)
+            val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), dayEndHour)
             validate(!startDate.isBefore(currentLogicalDate), ValidationError.TODO_DATE_IN_PAST)
         }
 
-        val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
-        when (validateNotifications(notifications, dueMinutes, endHour).firstOrNull()) {
+        when (validateNotifications(notifications, dueMinutes, dayEndHour).firstOrNull()) {
             NotificationValidationError.TOO_MANY ->
                 throw ValidationException(ValidationError.TODO_NOTIFICATION_TOO_MANY)
             NotificationValidationError.INVALID_AMOUNT ->
@@ -335,15 +331,14 @@ class RoomTodoRepository @Inject constructor(
         operationId: String,
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
-        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val dayEndHour = settingsRepository.dayEndHour.first()
         val holidays = holidayRepository.currentSnapshot().dates
         val now = ZonedDateTime.now(clock)
         database.withTransaction {
             val todoEntity = todoDao.findById(todoId)
                 ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
-            val endHour = category?.endHour ?: uncategorizedEndHour
-            validateActionTarget(todoEntity, logicalDate, endHour, now, holidays)
+            validateActionTarget(todoEntity, logicalDate, dayEndHour, now, holidays)
             if (completed) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existingExecution = executionDao.find(todoId, logicalDate.toString())
@@ -370,7 +365,7 @@ class RoomTodoRepository @Inject constructor(
                         logicalDate = logicalDate,
                         status = TodoState.COMPLETED,
                         operationId = operationId,
-                        endHour = endHour,
+                        endHour = dayEndHour,
                         weekStart = weekStart,
                     ),
                 )
@@ -396,15 +391,14 @@ class RoomTodoRepository @Inject constructor(
         operationId: String,
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
-        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val dayEndHour = settingsRepository.dayEndHour.first()
         val holidays = holidayRepository.currentSnapshot().dates
         val now = ZonedDateTime.now(clock)
         database.withTransaction {
             val todoEntity = todoDao.findById(todoId)
                 ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
-            val endHour = category?.endHour ?: uncategorizedEndHour
-            validateActionTarget(todoEntity, logicalDate, endHour, now, holidays)
+            validateActionTarget(todoEntity, logicalDate, dayEndHour, now, holidays)
             if (skipped) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existing = executionDao.find(todoId, logicalDate.toString())
@@ -419,7 +413,7 @@ class RoomTodoRepository @Inject constructor(
                         logicalDate = logicalDate,
                         status = TodoState.SKIPPED,
                         operationId = operationId,
-                        endHour = endHour,
+                        endHour = dayEndHour,
                         weekStart = weekStart,
                     ),
                 )
@@ -468,14 +462,12 @@ class RoomTodoRepository @Inject constructor(
 
     override suspend fun restoreTodo(id: String): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
-        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val dayEndHour = settingsRepository.dayEndHour.first()
         val now = ZonedDateTime.now(clock)
         database.withTransaction {
             val entity = todoDao.findById(id) ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             if (entity.archivedAt == null) return@withTransaction
-            val category = entity.categoryId?.let { categoryDao.findById(it) }
-            val endHour = category?.endHour ?: uncategorizedEndHour
-            val currentLogicalDate = logicalDate(now, endHour)
+            val currentLogicalDate = logicalDate(now, dayEndHour)
             val todo = entity.toDomain()
             val currentPeriod = todo.recurrencePeriod(currentLogicalDate, weekStart)
             val existing = runtimeStateDao.find(id)
@@ -578,10 +570,9 @@ class RoomTodoRepository @Inject constructor(
         )
     }
 
-    private fun TodoOccurrence.effectiveDueMinutes(): Int {
-        val endHour = category?.endHour ?: 0
-        val due = todo.dueMinutes ?: (endHour * 60)
-        return due + if (due < endHour * 60 || todo.dueMinutes == null) 1440 else 0
+    private fun TodoOccurrence.effectiveDueMinutes(dayEndHour: Int): Int {
+        val due = todo.dueMinutes ?: (dayEndHour * 60)
+        return due + if (due < dayEndHour * 60 || todo.dueMinutes == null) 1440 else 0
     }
 }
 
@@ -596,7 +587,6 @@ private fun CategoryEntity.toDomain() = Category(
     name = name,
     colorIndex = colorIndex,
     iconName = iconName,
-    endHour = endHour,
     sortOrder = sortOrder,
 )
 

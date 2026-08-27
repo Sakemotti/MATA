@@ -41,9 +41,11 @@ import java.time.LocalDate
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -84,13 +86,16 @@ class RoomArchiveRepository @Inject constructor(
     override fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary> =
         executionDao.observeArchiveHistoryCount(todoId).map { count -> count.toDomain() }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun pagedHistory(todoId: String): Flow<PagingData<ArchivedHistoryItem>> =
-        Pager(PAGING_CONFIG) { executionDao.pageArchiveHistory(todoId) }
-            .flow
-            .map { pagingData ->
-                pagingData
-                    .filter { row -> row.hasValidDomainValues() }
-                    .map { row -> requireNotNull(row.toDomain()) }
+        settingsRepository.dayEndHour.flatMapLatest { dayEndHour ->
+            Pager(PAGING_CONFIG) { executionDao.pageArchiveHistory(todoId) }
+                .flow
+                .map { pagingData ->
+                    pagingData
+                        .filter { row -> row.hasValidDomainValues() }
+                        .map { row -> requireNotNull(row.toDomain(dayEndHour)) }
+                }
             }
 
     override suspend fun getActionPreview(todoId: String): Result<ArchiveActionPreview> = runCatching {
@@ -100,16 +105,15 @@ class RoomArchiveRepository @Inject constructor(
         val notifications = notificationDao.findForTodo(todoId).map { notification ->
             notification.toDomain()
         }
-        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
-        val row = todoDao.observeArchivedById(todoId).first()
+        val dayEndHour = settingsRepository.dayEndHour.first()
+        todoDao.observeArchivedById(todoId).first()
             ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
-        val endHour = row.categoryEndHour ?: uncategorizedEndHour
         val now = ZonedDateTime.now(clock)
         val restoredTodo = entity.toDomain(notifications).copy(archivedAt = null)
-        val currentLogicalDate = logicalDate(now, endHour)
+        val currentLogicalDate = logicalDate(now, dayEndHour)
         val hasFutureOccurrence = restoredTodo.nextOccurrenceOnOrAfter(currentLogicalDate) != null
         val systemState = notificationScheduler.systemState()
-        val invalidSettings = validateNotifications(notifications, restoredTodo.dueMinutes, endHour)
+        val invalidSettings = validateNotifications(notifications, restoredTodo.dueMinutes, dayEndHour)
         val unavailableCount = when {
             notifications.isEmpty() -> 0
             !systemState.canPostNotifications -> notifications.size
@@ -154,7 +158,6 @@ class RoomArchiveRepository @Inject constructor(
                     name = name,
                     colorIndex = categoryColorIndex ?: 15,
                     iconName = categoryIconName ?: DEFAULT_CATEGORY_ICON,
-                    endHour = categoryEndHour ?: 0,
                     sortOrder = categorySortOrder ?: -1,
                 )
             }
@@ -169,8 +172,8 @@ class RoomArchiveRepository @Inject constructor(
         periodResultCount = periodResultCount,
     )
 
-    private fun ArchiveHistoryRow.toDomain(): ArchivedHistoryItem? {
-        val snapshot = HistorySnapshotJson.decodeDomain(snapshotJson) ?: currentDefinitionSnapshot()
+    private fun ArchiveHistoryRow.toDomain(dayEndHour: Int): ArchivedHistoryItem? {
+        val snapshot = HistorySnapshotJson.decodeDomain(snapshotJson) ?: currentDefinitionSnapshot(dayEndHour)
         return if (rowType == ROW_EXECUTION) {
             ArchivedHistoryItem.Execution(
                 HistoryEntry(
@@ -209,7 +212,7 @@ class RoomArchiveRepository @Inject constructor(
             requiredCount != null && completedCount != null && achieved != null && displayDate != null
     }
 
-    private fun ArchiveHistoryRow.currentDefinitionSnapshot(): HistoryTodoSnapshot {
+    private fun ArchiveHistoryRow.currentDefinitionSnapshot(dayEndHour: Int): HistoryTodoSnapshot {
         val recurrence = RecurrenceRuleJson.decode(
             currentRecurrenceType,
             currentRepeatParamsVersion,
@@ -230,7 +233,7 @@ class RoomArchiveRepository @Inject constructor(
             categoryColorIndex = currentCategoryColorIndex,
             categoryIconName = currentCategoryIconName,
             categorySortOrder = currentCategorySortOrder,
-            endHour = currentCategoryEndHour ?: 0,
+            endHour = dayEndHour,
             weekStart = DayOfWeek.MONDAY,
             createdAt = currentCreatedAt,
         )

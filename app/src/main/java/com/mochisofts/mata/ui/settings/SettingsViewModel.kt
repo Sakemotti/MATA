@@ -153,7 +153,7 @@ class SettingsViewModel @Inject constructor(
     fun retry() = load()
 
     fun setEndHour(value: Int) = save(SavingSetting.END_HOUR) {
-        repository.setUncategorizedEndHour(value)
+        repository.setDayEndHour(value)
     }
 
     fun setWeekStart(value: DayOfWeek) = save(SavingSetting.WEEK_START) {
@@ -260,7 +260,7 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true, hasLoadError = false) }
         loadJob = viewModelScope.launch {
             combine(
-                repository.uncategorizedEndHour,
+                repository.dayEndHour,
                 repository.weekStart,
                 repository.showCompleted,
                 repository.theme,

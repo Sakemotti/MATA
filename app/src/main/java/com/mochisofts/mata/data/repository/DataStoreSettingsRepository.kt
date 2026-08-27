@@ -31,8 +31,8 @@ class DataStoreSettingsRepository @Inject constructor(
         preferences[TODO_LIST_MODE] ?: "DATE"
     }
 
-    override val uncategorizedEndHour: Flow<Int> = dataStore.data.map { preferences ->
-        preferences[UNCATEGORIZED_END_HOUR] ?: 0
+    override val dayEndHour: Flow<Int> = dataStore.data.map { preferences ->
+        preferences[DAY_END_HOUR] ?: 0
     }
 
     override val weekStart: Flow<DayOfWeek> = dataStore.data.map { preferences ->
@@ -61,9 +61,9 @@ class DataStoreSettingsRepository @Inject constructor(
         mutationGate.withMutation { dataStore.edit { it[TODO_LIST_MODE] = value } }
     }
 
-    override suspend fun setUncategorizedEndHour(value: Int) {
+    override suspend fun setDayEndHour(value: Int) {
         require(value in 0..23)
-        mutationGate.withMutation { dataStore.edit { it[UNCATEGORIZED_END_HOUR] = value } }
+        mutationGate.withMutation { dataStore.edit { it[DAY_END_HOUR] = value } }
     }
 
     override suspend fun setWeekStart(value: DayOfWeek) {
@@ -85,7 +85,7 @@ class DataStoreSettingsRepository @Inject constructor(
     internal suspend fun backupSnapshot(): BackupSettings {
         val preferences = dataStore.data.first()
         return BackupSettings(
-            uncategorizedEndHour = preferences[UNCATEGORIZED_END_HOUR] ?: 0,
+            dayEndHour = preferences[DAY_END_HOUR] ?: 0,
             weekStartDay = preferences[WEEK_START]
                 ?.let { stored -> runCatching { DayOfWeek.valueOf(stored) }.getOrNull() }
                 ?: DayOfWeek.MONDAY,
@@ -96,7 +96,7 @@ class DataStoreSettingsRepository @Inject constructor(
 
     internal suspend fun restoreBackupSettings(settings: BackupSettings) {
         dataStore.edit { preferences ->
-            preferences[UNCATEGORIZED_END_HOUR] = settings.uncategorizedEndHour
+            preferences[DAY_END_HOUR] = settings.dayEndHour
             preferences[WEEK_START] = settings.weekStartDay.name
             preferences[SHOW_COMPLETED] = settings.showCompletedTodos
             preferences[THEME] = settings.theme.code
@@ -106,7 +106,7 @@ class DataStoreSettingsRepository @Inject constructor(
     private companion object {
         val SHOW_COMPLETED = booleanPreferencesKey("show_completed_todos")
         val TODO_LIST_MODE = stringPreferencesKey("todo_list_mode")
-        val UNCATEGORIZED_END_HOUR = intPreferencesKey("uncategorized_end_hour")
+        val DAY_END_HOUR = intPreferencesKey("uncategorized_end_hour")
         val WEEK_START = stringPreferencesKey("week_start")
         val THEME = stringPreferencesKey("theme")
         val NOTIFICATION_PERMISSION_REQUESTED = booleanPreferencesKey("notification_permission_requested")

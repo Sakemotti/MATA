@@ -49,23 +49,19 @@ class RoomWidgetDisplayRepository @Inject constructor(
 ) {
     suspend fun createSnapshot(): WidgetDisplayModel {
         val now = ZonedDateTime.now(clock)
-        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val dayEndHour = settingsRepository.dayEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
         val holidayState = holidayRepository.currentSnapshot()
         val data = database.withTransaction {
             val todos = todoDao.findAllActive()
             val categories = categoryDao.findAll()
-            val logicalDates = (categories.map(CategoryEntity::endHour) + uncategorizedEndHour)
-                .distinct()
-                .map { endHour -> logicalDate(now, endHour) }
-            val firstDate = logicalDates.minOrNull() ?: now.toLocalDate()
-            val lastDate = logicalDates.maxOrNull() ?: now.toLocalDate()
+            val currentLogicalDate = logicalDate(now, dayEndHour)
             WidgetSourceData(
                 todos = todos,
                 categories = categories,
                 executions = executionDao.findBetween(
-                    firstDate.withDayOfMonth(1).minusDays(7).toString(),
-                    lastDate.toString(),
+                    currentLogicalDate.withDayOfMonth(1).minusDays(7).toString(),
+                    currentLogicalDate.toString(),
                 ),
                 holidays = holidayDao.findAll().mapTo(mutableSetOf()) { LocalDate.parse(it.date) },
             )
@@ -73,7 +69,7 @@ class RoomWidgetDisplayRepository @Inject constructor(
         return buildWidgetDisplayModel(
             now = now,
             source = data,
-            uncategorizedEndHour = uncategorizedEndHour,
+            dayEndHour = dayEndHour,
             weekStart = weekStart,
             holidayState = holidayState,
             uncategorizedName = context.getString(R.string.label_uncategorized),
@@ -102,7 +98,7 @@ internal data class WidgetSourceData(
 internal fun buildWidgetDisplayModel(
     now: ZonedDateTime,
     source: WidgetSourceData,
-    uncategorizedEndHour: Int,
+    dayEndHour: Int,
     weekStart: DayOfWeek,
     holidayState: HolidaySnapshot,
     uncategorizedName: String,
@@ -119,8 +115,7 @@ internal fun buildWidgetDisplayModel(
     source.todos.forEach { entity ->
         val todo = entity.toDomain()
         val category = entity.categoryId?.let(categories::get)
-        val endHour = category?.endHour ?: uncategorizedEndHour
-        val targetDate = logicalDate(now, endHour)
+        val targetDate = logicalDate(now, dayEndHour)
         if (!todo.occursOn(targetDate, source.holidays)) return@forEach
         if (executions[todo.id to targetDate.toString()] != null) return@forEach
 
@@ -133,7 +128,7 @@ internal fun buildWidgetDisplayModel(
         }
         if (progress?.isAchieved == true) return@forEach
 
-        val deadline = deadlineAt(targetDate, endHour, todo.dueMinutes, now.zone)
+        val deadline = deadlineAt(targetDate, dayEndHour, todo.dueMinutes, now.zone)
         groupedItems.getOrPut(entity.categoryId) { mutableListOf() } += WidgetTodoItem(
             todoId = todo.id,
             definitionRevision = todo.definitionRevision,
@@ -159,8 +154,7 @@ internal fun buildWidgetDisplayModel(
     val groups = groupedItems.mapNotNull { (categoryId, items) ->
         if (items.isEmpty()) return@mapNotNull null
         val category = categoryId?.let(categories::get)
-        val endHour = category?.endHour ?: uncategorizedEndHour
-        val groupDate = logicalDate(now, endHour)
+        val groupDate = logicalDate(now, dayEndHour)
         WidgetCategoryGroup(
             categoryId = categoryId,
             categoryName = category?.name ?: uncategorizedName,
@@ -177,13 +171,13 @@ internal fun buildWidgetDisplayModel(
         )
     }.sortedWith(compareBy<WidgetCategoryGroup>(WidgetCategoryGroup::sortOrder).thenBy { it.categoryId ?: "" })
 
-    val boundaryCandidates = (source.categories.map(CategoryEntity::endHour) + uncategorizedEndHour)
-        .distinct()
-        .map { endHour ->
-            logicalDayEnd(logicalDate(now, endHour), endHour, now.zone).toInstant().toEpochMilli()
-        }
+    val dayBoundary = logicalDayEnd(
+        logicalDate(now, dayEndHour),
+        dayEndHour,
+        now.zone,
+    ).toInstant().toEpochMilli()
     val nextCalendarDay = now.toLocalDate().plusDays(1).atStartOfDay(now.zone).toInstant().toEpochMilli()
-    val nextRefreshAt = (boundaryCandidates + nextCalendarDay + groups.flatMap { group ->
+    val nextRefreshAt = (listOf(dayBoundary, nextCalendarDay) + groups.flatMap { group ->
         group.items.map(WidgetTodoItem::deadlineAt)
     }).filter { it > now.toInstant().toEpochMilli() }.minOrNull()
         ?: now.plusHours(1).toInstant().toEpochMilli()
