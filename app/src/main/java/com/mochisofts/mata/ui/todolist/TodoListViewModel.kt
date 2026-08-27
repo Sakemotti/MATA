@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +38,13 @@ import kotlinx.coroutines.launch
 data class TodoOccurrenceGroup(
     val category: Category?,
     val occurrences: List<TodoOccurrence>,
+)
+
+internal data class TodoListContent(
+    val occurrences: List<TodoOccurrence>,
+    val todos: List<Todo>,
+    val holidaySnapshot: HolidaySnapshot,
+    val date: LocalDate,
 )
 
 data class TodoListUiState(
@@ -83,24 +91,12 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    private val occurrenceFlow = selectedDate.flatMapLatest(todoRepository::observeOccurrences)
-
-    private val baseContent = combine(
-        occurrenceFlow,
-        todoRepository.observeTodos(),
-        holidayRepository.snapshot,
-    ) { occurrences, todos, holidaySnapshot ->
-        BaseContent(occurrences, todos, holidaySnapshot)
-    }
-
-    private val content = combine(baseContent, selectedDate) { base, date ->
-        Content(
-            base.occurrences,
-            base.todos,
-            base.holidaySnapshot,
-            date,
-        )
-    }
+    private val content = observeTodoListContent(
+        selectedDate = selectedDate,
+        occurrencesForDate = todoRepository::observeOccurrences,
+        todos = todoRepository.observeTodos(),
+        holidaySnapshot = holidayRepository.snapshot,
+    )
 
     val uiState: StateFlow<TodoListUiState> = combine(
         content,
@@ -240,19 +236,26 @@ class TodoListViewModel @Inject constructor(
                 }
         }
     }
+}
 
-    private data class Content(
-        val occurrences: List<TodoOccurrence>,
-        val todos: List<Todo>,
-        val holidaySnapshot: HolidaySnapshot,
-        val date: LocalDate,
-    )
-
-    private data class BaseContent(
-        val occurrences: List<TodoOccurrence>,
-        val todos: List<Todo>,
-        val holidaySnapshot: HolidaySnapshot,
-    )
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+internal fun observeTodoListContent(
+    selectedDate: Flow<LocalDate>,
+    occurrencesForDate: (LocalDate) -> Flow<List<TodoOccurrence>>,
+    todos: Flow<List<Todo>>,
+    holidaySnapshot: Flow<HolidaySnapshot>,
+): Flow<TodoListContent> {
+    val datedOccurrences = selectedDate.flatMapLatest { date ->
+        occurrencesForDate(date).map { occurrences -> date to occurrences }
+    }
+    return combine(datedOccurrences, todos, holidaySnapshot) { (date, occurrences), todoList, holidays ->
+        TodoListContent(
+            occurrences = occurrences,
+            todos = todoList,
+            holidaySnapshot = holidays,
+            date = date,
+        )
+    }
 }
 
 internal fun buildTodoOccurrenceGroups(
