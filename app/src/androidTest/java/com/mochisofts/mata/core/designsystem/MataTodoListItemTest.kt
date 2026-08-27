@@ -82,6 +82,39 @@ class MataTodoListItemTest {
         assertEquals(emptyBounds.left, visibleBounds.left, POSITION_TOLERANCE_PX)
         assertEquals(emptyBounds.right, visibleBounds.right, POSITION_TOLERANCE_PX)
     }
+
+    @Test
+    fun completionCheckboxCenterStaysAlignedWhenOnlyPendingItemIsInteractive() {
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                Column(Modifier.width(360.dp)) {
+                    CheckboxTodoListItem(
+                        checkboxTag = "pending-checkbox",
+                        checked = false,
+                        onCheckedChange = {},
+                    )
+                    CheckboxTodoListItem(
+                        checkboxTag = "completed-checkbox",
+                        checked = true,
+                        onCheckedChange = null,
+                    )
+                }
+            }
+        }
+
+        val pendingBounds = composeRule.onNodeWithTag("pending-checkbox")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val completedBounds = composeRule.onNodeWithTag("completed-checkbox")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertEquals(
+            pendingBounds.center.x,
+            completedBounds.center.x,
+            POSITION_TOLERANCE_PX,
+        )
+    }
 }
 
 @Composable
@@ -105,6 +138,26 @@ private fun TestTodoListItem(
         reserveLeadingSpace = true,
         reserveTrailingSpace = true,
         trailingSlotWidth = trailingSlotWidth,
+    )
+}
+
+@Composable
+private fun CheckboxTodoListItem(
+    checkboxTag: String,
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+) {
+    MataTodoListItem(
+        headlineContent = { Box(Modifier.fillMaxWidth().height(24.dp)) },
+        leadingContent = {
+            MataCompletionCheckbox(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                modifier = Modifier.testTag(checkboxTag),
+            )
+        },
+        reserveLeadingSpace = true,
+        reserveTrailingSpace = true,
     )
 }
 
