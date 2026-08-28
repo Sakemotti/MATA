@@ -1,9 +1,10 @@
 # Google Playストア掲載文・画像仕様
 
-- 文書状態: 確定文案・画像未作成
+- 文書状態: 掲載文成果物化済み・画像未作成
 - 最終更新日: 2026-08-28
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連文書: [Google Play Console申請シート](play-console-submission.md)
+- 関連成果物: [Google Play掲載成果物](../../../fastlane/README.md)
 
 ## 1. 掲載言語と基本情報
 
