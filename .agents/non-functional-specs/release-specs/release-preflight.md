@@ -27,7 +27,7 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 - 公開前原稿モードの全項目を検査する。
 - `generateReleaseArtifactMetadata`が生成したAAB、R8 mapping、ライセンス一覧および最終Manifestの存在、バイト数、SHA-256を再計算する。
 - メタデータのGit commitが検査時のHEADと一致することを確認する。
-- Upload Key未署名のCI検証用AABを許容するが、本番公開可能とは判定しない。
+- Upload Key未署名のCI検証用AABでは、署名方法が`none`、証明書SHA-256が空、`publishable=false`であることを確認する。本番公開可能とは判定しない。
 
 ### 2.3 本番公開候補
 
@@ -35,7 +35,7 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 
 - `main`ブランチのクリーンな作業ツリーだけを許可する。
 - 法的文書の未確定値、検索除外、CNAME、app-ads.txtおよびストア画像の不足を許容しない。
-- 成果物メタデータがUpload Key署名済みの公開可能AABを示すことを要求する。
+- 成果物メタデータがUpload Key署名済みで、1件以上の署名者証明書SHA-256と`publishable=true`を持つ公開可能AABを示すことを要求する。
 - 本モードの成功だけで公開承認とはせず、実機、Google Play Console、Pre-launch report、専門家確認および人的承認も完了させる。
 
 ## 3. 証跡

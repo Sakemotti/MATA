@@ -18,6 +18,50 @@ def releasePrivacyPolicyUrl = providers.gradleProperty("MATA_PRIVACY_POLICY_URL"
 def releaseTermsUrl = providers.gradleProperty("MATA_TERMS_URL").orElse("").get()
 def releaseVersionCode = 1
 def releaseVersionName = "1.0.0"
+def uploadStoreFilePath = providers.gradleProperty("MATA_UPLOAD_STORE_FILE").orElse("").get()
+def uploadStorePassword = providers.gradleProperty("MATA_UPLOAD_STORE_PASSWORD").orElse("").get()
+def uploadKeyAlias = providers.gradleProperty("MATA_UPLOAD_KEY_ALIAS").orElse("").get()
+def uploadKeyPassword = providers.gradleProperty("MATA_UPLOAD_KEY_PASSWORD").orElse("").get()
+def requireUploadSigningValue = providers.gradleProperty("MATA_REQUIRE_UPLOAD_SIGNING")
+    .orElse("false")
+    .get()
+if (!(requireUploadSigningValue ==~ /(?i:true|false)/)) {
+    throw new GradleException("MATA_REQUIRE_UPLOAD_SIGNING must be true or false.")
+}
+def requireUploadSigning = requireUploadSigningValue.toBoolean()
+def uploadSigningValues = [
+    uploadStoreFilePath,
+    uploadStorePassword,
+    uploadKeyAlias,
+    uploadKeyPassword,
+]
+def uploadSigningConfigured = uploadSigningValues.every { !it.isEmpty() }
+def uploadSigningPartiallyConfigured = uploadSigningValues.any { !it.isEmpty() } &&
+    !uploadSigningConfigured
+if (uploadSigningPartiallyConfigured) {
+    throw new GradleException(
+        "Upload Key signing is partially configured. Set all four MATA_UPLOAD_* properties or none."
+    )
+}
+def uploadStoreFile = uploadSigningConfigured ? new File(uploadStoreFilePath) : null
+if (uploadSigningConfigured) {
+    if (gradle.startParameter.configurationCacheRequested) {
+        throw new GradleException(
+            "Upload Key signing requires --no-configuration-cache so signing secrets are not " +
+                "retained in the project configuration cache."
+        )
+    }
+    if (!uploadStoreFile.isAbsolute()) {
+        throw new GradleException("MATA_UPLOAD_STORE_FILE must be an absolute path.")
+    }
+    if (!uploadStoreFile.isFile()) {
+        throw new GradleException("The configured Upload Key keystore file does not exist.")
+    }
+    def repositoryPath = rootProject.projectDir.canonicalFile.toPath()
+    if (uploadStoreFile.canonicalFile.toPath().startsWith(repositoryPath)) {
+        throw new GradleException("The Upload Key keystore must be stored outside the repository.")
+    }
+}
 
 android {
     namespace 'com.mochisofts.mata'
@@ -35,6 +79,17 @@ android {
         versionName releaseVersionName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (uploadSigningConfigured) {
+            create("upload") {
+                storeFile uploadStoreFile
+                storePassword uploadStorePassword
+                keyAlias uploadKeyAlias
+                keyPassword uploadKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -56,6 +111,9 @@ android {
             buildConfigField "String", "ADMOB_BANNER_AD_UNIT_ID", "\"${releaseBannerAdUnitId}\""
             buildConfigField "String", "PRIVACY_POLICY_URL", "\"${releasePrivacyPolicyUrl}\""
             buildConfigField "String", "TERMS_URL", "\"${releaseTermsUrl}\""
+            if (uploadSigningConfigured) {
+                signingConfig signingConfigs.getByName("upload")
+            }
         }
         benchmark {
             initWith buildTypes.release
@@ -219,11 +277,27 @@ def verifyReleaseVersionConfiguration = tasks.register("verifyReleaseVersionConf
     }
 }
 
+def verifyReleaseSigningConfiguration = tasks.register("verifyReleaseSigningConfiguration") {
+    group = "verification"
+    description = "Verifies whether Upload Key signing is required and fully configured."
+    inputs.property("uploadSigningConfigured", uploadSigningConfigured)
+    inputs.property("requireUploadSigning", requireUploadSigning)
+    doLast {
+        if (requireUploadSigning && !uploadSigningConfigured) {
+            throw new GradleException(
+                "A publishable Release requires Upload Key signing. Set all four MATA_UPLOAD_* " +
+                    "properties and build with --no-configuration-cache."
+            )
+        }
+    }
+}
+
 tasks.configureEach { task ->
     if (task.name == "preReleaseBuild") {
         task.dependsOn(
             verifyReleaseAdMobConfiguration,
             verifyReleaseLegalUrls,
+            verifyReleaseSigningConfiguration,
             verifyReleaseVersionConfiguration,
         )
     }
@@ -254,7 +328,7 @@ def releaseRootPath = rootProject.layout.projectDirectory.asFile.absolutePath
 
 tasks.register("generateReleaseArtifactMetadata") {
     group = "verification"
-    description = "Builds the verification AAB and records checksums and release identity."
+    description = "Builds the Release AAB and records signing, checksums, and release identity."
     dependsOn("bundleRelease", verifyReleaseVersionConfiguration)
     inputs.files(releaseBundle, releaseMapping, releaseLicenseList, releaseManifest)
     inputs.property("applicationId", "com.mochisofts.mata")
@@ -262,6 +336,7 @@ tasks.register("generateReleaseArtifactMetadata") {
     inputs.property("versionCode", releaseVersionCode)
     inputs.property("gitCommit", releaseGitCommit)
     inputs.property("buildTimestamp", releaseBuildTimestamp)
+    inputs.property("uploadSigningConfigured", uploadSigningConfigured)
     outputs.file(releaseMetadata)
 
     doLast {
@@ -298,16 +373,56 @@ tasks.register("generateReleaseArtifactMetadata") {
             }
             digest.digest().encodeHex().toString()
         }
+        def signerCertificateSha256 = { File file ->
+            def fingerprints = [] as Set
+            def jar = new java.util.jar.JarFile(file, true)
+            try {
+                def entries = jar.entries()
+                while (entries.hasMoreElements()) {
+                    def entry = entries.nextElement()
+                    if (entry.directory || entry.name.startsWith("META-INF/")) {
+                        continue
+                    }
+                    jar.getInputStream(entry).withCloseable { input ->
+                        def buffer = new byte[8192]
+                        while (input.read(buffer) != -1) {
+                            // Reading each entry fully causes JarFile to verify and expose signers.
+                        }
+                    }
+                    entry.codeSigners?.each { signer ->
+                        def certificate = signer.signerCertPath.certificates[0]
+                        def digest = java.security.MessageDigest.getInstance("SHA-256")
+                        fingerprints.add(digest.digest(certificate.encoded).encodeHex().toString())
+                    }
+                }
+            } finally {
+                jar.close()
+            }
+            fingerprints.toList().sort()
+        }
+        def signerFingerprints = signerCertificateSha256(releaseBundle.get().asFile)
+        if (uploadSigningConfigured && signerFingerprints.isEmpty()) {
+            throw new GradleException("Upload Key signing was configured but the AAB is unsigned.")
+        }
+        if (!uploadSigningConfigured && !signerFingerprints.isEmpty()) {
+            throw new GradleException("The CI verification AAB must not contain a signing certificate.")
+        }
         def rootPath = java.nio.file.Paths.get(releaseRootPath)
         def metadata = [
-            schemaVersion: 1,
-            publishable: false,
-            purpose: "CI verification only; production publication requires Upload Key signing.",
+            schemaVersion: 2,
+            publishable: uploadSigningConfigured,
+            purpose: uploadSigningConfigured
+                ? "Upload Key signed candidate; all remaining release gates still apply."
+                : "CI verification only; production publication requires Upload Key signing.",
             applicationId: "com.mochisofts.mata",
             versionName: releaseVersionName,
             versionCode: releaseVersionCode,
             gitCommit: commit.toLowerCase(java.util.Locale.ROOT),
             buildTimestamp: timestamp,
+            signing: [
+                method: uploadSigningConfigured ? "uploadKey" : "none",
+                certificateSha256: signerFingerprints,
+            ],
             artifacts: requiredArtifacts.collect { artifact ->
                 [
                     type: artifact.type,

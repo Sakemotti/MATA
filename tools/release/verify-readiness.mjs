@@ -98,6 +98,8 @@ function verifyBuildConfiguration() {
     ['Baseline Profile', /baselineProfile\s+project\(['"]:benchmark['"]\)/],
     ['release AdMob properties', /gradleProperty\(['"]MATA_ADMOB_APP_ID['"]\)/],
     ['release legal URL properties', /gradleProperty\(['"]MATA_PRIVACY_POLICY_URL['"]\)/],
+    ['Upload Key properties', /gradleProperty\(['"]MATA_UPLOAD_STORE_FILE['"]\)/],
+    ['production signing gate', /gradleProperty\(['"]MATA_REQUIRE_UPLOAD_SIGNING['"]\)/],
   ];
   const missing = requirements.filter(([, pattern]) => !pattern.test(build)).map(([label]) => label);
   if (versionCodeMatch === null || Number(versionCodeMatch[1]) < 1) {
@@ -167,7 +169,7 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
       'mergedManifest',
     ]);
     const problems = [];
-    if (metadata.schemaVersion !== 1) problems.push('schemaVersion must be 1');
+    if (metadata.schemaVersion !== 2) problems.push('schemaVersion must be 2');
     if (metadata.applicationId !== 'com.mochisofts.mata') problems.push('applicationId is invalid');
     if (!/^\d+\.\d+\.\d+$/.test(metadata.versionName)) problems.push('versionName is invalid');
     if (!Number.isInteger(metadata.versionCode) || metadata.versionCode < 1) {
@@ -198,6 +200,22 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
         if (sha256(path) !== artifact.sha256) problems.push(`${artifact.type} SHA-256 changed`);
       }
     }
+    const signerFingerprints = metadata.signing?.certificateSha256;
+    if (metadata.publishable === true) {
+      if (metadata.signing?.method !== 'uploadKey') {
+        problems.push('publishable AAB must use Upload Key signing');
+      }
+      if (!Array.isArray(signerFingerprints) || signerFingerprints.length < 1) {
+        problems.push('publishable AAB has no signing certificate SHA-256');
+      }
+    } else if (
+      metadata.publishable !== false ||
+      metadata.signing?.method !== 'none' ||
+      !Array.isArray(signerFingerprints) ||
+      signerFingerprints.length !== 0
+    ) {
+      problems.push('verification AAB signing metadata is inconsistent');
+    }
     if (requirePublishable && metadata.publishable !== true) {
       problems.push('AAB is a CI verification artifact and is not signed with the Upload Key');
     }
@@ -208,7 +226,7 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
       addCheck(
         'release_artifacts',
         'passed',
-        `${metadata.versionName} (${metadata.versionCode}); ${metadata.artifacts.length} artifact hashes match.`,
+        `${metadata.versionName} (${metadata.versionCode}); ${metadata.artifacts.length} artifact hashes match; signing=${metadata.signing.method}.`,
       );
     }
   } catch (error) {
