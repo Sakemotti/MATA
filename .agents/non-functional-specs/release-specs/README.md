@@ -1,7 +1,7 @@
 # リリース・配布運用仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-27
+- 最終更新日: 2026-08-28
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[総合動作確認項目書](../../test-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[法的文書仕様](../legal-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)
 
 ## 1. 目的
@@ -14,6 +14,9 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | --- | --- |
 | [バージョン・ビルド・署名仕様](versioning-build-and-signing.md) | versionName、versionCode、AAB、署名、成果物 |
 | [Google Play掲載・公開仕様](play-listing-and-rollout.md) | 対象地域、掲載情報、トラック、段階公開、法的URL |
+| [Google Play Console申請シート](play-console-submission.md) | App content、商品、権限、対象ユーザー、入力値、公開ブロッカー |
+| [Google Playストア掲載文・画像仕様](store-listing-copy-and-assets.md) | 確定掲載文、リリースノート、画像寸法、撮影構成 |
+| [Google Play Data safety申告案](data-safety-declaration.md) | 収集・共有データ、目的、削除、最終検証 |
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 
 ## 3. 基本方針

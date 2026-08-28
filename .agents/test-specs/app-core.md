@@ -167,7 +167,7 @@
 | REL-006 | P0 | MANUAL | `assembleDebug`を実行する | Debug APKの生成に成功する | 未実施 | |
 | REL-007 | P0 | MANUAL | CIの対象コミットを確認する | 単体テスト、Lint、Debugビルドがすべて成功する | 未実施 | |
 | REL-008 | P1 | UI/MANUAL | 全主要画面をライト・ダーク・最大フォントで確認する | 内容と主要操作が欠けず、致命的な重なりや切れがない | 未実施 | |
-| REL-009 | P1 | MANUAL | 新しい権限、外部SDK、通信先、データ収集、課金および連絡先の差分を確認する | 仕様、プライバシーポリシー、利用規約、特定商取引法に基づく表記、外部送信に関する公表、Data safety、UMPおよびストア掲載が実装と一致して更新される | 未実施 | |
+| REL-009 | P1 | MANUAL | 新しい権限、外部SDK、通信先、データ収集、課金および連絡先の差分を確認する | 仕様、法的文書、Google Play Console申請シート、Data safety、UMP、商品設定およびストア掲載がRelease実装と一致して更新される | 未実施 | |
 | REL-010 | P0 | MANUAL | 全項目の結果と未解決不具合を確認する | 全P0/P1が合格し、P2不合格に承認済み判断がある | 未実施 | |
 | REL-011 | P1 | MANUAL | ビルド設定と主要ソースを静的レビューする | Kotlin、AGP 9系内蔵Kotlin、Compose、Material 3、原則単一Activity、Coroutines、`java.time`を使用する | 未実施 | |
 | REL-012 | P1 | MANUAL | パッケージ依存と主要機能の実装位置をレビューする | `core`、`data`、`domain`、`ui`の責務を守り、UIが保存処理を直接呼ばずViewModelとRepositoryを経由する | 未実施 | |
