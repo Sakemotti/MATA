@@ -33,6 +33,7 @@
 - [ ] セキュリティ、Secret、依存関係、Manifest検査が成功した。
 - [ ] Macrobenchmarkと主要性能回帰が公開基準を満たした。
 - [ ] ログ検査でユーザー入力、トークン、URI、広告情報が検出されなかった。
+- [ ] `verify-readiness.mjs --artifacts`が成功し、Release成果物と同じActions artifactへ検査結果JSONを保存した。
 
 ## 3. Release成果物検査
 
@@ -42,6 +43,7 @@
 - [ ] 最終Manifestの権限、exported、backup、cleartext設定が仕様どおりである。
 - [ ] AABがUpload Keyで署名され、SHA-256を記録した。
 - [ ] mapping、依存関係、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
+- [ ] `verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
 
 ## 4. 実機・Google Play検査
 
