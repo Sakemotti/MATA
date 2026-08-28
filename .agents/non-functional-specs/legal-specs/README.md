@@ -1,7 +1,7 @@
 # 法的文書仕様
 
 - 文書状態: 方針確定・公開前原稿
-- 最終更新日: 2026-08-27
+- 最終更新日: 2026-08-28
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[リリース・配布運用仕様](../release-specs/README.md)
 
 ## 1. 目的
@@ -18,6 +18,8 @@ MATAの一般公開に必要な法的文書の公開前原稿、公開URLおよ�
 | 外部送信に関する公表 | [external-transmission.md](external-transmission.md) | `https://mochisofts.com/mata/external-transmission` |
 
 このリポジトリのMarkdownを正本原稿とし、公開時は内容を省略せず静的HTMLへ変換する。アプリに直接表示するのは既存仕様どおりプライバシーポリシーと利用規約へのリンクとし、他の2文書はWebサイトと各文書間のリンクから到達可能にする。
+
+公開サイトのHTML/CSS雛形、ローカル検証手順および誤公開防止の公開用検証は[法的文書サイト](../../../legal-site/README.md)で管理する。雛形には未確定値と検索除外が残るため、同READMEの公開前作業を完了するまで本番へ配置しない。
 
 ## 3. 運営者と連絡先
 
