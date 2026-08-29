@@ -90,11 +90,11 @@ function verifyBuildConfiguration() {
   const versionCodeMatch = /def\s+releaseVersionCode\s*=\s*(\d+)\b/.exec(build);
   const versionNameMatch = /def\s+releaseVersionName\s*=\s*['"]([^'"]+)['"]/.exec(build);
   const requirements = [
-    ['namespace', /namespace\s+['"]com\.mochisofts\.mata['"]/],
+    ['namespace', /namespace\s*=\s*['"]com\.mochisofts\.mata['"]/],
     ['applicationId', /applicationId\s+['"]com\.mochisofts\.mata['"]/],
     ['minSdk 26', /minSdk\s+26\b/],
     ['targetSdk 36', /targetSdk\s+36\b/],
-    ['release optimization', /release\s*\{[\s\S]*?optimization\s*\{\s*enable\s+true\s*\}/],
+    ['release optimization', /release\s*\{[\s\S]*?optimization\s*\{\s*enable\s*=\s*true\s*\}/],
     ['Baseline Profile', /baselineProfile\s+project\(['"]:benchmark['"]\)/],
     ['release AdMob properties', /gradleProperty\(['"]MATA_ADMOB_APP_ID['"]\)/],
     ['release legal URL properties', /gradleProperty\(['"]MATA_PRIVACY_POLICY_URL['"]\)/],

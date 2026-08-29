@@ -65,7 +65,7 @@ if (uploadSigningConfigured) {
 }
 
 android {
-    namespace 'com.mochisofts.mata'
+    namespace = 'com.mochisofts.mata'
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -105,7 +105,7 @@ android {
         }
         release {
             optimization {
-                enable true
+                enable = true
             }
             manifestPlaceholders.admobAppId = releaseAdMobAppId ?: "missing-admob-app-id"
             buildConfigField "String", "ADMOB_APP_ID", "\"${releaseAdMobAppId}\""
@@ -113,12 +113,12 @@ android {
             buildConfigField "String", "PRIVACY_POLICY_URL", "\"${releasePrivacyPolicyUrl}\""
             buildConfigField "String", "TERMS_URL", "\"${releaseTermsUrl}\""
             if (uploadSigningConfigured) {
-                signingConfig signingConfigs.getByName("upload")
+                signingConfig = signingConfigs.getByName("upload")
             }
         }
         benchmark {
             initWith buildTypes.release
-            signingConfig signingConfigs.debug
+            signingConfig = signingConfigs.debug
             matchingFallbacks = ['release']
             manifestPlaceholders.admobAppId = debugAdMobAppId
             buildConfigField "String", "ADMOB_APP_ID", "\"${debugAdMobAppId}\""
@@ -132,8 +132,8 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     buildFeatures {
-        compose true
-        buildConfig true
+        compose = true
+        buildConfig = true
     }
     sourceSets {
         androidTest.assets.srcDir "$projectDir/schemas"
@@ -202,8 +202,8 @@ dependencies {
 }
 
 baselineProfile {
-    automaticGenerationDuringBuild false
-    saveInSrc true
+    automaticGenerationDuringBuild = false
+    saveInSrc = true
 }
 
 def verifyReleaseAdMobConfiguration = tasks.register("verifyReleaseAdMobConfiguration") {

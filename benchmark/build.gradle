@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.mochisofts.mata.benchmark'
+    namespace = 'com.mochisofts.mata.benchmark'
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -17,7 +17,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    targetProjectPath ':app'
+    targetProjectPath = ':app'
     experimentalProperties["android.experimental.self-instrumenting"] = true
 
     compileOptions {
@@ -27,7 +27,7 @@ android {
 }
 
 baselineProfile {
-    useConnectedDevices true
+    useConnectedDevices = true
 }
 
 dependencies {
