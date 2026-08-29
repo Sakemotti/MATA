@@ -27,9 +27,17 @@ Google Play Consoleへ登録する日本語の掲載文と画像を、Fastlane S
 
 ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。ランチャー用の最大画像は432px、従来アイコンは192pxしかないため、512pxストアアイコンへ単純拡大しません。提供済みの高解像度元画像が必要です。
 
+## フィーチャーグラフィックの生成
+
+フィーチャーグラフィックは、アプリアイコンを大きく複製せず、MATAの循環・チェック表現とブランド色を使って、Java標準APIだけで1024×500の24-bit RGB PNGへ描画します。主要要素はGoogle Playでの表示切れを避けるため中央へ配置します。リポジトリルートで次を実行してください。
+
+    java fastlane/tools/GenerateFeatureGraphic.java
+
+生成先は`metadata/android/ja-JP/images/featureGraphic.png`です。生成後は`node fastlane/verify-play-store.mjs`で寸法、色形式およびManifestとの一致を確認し、目視確認も行います。ブランド色や構図を変更した場合は、生成処理と画像を同じコミットで更新してください。
+
 ## 公開候補の検証
 
-すべての画像を配置した後、次のコマンドを実行します。
+ストアアイコンとすべてのスクリーンショットを配置した後、次のコマンドを実行します。
 
     node fastlane/verify-play-store.mjs --release
 
