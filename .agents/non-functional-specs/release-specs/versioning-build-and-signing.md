@@ -1,7 +1,7 @@
 # バージョン・ビルド・署名仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-08-28
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. バージョン
@@ -45,12 +45,23 @@
   - AABのSHA-256
   - R8 mapping
   - Baseline Profileと生成元
-  - 依存関係一覧とライセンス一覧
+  - Release runtimeのCycloneDX SBOMとライセンス一覧
   - 最終Manifestと権限一覧
   - テスト・Lint・benchmark結果
   - ストア掲載文言とリリースノート
 - ネイティブライブラリを導入した場合はNative Debug Symbolsもアップロード・保管する。
 - CI成果物は原則1年、公開済みReleaseのメタデータとmappingは公開期間中および公開終了後3年以上保持する。
+
+### 4.1 Release SBOM
+
+- CycloneDX Gradle Pluginの固定バージョンを使用し、CycloneDX 1.6 JSONを`app/build/outputs/sbom/release-sbom.cdx.json`へ生成する。
+- 対象は`:app`の`releaseRuntimeClasspath`だけとし、Debug、テスト、benchmarkおよびビルドツールの依存関係を含めない。
+- Releaseへ解決された直接・推移依存関係と依存関係グラフを記録する。
+- ルートcomponentは`application`、groupは`com.mochisofts`、nameは`MATA`、versionはReleaseの`versionName`とする。
+- ランダムなserial numberを含めず、SBOMのUTC timestampはReleaseメタデータの`buildTimestamp`と一致させる。
+- ReleaseメタデータへSBOMの相対パス、バイト数およびSHA-256を記録し、AAB等と同じCI artifactへ保存する。
+- 自動検査ではCycloneDX形式、ルートcomponent、依存関係グラフ、およびBilling、GMA Next-Gen SDK、UMPの存在を確認する。
+- SBOMには依存ライブラリ情報だけを記録し、署名秘密、広告IDの値、購入トークン、ユーザーデータまたはローカルパスを含めない。
 
 ## 5. 署名
 
@@ -62,11 +73,39 @@
 - CIでは保護されたRelease環境だけが署名Secretを参照できる。
 - Upload Key紛失・侵害時はGoogle Playのリセット手順を使用し、App Signing Keyの変更を試みない。
 
+### 5.1 Gradle入力
+
+本番用AABの生成時は次の4項目をすべてGradleプロパティとして設定する。1項目でも不足した部分設定を許可しない。
+
+| プロパティ | 内容 |
+| --- | --- |
+| `MATA_UPLOAD_STORE_FILE` | リポジトリ外に保管したkeystoreの絶対パス |
+| `MATA_UPLOAD_STORE_PASSWORD` | keystoreのパスワード |
+| `MATA_UPLOAD_KEY_ALIAS` | Upload Keyのalias |
+| `MATA_UPLOAD_KEY_PASSWORD` | Upload Keyのパスワード |
+
+- ローカルでは`GRADLE_USER_HOME/gradle.properties`へ保存し、プロジェクト内の`gradle.properties`、`keystore.properties`、シェル履歴またはIDEの共有Run Configurationへ記載しない。
+- CIでは保護された環境のSecretから`ORG_GRADLE_PROJECT_`接頭辞付き環境変数として一時的に渡す。
+- keystoreは絶対パスで指定し、リポジトリ配下のパスを拒否する。
+- 秘密値4項目の名称や設定有無は検査できるが、値そのものをログ、JSONまたはActions artifactへ出力しない。
+
+### 5.2 本番署名ビルド
+
+本番公開候補では、非秘密値`MATA_REQUIRE_UPLOAD_SIGNING=true`も設定し、Configuration Cacheを無効化して次を実行する。
+
+    ./gradlew :app:generateReleaseArtifactMetadata -PMATA_REQUIRE_UPLOAD_SIGNING=true --no-configuration-cache --no-daemon
+
+- `MATA_REQUIRE_UPLOAD_SIGNING=true`で秘密値が不足する場合はビルドを失敗させる。
+- 署名秘密が設定された状態でConfiguration Cacheが有効な場合は、秘密値をプロジェクトキャッシュへ保持しないためビルドを失敗させる。
+- 生成したAABをJAR署名として検証し、署名者証明書のSHA-256をReleaseメタデータへ記録する。
+- Releaseメタデータの`publishable`はUpload Key署名を検出した場合だけ`true`とする。署名済みであっても他の公開ゲートを省略しない。
+- 通常CIは署名秘密と`MATA_REQUIRE_UPLOAD_SIGNING`を設定せず、未署名で`publishable=false`の検証用AABを生成する。
+
 ## 6. 再現性と供給網
 
 - Gradle Wrapper、JDK、AGP、Kotlin、依存関係バージョンを固定する。
 - 動的依存を禁止し、Dependency VerificationとロックをCIで強制する。
 - CIは毎回クリーン環境からビルドする。
 - ビルドスクリプトからネットワーク上の任意スクリプトを直接実行しない。
-- 生成されたライセンス一覧と依存関係一覧をRelease前に差分確認する。
+- 生成されたライセンス一覧とCycloneDX SBOMをRelease前に差分確認し、追加・更新・削除されたSDKをData safety、権限および外部送信公表と照合する。
 - AABアップロード前にSHA-256を記録し、検証済みファイルと一致することを確認する。

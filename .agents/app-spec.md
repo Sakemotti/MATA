@@ -1,7 +1,7 @@
 # MATA アプリ全体仕様
 
 - 文書状態: 初版
-- 最終更新日: 2026-08-26
+- 最終更新日: 2026-08-29
 
 ## 1. 概要
 
@@ -319,6 +319,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 
 - 基本機能は広告付きで無料提供する。
 - Google Playの買い切り購入によって広告を削除できるようにする。
+- 無料版と有料版を別アプリとして公開せず、単一のMATAアプリ内で非消費型商品`remove_ads`を販売する。
 - 広告削除商品の商品IDは`remove_ads`、初期の日本向け基本価格は500円とする。
 - 表示価格はGoogle Playから取得したローカライズ済み価格を使用する。
 - 購入状態はGoogle Playを正とし、バックアップへ含めない。
@@ -351,8 +352,13 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 
 - プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
-- Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`、掲載用連絡先は`support@mochisofts.com`とする。
+- 特定商取引法に基づく表記は`https://mochisofts.com/mata/commercial-transactions`で公開する。
+- 外部送信に関する公表は`https://mochisofts.com/mata/external-transmission`で公開する。
+- アプリ提供者はMochisofts（個人運営）、Google Playおよび法的文書の連絡先は`com.mochisofts@gmail.com`とする。
+- Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`とし、GitHub Pagesを利用した認証不要の静的サイトとして公開する。
+- 購入のキャンセルと払い戻しはGoogle Playの方針および適用法令に従い、不具合等の問い合わせを上記連絡先で受け付ける。払い戻しまたは購入取消を確認した場合の権利状態は収益化仕様に従う。
+- 法的文書の原稿、公開ブロッカーおよび変更管理は[法的文書仕様](non-functional-specs/legal-specs/README.md)に従う。
 - 公開前に法的URLの実在、Data safety、権限、SDK、署名、テストトラック、段階公開を[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)で確認する。
 - Google PlayおよびAndroidの要件は公開候補ごとに現行内容を確認し、固定した過去要件だけを根拠に公開しない。
 
-Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](functional-specs/domain-specs/README.md)、祝日連携は[祝日情報連携仕様](functional-specs/holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](functional-specs/backup-specs/README.md)、広告と課金は[収益化仕様](functional-specs/monetization-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)で確定済みとする。
+Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](functional-specs/domain-specs/README.md)、祝日連携は[祝日情報連携仕様](functional-specs/holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](functional-specs/backup-specs/README.md)、広告と課金は[収益化仕様](functional-specs/monetization-specs/README.md)、法的文書は[法的文書仕様](non-functional-specs/legal-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)で確定済みとする。

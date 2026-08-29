@@ -1,7 +1,7 @@
 # Google Play掲載・公開仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-08-28
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. ストア掲載
@@ -14,6 +14,7 @@
 - スクリーンショットは実際のRelease相当UIと日本語の架空データを使用し、個人情報やデバッグ表示を含めない。
 - スマートフォンとタブレットの必要な画像を用意し、表示内容を同じリリースに一致させる。
 - 高解像度アイコンとFeature Graphicはデザインシステムのブランド表現に従う。
+- Google Playへ転記する確定文案、リリースノート、画像寸法、撮影順および代替テキストは[Google Playストア掲載文・画像仕様](store-listing-copy-and-assets.md)に従う。
 
 ## 2. 対象ユーザーとコンテンツ
 
@@ -28,11 +29,15 @@
 
 - プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
-- 両URLはHTTPS、認証不要、地域制限なし、モバイル表示対応とする。
+- 特定商取引法に基づく表記は`https://mochisofts.com/mata/commercial-transactions`で公開する。
+- 外部送信に関する公表は`https://mochisofts.com/mata/external-transmission`で公開する。
+- 4文書はHTTPS、認証不要、地域制限なし、モバイル表示対応とし、本文表示にJavaScriptを必須とせずPDFだけで公開しない。
 - アプリ内の設定画面とGoogle Play掲載から同じポリシーURLを開く。
-- デベロッパーWebサイトは`https://mochisofts.com/`、連絡先は`support@mochisofts.com`とする。
+- アプリ提供者はMochisofts（個人運営）、デベロッパーWebサイトは`https://mochisofts.com/`、連絡先は`com.mochisofts@gmail.com`とする。
+- Webサイトは`mochisofts.com`をカスタムドメインとするGitHub Pagesの静的サイトとし、初期公開では独自のアクセス解析、広告および問い合わせフォームを設けない。
 - `https://mochisofts.com/app-ads.txt`をAdMobの正式な内容で公開する。
-- 文書やapp-ads.txtの実際の公開は本番リリース前の必須作業とし、URLを決めただけで完了扱いにしない。
+- 文書の個人情報に関するプレースホルダーを解消し、特定商取引法に基づく表記と利用規約の専門家確認を完了する。
+- 文書やapp-ads.txtの実際の公開、DNS、HTTPSおよびリンク検査は本番リリース前の必須作業とし、URLを決めただけで完了扱いにしない。
 
 ## 4. Google Play申告
 
@@ -42,6 +47,8 @@
 - `SCHEDULE_EXACT_ALARM`の利用目的を時刻指定TODO通知として説明し、公開時点のPlayポリシー適格性を再確認する。
 - SDK Indexの警告、Target API、Billing、広告SDKの期限を公開候補ごとに確認する。
 - Play Integrity APIは初回公開では導入しない。
+- 各App contentカード、Advertising ID、権限説明、アプリ内商品および初回公開ブロッカーは[Google Play Console申請シート](play-console-submission.md)に従う。
+- Data safetyは[Google Play Data safety申告案](data-safety-declaration.md)をRelease AABと実通信で検証してから送信する。
 
 ## 5. テストトラック
 

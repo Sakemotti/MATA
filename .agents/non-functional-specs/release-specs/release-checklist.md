@@ -1,7 +1,7 @@
 # リリースチェックリスト
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-08-28
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. リリース準備
@@ -11,8 +11,16 @@
 - [ ] 変更内容、DBスキーマ、バックアップ形式、権限、SDK、データ収集の差分を確認した。
 - [ ] 依存関係、SDK Index、Google Playポリシー期限、Target API要件を確認した。
 - [ ] 日本語リリースノートとストア掲載差分を用意した。
-- [ ] プライバシーポリシー、利用規約、app-ads.txtをHTTPSで閲覧できる。
+- [ ] Google Play Console申請シートの全項目を現行Consoleと照合し、未入力カードと公開ブロッカーがない。
+- [ ] ストア掲載文を確定文案から転記し、文字数、改行、広告・買い切り表現および実装との一致を確認した。
+- [ ] 512pxアイコン、フィーチャーグラフィック、スマートフォン・タブレット画像と代替テキストが画像仕様を満たす。
+- [ ] プライバシーポリシー、利用規約、特定商取引法に基づく表記、外部送信に関する公表およびapp-ads.txtをHTTPSで閲覧できる。
+- [ ] 法的文書に氏名、住所、電話番号、制定日等のプレースホルダーが残っておらず、専門家確認が必要な文書の確認を完了した。
+- [ ] GitHub Pagesのカスタムドメイン、DNSおよびHTTPSが有効で、法的文書を認証・地域制限・JavaScriptなしでモバイルから全文閲覧できる。
+- [ ] 4文書の提供者名、連絡先、商品、価格、払い戻し、外部サービスおよび送信情報が実装、Google Play Console、UMPと一致する。
 - [ ] Data safety、広告、対象年齢、コンテンツレーティング、権限申告が実装と一致する。
+- [ ] Financial features、Health apps、Government apps、Advertising ID、アカウント作成有無を申請シートどおり申告した。
+- [ ] `remove_ads`と購入オプション`buy`が日本向け500円で有効になり、表示内容が法的文書と一致する。
 
 ## 2. 自動ゲート
 
@@ -22,9 +30,10 @@
 - [ ] Room migrationとバックアップ互換性試験が全対応元バージョンから成功した。
 - [ ] Compose UI、アクセシビリティ、適応レイアウトの自動試験が成功した。
 - [ ] 通知、ウィジェット、祝日、Billing、広告、同意のFake結合試験が成功した。
-- [ ] セキュリティ、Secret、依存関係、Manifest検査が成功した。
+- [ ] セキュリティ、Secret、CycloneDX SBOM、依存関係、Manifest検査が成功した。
 - [ ] Macrobenchmarkと主要性能回帰が公開基準を満たした。
 - [ ] ログ検査でユーザー入力、トークン、URI、広告情報が検出されなかった。
+- [ ] `verify-readiness.mjs --artifacts`が成功し、Release成果物と同じActions artifactへ検査結果JSONを保存した。
 
 ## 3. Release成果物検査
 
@@ -33,7 +42,8 @@
 - [ ] 本番広告ID、Billing商品ID、法的URLが正しく、テスト値と開発URLがない。
 - [ ] 最終Manifestの権限、exported、backup、cleartext設定が仕様どおりである。
 - [ ] AABがUpload Keyで署名され、SHA-256を記録した。
-- [ ] mapping、依存関係、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
+- [ ] mapping、CycloneDX SBOM、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
+- [ ] `verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
 
 ## 4. 実機・Google Play検査
 
@@ -60,7 +70,7 @@
 
 - [ ] Google Playの処理、審査、公開状態を確認した。
 - [ ] アプリをGoogle Playから新規インストール・更新できることを確認した。
-- [ ] 商品価格、購入、広告、app-ads.txt、法的リンクを本番で確認した。
+- [ ] 商品価格、購入、払い戻し導線、広告、app-ads.txtおよび4つの法的リンクを本番で確認した。
 - [ ] Android vitals、Pre-launch report、レビュー、ポリシー警告を確認した。
 - [ ] 段階公開は各段階を24時間以上監視し、拡大・停止判断を記録した。
 - [ ] 100%公開後にGitタグ、公開日、最終AAB SHA-256、リリースノートを確定した。
@@ -69,7 +79,7 @@
 
 - 毎週、依存関係更新とAndroid vitalsを確認する。
 - 毎月、Google Playポリシー期限、SDKサポート期限、Target API、Billing、広告、UMPを確認する。
-- 四半期ごとにプライバシーポリシー、Data safety、権限、通信先、依存SDK一覧を棚卸しする。
+- 四半期ごとに4つの法的文書、Data safety、権限、通信先、依存SDK一覧を棚卸しする。
 - Androidの新しい安定版公開時に互換性と対象SDK更新計画を確認する。
 - 署名鍵、CI Secret、Play Console権限を半年ごとに棚卸しする。
 - プロダクト終了時は新規インストール停止、既存ユーザーのデータ・購入・法的文書・サポート期間を別途計画する。
