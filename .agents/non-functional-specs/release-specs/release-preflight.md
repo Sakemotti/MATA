@@ -25,7 +25,8 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
     node tools/release/verify-readiness.mjs --artifacts
 
 - 公開前原稿モードの全項目を検査する。
-- `generateReleaseArtifactMetadata`が生成したAAB、R8 mapping、ライセンス一覧および最終Manifestの存在、バイト数、SHA-256を再計算する。
+- `generateReleaseArtifactMetadata`が生成したAAB、R8 mapping、ライセンス一覧、CycloneDX SBOMおよび最終Manifestの存在、バイト数、SHA-256を再計算する。
+- SBOMがCycloneDX 1.6で、Release runtimeのcomponentと依存関係グラフを持ち、アプリ識別子、ビルド日時および必須SDKがReleaseメタデータと一致することを確認する。
 - メタデータのGit commitが検査時のHEADと一致することを確認する。
 - Upload Key未署名のCI検証用AABでは、署名方法が`none`、証明書SHA-256が空、`publishable=false`であることを確認する。本番公開可能とは判定しない。
 
@@ -47,7 +48,7 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 - Gitブランチとcommit
 - Release成果物のバージョンとハッシュ照合結果
 
-CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ライセンスおよび最終Manifestと同じActions artifactへ保存する。
+CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ライセンス、CycloneDX SBOMおよび最終Manifestと同じActions artifactへ保存する。
 
 ## 4. 失敗時の扱い
 

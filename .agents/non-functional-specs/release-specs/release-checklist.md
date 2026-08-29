@@ -30,7 +30,7 @@
 - [ ] Room migrationとバックアップ互換性試験が全対応元バージョンから成功した。
 - [ ] Compose UI、アクセシビリティ、適応レイアウトの自動試験が成功した。
 - [ ] 通知、ウィジェット、祝日、Billing、広告、同意のFake結合試験が成功した。
-- [ ] セキュリティ、Secret、依存関係、Manifest検査が成功した。
+- [ ] セキュリティ、Secret、CycloneDX SBOM、依存関係、Manifest検査が成功した。
 - [ ] Macrobenchmarkと主要性能回帰が公開基準を満たした。
 - [ ] ログ検査でユーザー入力、トークン、URI、広告情報が検出されなかった。
 - [ ] `verify-readiness.mjs --artifacts`が成功し、Release成果物と同じActions artifactへ検査結果JSONを保存した。
@@ -42,7 +42,7 @@
 - [ ] 本番広告ID、Billing商品ID、法的URLが正しく、テスト値と開発URLがない。
 - [ ] 最終Manifestの権限、exported、backup、cleartext設定が仕様どおりである。
 - [ ] AABがUpload Keyで署名され、SHA-256を記録した。
-- [ ] mapping、依存関係、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
+- [ ] mapping、CycloneDX SBOM、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
 - [ ] `verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
 
 ## 4. 実機・Google Play検査

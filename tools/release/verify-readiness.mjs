@@ -100,6 +100,7 @@ function verifyBuildConfiguration() {
     ['release legal URL properties', /gradleProperty\(['"]MATA_PRIVACY_POLICY_URL['"]\)/],
     ['Upload Key properties', /gradleProperty\(['"]MATA_UPLOAD_STORE_FILE['"]\)/],
     ['production signing gate', /gradleProperty\(['"]MATA_REQUIRE_UPLOAD_SIGNING['"]\)/],
+    ['CycloneDX Release SBOM', /cyclonedxDirectBom[\s\S]*?releaseRuntimeClasspath/],
   ];
   const missing = requirements.filter(([, pattern]) => !pattern.test(build)).map(([label]) => label);
   if (versionCodeMatch === null || Number(versionCodeMatch[1]) < 1) {
@@ -167,9 +168,11 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
       'r8Mapping',
       'openSourceLicenses',
       'mergedManifest',
+      'cycloneDxSbom',
     ]);
     const problems = [];
-    if (metadata.schemaVersion !== 2) problems.push('schemaVersion must be 2');
+    let sbomSummary = null;
+    if (metadata.schemaVersion !== 3) problems.push('schemaVersion must be 3');
     if (metadata.applicationId !== 'com.mochisofts.mata') problems.push('applicationId is invalid');
     if (!/^\d+\.\d+\.\d+$/.test(metadata.versionName)) problems.push('versionName is invalid');
     if (!Number.isInteger(metadata.versionCode) || metadata.versionCode < 1) {
@@ -183,6 +186,9 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
       problems.push('artifacts must be an array');
     } else {
       const actualTypes = new Set(metadata.artifacts.map((artifact) => artifact.type));
+      if (actualTypes.size !== metadata.artifacts.length) {
+        problems.push('artifact types must be unique');
+      }
       for (const expectedType of expectedTypes) {
         if (!actualTypes.has(expectedType)) problems.push(`missing artifact type ${expectedType}`);
       }
@@ -198,6 +204,56 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
         }
         if (statSync(path).size !== artifact.bytes) problems.push(`${artifact.type} byte size changed`);
         if (sha256(path) !== artifact.sha256) problems.push(`${artifact.type} SHA-256 changed`);
+        if (artifact.type === 'cycloneDxSbom') {
+          try {
+            const sbom = JSON.parse(readText(path));
+            if (sbom.bomFormat !== 'CycloneDX') problems.push('SBOM format must be CycloneDX');
+            if (sbom.specVersion !== '1.6') problems.push('SBOM specVersion must be 1.6');
+            if (sbom.metadata?.timestamp !== metadata.buildTimestamp) {
+              problems.push('SBOM timestamp does not match release metadata');
+            }
+            const rootComponent = sbom.metadata?.component;
+            if (
+              rootComponent?.type !== 'application' ||
+              rootComponent?.group !== 'com.mochisofts' ||
+              rootComponent?.name !== 'MATA' ||
+              rootComponent?.version !== metadata.versionName
+            ) {
+              problems.push('SBOM root component identity is invalid');
+            }
+            if (!Array.isArray(sbom.components) || sbom.components.length === 0) {
+              problems.push('SBOM components must be a non-empty array');
+            } else {
+              const componentRefs = new Set();
+              for (const component of sbom.components) {
+                if (typeof component['bom-ref'] !== 'string' || component['bom-ref'] === '') {
+                  problems.push('SBOM component has no bom-ref');
+                  continue;
+                }
+                if (componentRefs.has(component['bom-ref'])) {
+                  problems.push(`SBOM component bom-ref is duplicated: ${component['bom-ref']}`);
+                }
+                componentRefs.add(component['bom-ref']);
+              }
+              const requiredRuntimeComponents = [
+                ['com.android.billingclient', 'billing-ktx'],
+                ['com.google.android.libraries.ads.mobile.sdk', 'ads-mobile-sdk'],
+                ['com.google.android.ump', 'user-messaging-platform'],
+              ];
+              for (const [group, name] of requiredRuntimeComponents) {
+                if (!sbom.components.some((component) => component.group === group && component.name === name)) {
+                  problems.push(`SBOM is missing required runtime component ${group}:${name}`);
+                }
+              }
+              sbomSummary = `${sbom.components.length} runtime components`;
+            }
+            if (!Array.isArray(sbom.dependencies) || sbom.dependencies.length === 0) {
+              problems.push('SBOM dependency graph must be a non-empty array');
+            }
+          } catch (error) {
+            problems.push(`CycloneDX SBOM is invalid: ${error.message}`);
+          }
+        }
       }
     }
     const signerFingerprints = metadata.signing?.certificateSha256;
@@ -226,7 +282,7 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
       addCheck(
         'release_artifacts',
         'passed',
-        `${metadata.versionName} (${metadata.versionCode}); ${metadata.artifacts.length} artifact hashes match; signing=${metadata.signing.method}.`,
+        `${metadata.versionName} (${metadata.versionCode}); ${metadata.artifacts.length} artifact hashes match; ${sbomSummary}; signing=${metadata.signing.method}.`,
       );
     }
   } catch (error) {
