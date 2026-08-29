@@ -1,7 +1,7 @@
 # 法的文書仕様
 
 - 文書状態: 方針確定・公開前原稿
-- 最終更新日: 2026-08-28
+- 最終更新日: 2026-08-29
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[リリース・配布運用仕様](../release-specs/README.md)
 
 ## 1. 目的
@@ -35,7 +35,9 @@ MATAの一般公開に必要な法的文書の公開前原稿、公開URLおよ�
 ## 4. 公開方式
 
 - `mochisofts.com`をカスタムドメインとするGitHub Pagesの静的公開を採用する。
-- 公開サイト用リポジトリは`Sakemotti/mochisofts.github.io`を候補とし、作成、DNS設定および公開は別作業とする。
+- アプリのソースを管理するPrivateリポジトリをそのまま公開元にせず、無料公開用のPublicリポジトリ`Sakemotti/mochisofts.github.io`を別途作成する。リポジトリ作成、DNS設定および初回公開は別作業とする。
+- 公開サイト用リポジトリは`main`ブランチのルートから公開し、MATAリポジトリから長期PATを使って自動pushしない。
+- 公開前に`legal-site/package-release.ps1`を実行し、公開用検証を通過したHTML、CSS、`CNAME`、`app-ads.txt`等の許可対象だけを空の出力先へ生成する。原稿Markdown、テンプレート、READMEおよび検証スクリプトを公開リポジトリへ含めない。
 - 認証、地域制限、Cookie同意を経ないと本文を読めない構成、PDFだけの公開、JavaScriptを必須とする本文表示を使用しない。
 - HTTPSを強制し、モバイルブラウザーから全文を閲覧可能にする。
 - Webサイト独自のアクセス解析、広告および問い合わせフォームは初期公開では設けない。

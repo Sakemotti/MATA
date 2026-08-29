@@ -14,6 +14,7 @@ function Add-VerificationError {
 }
 
 $requiredFiles = @(
+    '.nojekyll',
     'index.html',
     '404.html',
     'assets/styles.css',

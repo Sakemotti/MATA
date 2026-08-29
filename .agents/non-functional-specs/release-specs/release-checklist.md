@@ -17,6 +17,7 @@
 - [ ] プライバシーポリシー、利用規約、特定商取引法に基づく表記、外部送信に関する公表およびapp-ads.txtをHTTPSで閲覧できる。
 - [ ] 法的文書に氏名、住所、電話番号、制定日等のプレースホルダーが残っておらず、専門家確認が必要な文書の確認を完了した。
 - [ ] GitHub Pagesのカスタムドメイン、DNSおよびHTTPSが有効で、法的文書を認証・地域制限・JavaScriptなしでモバイルから全文閲覧できる。
+- [ ] `package-release.ps1`が成功し、公開用Publicリポジトリに許可対象ファイルと`SHA256SUMS`だけが含まれる。
 - [ ] 4文書の提供者名、連絡先、商品、価格、払い戻し、外部サービスおよび送信情報が実装、Google Play Console、UMPと一致する。
 - [ ] Data safety、広告、対象年齢、コンテンツレーティング、権限申告が実装と一致する。
 - [ ] Financial features、Health apps、Government apps、Advertising ID、アカウント作成有無を申請シートどおり申告した。
