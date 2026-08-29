@@ -25,6 +25,7 @@ class BenchmarkDataReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_SEED_BENCHMARK_DATA) return
         runBlocking(Dispatchers.IO) {
+            settingsRepository.setDayEndHour(0)
             seedCategories()
             seedTodos(LocalDate.now(clock))
             settingsRepository.setShowCompleted(false)
@@ -39,7 +40,6 @@ class BenchmarkDataReceiver : BroadcastReceiver() {
                 name = "Benchmark Category ${index + 1}",
                 colorIndex = index,
                 iconName = icon,
-                endHour = 0,
             ).getOrThrow()
         }
     }
