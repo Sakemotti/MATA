@@ -55,7 +55,7 @@
       "captureKey": "phone-05-widget",
       "width": 1080,
       "height": 1920,
-      "altText": "ホーム画面で今日のTODOを確認できるMATAウィジェット"
+      "altText": "ウィジェット選択画面に表示されたMATAの今日のTODOプレビュー"
     },
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/06-settings-backup.png",

@@ -60,7 +60,7 @@ Manifestの順序に従ってアプリを操作し、表示中の画面を撮影
 
     powershell -ExecutionPolicy Bypass -File fastlane/capture-store-screenshot.ps1 -CaptureKey phone-01-today
 
-ウィジェット画像は、架空データ投入後にホーム画面へMATAウィジェットを追加してから撮影します。設定画像またはカテゴリ画像のうち少なくとも1枚は、アプリ設定でダークテーマへ切り替えて撮影します。全撮影後はデモモードを解除し、掲載成果物全体を検査します。
+ウィジェット画像は、Release相当のBenchmark版を端末へ導入し、Androidのウィジェット選択画面をMATAで絞り込んだうえで、実際のGlanceプレビューを撮影します。Debug版の名称、他アプリのアイコン、ホーム画面のGoogle検索バーを含めません。設定画像またはカテゴリ画像のうち少なくとも1枚は、アプリ設定でダークテーマへ切り替えて撮影します。全撮影後はデモモードを解除し、掲載成果物全体を検査します。
 
     powershell -ExecutionPolicy Bypass -File fastlane/capture-store-screenshot.ps1 -Finish
     node fastlane/verify-play-store.mjs --release
