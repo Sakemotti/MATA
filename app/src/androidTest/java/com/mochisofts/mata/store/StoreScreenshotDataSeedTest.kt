@@ -5,24 +5,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.data.local.CategoryEntity
-import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.local.TodoNotificationEntity
 import com.mochisofts.mata.data.repository.HistorySnapshotJson
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
-import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
-import com.mochisofts.mata.domain.repository.NotificationScheduler
-import com.mochisofts.mata.domain.repository.SettingsRepository
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -305,13 +298,4 @@ class StoreScreenshotDataSeedTest {
             "50000000-0000-0000-0000-000000000003",
         )
     }
-}
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-internal interface StoreScreenshotSeedEntryPoint {
-    fun database(): MataDatabase
-    fun settingsRepository(): SettingsRepository
-    fun notificationScheduler(): NotificationScheduler
-    fun widgetUpdater(): WidgetUpdater
 }

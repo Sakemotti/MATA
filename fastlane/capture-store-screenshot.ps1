@@ -95,8 +95,17 @@ function Invoke-AdbCommand {
         [Parameter(Mandatory = $true)][string[]]$CommandArguments
     )
 
-    $commandOutput = @(& $AdbPath -s $Serial @CommandArguments 2>&1)
-    if ($LASTEXITCODE -ne 0) {
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        # adb pull writes normal progress to stderr. Windows PowerShell wraps that output in a
+        # NativeCommandError when the caller uses Stop, so the process exit code is authoritative.
+        $ErrorActionPreference = 'Continue'
+        $commandOutput = @(& $AdbPath -s $Serial @CommandArguments 2>&1)
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    if ($exitCode -ne 0) {
         throw "adb command failed: $($CommandArguments -join ' ')`n$($commandOutput -join "`n")"
     }
     return $commandOutput
@@ -205,7 +214,7 @@ function Invoke-Prepare {
     $commands.Add(@('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '-e', 'command', 'enter'))
     $commands.Add(@('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '-e', 'command', 'clock', '-e', 'hhmm', '1000'))
     $commands.Add(@('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '-e', 'command', 'battery', '-e', 'level', '100', '-e', 'plugged', 'false'))
-    $commands.Add(@('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '-e', 'command', 'network', '-e', 'wifi', 'show', '-e', 'level', '4', '-e', 'mobile', 'show', '-e', 'datatype', 'lte', '-e', 'sims', '1', '-e', 'nosim', 'false'))
+    $commands.Add(@('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '-e', 'command', 'network', '-e', 'wifi', 'show', '-e', 'level', '4', '-e', 'mobile', 'hide'))
     $commands.Add(@('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '-e', 'command', 'notifications', '-e', 'visible', 'false'))
     foreach ($command in $commands) {
         Invoke-AdbCommand -AdbPath $AdbPath -Serial $Serial -CommandArguments $command | Out-Null
