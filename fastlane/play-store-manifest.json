@@ -20,6 +20,7 @@
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/01-today.png",
       "kind": "phoneScreenshot",
+      "captureKey": "phone-01-today",
       "width": 1080,
       "height": 1920,
       "altText": "今日のTODOをカテゴリごとに表示した一覧画面"
@@ -27,6 +28,7 @@
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/02-recurrence.png",
       "kind": "phoneScreenshot",
+      "captureKey": "phone-02-recurrence",
       "width": 1080,
       "height": 1920,
       "altText": "曜日や月内の順番を選べるTODOの繰り返し設定画面"
@@ -34,6 +36,7 @@
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/03-calendar-history.png",
       "kind": "phoneScreenshot",
+      "captureKey": "phone-03-calendar-history",
       "width": 1080,
       "height": 1920,
       "altText": "カレンダーで日付を選びTODO履歴を確認する画面"
@@ -41,6 +44,7 @@
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/04-categories.png",
       "kind": "phoneScreenshot",
+      "captureKey": "phone-04-categories",
       "width": 1080,
       "height": 1920,
       "altText": "色とアイコンを設定したカテゴリ管理画面"
@@ -48,6 +52,7 @@
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/05-widget.png",
       "kind": "phoneScreenshot",
+      "captureKey": "phone-05-widget",
       "width": 1080,
       "height": 1920,
       "altText": "ホーム画面で今日のTODOを確認できるMATAウィジェット"
@@ -55,6 +60,7 @@
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/06-settings-backup.png",
       "kind": "phoneScreenshot",
+      "captureKey": "phone-06-settings-backup",
       "width": 1080,
       "height": 1920,
       "altText": "通知や表示と手動バックアップを管理する設定画面"
@@ -62,6 +68,7 @@
     {
       "path": "metadata/android/ja-JP/images/sevenInchScreenshots/01-two-pane.png",
       "kind": "tabletScreenshot",
+      "captureKey": "seven-inch-01-two-pane",
       "width": 1920,
       "height": 1080,
       "altText": "7インチタブレットで一覧と詳細を表示した2ペイン画面"
@@ -69,6 +76,7 @@
     {
       "path": "metadata/android/ja-JP/images/sevenInchScreenshots/02-categories.png",
       "kind": "tabletScreenshot",
+      "captureKey": "seven-inch-02-categories",
       "width": 1920,
       "height": 1080,
       "altText": "7インチタブレットのカテゴリ管理画面"
@@ -76,6 +84,7 @@
     {
       "path": "metadata/android/ja-JP/images/sevenInchScreenshots/03-calendar-history.png",
       "kind": "tabletScreenshot",
+      "captureKey": "seven-inch-03-calendar-history",
       "width": 1920,
       "height": 1080,
       "altText": "7インチタブレットのカレンダー履歴画面"
@@ -83,6 +92,7 @@
     {
       "path": "metadata/android/ja-JP/images/sevenInchScreenshots/04-archive.png",
       "kind": "tabletScreenshot",
+      "captureKey": "seven-inch-04-archive",
       "width": 1920,
       "height": 1080,
       "altText": "7インチタブレットのアーカイブ管理画面"
@@ -90,6 +100,7 @@
     {
       "path": "metadata/android/ja-JP/images/tenInchScreenshots/01-two-pane.png",
       "kind": "tabletScreenshot",
+      "captureKey": "ten-inch-01-two-pane",
       "width": 1920,
       "height": 1080,
       "altText": "10インチタブレットで一覧と詳細を表示した2ペイン画面"
@@ -97,6 +108,7 @@
     {
       "path": "metadata/android/ja-JP/images/tenInchScreenshots/02-categories.png",
       "kind": "tabletScreenshot",
+      "captureKey": "ten-inch-02-categories",
       "width": 1920,
       "height": 1080,
       "altText": "10インチタブレットのカテゴリ管理画面"
@@ -104,6 +116,7 @@
     {
       "path": "metadata/android/ja-JP/images/tenInchScreenshots/03-calendar-history.png",
       "kind": "tabletScreenshot",
+      "captureKey": "ten-inch-03-calendar-history",
       "width": 1920,
       "height": 1080,
       "altText": "10インチタブレットのカレンダー履歴画面"
@@ -111,6 +124,7 @@
     {
       "path": "metadata/android/ja-JP/images/tenInchScreenshots/04-archive.png",
       "kind": "tabletScreenshot",
+      "captureKey": "ten-inch-04-archive",
       "width": 1920,
       "height": 1080,
       "altText": "10インチタブレットのアーカイブ管理画面"

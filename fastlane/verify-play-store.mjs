@@ -153,6 +153,8 @@ const expectedKindCounts = new Map([
 ]);
 const actualKindCounts = new Map();
 const expectedPaths = new Set();
+const captureKeys = new Set();
+const screenshotKinds = new Set(['phoneScreenshot', 'tabletScreenshot']);
 
 for (const asset of manifest.assets) {
   actualKindCounts.set(asset.kind, (actualKindCounts.get(asset.kind) ?? 0) + 1);
@@ -162,6 +164,24 @@ for (const asset of manifest.assets) {
   expectedPaths.add(asset.path);
   if (typeof asset.altText !== 'string' || asset.altText.trim() === '') {
     fail(`Asset has no alternative text: ${asset.path}`);
+  }
+  if (screenshotKinds.has(asset.kind)) {
+    if (
+      typeof asset.captureKey !== 'string' ||
+      !/^(phone|seven-inch|ten-inch)-\d{2}-[a-z0-9-]+$/.test(asset.captureKey)
+    ) {
+      fail(`Screenshot has an invalid captureKey: ${asset.path}`);
+    } else if (captureKeys.has(asset.captureKey)) {
+      fail(`Duplicate screenshot captureKey: ${asset.captureKey}`);
+    } else {
+      captureKeys.add(asset.captureKey);
+      const fileStem = asset.captureKey.replace(/^(phone|seven-inch|ten-inch)-/, '');
+      if (!asset.path.endsWith(`/${fileStem}.png`)) {
+        fail(`Screenshot captureKey does not match its output filename: ${asset.captureKey}`);
+      }
+    }
+  } else if (asset.captureKey !== undefined) {
+    fail(`Non-screenshot asset must not have a captureKey: ${asset.path}`);
   }
 
   const assetPath = resolve(fastlaneRoot, asset.path);
