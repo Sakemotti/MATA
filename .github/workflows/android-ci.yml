@@ -41,6 +41,9 @@ jobs:
       - name: Test Release evidence verifier
         run: node --test tools/release/verify-evidence.test.mjs
 
+      - name: Test Release record tooling
+        run: node --test tools/release/release-record.test.mjs
+
   android_verification:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest

@@ -137,6 +137,8 @@
 
 Actions実行サマリーへGitHubが計算したartifact ZIPのSHA-256を記録し、ダウンロードしたZIPの展開前検査に使用する。展開後はJDK 17の`jarsigner`と`keytool`により、AAB署名自体の有効性と実証明書SHA-256も検査する。
 
+証跡artifactのアップロード後は、そのartifact ID・URL・SHA-256を含む候補リリース記録を別artifactとして生成する。記録は[リリース記録仕様](release-records.md)に従って段階ごとに更新する。
+
 ## 6. 再現性と供給網
 
 - Gradle Wrapper、JDK、AGP、Kotlin、依存関係バージョンを固定する。

@@ -142,6 +142,28 @@ jobs:
           include-hidden-files: true
           retention-days: 365
 
+      - name: Create Release record draft
+        env:
+          MATA_RELEASE_EVIDENCE_ARTIFACT_ID: ${{ steps.upload_release_evidence.outputs.artifact-id }}
+          MATA_RELEASE_EVIDENCE_ARTIFACT_URL: ${{ steps.upload_release_evidence.outputs.artifact-url }}
+          MATA_RELEASE_EVIDENCE_ARTIFACT_SHA256: ${{ steps.upload_release_evidence.outputs.artifact-digest }}
+        run: node tools/release/release-record.mjs create
+
+      - name: Verify Release record draft
+        run: >-
+          node tools/release/release-record.mjs verify
+          --record app/build/outputs/release-candidate/release-record-draft.json
+          --stage candidate
+
+      - name: Upload Release record draft
+        id: upload_release_record
+        uses: actions/upload-artifact@v7
+        with:
+          name: mata-release-record-${{ github.sha }}
+          path: app/build/outputs/release-candidate/release-record-draft.json
+          if-no-files-found: error
+          retention-days: 365
+
       - name: Record Release evidence identity
         shell: bash
         run: |
@@ -150,6 +172,8 @@ jobs:
             echo "- Commit: \`$GITHUB_SHA\`"
             echo "- Artifact ID: \`${{ steps.upload_release_evidence.outputs.artifact-id }}\`"
             echo "- Artifact SHA-256: \`${{ steps.upload_release_evidence.outputs.artifact-digest }}\`"
+            echo "- Record artifact ID: \`${{ steps.upload_release_record.outputs.artifact-id }}\`"
+            echo "- Record artifact SHA-256: \`${{ steps.upload_release_record.outputs.artifact-digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove temporary Upload Key

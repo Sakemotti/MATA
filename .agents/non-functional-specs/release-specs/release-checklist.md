@@ -49,6 +49,7 @@
 - [ ] Release candidate workflowのartifactをダウンロードし、AAB、メタデータ、mapping、SBOM、ライセンス、Manifest、ストア成果物および法的サイトパッケージが同じcommitに対応している。
 - [ ] Actions実行サマリーのartifact IDとSHA-256をリリース記録へ転記し、ダウンロードしたZIPのSHA-256が一致した。
 - [ ] `verify-evidence.mjs verify`へGitHub上で確認したcommitと保管済みUpload Key証明書SHA-256を指定し、ダウンロードしたartifactの全証跡が一致した。
+- [ ] 自動生成された候補リリース記録を`candidate`として検査し、Internal testingへ進める候補だけを`release-records`へ保存した。
 
 ## 4. 実機・Google Play検査
 
@@ -61,6 +62,7 @@
 - [ ] ライセンステスターで購入、保留、取消、承認、復元、払い戻しを確認した。
 - [ ] テスト広告、UMP地域デバッグ、広告削除状態を確認した。
 - [ ] Internal testingのPre-launch reportに未解決の重大問題がない。
+- [ ] Internal、ClosedおよびProductionの各操作後にリリース記録の状態、release ID、日時、担当およびtrack eventを更新した。
 
 ## 5. 公開承認
 
@@ -79,6 +81,7 @@
 - [ ] Android vitals、Pre-launch report、レビュー、ポリシー警告を確認した。
 - [ ] 段階公開は各段階を24時間以上監視し、拡大・停止判断を記録した。
 - [ ] 100%公開後にGitタグ、公開日、最終AAB SHA-256、リリースノートを確定した。
+- [ ] source tagと公開承認を含む確定記録を`production`として検査し、レビュー後にGit管理した。
 
 ## 7. 定期保守
 

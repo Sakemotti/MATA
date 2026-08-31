@@ -152,6 +152,10 @@ function verifyReleaseWorkflow() {
     ['hidden evidence upload', /include-hidden-files: true/],
     ['artifact retention', /retention-days: 365/],
     ['artifact digest summary', /outputs\.artifact-digest/],
+    ['Release record creation', /release-record\.mjs create/],
+    ['Release record candidate verification', /release-record\.mjs verify[\s\S]*--stage candidate/],
+    ['Release record upload', /name: mata-release-record-\$\{\{ github\.sha \}\}/],
+    ['Release record digest summary', /upload_release_record\.outputs\.artifact-digest/],
     ['temporary key cleanup', /if: always\(\)[\s\S]*rm -f "\$RUNNER_TEMP\/mata-upload\.jks"/],
   ];
   const missing = requirements.filter(([, pattern]) => !pattern.test(workflow)).map(([label]) => label);

@@ -56,6 +56,8 @@ CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ラ
 
 Actions実行サマリーへ、GitHubが生成したartifact IDとartifact ZIPのSHA-256を記録する。ブラウザーから取得したZIPは展開前に同じSHA-256であることを確認し、値が一致しないZIPを使用しない。
 
+証跡artifactのアップロード後、workflowはartifact ID・URL・SHA-256とRelease識別を紐付けた候補リリース記録を生成・検査し、別artifactへ保存する。試験、承認およびGoogle Play操作は[リリース記録仕様](release-records.md)に従って実績だけを追記する。
+
 Actions artifactをダウンロードした後、Google Playへアップロードする前に、GitHub上で確認した実行commitを`--expected-commit`へ指定して再検査する。`--root`には展開後の`app`と`fastlane`を直下に持つディレクトリを指定する。
 
     node tools/release/verify-evidence.mjs verify --root <artifact-directory> --expected-commit <40桁commit>

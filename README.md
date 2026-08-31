@@ -76,6 +76,8 @@ Release環境でUpload Keyにより署名します。
 
 ダウンロードした公開候補は`tools/release/verify-evidence.mjs verify`で、GitHub上のcommitを期待値として全ファイルのSHA-256、署名証明書、法的サイトおよびストア素材を再検査できます。
 
+Release workflowは証跡artifactと同時に候補リリース記録も生成します。`tools/release/release-record.mjs verify`でcandidate、Internal、Closed、Productionの段階ごとに試験、承認、Google Play trackおよび公開結果の必須項目を検査できます。
+
 Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
 
 ## 依存関係の更新
