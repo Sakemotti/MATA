@@ -25,7 +25,15 @@ Google Play Consoleへ登録する日本語の掲載文と画像を、Fastlane S
 - 7インチタブレット4枚: metadata/android/ja-JP/images/sevenInchScreenshots
 - 10インチタブレット4枚: metadata/android/ja-JP/images/tenInchScreenshots
 
-ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。ランチャー用の最大画像は432px、従来アイコンは192pxしかないため、512pxストアアイコンへ単純拡大しません。提供済みの高解像度元画像が必要です。
+ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。
+
+## ストアアイコンの生成
+
+ストアアイコンは、提供済みの1,024×1,024px背景・前景レイヤーからJava標準APIだけで512×512pxの32-bit RGBA PNGへ合成します。Google Playが角丸と外周シャドウを適用するため、成果物は不透明なフルスクエアとし、ランチャー用画像の角丸マスクを使用しません。
+
+    java fastlane/tools/GenerateStoreIcon.java
+
+生成先は`metadata/android/ja-JP/images/icon.png`です。生成処理は入力レイヤーの寸法、前景のアルファチャンネル、出力全画素の不透明性を検査します。生成後は`node fastlane/verify-play-store.mjs`で寸法、RGBA形式および容量を確認し、角丸が事前適用されていないこととブランド表現を目視確認してください。原本または合成方法を変更した場合は、生成処理と成果物を同じコミットで更新します。
 
 ## フィーチャーグラフィックの生成
 
