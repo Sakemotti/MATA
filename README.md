@@ -74,6 +74,8 @@ Release環境でUpload Keyにより署名します。
 
 署名済み公開候補は通常CIとは分離し、`Release candidate`ワークフローを`main`から手動実行した場合だけ生成します。Upload Keyと本番AdMob IDの設定、公開用法的文書、ストア画像および全Releaseゲートが揃うまで成功しません。このワークフローはGoogle Playへアップロードまたは公開しません。
 
+ダウンロードした公開候補は`tools/release/verify-evidence.mjs verify`で、GitHub上のcommitを期待値として全ファイルのSHA-256、署名証明書、法的サイトおよびストア素材を再検査できます。
+
 Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
 
 ## 依存関係の更新

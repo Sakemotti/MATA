@@ -118,7 +118,11 @@ jobs:
           ./legal-site/package-release.ps1
           -OutputDirectory 'app/build/outputs/release-candidate/legal-site'
 
+      - name: Create Release evidence manifest
+        run: node tools/release/verify-evidence.mjs create
+
       - name: Upload Release candidate evidence
+        id: upload_release_evidence
         uses: actions/upload-artifact@v7
         with:
           name: mata-release-candidate-${{ github.sha }}
@@ -131,10 +135,22 @@ jobs:
             app/build/outputs/sbom/release-sbom.cdx.json
             app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
             app/build/outputs/release-candidate/legal-site
+            app/build/outputs/release-candidate/evidence-manifest.json
             fastlane/metadata/android/ja-JP
             fastlane/play-store-manifest.json
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 365
+
+      - name: Record Release evidence identity
+        shell: bash
+        run: |
+          {
+            echo "### Release candidate evidence"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Artifact ID: \`${{ steps.upload_release_evidence.outputs.artifact-id }}\`"
+            echo "- Artifact SHA-256: \`${{ steps.upload_release_evidence.outputs.artifact-digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove temporary Upload Key
         if: always()

@@ -1,7 +1,7 @@
 # Release事前検査仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-28
+- 最終更新日: 2026-08-31
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連文書: [リリースチェックリスト](release-checklist.md)、[バージョン・ビルド・署名仕様](versioning-build-and-signing.md)
 
@@ -51,6 +51,20 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ライセンス、CycloneDX SBOMおよび最終Manifestと同じActions artifactへ保存する。
 
 本番公開候補は手動の`Release candidate`ワークフローで生成する。ワークフローは保護された署名入力を使用し、本検査結果に加えてGoogle Play掲載成果物と法的サイト公開パッケージを同じActions artifactへ保存する。Google Playへのアップロードや公開は別の人的承認後に行う。
+
+ワークフローはアップロード対象全ファイルの相対パス、バイト数、SHA-256、commit、バージョンおよびUpload Key証明書SHA-256を`evidence-manifest.json`へ記録する。法的サイトの`.nojekyll`を含む隠しファイルも省略せず保存する。
+
+Actions実行サマリーへ、GitHubが生成したartifact IDとartifact ZIPのSHA-256を記録する。ブラウザーから取得したZIPは展開前に同じSHA-256であることを確認し、値が一致しないZIPを使用しない。
+
+Actions artifactをダウンロードした後、Google Playへアップロードする前に、GitHub上で確認した実行commitを`--expected-commit`へ指定して再検査する。`--root`には展開後の`app`と`fastlane`を直下に持つディレクトリを指定する。
+
+    node tools/release/verify-evidence.mjs verify --root <artifact-directory> --expected-commit <40桁commit>
+
+初回にUpload Key証明書SHA-256を別経路で記録した後は、同じ値を毎回指定する。
+
+    node tools/release/verify-evidence.mjs verify --root <artifact-directory> --expected-commit <40桁commit> --expected-certificate-sha256 <64桁SHA-256>
+
+検査にはJDK 17の`jarsigner`と`keytool`を使用する。Releaseメタデータと事前検査の合格状態、全ファイルのSHA-256、AAB署名の有効性と実際の署名証明書、法的サイト内の`SHA256SUMS`、ストア素材の宣言、欠落ファイル、未宣言ファイル、シンボリックリンクおよび安全でない相対パスを確認する。期待するcommitまたは証明書が一致しないartifactは使用しない。
 
 ## 4. 失敗時の扱い
 

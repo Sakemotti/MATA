@@ -144,10 +144,14 @@ function verifyReleaseWorkflow() {
     ['publishable verification', /verify-readiness\.mjs --release/],
     ['Play Store verification', /verify-play-store\.mjs --release/],
     ['legal-site packaging', /legal-site\/package-release\.ps1/],
+    ['evidence manifest creation', /verify-evidence\.mjs create/],
     ['Release evidence upload', /actions\/upload-artifact@v7[\s\S]*app-release\.aab/],
+    ['evidence manifest upload', /actions\/upload-artifact@v7[\s\S]*evidence-manifest\.json/],
     ['store evidence upload', /actions\/upload-artifact@v7[\s\S]*fastlane\/metadata\/android\/ja-JP/],
     ['legal-site evidence upload', /actions\/upload-artifact@v7[\s\S]*release-candidate\/legal-site/],
+    ['hidden evidence upload', /include-hidden-files: true/],
     ['artifact retention', /retention-days: 365/],
+    ['artifact digest summary', /outputs\.artifact-digest/],
     ['temporary key cleanup', /if: always\(\)[\s\S]*rm -f "\$RUNNER_TEMP\/mata-upload\.jks"/],
   ];
   const missing = requirements.filter(([, pattern]) => !pattern.test(workflow)).map(([label]) => label);

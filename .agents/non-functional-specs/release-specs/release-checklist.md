@@ -1,7 +1,7 @@
 # リリースチェックリスト
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-28
+- 最終更新日: 2026-08-31
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. リリース準備
@@ -47,6 +47,8 @@
 - [ ] `verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
 - [ ] `release-candidate` Environmentの保護規則、Secrets、Variablesを確認し、手動のRelease candidate workflowが`main`から成功した。
 - [ ] Release candidate workflowのartifactをダウンロードし、AAB、メタデータ、mapping、SBOM、ライセンス、Manifest、ストア成果物および法的サイトパッケージが同じcommitに対応している。
+- [ ] Actions実行サマリーのartifact IDとSHA-256をリリース記録へ転記し、ダウンロードしたZIPのSHA-256が一致した。
+- [ ] `verify-evidence.mjs verify`へGitHub上で確認したcommitと保管済みUpload Key証明書SHA-256を指定し、ダウンロードしたartifactの全証跡が一致した。
 
 ## 4. 実機・Google Play検査
 

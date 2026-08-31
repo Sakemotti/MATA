@@ -1,7 +1,7 @@
 # バージョン・ビルド・署名仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-28
+- 最終更新日: 2026-08-31
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. バージョン
@@ -131,6 +131,11 @@
 - R8 mapping、CycloneDX SBOM、ライセンス一覧、最終Manifest
 - Google Play掲載文と画像
 - 法的文書サイトの公開パッケージと`SHA256SUMS`
+- 上記全ファイルの相対パス、バイト数およびSHA-256を記録した`evidence-manifest.json`
+
+ダウンロードした公開候補は、Google Playへのアップロード前に`verify-evidence.mjs verify`で検査する。GitHub上の実行commitと、安全な別経路で記録したUpload Key証明書SHA-256を期待値として指定し、artifact内の値だけを根拠に真正性を判断しない。
+
+Actions実行サマリーへGitHubが計算したartifact ZIPのSHA-256を記録し、ダウンロードしたZIPの展開前検査に使用する。展開後はJDK 17の`jarsigner`と`keytool`により、AAB署名自体の有効性と実証明書SHA-256も検査する。
 
 ## 6. 再現性と供給網
 

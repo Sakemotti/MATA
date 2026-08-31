@@ -38,6 +38,9 @@ jobs:
             exit 1
           fi
 
+      - name: Test Release evidence verifier
+        run: node --test tools/release/verify-evidence.test.mjs
+
   android_verification:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
