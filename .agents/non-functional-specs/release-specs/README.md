@@ -20,6 +20,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 | [Release事前検査仕様](release-preflight.md) | 設定、法的文書、ストア成果物、AABと証跡の統合検査 |
 | [リリース記録仕様](release-records.md) | Release候補、試験、承認、Google Play trackおよび公開結果の追跡 |
+| [公開監視・障害対応・Hotfix仕様](monitoring-incident-and-hotfix.md) | 監視、rollout停止、鍵侵害、前方修正および再公開 |
 
 ## 3. 基本方針
 

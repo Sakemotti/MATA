@@ -78,6 +78,8 @@ Release環境でUpload Keyにより署名します。
 
 Release workflowは証跡artifactと同時に候補リリース記録も生成します。`tools/release/release-record.mjs verify`でcandidate、Internal、Closed、Productionの段階ごとに試験、承認、Google Play trackおよび公開結果の必須項目を検査できます。
 
+公開中の重大障害では[公開障害クイックRunbook](release-records/INCIDENT-RUNBOOK.md)を使い、rollout停止、証跡保全、`halted`記録の検査および新しいversionCodeのHotfixへ進みます。
+
 Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
 
 ## 依存関係の更新

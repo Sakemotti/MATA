@@ -29,7 +29,13 @@ Production公開完了後:
 
     node tools/release/release-record.mjs verify --record release-records/v1.0.0-1.json --stage production
 
+配布停止後:
+
+    node tools/release/release-record.mjs verify --record release-records/v1.0.0-1.json --stage halted
+
 JSONの状態、日時、担当、Google Play release ID、track eventは実際の操作直後に更新します。状態を推測して事前入力しません。
+
+公開中の異常を検知した場合は[公開障害クイックRunbook](INCIDENT-RUNBOOK.md)を使用します。
 
 ## 禁止事項
 

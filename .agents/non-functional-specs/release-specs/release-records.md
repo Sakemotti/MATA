@@ -19,6 +19,8 @@
 - Production公開後の確定記録はレビューを経てGit管理する。公開済み記録の過去値を消さず、訂正理由を`notes`へ追記する。
 - Actions artifactの期限前に、確定記録と記録が指す公開成果物を別の安全な保管先へ移す。
 
+監視記録を持つ現行形式は`schemaVersion: 2`とする。旧`schemaVersion: 1`の候補記録は`candidate`として検査できるが、Internal以降の監視判断へ進める前に`monitoring: []`を追加し、schemaVersionを2へ更新する。
+
 ## 3. 記録項目
 
 | 区分 | 必須項目 |
@@ -43,9 +45,12 @@
 | `candidate` | `candidate` | 自動Releaseゲート合格、公開前、track履歴なし |
 | `internal` | `internal_verified` | 証跡、P0/P1、Pre-launch report、Internal testing、法的公開、技術承認が合格し、Internal track完了履歴がある |
 | `closed` | `closed_verified` | Internalの条件に加えClosed testingが合格し、Closed track完了履歴がある |
-| `production` | `published` | 全検査と両承認が合格し、source tag、Production release ID、公開日時、100% rolloutおよびProduction完了履歴がある |
+| `production` | `published` | 全検査と両承認が合格し、source tag、Production release ID、公開日時、100% rollout、Production完了履歴および健全な`production_100`監視がある |
+| `halted` | `halted` | 影響trackの停止履歴、監視の`halt`判断および対応中のS0/S1障害がある |
 
 Production段階では未解決または緩和中の障害を許可しない。残存リスクを受容して公開する場合は障害を`accepted`とし、公開承認の判断理由を記録する。
+
+`monitoring`はInternal、Closed、Productionのチェックポイントごとに、観測日時、担当、Android vitals・レビュー・Billing・広告・ポリシーの状態、`continue` / `hold` / `halt`の判断および要約を持つ。値を取得できない場合は`unavailable`とし、正常値を推測しない。
 
 ## 5. 更新手順
 

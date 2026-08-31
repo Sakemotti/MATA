@@ -10,7 +10,7 @@ const defaultRecordPath = 'app/build/outputs/release-candidate/release-record-dr
 const sha256Pattern = /^[0-9a-f]{64}$/;
 const commitPattern = /^[0-9a-f]{40}$/;
 const versionNamePattern = /^\d+\.\d+\.\d+$/;
-const stages = new Set(['candidate', 'internal', 'closed', 'production']);
+const stages = new Set(['candidate', 'internal', 'closed', 'production', 'halted']);
 const checkNames = [
   'automatedReleaseGate',
   'downloadedEvidence',
@@ -166,7 +166,7 @@ export function createReleaseRecord({
 
   const generatedAt = now.toISOString();
   const record = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     recordState: 'candidate',
     applicationId: metadata.applicationId,
     versionName: metadata.versionName,
@@ -210,6 +210,7 @@ export function createReleaseRecord({
       technical: statusEntry(),
       release: statusEntry(),
     },
+    monitoring: [],
     incidents: [],
     notes: [],
   };
@@ -274,7 +275,7 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
   if (!stages.has(stage)) fail(`Unsupported Release record stage: ${stage}`);
   const record = requireObject(recordValue, 'Release record');
   rejectSecretLikeData(record);
-  if (record.schemaVersion !== 1) fail('Release record schemaVersion must be 1.');
+  if (![1, 2].includes(record.schemaVersion)) fail('Release record schemaVersion must be 1 or 2.');
   if (record.applicationId !== 'com.mochisofts.mata') fail('Release record applicationId is invalid.');
   if (!versionNamePattern.test(record.versionName)) fail('Release record versionName is invalid.');
   requirePositiveInteger(record.versionCode, 'Release record versionCode');
@@ -362,6 +363,40 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
       fail(`publication.events[${index}].rolloutPercent must be between 0 and 100.`);
     }
   }
+  const monitoring = record.schemaVersion === 1 && record.monitoring === undefined
+    ? []
+    : record.monitoring;
+  if (!Array.isArray(monitoring)) fail('Release record monitoring must be an array.');
+  const monitoringCheckpoints = new Set([
+    'internal',
+    'closed',
+    'production_initial',
+    'rollout_10',
+    'rollout_25',
+    'rollout_50',
+    'production_100',
+    'stable_weekly',
+  ]);
+  const signalStates = new Set(['healthy', 'degraded', 'threshold_exceeded', 'unavailable']);
+  for (const [index, observationValue] of monitoring.entries()) {
+    const observation = requireObject(observationValue, `monitoring[${index}]`);
+    if (!monitoringCheckpoints.has(observation.checkpoint)) {
+      fail(`monitoring[${index}].checkpoint is invalid.`);
+    }
+    requireIsoTimestamp(observation.observedAt, `monitoring[${index}].observedAt`);
+    if (typeof observation.actor !== 'string' || !/^@?[A-Za-z0-9_.-]{1,100}$/.test(observation.actor)) {
+      fail(`monitoring[${index}].actor is invalid.`);
+    }
+    const signals = requireObject(observation.signals, `monitoring[${index}].signals`);
+    for (const name of ['androidVitals', 'reviews', 'billing', 'ads', 'policy']) {
+      if (!signalStates.has(signals[name])) fail(`monitoring[${index}].signals.${name} is invalid.`);
+    }
+    if (!new Set(['continue', 'hold', 'halt']).has(observation.decision)) {
+      fail(`monitoring[${index}].decision is invalid.`);
+    }
+    const summary = requireString(observation.summary, `monitoring[${index}].summary`);
+    if (summary.length > 1000) fail(`monitoring[${index}].summary exceeds 1000 characters.`);
+  }
   if (!Array.isArray(record.incidents) || !Array.isArray(record.notes)) {
     fail('Release record incidents and notes must be arrays.');
   }
@@ -391,6 +426,7 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
       technicalApproval: null,
       releaseApproval: null,
       requiredTracks: [],
+      monitoringCheckpoint: null,
     },
     internal: {
       recordState: 'internal_verified',
@@ -401,6 +437,7 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
       technicalApproval: 'approved',
       releaseApproval: null,
       requiredTracks: ['internal'],
+      monitoringCheckpoint: 'internal',
     },
     closed: {
       recordState: 'closed_verified',
@@ -417,6 +454,7 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
       technicalApproval: 'approved',
       releaseApproval: null,
       requiredTracks: ['internal', 'closed'],
+      monitoringCheckpoint: 'closed',
     },
     production: {
       recordState: 'published',
@@ -433,8 +471,53 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
       technicalApproval: 'approved',
       releaseApproval: 'approved',
       requiredTracks: ['internal', 'closed', 'production'],
+      monitoringCheckpoint: 'production_100',
     },
   }[stage];
+  if (stage === 'halted') {
+    if (record.schemaVersion !== 2) fail('Halted verification requires Release record schemaVersion 2.');
+    if (record.recordState !== 'halted') fail('recordState must be halted for halted verification.');
+    if (!['internal', 'closed', 'production'].includes(publication.track)) {
+      fail('Halted record must identify the affected Google Play track.');
+    }
+    if (
+      publication.status !== 'halted' ||
+      publication.googlePlayReleaseId === null ||
+      publication.submittedAt === null
+    ) {
+      fail('Halted record must contain its halted publication identity and submission time.');
+    }
+    const latestTrackEvent = [...publication.events]
+      .reverse()
+      .find((event) => event.track === publication.track);
+    if (
+      latestTrackEvent === undefined ||
+      latestTrackEvent.status !== 'halted' ||
+      latestTrackEvent.googlePlayReleaseId !== publication.googlePlayReleaseId
+    ) {
+      fail('Halted record latest track event must match its halted publication.');
+    }
+    const trackCheckpoints = publication.track === 'production'
+      ? new Set(['production_initial', 'rollout_10', 'rollout_25', 'rollout_50', 'production_100'])
+      : new Set([publication.track]);
+    const haltObservation = [...monitoring]
+      .reverse()
+      .find((item) => item.decision === 'halt' && trackCheckpoints.has(item.checkpoint));
+    if (haltObservation === undefined) fail('Halted record must contain a monitoring halt decision.');
+    if (
+      !record.incidents.some(
+        (incident) => ['S0', 'S1'].includes(incident.severity) && ['open', 'mitigated'].includes(incident.status),
+      )
+    ) {
+      fail('Halted record must contain an active S0 or S1 incident.');
+    }
+    return {
+      stage,
+      versionName: record.versionName,
+      versionCode: record.versionCode,
+      gitCommit: record.gitCommit,
+    };
+  }
   if (record.recordState !== requirements.recordState) {
     fail(`recordState must be ${requirements.recordState} for ${stage} verification.`);
   }
@@ -452,6 +535,21 @@ export function validateReleaseRecord(recordValue, stage = 'candidate') {
   }
   if (requirements.releaseApproval !== null && approvals.release.status !== requirements.releaseApproval) {
     fail(`approvals.release.status must be ${requirements.releaseApproval}.`);
+  }
+  if (requirements.monitoringCheckpoint !== null) {
+    if (record.schemaVersion !== 2) fail(`${stage} monitoring requires Release record schemaVersion 2.`);
+    const observation = [...monitoring]
+      .reverse()
+      .find((item) => item.checkpoint === requirements.monitoringCheckpoint);
+    if (observation === undefined || observation.decision !== 'continue') {
+      fail(`${stage} record must contain a continue decision at ${requirements.monitoringCheckpoint}.`);
+    }
+    if (
+      stage === 'production' &&
+      Object.values(observation.signals).some((value) => value !== 'healthy')
+    ) {
+      fail('Production 100% monitoring signals must all be healthy.');
+    }
   }
   if (
     Object.values(verification).some((entry) => entry.status === 'failed') ||
@@ -519,7 +617,7 @@ function usage() {
   return [
     'Usage:',
     '  node tools/release/release-record.mjs create [--root <directory>] [--output <relative-path>]',
-    '  node tools/release/release-record.mjs verify --record <json-file> --stage <candidate|internal|closed|production>',
+    '  node tools/release/release-record.mjs verify --record <json-file> --stage <candidate|internal|closed|production|halted>',
   ].join('\n');
 }
 

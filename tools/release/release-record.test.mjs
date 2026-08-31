@@ -71,6 +71,23 @@ function approved(actor) {
   };
 }
 
+function monitoring(checkpoint, decision = 'continue', signal = 'healthy') {
+  return {
+    checkpoint,
+    observedAt: '2026-09-02T02:00:00.000Z',
+    actor: 'release-owner',
+    signals: {
+      androidVitals: signal,
+      reviews: signal,
+      billing: signal,
+      ads: signal,
+      policy: signal,
+    },
+    decision,
+    summary: `${checkpoint} monitoring completed`,
+  };
+}
+
 function makeProductionRecord(candidate) {
   const record = structuredClone(candidate);
   record.recordState = 'published';
@@ -118,6 +135,7 @@ function makeProductionRecord(candidate) {
       },
     ],
   };
+  record.monitoring.push(monitoring('production_100'));
   return record;
 }
 
@@ -129,6 +147,7 @@ test('creates a candidate record from Release evidence and Actions identity', ()
       environment: fixture.environment,
       now: new Date('2026-08-31T00:02:00.000Z'),
     });
+    assert.equal(result.record.schemaVersion, 2);
     assert.equal(result.record.recordState, 'candidate');
     assert.equal(result.record.gitCommit, commit);
     assert.equal(result.record.build.evidenceArtifact.sha256, artifactDigest);
@@ -147,6 +166,64 @@ test('accepts a complete Production record', () => {
     const result = validateReleaseRecord(production, 'production');
     assert.equal(result.versionName, '1.0.0');
     assert.equal(result.versionCode, 1);
+  } finally {
+    rmSync(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test('keeps schemaVersion 1 candidate records readable before monitoring migration', () => {
+  const fixture = createFixture();
+  try {
+    const record = createReleaseRecord({ root: fixture.root, environment: fixture.environment }).record;
+    record.schemaVersion = 1;
+    delete record.monitoring;
+    assert.equal(validateReleaseRecord(record, 'candidate').stage, 'candidate');
+  } finally {
+    rmSync(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test('accepts a halted release with a halt decision and active critical incident', () => {
+  const fixture = createFixture();
+  try {
+    const record = createReleaseRecord({ root: fixture.root, environment: fixture.environment }).record;
+    record.recordState = 'halted';
+    record.publication = {
+      track: 'closed',
+      status: 'halted',
+      googlePlayReleaseId: 'play-closed-1',
+      submittedAt: '2026-09-01T01:00:00.000Z',
+      publishedAt: null,
+      rolloutPercent: 25,
+      events: [
+        {
+          track: 'closed',
+          status: 'halted',
+          googlePlayReleaseId: 'play-closed-1',
+          occurredAt: '2026-09-01T02:00:00.000Z',
+          rolloutPercent: 25,
+        },
+      ],
+    };
+    record.monitoring.push(monitoring('closed', 'halt', 'threshold_exceeded'));
+    record.incidents.push({
+      id: 'INC-1',
+      severity: 'S1',
+      status: 'open',
+      summary: 'Repeated startup failure detected without user data.',
+    });
+    assert.equal(validateReleaseRecord(record, 'halted').stage, 'halted');
+    record.publication.events.push({
+      track: 'closed',
+      status: 'active',
+      googlePlayReleaseId: 'play-closed-1',
+      occurredAt: '2026-09-01T03:00:00.000Z',
+      rolloutPercent: 25,
+    });
+    assert.throws(
+      () => validateReleaseRecord(record, 'halted'),
+      /latest track event must match its halted publication/,
+    );
   } finally {
     rmSync(fixture.root, { recursive: true, force: true });
   }
