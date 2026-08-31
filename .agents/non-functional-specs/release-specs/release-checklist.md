@@ -25,7 +25,7 @@
 
 ## 2. 自動ゲート
 
-- [ ] `testDebugUnitTest`とRelease対象の単体試験が成功した。
+- [ ] `testDebugUnitTest`が成功した（現行構成ではRelease専用の単体テストタスクは生成しない）。
 - [ ] `lintDebug`と`lintRelease`が成功した。
 - [ ] Debug APKとRelease AABをビルドできた。
 - [ ] Room migrationとバックアップ互換性試験が全対応元バージョンから成功した。
@@ -45,6 +45,8 @@
 - [ ] AABがUpload Keyで署名され、SHA-256を記録した。
 - [ ] mapping、CycloneDX SBOM、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
 - [ ] `verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
+- [ ] `release-candidate` Environmentの保護規則、Secrets、Variablesを確認し、手動のRelease candidate workflowが`main`から成功した。
+- [ ] Release candidate workflowのartifactをダウンロードし、AAB、メタデータ、mapping、SBOM、ライセンス、Manifest、ストア成果物および法的サイトパッケージが同じcommitに対応している。
 
 ## 4. 実機・Google Play検査
 

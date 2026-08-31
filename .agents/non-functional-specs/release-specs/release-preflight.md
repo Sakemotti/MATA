@@ -50,6 +50,8 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 
 CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ライセンス、CycloneDX SBOMおよび最終Manifestと同じActions artifactへ保存する。
 
+本番公開候補は手動の`Release candidate`ワークフローで生成する。ワークフローは保護された署名入力を使用し、本検査結果に加えてGoogle Play掲載成果物と法的サイト公開パッケージを同じActions artifactへ保存する。Google Playへのアップロードや公開は別の人的承認後に行う。
+
 ## 4. 失敗時の扱い
 
 - 失敗を無視して公開用AABをアップロードしない。

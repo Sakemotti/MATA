@@ -101,6 +101,37 @@
 - Releaseメタデータの`publishable`はUpload Key署名を検出した場合だけ`true`とする。署名済みであっても他の公開ゲートを省略しない。
 - 通常CIは署名秘密と`MATA_REQUIRE_UPLOAD_SIGNING`を設定せず、未署名で`publishable=false`の検証用AABを生成する。
 
+### 5.3 GitHub Actionsでの公開候補生成
+
+`.github/workflows/release-candidate.yml`を、署名済み公開候補を生成する唯一のGitHub Actionsワークフローとする。
+
+- `workflow_dispatch`から明示的に`confirm`を有効にした場合だけ起動し、自動のpush、Pull Requestまたはscheduleでは起動しない。
+- `main`以外を選択した実行はBuild jobを開始せず、署名情報へアクセスしない。
+- jobは`release-candidate` Environmentを参照し、公開操作を伴わないためGitHub Deploymentは作成しない。
+- Environmentでは可能なプランでrequired reviewerと`main`だけのdeployment branch ruleを設定する。
+- Environment Secretsを利用できない契約では同名のRepository Secretsを使用し、Repositoryへの管理権限を必要最小限にする。
+- ワークフローは署名済みAABと証跡を生成するだけで、Google Playへのアップロード、トラック変更、公開、Gitタグ作成を行わない。
+- artifactはPrivateリポジトリで設定済みの保持期間365日を使用する。公開済み版のAAB、mapping、メタデータおよび証明書SHA-256は期限前に別の安全な保管先へ移す。
+
+`release-candidate` EnvironmentまたはRepositoryへ次を設定する。値をworkflowファイル、Actions Variables以外の平文ファイルまたはActionsログへ出力しない。
+
+| 種別 | 名前 | 内容 |
+| --- | --- | --- |
+| Secret | `MATA_UPLOAD_KEYSTORE_BASE64` | Upload Key keystore全体をBase64化した値 |
+| Secret | `MATA_UPLOAD_STORE_PASSWORD` | keystoreのパスワード |
+| Secret | `MATA_UPLOAD_KEY_PASSWORD` | Upload Keyのパスワード |
+| Variable | `MATA_UPLOAD_KEY_ALIAS` | Upload Keyのalias |
+| Variable | `MATA_ADMOB_APP_ID` | 本番AdMob App ID |
+| Variable | `MATA_ADMOB_BANNER_AD_UNIT_ID` | 本番バナー広告ユニットID |
+
+ワークフローはSecretとVariableの存在を検証してから、keystoreをrunnerの一時領域へ復元する。Gradle実行ではConfiguration Cacheを無効化し、成否にかかわらず最後に一時keystoreを削除する。公開用検証、ストア画像検証および法的サイトの公開パッケージ生成がすべて成功した場合だけ、次を1つのActions artifactへ保存する。
+
+- Upload Key署名済みAAB
+- Releaseメタデータと公開用事前検査結果
+- R8 mapping、CycloneDX SBOM、ライセンス一覧、最終Manifest
+- Google Play掲載文と画像
+- 法的文書サイトの公開パッケージと`SHA256SUMS`
+
 ## 6. 再現性と供給網
 
 - Gradle Wrapper、JDK、AGP、Kotlin、依存関係バージョンを固定する。

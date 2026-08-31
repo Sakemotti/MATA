@@ -120,6 +120,58 @@ function verifyBuildConfiguration() {
   }
 }
 
+function verifyReleaseWorkflow() {
+  const workflowPath = resolve(repositoryRoot, '.github/workflows/release-candidate.yml');
+  if (!existsSync(workflowPath)) {
+    addCheck('release_workflow', 'failed', 'The manual Release candidate workflow is missing.');
+    return;
+  }
+
+  const workflow = readText(workflowPath);
+  const triggerSection = workflow.split(/^permissions:/m)[0];
+  const requirements = [
+    ['manual trigger', /^  workflow_dispatch:/m],
+    ['explicit confirmation', /inputs:\n      confirm:[\s\S]*?type: boolean/],
+    ['main-only gate', /if: github\.ref == 'refs\/heads\/main' && inputs\.confirm/],
+    ['protected environment', /environment:\n      name: release-candidate\n      deployment: false/],
+    ['Upload Key secret', /secrets\.MATA_UPLOAD_KEYSTORE_BASE64/],
+    ['Upload Key passwords', /secrets\.MATA_UPLOAD_STORE_PASSWORD[\s\S]*secrets\.MATA_UPLOAD_KEY_PASSWORD/],
+    ['Upload Key alias', /vars\.MATA_UPLOAD_KEY_ALIAS/],
+    ['production AdMob variables', /vars\.MATA_ADMOB_APP_ID[\s\S]*vars\.MATA_ADMOB_BANNER_AD_UNIT_ID/],
+    ['signing requirement', /ORG_GRADLE_PROJECT_MATA_REQUIRE_UPLOAD_SIGNING: "true"/],
+    ['configuration cache disabled', /--no-configuration-cache/],
+    ['unit tests', /:app:testDebugUnitTest/],
+    ['publishable verification', /verify-readiness\.mjs --release/],
+    ['Play Store verification', /verify-play-store\.mjs --release/],
+    ['legal-site packaging', /legal-site\/package-release\.ps1/],
+    ['Release evidence upload', /actions\/upload-artifact@v7[\s\S]*app-release\.aab/],
+    ['store evidence upload', /actions\/upload-artifact@v7[\s\S]*fastlane\/metadata\/android\/ja-JP/],
+    ['legal-site evidence upload', /actions\/upload-artifact@v7[\s\S]*release-candidate\/legal-site/],
+    ['artifact retention', /retention-days: 365/],
+    ['temporary key cleanup', /if: always\(\)[\s\S]*rm -f "\$RUNNER_TEMP\/mata-upload\.jks"/],
+  ];
+  const missing = requirements.filter(([, pattern]) => !pattern.test(workflow)).map(([label]) => label);
+  if (/^  (push|pull_request|schedule):/m.test(triggerSection)) {
+    missing.push('manual-only trigger');
+  }
+  if (!/^permissions:\n  contents: read\n\nconcurrency:/m.test(workflow)) {
+    missing.push('read-only workflow permissions');
+  }
+  if (/\b(upload_to_play_store|supply|publishBundle|publishReleaseBundle)\b/.test(workflow)) {
+    missing.push('no Google Play publishing command');
+  }
+
+  if (missing.length > 0) {
+    addCheck('release_workflow', 'failed', `Missing or unsafe workflow configuration: ${missing.join(', ')}`);
+  } else {
+    addCheck(
+      'release_workflow',
+      'passed',
+      'Manual main-only workflow requires protected signing inputs, verifies all Release gates, and uploads evidence without publishing to Google Play.',
+    );
+  }
+}
+
 function verifyGitState(releaseMode) {
   try {
     const head = git('rev-parse', 'HEAD');
@@ -291,6 +343,7 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
 }
 
 verifyBuildConfiguration();
+verifyReleaseWorkflow();
 const gitState = verifyGitState(mode === 'release');
 
 const powershell = process.platform === 'win32' ? 'powershell' : 'pwsh';

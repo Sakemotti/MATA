@@ -1,0 +1,142 @@
+name: Release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Build an Upload Key signed candidate from main
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mata-release-candidate
+  cancel-in-progress: false
+
+jobs:
+  build_release_candidate:
+    name: Build signed Release candidate
+    if: github.ref == 'refs/heads/main' && inputs.confirm
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: release-candidate
+      deployment: false
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Confirm clean main checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B main "$GITHUB_SHA"
+          test "$(git branch --show-current)" = "main"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Prepare Upload Key
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MATA_UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_STORE_PASSWORD: ${{ secrets.MATA_UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ vars.MATA_UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.MATA_UPLOAD_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ vars.MATA_ADMOB_APP_ID }}
+          ADMOB_BANNER_AD_UNIT_ID: ${{ vars.MATA_ADMOB_BANNER_AD_UNIT_ID }}
+        run: |
+          set -euo pipefail
+          required=(
+            KEYSTORE_BASE64
+            UPLOAD_STORE_PASSWORD
+            UPLOAD_KEY_ALIAS
+            UPLOAD_KEY_PASSWORD
+            ADMOB_APP_ID
+            ADMOB_BANNER_AD_UNIT_ID
+          )
+          for name in "${required[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "Required release-candidate configuration is missing: $name" >&2
+              exit 1
+            fi
+          done
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mata-upload.jks"
+          test -s "$RUNNER_TEMP/mata-upload.jks"
+          chmod 600 "$RUNNER_TEMP/mata-upload.jks"
+
+      - name: Set build timestamp
+        shell: bash
+        run: echo "ORG_GRADLE_PROJECT_MATA_BUILD_TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Test and build signed candidate
+        env:
+          ORG_GRADLE_PROJECT_MATA_ADMOB_APP_ID: ${{ vars.MATA_ADMOB_APP_ID }}
+          ORG_GRADLE_PROJECT_MATA_ADMOB_BANNER_AD_UNIT_ID: ${{ vars.MATA_ADMOB_BANNER_AD_UNIT_ID }}
+          ORG_GRADLE_PROJECT_MATA_PRIVACY_POLICY_URL: https://mochisofts.com/mata/privacy
+          ORG_GRADLE_PROJECT_MATA_TERMS_URL: https://mochisofts.com/mata/terms
+          ORG_GRADLE_PROJECT_MATA_UPLOAD_STORE_FILE: ${{ runner.temp }}/mata-upload.jks
+          ORG_GRADLE_PROJECT_MATA_UPLOAD_STORE_PASSWORD: ${{ secrets.MATA_UPLOAD_STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_MATA_UPLOAD_KEY_ALIAS: ${{ vars.MATA_UPLOAD_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_MATA_UPLOAD_KEY_PASSWORD: ${{ secrets.MATA_UPLOAD_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_MATA_REQUIRE_UPLOAD_SIGNING: "true"
+        run: >-
+          ./gradlew
+          :app:testDebugUnitTest
+          :app:lintRelease
+          :app:generateReleaseArtifactMetadata
+          :app:verifyReleaseManifestSecurity
+          --no-configuration-cache
+          --no-daemon
+          --stacktrace
+
+      - name: Verify Play Store assets
+        run: node fastlane/verify-play-store.mjs --release
+
+      - name: Verify publishable Release candidate
+        run: node tools/release/verify-readiness.mjs --release
+
+      - name: Package legal site
+        shell: pwsh
+        run: >-
+          ./legal-site/package-release.ps1
+          -OutputDirectory 'app/build/outputs/release-candidate/legal-site'
+
+      - name: Upload Release candidate evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: mata-release-candidate-${{ github.sha }}
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/release-metadata/release-metadata.json
+            app/build/outputs/release-metadata/release-readiness.json
+            app/build/outputs/mapping/release/mapping.txt
+            app/build/generated/aboutLibraries/release/res/raw/aboutlibraries.json
+            app/build/outputs/sbom/release-sbom.cdx.json
+            app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
+            app/build/outputs/release-candidate/legal-site
+            fastlane/metadata/android/ja-JP
+            fastlane/play-store-manifest.json
+          if-no-files-found: error
+          retention-days: 365
+
+      - name: Remove temporary Upload Key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/mata-upload.jks"
