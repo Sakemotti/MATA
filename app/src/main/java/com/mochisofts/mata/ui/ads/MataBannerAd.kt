@@ -5,10 +5,15 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +54,7 @@ fun MataBannerAd(
     isImeVisible: Boolean,
     hasOverlay: Boolean,
     modifier: Modifier = Modifier,
+    applyBottomSafeInset: Boolean = false,
 ) {
     val isPreview = LocalInspectionMode.current
     val validConfiguration = remember {
@@ -84,6 +90,7 @@ fun MataBannerAd(
                 BannerAdHost(
                     widthDp = stableWidth,
                     consentRevision = runtimeState.consentRevision,
+                    applyBottomSafeInset = applyBottomSafeInset,
                 )
             }
         }
@@ -91,7 +98,11 @@ fun MataBannerAd(
 }
 
 @Composable
-private fun BannerAdHost(widthDp: Int, consentRevision: Long) {
+private fun BannerAdHost(
+    widthDp: Int,
+    consentRevision: Long,
+    applyBottomSafeInset: Boolean,
+) {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() } ?: return
     val scope = rememberCoroutineScope()
@@ -122,12 +133,19 @@ private fun BannerAdHost(widthDp: Int, consentRevision: Long) {
     }
 
     val size = loadedSize
+    val loadedModifier = if (applyBottomSafeInset) {
+        Modifier.windowInsetsPadding(
+            WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
+        )
+    } else {
+        Modifier
+    }
     AndroidView(
         factory = { adView },
         modifier = if (size == null) {
             Modifier.size(0.dp)
         } else {
-            Modifier.width(size.width.dp).height(size.height.dp)
+            loadedModifier.width(size.width.dp).height(size.height.dp)
         },
     )
 }

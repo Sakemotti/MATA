@@ -42,7 +42,6 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -87,6 +86,7 @@ import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.MataTodoListItem
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.domain.model.Category
@@ -96,6 +96,11 @@ import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.HolidayYearStatus
+import com.mochisofts.mata.ui.common.TodoDetailCategory
+import com.mochisofts.mata.ui.common.TodoDetailField
+import com.mochisofts.mata.ui.common.TodoDetailModal
+import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -276,25 +281,9 @@ fun TodoListScreen(
     }
 
     readOnlyOccurrence?.let { occurrence ->
-        AlertDialog(
-            onDismissRequest = { readOnlyOccurrence = null },
-            title = { Text(occurrence.todo.title) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        occurrence.todo.description.ifBlank {
-                            stringResource(R.string.todo_description_empty)
-                        },
-                    )
-                    Text(occurrence.category?.name ?: stringResource(R.string.label_uncategorized))
-                    Text(stringResource(occurrence.state.labelRes()))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { readOnlyOccurrence = null }) {
-                    Text(stringResource(R.string.action_close))
-                }
-            },
+        TodoDetailModal(
+            data = occurrence.detailModalData(),
+            onDismiss = { readOnlyOccurrence = null },
         )
     }
 
@@ -520,8 +509,9 @@ private fun TodoOccurrenceRow(
     onOpen: (TodoOccurrence) -> Unit,
 ) {
     val completed = occurrence.state == TodoState.COMPLETED
+    val showCompletionControl = canComplete || occurrence.state != TodoState.PENDING
     val occurrenceState = stringResource(occurrence.state.labelRes())
-    ListItem(
+    MataTodoListItem(
         headlineContent = {
             Text(
                 text = occurrence.todo.title,
@@ -579,12 +569,14 @@ private fun TodoOccurrenceRow(
             }
         },
         leadingContent = {
-            MataCompletionCheckbox(
-                checked = completed,
-                onCheckedChange = if (canComplete && !completed) {
-                    { checked -> if (checked) onComplete(occurrence) }
-                } else null,
-            )
+            if (showCompletionControl) {
+                MataCompletionCheckbox(
+                    checked = completed,
+                    onCheckedChange = if (canComplete && !completed) {
+                        { checked -> if (checked) onComplete(occurrence) }
+                    } else null,
+                )
+            }
         },
         trailingContent = if (showActions) {
             {
@@ -598,6 +590,8 @@ private fun TodoOccurrenceRow(
         } else {
             null
         },
+        reserveLeadingSpace = true,
+        reserveTrailingSpace = true,
         modifier = Modifier
             .semantics { stateDescription = occurrenceState }
             .mataClickablePointer()
@@ -648,6 +642,41 @@ private fun EmptyTodos(message: String) {
 
 private fun LocalDate.toJapaneseDate(pattern: String): String =
     format(DateTimeFormatter.ofPattern(pattern, Locale.JAPANESE))
+
+@Composable
+private fun TodoOccurrence.detailModalData(): TodoDetailModalData = TodoDetailModalData(
+    title = todo.title,
+    description = todo.description,
+    category = TodoDetailCategory(
+        name = category?.name ?: stringResource(R.string.label_uncategorized),
+        iconName = category?.iconName,
+        colorIndex = category?.colorIndex,
+    ),
+    fields = listOf(
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_logical_date),
+            value = logicalDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_due),
+            value = todo.dueMinutes?.let { minutes ->
+                stringResource(R.string.time_format, minutes / 60, minutes % 60)
+            } ?: stringResource(R.string.label_not_set),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_recurrence),
+            value = recurrenceSummary(todo),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_notifications),
+            value = todoNotificationSettingsText(todo.notifications),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_state),
+            value = stringResource(state.labelRes()),
+        ),
+    ),
+)
 
 @Composable
 internal fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) {

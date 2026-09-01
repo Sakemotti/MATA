@@ -18,8 +18,6 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
-import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -27,8 +25,6 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.PreviewSizeMode
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.action.ActionCallback
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.background
@@ -50,28 +46,21 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.mochisofts.mata.R
 import com.mochisofts.mata.app.MainActivity
-import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.data.local.WidgetInstanceStateDao
 import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
-import com.mochisofts.mata.data.widget.ERROR_COMPLETE
-import com.mochisofts.mata.data.widget.LOAD_ACTION_ERROR
 import com.mochisofts.mata.data.widget.LOAD_ERROR
-import com.mochisofts.mata.data.widget.LOAD_LOADING
 import com.mochisofts.mata.data.widget.LOAD_STALE
 import com.mochisofts.mata.data.widget.WidgetRefreshAlarmScheduler
-import com.mochisofts.mata.data.widget.WidgetRefreshCoordinator
 import com.mochisofts.mata.data.widget.WidgetSnapshotJson
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.data.widget.widgetEntryPoint
 import com.mochisofts.mata.domain.model.WidgetCategoryGroup
 import com.mochisofts.mata.domain.model.WidgetDisplayModel
 import com.mochisofts.mata.domain.model.WidgetTodoItem
-import com.mochisofts.mata.domain.repository.TodoRepository
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -240,9 +229,7 @@ private fun WidgetModelContent(
             )
         }
 
-        if (state?.loadState == LOAD_ACTION_ERROR) {
-            StatusText(context.getString(R.string.widget_complete_failed), WidgetColors.error)
-        } else if (state?.loadState == LOAD_STALE) {
+        if (state?.loadState == LOAD_STALE) {
             StatusText(context.getString(R.string.widget_stale), WidgetColors.error)
             lastUpdated?.let { StatusText(it, WidgetColors.onSurfaceVariant) }
         }
@@ -328,45 +315,28 @@ private fun WidgetTodoRow(
     item: WidgetTodoItem,
     compact: Boolean,
 ) {
+    val actionIntent = widgetTodoActionIntent(
+        context = context,
+        request = WidgetTodoActionRequest(
+            todoId = item.todoId,
+            logicalDate = LocalDate.parse(item.logicalDate),
+            expectedRevision = item.definitionRevision,
+            appWidgetId = appWidgetId,
+            snapshotVersion = snapshotVersion,
+        ),
+    )
     Row(
-        modifier = GlanceModifier.fillMaxWidth().padding(vertical = if (compact) 2.dp else 4.dp),
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .clickable(actionStartActivity(actionIntent))
+            .padding(
+                horizontal = if (compact) 4.dp else 8.dp,
+                vertical = if (compact) 10.dp else 12.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            provider = ImageProvider(R.drawable.ic_widget_unchecked),
-            contentDescription = context.getString(
-                R.string.widget_complete_content_description,
-                item.title,
-            ),
-            modifier = GlanceModifier
-                .size(48.dp)
-                .padding(12.dp)
-                .clickable(
-                    actionRunCallback<CompleteTodoWidgetAction>(
-                        actionParametersOf(
-                            WidgetActionKeys.todoId to item.todoId,
-                            WidgetActionKeys.logicalDate to item.logicalDate,
-                            WidgetActionKeys.definitionRevision to item.definitionRevision,
-                            WidgetActionKeys.appWidgetId to appWidgetId,
-                            WidgetActionKeys.snapshotVersion to snapshotVersion,
-                        ),
-                    ),
-                ),
-        )
         Column(
-            modifier = GlanceModifier
-                .defaultWeight()
-                .clickable(
-                    actionStartActivity(
-                        todoListIntent(
-                            context = context,
-                            selectedDate = item.logicalDate,
-                            mode = MainActivity.WIDGET_MODE_DATE,
-                            selectedCategoryKey = null,
-                            todoId = item.todoId,
-                        ),
-                    ),
-                ),
+            modifier = GlanceModifier.defaultWeight(),
         ) {
             Text(
                 text = item.title,
@@ -454,103 +424,6 @@ private fun todoListIntent(
     todoId?.let { putExtra(MainActivity.EXTRA_TODO_ID, it) }
     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 }
-
-object WidgetActionKeys {
-    val todoId = ActionParameters.Key<String>("todo_id")
-    val logicalDate = ActionParameters.Key<String>("logical_date")
-    val definitionRevision = ActionParameters.Key<Int>("definition_revision")
-    val appWidgetId = ActionParameters.Key<Int>("app_widget_id")
-    val snapshotVersion = ActionParameters.Key<Int>("snapshot_version")
-}
-
-class CompleteTodoWidgetAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val todoId = parameters[WidgetActionKeys.todoId] ?: return
-        val logicalDate = parameters[WidgetActionKeys.logicalDate]?.let {
-            runCatching { LocalDate.parse(it) }.getOrNull()
-        } ?: return
-        val expectedRevision = parameters[WidgetActionKeys.definitionRevision] ?: return
-        val snapshotVersion = parameters[WidgetActionKeys.snapshotVersion] ?: return
-        val appWidgetId = parameters[WidgetActionKeys.appWidgetId] ?: return
-        if (runCatching { GlanceAppWidgetManager(context).getAppWidgetId(glanceId) }.getOrNull() !=
-            appWidgetId
-        ) return
-        val dependencies = widgetActionEntryPoint(context)
-        if (snapshotVersion != WidgetDisplayModel.CURRENT_VERSION) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-            return
-        }
-        val currentTodo = dependencies.todoRepository().getTodo(todoId)
-        if (currentTodo == null || currentTodo.archivedAt != null ||
-            currentTodo.definitionRevision < expectedRevision
-        ) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-            return
-        }
-
-        val result = dependencies.todoRepository().setCompleted(
-            todoId = todoId,
-            logicalDate = logicalDate,
-            completed = true,
-        )
-        if (result.isSuccess) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-            return
-        }
-
-        if (result.exceptionOrNull() is ValidationException) {
-            dependencies.refreshCoordinator().refreshAll(appWidgetId)
-        } else {
-            markActionFailure(context, glanceId, appWidgetId, dependencies)
-        }
-    }
-}
-
-private suspend fun markActionFailure(
-    context: Context,
-    glanceId: GlanceId,
-    appWidgetId: Int,
-    dependencies: WidgetActionEntryPoint,
-) {
-    val now = dependencies.clock().millis()
-    val previous = dependencies.widgetStateDao().find(appWidgetId)
-    dependencies.widgetStateDao().upsert(
-        (previous ?: emptyWidgetState(appWidgetId, now)).copy(
-            loadState = LOAD_ACTION_ERROR,
-            errorCode = ERROR_COMPLETE,
-            lastFailureAt = now,
-            updatedAt = now,
-        ),
-    )
-    runCatching { TodayTodoWidget().update(context, glanceId) }
-}
-
-private fun emptyWidgetState(appWidgetId: Int, now: Long) = WidgetInstanceStateEntity(
-    appWidgetId = appWidgetId,
-    snapshotVersion = WidgetDisplayModel.CURRENT_VERSION,
-    snapshotJson = null,
-    lastSuccessAt = null,
-    loadState = LOAD_LOADING,
-    errorCode = null,
-    lastFailureAt = null,
-    undoOperationId = null,
-    undoTodoTitle = null,
-    undoExpiresAt = null,
-    nextRefreshAt = null,
-    updatedAt = now,
-)
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface WidgetActionEntryPoint {
-    fun todoRepository(): TodoRepository
-    fun widgetStateDao(): WidgetInstanceStateDao
-    fun refreshCoordinator(): WidgetRefreshCoordinator
-    fun clock(): Clock
-}
-
-private fun widgetActionEntryPoint(context: Context): WidgetActionEntryPoint =
-    EntryPointAccessors.fromApplication(context.applicationContext, WidgetActionEntryPoint::class.java)
 
 class TodayTodoWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TodayTodoWidget()
