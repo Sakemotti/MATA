@@ -1,12 +1,15 @@
 package com.mochisofts.mata.core.designsystem
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -20,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class MataStatusType {
@@ -28,6 +32,54 @@ enum class MataStatusType {
     ERROR,
     IN_PROGRESS,
     FUTURE,
+}
+
+object MataTodoListItemDefaults {
+    val LeadingSlotWidth = 48.dp
+    val ActionSlotWidth = 48.dp
+    val StatusSlotWidth = 112.dp
+}
+
+@Composable
+fun MataTodoListItem(
+    headlineContent: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    supportingContent: (@Composable () -> Unit)? = null,
+    leadingContent: (@Composable () -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+    reserveLeadingSpace: Boolean = leadingContent != null,
+    reserveTrailingSpace: Boolean = trailingContent != null,
+    trailingSlotWidth: Dp = MataTodoListItemDefaults.ActionSlotWidth,
+) {
+    ListItem(
+        headlineContent = headlineContent,
+        modifier = modifier,
+        supportingContent = supportingContent,
+        leadingContent = if (reserveLeadingSpace) {
+            {
+                Box(
+                    modifier = Modifier.width(MataTodoListItemDefaults.LeadingSlotWidth),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    leadingContent?.invoke()
+                }
+            }
+        } else {
+            null
+        },
+        trailingContent = if (reserveTrailingSpace) {
+            {
+                Box(
+                    modifier = Modifier.width(trailingSlotWidth),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    trailingContent?.invoke()
+                }
+            }
+        } else {
+            null
+        },
+    )
 }
 
 @Composable
