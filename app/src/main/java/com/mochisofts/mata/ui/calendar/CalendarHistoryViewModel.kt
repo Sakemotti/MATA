@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.R
-import com.mochisofts.mata.domain.model.CompletionUndoToken
+import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryMonth
 import com.mochisofts.mata.domain.repository.HistoryRepository
@@ -49,7 +49,7 @@ data class CalendarHistoryUiState(
 )
 
 sealed interface CalendarHistoryEffect {
-    data class CompletionUndone(val token: CompletionUndoToken) : CalendarHistoryEffect
+    data class ActionUndone(val token: HistoryActionUndoToken) : CalendarHistoryEffect
     data class Message(@StringRes val messageRes: Int) : CalendarHistoryEffect
 }
 
@@ -181,13 +181,13 @@ class CalendarHistoryViewModel @Inject constructor(
         refreshGeneration.update(Int::inc)
     }
 
-    fun undoCompletion(executionId: String) {
+    fun undoAction(executionId: String) {
         if (busyExecutionId.value != null) return
         busyExecutionId.value = executionId
         viewModelScope.launch {
-            historyRepository.undoCompletion(executionId)
+            historyRepository.undoAction(executionId)
                 .onSuccess { token ->
-                    effectsChannel.send(CalendarHistoryEffect.CompletionUndone(token))
+                    effectsChannel.send(CalendarHistoryEffect.ActionUndone(token))
                 }
                 .onFailure { throwable ->
                     effectsChannel.send(
@@ -200,11 +200,11 @@ class CalendarHistoryViewModel @Inject constructor(
         }
     }
 
-    fun restoreCompletion(token: CompletionUndoToken) {
+    fun restoreAction(token: HistoryActionUndoToken) {
         if (busyExecutionId.value != null) return
         busyExecutionId.value = token.id
         viewModelScope.launch {
-            historyRepository.restoreCompletion(token)
+            historyRepository.restoreAction(token)
                 .onFailure { throwable ->
                     effectsChannel.send(
                         CalendarHistoryEffect.Message(

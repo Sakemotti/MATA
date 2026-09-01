@@ -52,8 +52,8 @@ data class TodoListUiState(
 
 sealed interface TodoListEffect {
     data class Message(@StringRes val messageRes: Int) : TodoListEffect
-    data class Completed(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
-    data class Skipped(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
+    data object Completed : TodoListEffect
+    data object Skipped : TodoListEffect
     data object Archived : TodoListEffect
     data object Deleted : TodoListEffect
 }
@@ -155,9 +155,7 @@ class TodoListViewModel @Inject constructor(
         viewModelScope.launch {
             todoRepository.setCompleted(occurrence.todo.id, occurrence.logicalDate, true)
                 .onSuccess {
-                    effectsChannel.send(
-                        TodoListEffect.Completed(occurrence.todo.id, occurrence.logicalDate),
-                    )
+                    effectsChannel.send(TodoListEffect.Completed)
                 }
                 .onFailure { throwable ->
                     effectsChannel.send(
@@ -169,44 +167,16 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    fun undoCompletion(todoId: String, logicalDate: LocalDate) {
-        viewModelScope.launch {
-            todoRepository.setCompleted(todoId, logicalDate, false)
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_undo_completion_failed),
-                        ),
-                    )
-                }
-        }
-    }
-
     fun skip(occurrence: TodoOccurrence) {
         viewModelScope.launch {
             todoRepository.setSkipped(occurrence.todo.id, occurrence.logicalDate, true)
                 .onSuccess {
-                    effectsChannel.send(
-                        TodoListEffect.Skipped(occurrence.todo.id, occurrence.logicalDate),
-                    )
+                    effectsChannel.send(TodoListEffect.Skipped)
                 }
                 .onFailure { throwable ->
                     effectsChannel.send(
                         TodoListEffect.Message(
                             throwable.toUserMessageRes(R.string.error_todo_skip_failed),
-                        ),
-                    )
-                }
-        }
-    }
-
-    fun undoSkip(todoId: String, logicalDate: LocalDate) {
-        viewModelScope.launch {
-            todoRepository.setSkipped(todoId, logicalDate, false)
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_undo_skip_failed),
                         ),
                     )
                 }

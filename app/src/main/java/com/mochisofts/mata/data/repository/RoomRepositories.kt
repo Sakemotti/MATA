@@ -436,24 +436,6 @@ class RoomTodoRepository @Inject constructor(
         runCatching { notificationScheduler.reconcileTodo(todoId) }
     }
 
-    override suspend fun undoCompletion(operationId: String): Result<Unit> = runCatching {
-        val todoId = database.withTransaction {
-            val execution = executionDao.findByOperationId(operationId)
-                ?: throw ValidationException(ValidationError.TODO_ACTION_CANNOT_UNDO)
-            if (TodoState.fromStoredValue(execution.status) != TodoState.COMPLETED) {
-                throw ValidationException(ValidationError.TODO_ACTION_CANNOT_UNDO)
-            }
-            val todo = todoDao.findById(execution.todoId)
-                ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
-            validate(todo.archivedAt == null, ValidationError.TODO_NOT_FOUND)
-            executionDao.deleteById(execution.id)
-            updateAppliedRevision(todo)
-            todo.id
-        }
-        requestImmediateWidgetUpdate()
-        runCatching { notificationScheduler.reconcileTodo(todoId) }
-    }
-
     override suspend fun archiveTodo(id: String): Result<Unit> = runCatching {
         database.withTransaction {
             val todo = todoDao.findById(id) ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
