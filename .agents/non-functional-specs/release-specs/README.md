@@ -41,7 +41,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | 利用規約 | `https://mochisofts.com/mata/terms` |
 | デベロッパーWebサイト | `https://mochisofts.com/` |
 | app-ads.txt | `https://mochisofts.com/app-ads.txt` |
-| Play掲載用連絡先 | `support@mochisofts.com` |
+| Play掲載用連絡先 | `com.mochisofts@gmail.com` |
 
 連絡先とWebサイトはGoogle Play掲載および法的文書に使用する。設定画面には既存仕様どおり「開発者Webサイト」「お問い合わせ」の行を追加しない。
 

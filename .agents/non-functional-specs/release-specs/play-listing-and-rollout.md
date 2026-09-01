@@ -30,7 +30,7 @@
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
 - 両URLはHTTPS、認証不要、地域制限なし、モバイル表示対応とする。
 - アプリ内の設定画面とGoogle Play掲載から同じポリシーURLを開く。
-- デベロッパーWebサイトは`https://mochisofts.com/`、連絡先は`support@mochisofts.com`とする。
+- デベロッパーWebサイトは`https://mochisofts.com/`、連絡先は`com.mochisofts@gmail.com`とする。
 - `https://mochisofts.com/app-ads.txt`をAdMobの正式な内容で公開する。
 - 文書やapp-ads.txtの実際の公開は本番リリース前の必須作業とし、URLを決めただけで完了扱いにしない。
 
