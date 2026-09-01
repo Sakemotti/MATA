@@ -118,7 +118,7 @@ dependencies {
     implementation libs.google.user.messaging.platform
     implementation libs.androidx.profileinstaller
     implementation libs.androidx.datastore.preferences
-    implementation libs.androidx.hilt.navigation.compose
+    implementation libs.androidx.hilt.lifecycle.viewmodel.compose
     implementation libs.hilt.android
     implementation libs.kotlinx.serialization.core
     implementation libs.kotlinx.serialization.json

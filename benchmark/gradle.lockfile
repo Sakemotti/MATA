@@ -110,7 +110,6 @@ androidx.graphics:graphics-shapes-desktop:1.0.1=benchmarkReleaseTestedApks,nonMi
 androidx.graphics:graphics-shapes:1.0.1=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
 androidx.hilt:hilt-lifecycle-viewmodel-compose:1.4.0=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
 androidx.hilt:hilt-lifecycle-viewmodel:1.4.0=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
-androidx.hilt:hilt-navigation-compose:1.4.0=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
 androidx.interpolator:interpolator:1.0.0=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
 androidx.lifecycle:lifecycle-common-jvm:2.11.0=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
 androidx.lifecycle:lifecycle-common:2.11.0=benchmarkReleaseTestedApks,nonMinifiedReleaseTestedApks
