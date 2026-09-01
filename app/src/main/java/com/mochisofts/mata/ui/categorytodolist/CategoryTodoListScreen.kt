@@ -33,7 +33,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,6 +59,8 @@ import com.mochisofts.mata.app.MataDestination
 import com.mochisofts.mata.app.MataNavigationType
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
+import com.mochisofts.mata.core.designsystem.MataTodoListItem
+import com.mochisofts.mata.core.designsystem.MataTodoListItemDefaults
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.domain.model.TodoState
@@ -200,7 +201,7 @@ private fun CategoryTodos(
         ) {
             items(state.items, key = { it.todo.id }) { item ->
                 val stateLabel = item.todayState?.let { stringResource(it.labelRes()) }
-                ListItem(
+                MataTodoListItem(
                     headlineContent = {
                         Text(
                             item.todo.title,
@@ -220,6 +221,8 @@ private fun CategoryTodos(
                             CategoryTodoStatus(status)
                         }
                     },
+                    reserveTrailingSpace = true,
+                    trailingSlotWidth = MataTodoListItemDefaults.StatusSlotWidth,
                     modifier = Modifier
                         .semantics {
                             stateLabel?.let { stateDescription = it }

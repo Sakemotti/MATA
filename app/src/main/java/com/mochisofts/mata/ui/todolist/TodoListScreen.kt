@@ -42,7 +42,6 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -89,6 +88,7 @@ import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.MataTodoListItem
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.domain.model.Category
@@ -533,8 +533,9 @@ private fun TodoOccurrenceRow(
     onOpen: (TodoOccurrence) -> Unit,
 ) {
     val completed = occurrence.state == TodoState.COMPLETED
+    val showCompletionControl = canComplete || occurrence.state != TodoState.PENDING
     val occurrenceState = stringResource(occurrence.state.labelRes())
-    ListItem(
+    MataTodoListItem(
         headlineContent = {
             Text(
                 text = occurrence.todo.title,
@@ -592,12 +593,14 @@ private fun TodoOccurrenceRow(
             }
         },
         leadingContent = {
-            MataCompletionCheckbox(
-                checked = completed,
-                onCheckedChange = if (canComplete && !completed) {
-                    { checked -> if (checked) onComplete(occurrence) }
-                } else null,
-            )
+            if (showCompletionControl) {
+                MataCompletionCheckbox(
+                    checked = completed,
+                    onCheckedChange = if (canComplete && !completed) {
+                        { checked -> if (checked) onComplete(occurrence) }
+                    } else null,
+                )
+            }
         },
         trailingContent = if (showActions) {
             {
@@ -611,6 +614,8 @@ private fun TodoOccurrenceRow(
         } else {
             null
         },
+        reserveLeadingSpace = true,
+        reserveTrailingSpace = true,
         modifier = Modifier
             .semantics { stateDescription = occurrenceState }
             .mataClickablePointer()
