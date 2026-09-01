@@ -18,7 +18,7 @@ import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
-import com.mochisofts.mata.domain.model.CompletionUndoToken
+import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryMonth
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
@@ -72,7 +72,6 @@ interface TodoRepository {
         skipped: Boolean,
         operationId: String = UUID.randomUUID().toString(),
     ): Result<Unit>
-    suspend fun undoCompletion(operationId: String): Result<Unit>
     suspend fun archiveTodo(id: String): Result<Unit>
     suspend fun restoreTodo(id: String): Result<Unit>
     suspend fun deleteTodo(id: String): Result<Unit>
@@ -117,8 +116,8 @@ interface HistoryReconciler {
 interface HistoryRepository {
     fun observeMonth(startDate: LocalDate, endDate: LocalDate): Flow<HistoryMonth>
     fun observeDay(date: LocalDate): Flow<HistoryDay>
-    suspend fun undoCompletion(executionId: String): Result<CompletionUndoToken>
-    suspend fun restoreCompletion(token: CompletionUndoToken): Result<Unit>
+    suspend fun undoAction(executionId: String): Result<HistoryActionUndoToken>
+    suspend fun restoreAction(token: HistoryActionUndoToken): Result<Unit>
 }
 
 interface ArchiveRepository {
