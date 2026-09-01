@@ -303,15 +303,6 @@ fun SettingsScreen(
 
                         SettingsSectionHeader(R.string.settings_section_data)
                         SettingsValueRow(
-                            title = stringResource(R.string.nav_archived_todos),
-                            value = stringResource(R.string.settings_open_management),
-                            description = stringResource(R.string.settings_archived_todos_description),
-                            isSaving = false,
-                            enabled = settingsEnabled,
-                            onClick = { onDestination(MataDestination.ARCHIVE) },
-                        )
-                        HorizontalDivider()
-                        SettingsValueRow(
                             title = stringResource(R.string.backup_create_title),
                             value = stringResource(R.string.backup_create_value),
                             description = stringResource(R.string.backup_create_description),
