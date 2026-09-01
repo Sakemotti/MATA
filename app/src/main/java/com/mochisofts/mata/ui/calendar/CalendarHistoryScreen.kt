@@ -45,7 +45,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
@@ -93,6 +92,7 @@ import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
+import com.mochisofts.mata.core.designsystem.MataTodoListItem
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
@@ -675,13 +675,13 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
-private fun HistoryEntryRow(
+internal fun HistoryEntryRow(
     entry: HistoryEntry,
     busyExecutionId: String?,
     onClick: (HistoryEntry) -> Unit,
     onUndoAction: (String) -> Unit,
 ) {
-    ListItem(
+    MataTodoListItem(
         headlineContent = {
             Text(entry.snapshot.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
         },
@@ -732,7 +732,7 @@ private fun HistoryEntryRow(
 
 @Composable
 private fun PeriodResultRow(entry: PeriodHistoryEntry, onClick: (PeriodHistoryEntry) -> Unit) {
-    ListItem(
+    MataTodoListItem(
         headlineContent = {
             Text(entry.snapshot.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
         },
