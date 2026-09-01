@@ -14,6 +14,7 @@
 - スクリーンショットは実際のRelease相当UIと日本語の架空データを使用し、個人情報やデバッグ表示を含めない。
 - スマートフォンとタブレットの必要な画像を用意し、表示内容を同じリリースに一致させる。
 - 高解像度アイコンとFeature Graphicはデザインシステムのブランド表現に従う。
+- Google Playへ転記する確定文案、リリースノート、画像寸法、撮影順および代替テキストは[Google Playストア掲載文・画像仕様](store-listing-copy-and-assets.md)に従う。
 
 ## 2. 対象ユーザーとコンテンツ
 
@@ -46,6 +47,8 @@
 - `SCHEDULE_EXACT_ALARM`の利用目的を時刻指定TODO通知として説明し、公開時点のPlayポリシー適格性を再確認する。
 - SDK Indexの警告、Target API、Billing、広告SDKの期限を公開候補ごとに確認する。
 - Play Integrity APIは初回公開では導入しない。
+- 各App contentカード、Advertising ID、権限説明、アプリ内商品および初回公開ブロッカーは[Google Play Console申請シート](play-console-submission.md)に従う。
+- Data safetyは[Google Play Data safety申告案](data-safety-declaration.md)をRelease AABと実通信で検証してから送信する。
 
 ## 5. テストトラック
 
