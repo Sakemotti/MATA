@@ -79,7 +79,7 @@ class BackupArchiveReader @Inject constructor() {
         try {
             ZipInputStream(input.buffered(), StandardCharsets.UTF_8).use { zip ->
                 dataEntry = zip.nextEntry ?: invalid("data.json is missing")
-                validateEntry(dataEntry!!, DATA_ENTRY)
+                validateEntry(dataEntry, DATA_ENTRY)
                 FileOutputStream(dataFile).buffered().use { output ->
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                     var first = true
@@ -108,7 +108,7 @@ class BackupArchiveReader @Inject constructor() {
                 }
                 zip.closeEntry()
                 manifestEntry = zip.nextEntry ?: invalid("manifest.json is missing")
-                validateEntry(manifestEntry!!, MANIFEST_ENTRY)
+                validateEntry(manifestEntry, MANIFEST_ENTRY)
                 manifestBytes = readLimited(zip, MAX_MANIFEST_BYTES)
                 zip.closeEntry()
                 if (zip.nextEntry != null) invalid("Unknown ZIP entry")
@@ -121,9 +121,13 @@ class BackupArchiveReader @Inject constructor() {
             throw BackupFormatException(message = "Invalid ZIP: ${error.javaClass.simpleName}")
         }
         return try {
-            if (dataEntry!!.time != manifestEntry!!.time) invalid("ZIP timestamps differ")
-            validateCompressionRatio(dataEntry!!, measuredBytes)
-            validateCompressionRatio(manifestEntry!!, manifestBytes.size.toLong())
+            val validatedDataEntry = dataEntry ?: invalid("data.json is missing")
+            val validatedManifestEntry = manifestEntry ?: invalid("manifest.json is missing")
+            if (validatedDataEntry.time != validatedManifestEntry.time) {
+                invalid("ZIP timestamps differ")
+            }
+            validateCompressionRatio(validatedDataEntry, measuredBytes)
+            validateCompressionRatio(validatedManifestEntry, manifestBytes.size.toLong())
             val manifest = readManifest(manifestBytes)
             val actualSha = digest.digest().toHex()
             if (manifest.dataSha256 != actualSha || manifest.dataUncompressedBytes != measuredBytes) {
