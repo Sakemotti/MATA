@@ -38,6 +38,9 @@ jobs:
             exit 1
           fi
 
+      - name: Verify legal site
+        run: node legal-site/verify.mjs
+
   android_verification:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest

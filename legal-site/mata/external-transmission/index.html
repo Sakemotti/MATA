@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AndroidアプリMATAの外部送信に関する公表です。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>外部送信に関する公表 | MATA</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/">Mochisofts</a>
+      <nav class="site-nav" aria-label="法的文書">
+        <a href="/mata/privacy">プライバシーポリシー</a>
+        <a href="/mata/terms">利用規約</a>
+        <a href="/mata/commercial-transactions">特商法表記</a>
+        <a aria-current="page" href="/mata/external-transmission">外部送信</a>
+      </nav>
+    </div>
+  </header>
+  <main class="page">
+    <article class="document">
+      <h1>MATA 外部送信に関する公表</h1>
+      <div class="metadata">
+        制定日: 2026年9月1日<br>
+        最終改定日: 2026年9月1日
+      </div>
+
+      <p class="notice">
+        MATAと関連Webサイトでは、機能提供のため外部サービスへ情報が送信される場合があります。
+        TODOのタイトル、説明、カテゴリ名、履歴および手動バックアップを、下記サービスの要求へ含めることはありません。
+      </p>
+
+      <h2>1. 本アプリからの外部送信</h2>
+
+      <h3>Google Mobile Ads（AdMob）</h3>
+      <dl>
+        <dt>情報を取り扱う者</dt>
+        <dd>Google</dd>
+        <dt>送信され得る情報</dt>
+        <dd>IPアドレス、IPアドレスなどから推定されるおおよその位置、広告ID・アプリセットIDなどの識別子、アプリや広告との操作、診断情報、端末・アプリ情報</dd>
+        <dt>利用目的</dt>
+        <dd>MATAではバナー広告の配信、表示、測定、不正防止に使用します。Googleでは広告配信、パーソナライズ、測定、分析、不正防止、サービス改善などに使用される場合があります。</dd>
+        <dt>選択・停止方法</dt>
+        <dd>対象地域ではUser Messaging Platformのプライバシー設定と端末の広告設定を利用できます。広告削除の購入権利が有効な間はMobile Ads SDKを初期化しません。</dd>
+      </dl>
+
+      <h3>User Messaging Platform（UMP）</h3>
+      <dl>
+        <dt>情報を取り扱う者</dt>
+        <dd>Google</dd>
+        <dt>送信され得る情報</dt>
+        <dd>IPアドレス、端末・アプリ情報、地域判定、同意またはプライバシー選択の状態、技術的な通信情報</dd>
+        <dt>利用目的</dt>
+        <dd>広告に関する同意・選択肢の取得と管理、法令・ポリシー対応</dd>
+        <dt>選択・停止方法</dt>
+        <dd>対象地域ではアプリの設定画面からプライバシー設定を再表示できます。広告削除中も同意状態を確認する通信が発生する場合があります。</dd>
+      </dl>
+
+      <h3>Google Play Billing</h3>
+      <dl>
+        <dt>情報を取り扱う者</dt>
+        <dd>Google Playの契約主体となるGoogle関連会社</dd>
+        <dt>送信され得る情報</dt>
+        <dd>商品ID、商品・価格の照会、購入状態、購入トークン、端末・アプリ情報その他Google Playが決済・権利確認に必要とする情報</dd>
+        <dt>利用目的</dt>
+        <dd>MATAでは価格表示、購入、承認、復元、払い戻し・取消の反映に使用します。Googleでは決済、購入管理、不正防止、法令・規約対応に使用されます。</dd>
+        <dt>選択・停止方法</dt>
+        <dd>購入操作は任意です。価格照会と既存購入の復元にはGoogle Playとの通信が必要です。</dd>
+      </dl>
+
+      <h3>Holidays JP</h3>
+      <dl>
+        <dt>情報を取り扱う者</dt>
+        <dd>holidays-jpプロジェクト</dd>
+        <dt>送信され得る情報</dt>
+        <dd>要求先URL、IPアドレス、固定User-Agent「MATA」、アクセス日時、HTTPキャッシュ情報その他通常のHTTP通信情報</dd>
+        <dt>利用目的</dt>
+        <dd>MATAでは日本の祝日データ取得と繰り返し計算に使用します。送信先では祝日データの配信、運用、セキュリティに使用される場合があります。</dd>
+        <dt>選択・停止方法</dt>
+        <dd>MATAは祝日情報を定期的に更新します。端末のネットワークを無効にすると送信されませんが、祝日情報が更新されない場合があります。</dd>
+      </dl>
+
+      <h3>Google Play / Android vitals</h3>
+      <dl>
+        <dt>情報を取り扱う者</dt>
+        <dd>Google</dd>
+        <dt>送信され得る情報</dt>
+        <dd>クラッシュ、応答なし、端末・OS・アプリバージョン、性能・安定性に関する情報</dd>
+        <dt>利用目的</dt>
+        <dd>アプリ配布、互換性・品質・障害の確認、Google PlayとAndroidの品質・安全性改善</dd>
+        <dt>選択・停止方法</dt>
+        <dd>Google Playおよび端末の設定に従います。MATA独自の利用分析・クラッシュ自動送信SDKは使用しません。</dd>
+      </dl>
+
+      <h2>2. Webサイト閲覧時の外部送信</h2>
+      <h3>GitHub Pages</h3>
+      <dl>
+        <dt>情報を取り扱う者</dt>
+        <dd>GitHub, Inc.</dd>
+        <dt>送信され得る情報</dt>
+        <dd>IPアドレス、User-Agent、アクセス日時、要求URLその他Web閲覧に通常必要な通信情報</dd>
+        <dt>利用目的</dt>
+        <dd>法的文書の配信、セキュリティ、サービス運用</dd>
+        <dt>選択・停止方法</dt>
+        <dd>法的文書サイトを閲覧しない場合は送信されません。</dd>
+      </dl>
+      <p>本サイトは独自のアクセス解析、広告、問い合わせフォームおよび独自Cookieを設置していません。</p>
+
+      <h2>3. 送信先の情報</h2>
+      <ul>
+        <li><a href="https://policies.google.com/privacy?hl=ja" rel="noopener noreferrer">Google プライバシーポリシー</a></li>
+        <li><a href="https://policies.google.com/technologies/ads?hl=ja" rel="noopener noreferrer">Googleによる広告でのデータ利用</a></li>
+        <li><a href="https://developers.google.com/admob/android/privacy/play-data-disclosure" rel="noopener noreferrer">Google Mobile Ads SDKのデータ開示</a></li>
+        <li><a href="https://holidays-jp.github.io/" rel="noopener noreferrer">Holidays JP</a></li>
+        <li><a href="https://docs.github.com/ja/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener noreferrer">GitHub 一般プライバシー声明</a></li>
+      </ul>
+
+      <h2>4. 変更とお問い合わせ</h2>
+      <p>
+        外部サービス、送信情報または利用目的を変更する場合は、本ページと
+        <a href="/mata/privacy">プライバシーポリシー</a>を更新します。重要な変更はアプリ内表示またはリリースノートなどでもお知らせします。
+      </p>
+      <p>
+        本ページに関するお問い合わせは、
+        <a href="mailto:com.mochisofts@gmail.com">com.mochisofts@gmail.com</a>までお願いします。
+      </p>
+    </article>
+  </main>
+  <footer class="site-footer">
+    <div class="footer-inner">© 2026 Mochisofts</div>
+  </footer>
+</body>
+</html>
