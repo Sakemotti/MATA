@@ -1,0 +1,257 @@
+:root {
+  color-scheme: light dark;
+  --background: #f7f7fb;
+  --surface: #ffffff;
+  --surface-muted: #f0f1f7;
+  --text: #1b1b1f;
+  --text-muted: #5f6069;
+  --primary: #415f91;
+  --primary-container: #d6e3ff;
+  --on-primary-container: #001b3e;
+  --outline: #c5c6cf;
+  --shadow: 0 12px 32px rgb(27 27 31 / 8%);
+}
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+a {
+  color: var(--primary);
+  overflow-wrap: anywhere;
+  text-underline-offset: 0.2em;
+}
+
+a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--outline);
+  background: var(--surface);
+}
+
+.header-inner,
+.page,
+.footer-inner {
+  width: min(100% - 32px, 920px);
+  margin-inline: auto;
+}
+
+.header-inner {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.brand {
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.site-nav a {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.page {
+  padding-block: 56px 72px;
+}
+
+.hero,
+.document {
+  border: 1px solid var(--outline);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  padding: clamp(28px, 6vw, 64px);
+}
+
+.hero h1,
+.document h1 {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 3.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.hero p {
+  max-width: 48rem;
+  margin: 24px 0 0;
+  color: var(--text-muted);
+  font-size: 1.08rem;
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.link-card {
+  display: block;
+  border-radius: 18px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  padding: 24px;
+  text-decoration: none;
+}
+
+.link-card strong,
+.link-card span {
+  display: block;
+}
+
+.link-card strong {
+  font-size: 1.15rem;
+}
+
+.link-card span {
+  margin-top: 4px;
+}
+
+.document {
+  padding: clamp(24px, 6vw, 56px);
+}
+
+.document h1 {
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+.document h2 {
+  margin: 48px 0 16px;
+  font-size: 1.45rem;
+  line-height: 1.4;
+}
+
+.document h3 {
+  margin: 32px 0 12px;
+  font-size: 1.12rem;
+}
+
+.document p,
+.document ul,
+.document ol {
+  margin-block: 12px;
+}
+
+.document li + li {
+  margin-top: 8px;
+}
+
+.metadata,
+.notice {
+  border-radius: 16px;
+  background: var(--surface-muted);
+  padding: 18px 20px;
+}
+
+.metadata {
+  margin-top: 24px;
+  color: var(--text-muted);
+}
+
+.notice {
+  margin-block: 24px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  margin-block: 20px;
+}
+
+table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid var(--outline);
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--surface-muted);
+}
+
+.site-footer {
+  border-top: 1px solid var(--outline);
+  background: var(--surface);
+}
+
+.footer-inner {
+  padding-block: 28px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    min-height: auto;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding-block: 18px;
+  }
+
+  .page {
+    padding-block: 28px 48px;
+  }
+
+  .hero,
+  .document {
+    border-radius: 18px;
+  }
+
+  .link-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111318;
+    --surface: #1b1b1f;
+    --surface-muted: #25262d;
+    --text: #e3e2e6;
+    --text-muted: #c5c6cf;
+    --primary: #aac7ff;
+    --primary-container: #264777;
+    --on-primary-container: #d6e3ff;
+    --outline: #45464f;
+    --shadow: 0 12px 32px rgb(0 0 0 / 24%);
+  }
+}

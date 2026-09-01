@@ -351,7 +351,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 
 - プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
-- Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`、掲載用連絡先は`support@mochisofts.com`とする。
+- Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`、掲載用連絡先は`com.mochisofts@gmail.com`とする。
 - 公開前に法的URLの実在、Data safety、権限、SDK、署名、テストトラック、段階公開を[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)で確認する。
 - Google PlayおよびAndroidの要件は公開候補ごとに現行内容を確認し、固定した過去要件だけを根拠に公開しない。
 
