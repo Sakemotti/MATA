@@ -8,7 +8,7 @@
 - JDK 17以上（Android Studio同梱JBRを利用可能）
 - Android SDK Platform 37.1
 - Gradle Wrapper 9.7.1
-- Android Gradle Plugin 9.3.1
+- Android Gradle Plugin 9.3.2
 - Kotlin 2.2.10（AGP内蔵Kotlin）
 - Jetpack Compose / Material 3
 
