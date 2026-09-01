@@ -43,7 +43,7 @@ class ArchiveModelsTest {
                 actedAt = 30,
                 finalizedAt = 30,
                 snapshot = snapshot,
-                canUndoCompletion = false,
+                canUndoAction = false,
             ),
         )
         val period = ArchivedHistoryItem.Period(
@@ -70,7 +70,7 @@ class ArchiveModelsTest {
                 actedAt = 40,
                 finalizedAt = 40,
                 snapshot = snapshot,
-                canUndoCompletion = false,
+                canUndoAction = false,
             ),
         )
 

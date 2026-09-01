@@ -83,7 +83,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     @Inject lateinit var notificationScheduler: NotificationScheduler
     @Inject lateinit var presenter: NotificationPresenter
     @Inject lateinit var widgetUpdater: WidgetUpdater
-    @Inject lateinit var clock: Clock
 
     override fun onReceive(context: Context, intent: Intent) {
         val todoId = intent.getStringExtra(EXTRA_TODO_ID) ?: return
@@ -94,12 +93,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             try {
                 when (intent.action) {
                     ACTION_COMPLETE -> complete(todoId, date, notificationId)
-                    ACTION_UNDO -> undo(
-                        todoId = todoId,
-                        date = date,
-                        notificationId = notificationId,
-                        completedAt = intent.getLongExtra(EXTRA_COMPLETED_AT, 0L),
-                    )
+                    ACTION_UNDO -> presenter.cancel(todoId, date, notificationId)
                     ACTION_DISMISS -> {
                         notificationScheduler.reconcileTodo(todoId)
                         presenter.refreshGroupSummary()
@@ -115,32 +109,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
         todoRepository.setCompleted(todoId, date, true)
             .onSuccess {
                 widgetUpdater.requestUpdate()
-                val todo = todoRepository.getTodo(todoId)
-                if (todo == null) {
-                    presenter.cancel(todoId, date, notificationId)
-                } else {
-                    presenter.showCompleted(todo, date, notificationId, clock.millis())
-                }
-            }
-            .onFailure { presenter.showCompletionFailed(todoId, date, notificationId) }
-    }
-
-    private suspend fun undo(
-        todoId: String,
-        date: LocalDate,
-        notificationId: Int,
-        completedAt: Long,
-    ) {
-        if (completedAt <= 0 || clock.millis() - completedAt > UNDO_WINDOW_MILLIS) {
-            presenter.showUndoFailed(todoId, date, notificationId)
-            return
-        }
-        todoRepository.setCompleted(todoId, date, false)
-            .onSuccess {
-                widgetUpdater.requestUpdate()
                 presenter.cancel(todoId, date, notificationId)
             }
-            .onFailure { presenter.showUndoFailed(todoId, date, notificationId) }
+            .onFailure { presenter.showCompletionFailed(todoId, date, notificationId) }
     }
 
     companion object {
@@ -150,8 +121,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val EXTRA_TODO_ID = "todo_id"
         const val EXTRA_LOGICAL_DATE = "logical_date"
         const val EXTRA_NOTIFICATION_ID = "notification_id"
-        const val EXTRA_COMPLETED_AT = "completed_at"
-        private const val UNDO_WINDOW_MILLIS = 15_000L
     }
 }
 
@@ -322,45 +291,11 @@ class NotificationPresenter @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    fun showCompleted(todo: Todo, date: LocalDate, notificationId: Int, completedAt: Long) {
-        if (!canPost()) return
-        val undoIntent = actionIntent(
-            action = NotificationActionReceiver.ACTION_UNDO,
-            todoId = todo.id,
-            date = date,
-            notificationId = notificationId,
-            completedAt = completedAt,
-        )
-        val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(todo.title)
-            .setContentText(context.getString(R.string.notification_completed))
-            .setTimeoutAfter(15_000L)
-            .setOnlyAlertOnce(true)
-            .setGroup(GROUP_KEY)
-            .setDeleteIntent(
-                actionIntent(NotificationActionReceiver.ACTION_DISMISS, todo.id, date, notificationId),
-            )
-            .addAction(0, context.getString(R.string.action_undo), undoIntent)
-            .build()
-        manager.notify(completedNotificationTag(todo.id, date), notificationId, notification)
-        updateGroupSummary()
-    }
-
-    @SuppressLint("MissingPermission")
     fun showCompletionFailed(todoId: String, date: LocalDate, notificationId: Int) =
         showFailure(
             tag = reminderNotificationTag(todoId, date),
             notificationId = notificationId,
             messageRes = R.string.notification_completion_failed,
-        )
-
-    @SuppressLint("MissingPermission")
-    fun showUndoFailed(todoId: String, date: LocalDate, notificationId: Int) =
-        showFailure(
-            tag = completedNotificationTag(todoId, date),
-            notificationId = notificationId,
-            messageRes = R.string.notification_undo_failed,
         )
 
     fun cancel(todoId: String, date: LocalDate, notificationId: Int) {
@@ -477,7 +412,6 @@ class NotificationPresenter @Inject constructor(
         todoId: String,
         date: LocalDate,
         notificationId: Int,
-        completedAt: Long = 0L,
     ): PendingIntent = PendingIntent.getBroadcast(
         context,
         purposeRequestCode(notificationId, if (action == NotificationActionReceiver.ACTION_COMPLETE) 2 else 3),
@@ -486,8 +420,7 @@ class NotificationPresenter @Inject constructor(
             .setData(notificationPendingIntentData(todoId, date, notificationId, action))
             .putExtra(NotificationActionReceiver.EXTRA_TODO_ID, todoId)
             .putExtra(NotificationActionReceiver.EXTRA_LOGICAL_DATE, date.toString())
-            .putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
-            .putExtra(NotificationActionReceiver.EXTRA_COMPLETED_AT, completedAt),
+            .putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 

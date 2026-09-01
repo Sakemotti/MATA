@@ -22,9 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -36,8 +34,8 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SkipNext
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DatePicker
@@ -102,11 +100,14 @@ import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
 import com.mochisofts.mata.domain.model.HistoryEntry
 import com.mochisofts.mata.domain.model.HistoryTodoSnapshot
-import com.mochisofts.mata.domain.model.NotificationRelation
-import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.PeriodHistoryEntry
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.ui.common.TodoDetailCategory
+import com.mochisofts.mata.ui.common.TodoDetailField
+import com.mochisofts.mata.ui.common.TodoDetailModal
+import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -170,28 +171,33 @@ fun CalendarHistoryScreen(
     var dialogItemKey by rememberSaveable { mutableStateOf<String?>(null) }
     val dialogItem = state.findDialogItem(dialogItemKey)
     val historyListState = rememberLazyListState()
-    val undoMessage = stringResource(R.string.calendar_history_completion_undone)
+    val completionUndoneMessage = stringResource(R.string.calendar_history_completion_undone)
+    val skipUndoneMessage = stringResource(R.string.calendar_history_skip_undone)
     val undoLabel = stringResource(R.string.action_undo)
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-    LaunchedEffect(viewModel, resources, undoMessage, undoLabel) {
+    LaunchedEffect(viewModel, resources, completionUndoneMessage, skipUndoneMessage, undoLabel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is CalendarHistoryEffect.Message -> {
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
-                is CalendarHistoryEffect.CompletionUndone -> {
+                is CalendarHistoryEffect.ActionUndone -> {
                     val result = withTimeoutOrNull(5_000) {
                         snackbarHostState.showSnackbar(
-                            message = undoMessage,
+                            message = if (effect.token.state == TodoState.SKIPPED) {
+                                skipUndoneMessage
+                            } else {
+                                completionUndoneMessage
+                            },
                             actionLabel = undoLabel,
                             withDismissAction = true,
                             duration = SnackbarDuration.Indefinite,
                         )
                     }
                     if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.restoreCompletion(effect.token)
+                        viewModel.restoreAction(effect.token)
                     }
                 }
             }
@@ -239,7 +245,7 @@ fun CalendarHistoryScreen(
                 onRetry = viewModel::refresh,
                 onEntryClick = { dialogItemKey = it.dialogKey() },
                 onPeriodClick = { dialogItemKey = it.dialogKey() },
-                onUndoCompletion = viewModel::undoCompletion,
+                onUndoAction = viewModel::undoAction,
                 modifier = Modifier.fillMaxSize().padding(padding),
             )
         }
@@ -254,7 +260,10 @@ fun CalendarHistoryScreen(
         )
     }
     dialogItem?.let { item ->
-        HistoryDetailDialog(item = item, onDismiss = { dialogItemKey = null })
+        TodoDetailModal(
+            data = item.detailModalData(),
+            onDismiss = { dialogItemKey = null },
+        )
     }
 }
 
@@ -270,7 +279,7 @@ private fun CalendarHistoryBody(
     onRetry: () -> Unit,
     onEntryClick: (HistoryEntry) -> Unit,
     onPeriodClick: (PeriodHistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (layoutInfo.useTwoPane) {
@@ -302,7 +311,7 @@ private fun CalendarHistoryBody(
                     onRetry = onRetry,
                     onEntryClick = onEntryClick,
                     onPeriodClick = onPeriodClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     listState = historyListState,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
@@ -327,7 +336,7 @@ private fun CalendarHistoryBody(
                 onRetry = onRetry,
                 onEntryClick = onEntryClick,
                 onPeriodClick = onPeriodClick,
-                onUndoCompletion = onUndoCompletion,
+                onUndoAction = onUndoAction,
                 listState = historyListState,
                 modifier = Modifier.weight(1f),
             )
@@ -555,7 +564,7 @@ private fun DayHistoryArea(
     onRetry: () -> Unit,
     onEntryClick: (HistoryEntry) -> Unit,
     onPeriodClick: (PeriodHistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
@@ -581,21 +590,21 @@ private fun DayHistoryArea(
                     titleRes = R.string.label_unfinished,
                     entries = unfinished,
                     onEntryClick = onEntryClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     busyExecutionId = state.busyExecutionId,
                 )
                 historySection(
                     titleRes = R.string.label_skipped,
                     entries = day.entries.filter { it.state == TodoState.SKIPPED },
                     onEntryClick = onEntryClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     busyExecutionId = state.busyExecutionId,
                 )
                 historySection(
                     titleRes = R.string.label_completed,
                     entries = day.entries.filter { it.state == TodoState.COMPLETED },
                     onEntryClick = onEntryClick,
-                    onUndoCompletion = onUndoCompletion,
+                    onUndoAction = onUndoAction,
                     busyExecutionId = state.busyExecutionId,
                 )
                 if (day.periodResults.isNotEmpty()) {
@@ -622,13 +631,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historySection(
     @androidx.annotation.StringRes titleRes: Int,
     entries: List<HistoryEntry>,
     onEntryClick: (HistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
     busyExecutionId: String?,
 ) {
     if (entries.isEmpty()) return
     item { SectionTitle(stringResource(titleRes)) }
     items(entries, key = { "entry:${it.id ?: "pending:${it.todoId}:${it.logicalDate}"}" }) { entry ->
-        HistoryEntryRow(entry, busyExecutionId, onEntryClick, onUndoCompletion)
+        HistoryEntryRow(entry, busyExecutionId, onEntryClick, onUndoAction)
         HorizontalDivider()
     }
 }
@@ -670,7 +679,7 @@ private fun HistoryEntryRow(
     entry: HistoryEntry,
     busyExecutionId: String?,
     onClick: (HistoryEntry) -> Unit,
-    onUndoCompletion: (String) -> Unit,
+    onUndoAction: (String) -> Unit,
 ) {
     ListItem(
         headlineContent = {
@@ -694,14 +703,26 @@ private fun HistoryEntryRow(
             }
         },
         leadingContent = {
-            if (entry.canUndoCompletion && entry.id != null) {
-                MataCompletionCheckbox(
-                    checked = true,
-                    enabled = busyExecutionId == null,
-                    onCheckedChange = { checked -> if (!checked) onUndoCompletion(entry.id) },
-                )
-            } else {
-                HistoryEntryIcon(entry.state)
+            when {
+                entry.canUndoAction && entry.id != null && entry.state == TodoState.COMPLETED -> {
+                    MataCompletionCheckbox(
+                        checked = true,
+                        enabled = busyExecutionId == null,
+                        onCheckedChange = { checked -> if (!checked) onUndoAction(entry.id) },
+                    )
+                }
+                entry.canUndoAction && entry.id != null && entry.state == TodoState.SKIPPED -> {
+                    IconButton(
+                        onClick = { onUndoAction(entry.id) },
+                        enabled = busyExecutionId == null,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Restore,
+                            contentDescription = stringResource(R.string.content_description_undo_skip),
+                        )
+                    }
+                }
+                else -> HistoryEntryIcon(entry.state)
             }
         },
         trailingContent = { CategorySnapshotIcon(entry.snapshot) },
@@ -799,93 +820,74 @@ private fun HistoryStateIcon(state: HistoryDayState, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun HistoryDetailDialog(item: HistoryDialogItem, onDismiss: () -> Unit) {
-    val scrollState = rememberScrollState()
-    val snapshot = when (item) {
-        is HistoryDialogItem.Execution -> item.value.snapshot
-        is HistoryDialogItem.Period -> item.value.snapshot
+private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
+    val snapshot = when (this) {
+        is HistoryDialogItem.Execution -> value.snapshot
+        is HistoryDialogItem.Period -> value.snapshot
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(snapshot.title) },
-        text = {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .mataPageKeyScroll(scrollState)
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (snapshot.description.isNotBlank()) Text(snapshot.description)
-                DetailLine(
-                    R.string.label_category,
-                    snapshot.categoryName ?: stringResource(R.string.label_uncategorized),
-                )
-                DetailLine(R.string.calendar_history_recurrence, recurrenceLabel(snapshot.recurrenceRule.type))
-                DetailLine(
-                    R.string.calendar_history_due,
-                    snapshot.dueMinutes?.let {
-                        stringResource(R.string.time_format, it / 60, it % 60)
-                    } ?: stringResource(R.string.label_not_set),
-                )
-                when (item) {
-                    is HistoryDialogItem.Execution -> {
-                        DetailLine(R.string.calendar_history_logical_date, item.value.logicalDate.toShortDate())
-                        DetailLine(R.string.calendar_history_state, item.value.state.label())
-                        item.value.actedAt?.let {
-                            DetailLine(R.string.calendar_history_operation_time, formatEpochMillis(it))
-                        }
-                    }
-                    is HistoryDialogItem.Period -> {
-                        DetailLine(
-                            R.string.calendar_history_period,
-                            stringResource(
-                                R.string.calendar_history_period_range,
-                                item.value.periodStart.toShortDate(),
-                                item.value.periodEnd.toShortDate(),
-                            ),
-                        )
-                        DetailLine(
-                            R.string.calendar_history_result,
-                            stringResource(
-                                R.string.calendar_history_result_count,
-                                item.value.completedCount,
-                                item.value.requiredCount,
-                                stringResource(
-                                    if (item.value.achieved) R.string.label_achieved else R.string.label_unachieved,
-                                ),
-                            ),
-                        )
-                    }
-                }
-                if (snapshot.notifications.isNotEmpty()) {
-                    val notificationTexts = mutableListOf<String>()
-                    for (notification in snapshot.notifications) {
-                        notificationTexts += notificationDisplayText(
-                            notification.relation,
-                            notification.amount,
-                            notification.unit,
-                        )
-                    }
-                    DetailLine(
-                        R.string.calendar_history_notifications,
-                        notificationTexts.joinToString(),
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
-        },
+    val fields = mutableListOf(
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_recurrence),
+            value = recurrenceLabel(snapshot.recurrenceRule.type),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_due),
+            value = snapshot.dueMinutes?.let {
+                stringResource(R.string.time_format, it / 60, it % 60)
+            } ?: stringResource(R.string.label_not_set),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.calendar_history_notifications),
+            value = todoNotificationSettingsText(snapshot.notifications),
+        ),
     )
-}
-
-@Composable
-private fun DetailLine(@androidx.annotation.StringRes labelRes: Int, value: String) {
-    Column {
-        Text(stringResource(labelRes), style = MaterialTheme.typography.labelMedium)
-        Text(value)
+    when (this) {
+        is HistoryDialogItem.Execution -> {
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_logical_date),
+                value = value.logicalDate.toShortDate(),
+            )
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_state),
+                value = value.state.label(),
+            )
+            value.actedAt?.let {
+                fields += TodoDetailField(
+                    label = stringResource(R.string.calendar_history_operation_time),
+                    value = formatEpochMillis(it),
+                )
+            }
+        }
+        is HistoryDialogItem.Period -> {
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_period),
+                value = stringResource(
+                    R.string.calendar_history_period_range,
+                    value.periodStart.toShortDate(),
+                    value.periodEnd.toShortDate(),
+                ),
+            )
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_result),
+                value = stringResource(
+                    R.string.calendar_history_result_count,
+                    value.completedCount,
+                    value.requiredCount,
+                    stringResource(if (value.achieved) R.string.label_achieved else R.string.label_unachieved),
+                ),
+            )
+        }
     }
+    return TodoDetailModalData(
+        title = snapshot.title,
+        description = snapshot.description,
+        category = TodoDetailCategory(
+            name = snapshot.categoryName ?: stringResource(R.string.label_uncategorized),
+            iconName = snapshot.categoryIconName,
+            colorIndex = snapshot.categoryColorIndex,
+        ),
+        fields = fields,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -994,31 +996,6 @@ private fun weekdayShortLabel(day: DayOfWeek): String = stringResource(
         DayOfWeek.SUNDAY -> R.string.weekday_sunday
     },
 )
-
-@Composable
-private fun notificationDisplayText(
-    relation: NotificationRelation,
-    amount: Int,
-    unit: NotificationUnit,
-): String {
-    if (relation == NotificationRelation.AT) return stringResource(R.string.notification_relation_at)
-    val unitLabel = stringResource(
-        when (unit) {
-            NotificationUnit.MINUTE -> R.string.unit_minute
-            NotificationUnit.HOUR -> R.string.unit_hour
-            NotificationUnit.DAY -> R.string.unit_day
-        },
-    )
-    return stringResource(
-        if (relation == NotificationRelation.BEFORE) {
-            R.string.notification_relation_before_format
-        } else {
-            R.string.notification_relation_after_format
-        },
-        amount,
-        unitLabel,
-    )
-}
 
 @Composable
 private fun formatEpochMillis(value: Long): String = Instant.ofEpochMilli(value)

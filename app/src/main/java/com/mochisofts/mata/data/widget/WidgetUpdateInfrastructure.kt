@@ -255,8 +255,6 @@ class WidgetRefreshCoordinator @Inject constructor(
         var nextRefreshAt = model.nextRefreshAt
         ids.forEach { id ->
             val appWidgetId = glanceManager.getAppWidgetId(id)
-            val previous = stateDao.find(appWidgetId)
-            val undoValid = previous?.undoExpiresAt?.let { it > now } == true
             val state = WidgetInstanceStateEntity(
                 appWidgetId = appWidgetId,
                 snapshotVersion = WidgetDisplayModel.CURRENT_VERSION,
@@ -265,13 +263,12 @@ class WidgetRefreshCoordinator @Inject constructor(
                 loadState = LOAD_READY,
                 errorCode = null,
                 lastFailureAt = null,
-                undoOperationId = previous?.undoOperationId.takeIf { undoValid },
-                undoTodoTitle = previous?.undoTodoTitle.takeIf { undoValid },
-                undoExpiresAt = previous?.undoExpiresAt.takeIf { undoValid },
+                undoOperationId = null,
+                undoTodoTitle = null,
+                undoExpiresAt = null,
                 nextRefreshAt = null,
                 updatedAt = now,
             )
-            state.undoExpiresAt?.let { nextRefreshAt = minOf(nextRefreshAt, it) }
             stateDao.upsert(state)
             if (runCatching { TodayTodoWidget().update(context, id) }.isFailure) {
                 allSucceeded = false

@@ -158,10 +158,12 @@
     <string name="calendar_history_result_count">%1$d / %2$d回・%3$s</string>
     <string name="calendar_history_notifications">通知設定</string>
     <string name="calendar_history_completion_undone">完了を取り消しました</string>
+    <string name="calendar_history_skip_undone">スキップを取り消しました</string>
+    <string name="content_description_undo_skip">スキップを取り消す</string>
     <string name="calendar_history_month_load_error">月の履歴を読み込めませんでした</string>
     <string name="calendar_history_day_load_error">この日の履歴を読み込めませんでした</string>
-    <string name="calendar_history_undo_error">完了を取り消せませんでした</string>
-    <string name="calendar_history_restore_error">完了履歴を元に戻せませんでした</string>
+    <string name="calendar_history_undo_error">完了またはスキップを取り消せませんでした</string>
+    <string name="calendar_history_restore_error">取り消した履歴を元に戻せませんでした</string>
 
     <!-- Settings -->
     <string name="settings_title">設定</string>
@@ -492,11 +494,9 @@
     <string name="error_todo_delete_failed">TODOを削除できませんでした</string>
     <string name="error_todo_archive_failed">TODOをアーカイブできませんでした</string>
     <string name="error_todo_complete_failed">完了にできませんでした</string>
-    <string name="error_todo_undo_completion_failed">完了を取り消せませんでした</string>
     <string name="error_todo_skip_failed">スキップできませんでした</string>
-    <string name="error_todo_undo_skip_failed">スキップを取り消せませんでした</string>
     <string name="error_history_record_not_found">履歴が見つかりません</string>
-    <string name="error_history_completion_not_undoable">この完了履歴は取り消せません</string>
+    <string name="error_history_action_not_undoable">この完了またはスキップ履歴は取り消せません</string>
 
     <!-- Android notifications -->
     <string name="notification_channel_name">TODO通知</string>
@@ -510,9 +510,7 @@
     <string name="notification_minute_count">%1$d分</string>
     <string name="notification_hour_count">%1$d時間</string>
     <string name="notification_day_count">%1$d日</string>
-    <string name="notification_completed">完了しました</string>
     <string name="notification_completion_failed">完了できませんでした</string>
-    <string name="notification_undo_failed">完了を取り消せませんでした</string>
     <string name="notification_group_title">MATAのTODO通知</string>
     <plurals name="notification_group_count">
         <item quantity="other">未処理の通知が%d件あります</item>
@@ -535,8 +533,6 @@
     <string name="widget_error">TODOを表示できませんでした</string>
     <string name="widget_stale">更新できませんでした。前回の内容を表示しています</string>
     <string name="widget_open_app">アプリを開く</string>
-    <string name="widget_completed_format">%1$sを完了しました</string>
-    <string name="widget_undo">元に戻す</string>
     <string name="widget_complete_failed">完了できませんでした</string>
     <string name="widget_holiday_provisional">祝日情報が未取得のため暫定表示です</string>
     <string name="widget_overdue">期限超過</string>
@@ -544,7 +540,8 @@
     <string name="widget_deadline_next_day_format">翌日 %1$d:%2$02d</string>
     <string name="widget_progress_format">%1$d/%2$d回</string>
     <string name="widget_logical_date_format">%1$d月%2$d日分</string>
-    <string name="widget_complete_content_description">%1$sを完了にする</string>
+    <string name="widget_action_prompt">%1$sに対する操作を選択してください。</string>
+    <string name="widget_action_unavailable">このTODOは現在操作できません。</string>
     <string name="widget_last_updated_format">最終更新 %1$s</string>
     <string name="widget_preview_category">日常</string>
     <string name="widget_preview_todo_one">朝のストレッチ</string>
