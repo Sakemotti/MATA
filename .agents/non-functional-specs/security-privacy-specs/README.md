@@ -1,8 +1,8 @@
 # セキュリティ・プライバシー仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
-- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[手動バックアップ仕様](../../functional-specs/backup-specs/README.md)、[通知仕様](../../functional-specs/notification-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[祝日情報連携仕様](../../functional-specs/holiday-specs/README.md)
+- 最終更新日: 2026-09-01
+- 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[手動バックアップ仕様](../../functional-specs/backup-specs/README.md)、[通知仕様](../../functional-specs/notification-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[祝日情報連携仕様](../../functional-specs/holiday-specs/README.md)、[法的文書仕様](../legal-specs/README.md)
 
 ## 1. 目的
 

@@ -160,12 +160,29 @@ a:focus-visible {
 
 .document p,
 .document ul,
-.document ol {
+.document ol,
+.document dl {
   margin-block: 12px;
 }
 
 .document li + li {
   margin-top: 8px;
+}
+
+.document dt {
+  margin-top: 18px;
+  font-weight: 700;
+}
+
+.document dd {
+  margin: 4px 0 0;
+}
+
+.document code {
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 0.1em 0.35em;
+  font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
 .metadata,

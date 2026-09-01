@@ -1,7 +1,7 @@
 # Google Play掲載・公開仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-09-01
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. ストア掲載
@@ -28,11 +28,15 @@
 
 - プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
-- 両URLはHTTPS、認証不要、地域制限なし、モバイル表示対応とする。
+- 特定商取引法に基づく表記は`https://mochisofts.com/mata/commercial-transactions`で公開する。
+- 外部送信に関する公表は`https://mochisofts.com/mata/external-transmission`で公開する。
+- 4文書はHTTPS、認証不要、地域制限なし、モバイル表示対応とし、本文表示にJavaScriptを必須とせずPDFだけで公開しない。
 - アプリ内の設定画面とGoogle Play掲載から同じポリシーURLを開く。
-- デベロッパーWebサイトは`https://mochisofts.com/`、連絡先は`com.mochisofts@gmail.com`とする。
+- アプリ提供者はMochisofts（個人運営）、デベロッパーWebサイトは`https://mochisofts.com/`、連絡先は`com.mochisofts@gmail.com`とする。
+- Webサイトは`mochisofts.com`をカスタムドメインとするGitHub Pagesの静的サイトとし、初期公開では独自のアクセス解析、広告および問い合わせフォームを設けない。
 - `https://mochisofts.com/app-ads.txt`をAdMobの正式な内容で公開する。
-- 文書やapp-ads.txtの実際の公開は本番リリース前の必須作業とし、URLを決めただけで完了扱いにしない。
+- 特定商取引法上の請求時開示方法を含め、特定商取引法に基づく表記、利用規約および外部送信に関する公表の専門家確認を完了する。
+- 文書やapp-ads.txtの実際の公開、DNS、HTTPSおよびリンク検査は本番リリース前の必須作業とし、URLを決めただけで完了扱いにしない。
 
 ## 4. Google Play申告
 

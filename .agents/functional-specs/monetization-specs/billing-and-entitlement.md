@@ -1,7 +1,7 @@
 # 課金・権利状態仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-09-01
 - 親仕様: [収益化仕様](README.md)
 - 関連画面: [設定画面仕様](../../screen-specs/settings/spec.md)、[TODO一覧画面仕様](../../screen-specs/todo-list/spec.md)
 
@@ -128,6 +128,8 @@
 
 ## 8. 払い戻し、取り消し、アカウント変更
 
+- 購入のキャンセルと払い戻しはGoogle Playの方針および適用法令に従い、アプリ独自に一律の払い戻し不可条件を設けない。
+- Google Playで手続できない不具合等の問い合わせを`com.mochisofts@gmail.com`で受け付け、公開文面は[利用規約](../../../legal-site/mata/terms/index.html)および[特定商取引法に基づく表記](../../non-functional-specs/legal-specs/commercial-transactions.md)と一致させる。
 - Google Playへの購入問い合わせが正常終了し、対象商品が存在しない場合は広告削除権利を取り消す。
 - 払い戻し、チャージバック、Googleによる取り消し、Google Playアカウントの変更を同じ「現在所有していない」状態として扱う。
 - 権利取り消し後はUMPの同意状態を再確認し、広告表示条件をすべて満たした場合だけ広告読み込みを再開する。
