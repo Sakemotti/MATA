@@ -59,7 +59,7 @@ fun MataTodoListItem(
             {
                 Box(
                     modifier = Modifier.width(MataTodoListItemDefaults.LeadingSlotWidth),
-                    contentAlignment = Alignment.CenterStart,
+                    contentAlignment = Alignment.Center,
                 ) {
                     leadingContent?.invoke()
                 }
