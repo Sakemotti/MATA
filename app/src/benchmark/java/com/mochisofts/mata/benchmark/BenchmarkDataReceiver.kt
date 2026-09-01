@@ -27,6 +27,7 @@ class BenchmarkDataReceiver : BroadcastReceiver() {
         runBlocking(Dispatchers.IO) {
             seedCategories()
             seedTodos(LocalDate.now(clock))
+            settingsRepository.setDayEndHour(0)
             settingsRepository.setShowCompleted(false)
             settingsRepository.setTodoListMode(TODO_LIST_MODE_DATE)
         }
@@ -39,7 +40,6 @@ class BenchmarkDataReceiver : BroadcastReceiver() {
                 name = "Benchmark Category ${index + 1}",
                 colorIndex = index,
                 iconName = icon,
-                endHour = 0,
             ).getOrThrow()
         }
     }
