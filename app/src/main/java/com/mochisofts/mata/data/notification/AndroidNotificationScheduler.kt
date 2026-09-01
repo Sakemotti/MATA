@@ -15,7 +15,6 @@ import com.mochisofts.mata.app.notification.NotificationAlarmReceiver
 import com.mochisofts.mata.app.notification.NotificationPresenter
 import com.mochisofts.mata.app.notification.NotificationReconcileReceiver
 import com.mochisofts.mata.core.notification.AlarmGateway
-import com.mochisofts.mata.data.local.CategoryDao
 import com.mochisofts.mata.data.local.ScheduledNotificationDao
 import com.mochisofts.mata.data.local.ScheduledNotificationEntity
 import com.mochisofts.mata.data.local.TodoDao
@@ -49,7 +48,6 @@ import kotlinx.coroutines.sync.withLock
 class AndroidNotificationScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val todoDao: TodoDao,
-    private val categoryDao: CategoryDao,
     private val executionDao: TodoExecutionDao,
     private val notificationDao: TodoNotificationDao,
     private val scheduledDao: ScheduledNotificationDao,
@@ -133,8 +131,7 @@ class AndroidNotificationScheduler @Inject constructor(
         }
 
         val todo = entity.toDomain()
-        val category = entity.categoryId?.let { categoryDao.findById(it) }
-        val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
+        val endHour = settingsRepository.dayEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
         val executions = executionDao.findForTodo(todoId)
         val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }

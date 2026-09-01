@@ -15,14 +15,14 @@ import java.time.ZonedDateTime
 
 class RecurrenceUnitTest {
     @Test
-    fun logicalDate_beforeCategoryBoundary_isPreviousDate() {
+    fun logicalDate_beforeDayBoundary_isPreviousDate() {
         val now = ZonedDateTime.of(2026, 8, 10, 3, 59, 0, 0, ZoneId.of("Asia/Tokyo"))
 
         assertEquals(LocalDate.of(2026, 8, 9), logicalDate(now, endHour = 4))
     }
 
     @Test
-    fun logicalDate_atCategoryBoundary_isCalendarDate() {
+    fun logicalDate_atDayBoundary_isCalendarDate() {
         val now = ZonedDateTime.of(2026, 8, 10, 4, 0, 0, 0, ZoneId.of("Asia/Tokyo"))
 
         assertEquals(LocalDate.of(2026, 8, 10), logicalDate(now, endHour = 4))

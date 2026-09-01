@@ -68,7 +68,7 @@ data class TodoEditorUiState(
     val monthlyCount: Int = 1,
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val dueMinutes: Int? = null,
-    val uncategorizedEndHour: Int = 0,
+    val dayEndHour: Int = 0,
     val notifications: List<TodoNotification> = emptyList(),
     val holidaySnapshot: HolidaySnapshot = HolidaySnapshot(),
     val notificationPreviews: Map<String, ZonedDateTime?> = emptyMap(),
@@ -86,7 +86,7 @@ data class TodoEditorUiState(
     @StringRes val errorMessageRes: Int? = null,
 ) {
     val effectiveEndHour: Int
-        get() = categories.firstOrNull { it.id == categoryId }?.endHour ?: uncategorizedEndHour
+        get() = dayEndHour
 
     val notificationErrors: Set<NotificationValidationError>
         get() = validateNotifications(notifications, dueMinutes, effectiveEndHour)
@@ -165,8 +165,8 @@ class TodoEditorViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            settingsRepository.uncategorizedEndHour.collect { endHour ->
-                _uiState.update { state -> refreshDerived(state.copy(uncategorizedEndHour = endHour)) }
+            settingsRepository.dayEndHour.collect { endHour ->
+                _uiState.update { state -> refreshDerived(state.copy(dayEndHour = endHour)) }
             }
         }
         viewModelScope.launch {

@@ -4,13 +4,13 @@ import com.mochisofts.mata.domain.model.AppTheme
 import java.time.DayOfWeek
 
 internal const val BACKUP_FORMAT_ID = "com.mochisofts.mata.backup"
-internal const val BACKUP_FORMAT_VERSION = 2
+internal const val BACKUP_FORMAT_VERSION = 3
 internal const val MIN_SUPPORTED_BACKUP_FORMAT_VERSION = 1
 internal const val BACKUP_MIME_TYPE = "application/zip"
 internal const val BACKUP_EXTENSION = ".mata-backup"
 
 data class BackupSettings(
-    val uncategorizedEndHour: Int,
+    val dayEndHour: Int,
     val weekStartDay: DayOfWeek,
     val showCompletedTodos: Boolean,
     val theme: AppTheme,

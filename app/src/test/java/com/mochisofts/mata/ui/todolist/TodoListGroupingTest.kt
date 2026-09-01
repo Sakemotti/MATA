@@ -21,7 +21,7 @@ class TodoListGroupingTest {
                 occurrence(todo("uncategorized", null), null),
                 occurrence(todo("earlier-todo", earlier.id), earlier),
             ),
-            uncategorizedEndHour = 0,
+            dayEndHour = 0,
         )
 
         assertEquals(listOf(null, earlier.id, later.id), groups.map { it.category?.id })
@@ -29,7 +29,7 @@ class TodoListGroupingTest {
 
     @Test
     fun sortsEachCategoryByActualDeadlineThenCreationAndId() {
-        val category = category(id = "night", sortOrder = 0, endHour = 4)
+        val category = category(id = "night", sortOrder = 0)
         val groups = buildTodoOccurrenceGroups(
             occurrences = listOf(
                 occurrence(todo("no-deadline", category.id, dueMinutes = null, createdAt = 1), category),
@@ -37,7 +37,7 @@ class TodoListGroupingTest {
                 occurrence(todo("same-newer", category.id, dueMinutes = 1_380, createdAt = 2), category),
                 occurrence(todo("same-older", category.id, dueMinutes = 1_380, createdAt = 1), category),
             ),
-            uncategorizedEndHour = 0,
+            dayEndHour = 4,
         )
 
         assertEquals(
@@ -47,14 +47,14 @@ class TodoListGroupingTest {
     }
 
     @Test
-    fun usesConfiguredEndHourForUncategorizedDeadlines() {
+    fun usesConfiguredGlobalEndHourForAllDeadlines() {
         val groups = buildTodoOccurrenceGroups(
             occurrences = listOf(
                 occurrence(todo("no-deadline", null, dueMinutes = null), null),
                 occurrence(todo("after-midnight", null, dueMinutes = 60), null),
                 occurrence(todo("morning", null, dueMinutes = 8 * 60), null),
             ),
-            uncategorizedEndHour = 6,
+            dayEndHour = 6,
         )
 
         assertEquals(
@@ -63,12 +63,11 @@ class TodoListGroupingTest {
         )
     }
 
-    private fun category(id: String, sortOrder: Int, endHour: Int = 0) = Category(
+    private fun category(id: String, sortOrder: Int) = Category(
         id = id,
         name = id,
         colorIndex = 0,
         iconName = "Category",
-        endHour = endHour,
         sortOrder = sortOrder,
     )
 

@@ -111,7 +111,7 @@ class SettingsViewModelTest {
 
         override val showCompleted: Flow<Boolean> = showCompletedState
         override val todoListMode: Flow<String> = todoListModeState
-        override val uncategorizedEndHour: Flow<Int> = endHourState
+        override val dayEndHour: Flow<Int> = endHourState
         override val weekStart: Flow<DayOfWeek> = weekStartState
         override val theme: Flow<AppTheme> = themeState
         override val notificationPermissionRequested: Flow<Boolean> =
@@ -127,7 +127,7 @@ class SettingsViewModelTest {
             todoListModeState.value = value
         }
 
-        override suspend fun setUncategorizedEndHour(value: Int) {
+        override suspend fun setDayEndHour(value: Int) {
             beforeSave()
             endHourState.value = value
         }

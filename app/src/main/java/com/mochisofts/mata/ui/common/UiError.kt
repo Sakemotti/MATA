@@ -16,7 +16,6 @@ fun AppFailure.toUserMessageRes(@StringRes fallback: Int): Int =
         ValidationError.CATEGORY_NAME_REQUIRED -> R.string.error_category_name_required
         ValidationError.CATEGORY_NAME_TOO_LONG -> R.string.error_category_name_too_long
         ValidationError.CATEGORY_COLOR_INVALID -> R.string.error_category_color_invalid
-        ValidationError.CATEGORY_END_HOUR_INVALID -> R.string.error_category_end_hour_invalid
         ValidationError.CATEGORY_NAME_DUPLICATE -> R.string.error_category_name_duplicate
         ValidationError.TODO_TITLE_REQUIRED -> R.string.error_todo_title_required
         ValidationError.TODO_TITLE_TOO_LONG -> R.string.error_todo_title_too_long

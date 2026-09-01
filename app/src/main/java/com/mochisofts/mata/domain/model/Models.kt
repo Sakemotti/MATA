@@ -95,7 +95,6 @@ data class Category(
     val name: String,
     val colorIndex: Int,
     val iconName: String,
-    val endHour: Int,
     val sortOrder: Int,
 )
 

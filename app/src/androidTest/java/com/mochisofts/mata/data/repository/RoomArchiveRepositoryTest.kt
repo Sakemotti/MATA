@@ -167,7 +167,7 @@ class RoomArchiveRepositoryTest {
             normalizedName = "生活",
             colorIndex = 4,
             iconName = "Home",
-            endHour = 0,
+            legacyEndHour = 0,
             sortOrder = 0,
             createdAt = 1,
         )
@@ -279,14 +279,14 @@ class RoomArchiveRepositoryTest {
 private class ArchiveTestSettingsRepository : SettingsRepository {
     override val showCompleted = MutableStateFlow(false)
     override val todoListMode = MutableStateFlow("DATE")
-    override val uncategorizedEndHour = MutableStateFlow(0)
+    override val dayEndHour = MutableStateFlow(0)
     override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
     override val theme = MutableStateFlow(AppTheme.SYSTEM)
     override val notificationPermissionRequested = MutableStateFlow(false)
     override val archiveSortOrder = MutableStateFlow(ArchiveSortOrder.NEWEST)
     override suspend fun setShowCompleted(value: Boolean) { showCompleted.value = value }
     override suspend fun setTodoListMode(value: String) { todoListMode.value = value }
-    override suspend fun setUncategorizedEndHour(value: Int) { uncategorizedEndHour.value = value }
+    override suspend fun setDayEndHour(value: Int) { dayEndHour.value = value }
     override suspend fun setWeekStart(value: DayOfWeek) { weekStart.value = value }
     override suspend fun setTheme(value: AppTheme) { theme.value = value }
     override suspend fun setNotificationPermissionRequested(value: Boolean) {

@@ -209,10 +209,10 @@ fun SettingsScreen(
                         )
                         Text(
                             text = if (state.endHour == 0) {
-                                stringResource(R.string.category_day_boundary_midnight)
+                                stringResource(R.string.day_boundary_midnight)
                             } else {
                                 stringResource(
-                                    R.string.category_day_boundary_format,
+                                    R.string.day_boundary_format,
                                     state.endHour,
                                     state.endHour - 1,
                                 )

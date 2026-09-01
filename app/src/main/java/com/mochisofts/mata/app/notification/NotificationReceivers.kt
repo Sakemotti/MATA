@@ -186,7 +186,7 @@ class NotificationDeliveryService @Inject constructor(
         }
 
         val category = entity.categoryId?.let { categoryDao.findById(it) }
-        val endHour = category?.endHour ?: settingsRepository.uncategorizedEndHour.first()
+        val endHour = settingsRepository.dayEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
         val now = ZonedDateTime.now(clock)
         val deadline = deadlineAt(date, endHour, todo.dueMinutes, now.zone)

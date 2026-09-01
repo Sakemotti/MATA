@@ -76,10 +76,10 @@ class RoomHistoryRepository @Inject constructor(
         val currentData = combine(
             todoDao.observeAll(),
             categoryDao.observeAll(),
-            settingsRepository.uncategorizedEndHour,
+            settingsRepository.dayEndHour,
             settingsRepository.weekStart,
-        ) { todos, categories, uncategorizedEndHour, weekStart ->
-            CurrentHistoryData(todos, categories, uncategorizedEndHour, weekStart)
+        ) { todos, categories, dayEndHour, weekStart ->
+            CurrentHistoryData(todos, categories, dayEndHour, weekStart)
         }
         return combine(
             executionDao.observeForDate(date.toString()),
@@ -170,7 +170,7 @@ class RoomHistoryRepository @Inject constructor(
             executions.forEach { execution ->
                 val todo = todos[execution.todoId]
                 val category = todo?.categoryId?.let(categories::get)
-                val snapshot = execution.toSnapshot(todo, category, current.uncategorizedEndHour)
+                val snapshot = execution.toSnapshot(todo, category, current.dayEndHour)
                     ?: return@forEach
                 add(
                     HistoryEntry(
@@ -186,8 +186,7 @@ class RoomHistoryRepository @Inject constructor(
                                 isUndoEligible(
                                     execution = execution,
                                     todo = it,
-                                    categories = categories,
-                                    uncategorizedEndHour = current.uncategorizedEndHour,
+                                    dayEndHour = current.dayEndHour,
                                     weekStart = current.weekStart,
                                     now = now,
                                 )
@@ -201,7 +200,7 @@ class RoomHistoryRepository @Inject constructor(
                 .forEach { occurrence ->
                     add(
                         occurrence.toPendingHistory(
-                            uncategorizedEndHour = current.uncategorizedEndHour,
+                            dayEndHour = current.dayEndHour,
                             weekStart = current.weekStart,
                         ),
                     )
@@ -211,7 +210,7 @@ class RoomHistoryRepository @Inject constructor(
         val periodEntries = periods.mapNotNull { period ->
             val todo = todos[period.todoId]
             val category = todo?.categoryId?.let(categories::get)
-            val snapshot = period.toSnapshot(todo, category, current.uncategorizedEndHour)
+            val snapshot = period.toSnapshot(todo, category, current.dayEndHour)
                 ?: return@mapNotNull null
             PeriodHistoryEntry(
                 id = period.id,
@@ -243,14 +242,12 @@ class RoomHistoryRepository @Inject constructor(
         }
         val todo = todoDao.findById(execution.todoId)
             ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
-        val category = todo.categoryId?.let { categoryDao.findById(it) }
-        val uncategorizedEndHour = settingsRepository.uncategorizedEndHour.first()
+        val dayEndHour = settingsRepository.dayEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
         if (!isUndoEligible(
                 execution = execution,
                 todo = todo,
-                categories = category?.let { mapOf(it.id to it) }.orEmpty(),
-                uncategorizedEndHour = uncategorizedEndHour,
+                dayEndHour = dayEndHour,
                 weekStart = weekStart,
                 now = ZonedDateTime.now(clock),
             )
@@ -263,14 +260,11 @@ class RoomHistoryRepository @Inject constructor(
     private fun isUndoEligible(
         execution: TodoExecutionEntity,
         todo: TodoEntity,
-        categories: Map<String, CategoryEntity>,
-        uncategorizedEndHour: Int,
+        dayEndHour: Int,
         weekStart: DayOfWeek,
         now: ZonedDateTime,
     ): Boolean {
-        val category = todo.categoryId?.let(categories::get)
-        val endHour = category?.endHour ?: uncategorizedEndHour
-        val currentLogicalDate = logicalDate(now, endHour)
+        val currentLogicalDate = logicalDate(now, dayEndHour)
         val executionDate = runCatching { LocalDate.parse(execution.logicalDate) }.getOrNull()
             ?: return false
         val domainTodo = todo.toDomain().copy(archivedAt = null)
@@ -286,16 +280,16 @@ class RoomHistoryRepository @Inject constructor(
     private fun TodoExecutionEntity.toSnapshot(
         todo: TodoEntity?,
         category: CategoryEntity?,
-        uncategorizedEndHour: Int,
+        dayEndHour: Int,
     ): HistoryTodoSnapshot? = snapshotFromJson(snapshotJson)
-        ?: todo?.toHistorySnapshot(category, uncategorizedEndHour)
+        ?: todo?.toHistorySnapshot(category, dayEndHour)
 
     private fun PeriodResultEntity.toSnapshot(
         todo: TodoEntity?,
         category: CategoryEntity?,
-        uncategorizedEndHour: Int,
+        dayEndHour: Int,
     ): HistoryTodoSnapshot? = snapshotFromJson(snapshotJson)
-        ?: todo?.toHistorySnapshot(category, uncategorizedEndHour)
+        ?: todo?.toHistorySnapshot(category, dayEndHour)
 
     private fun snapshotFromJson(value: String): HistoryTodoSnapshot? {
         val snapshot = HistorySnapshotJson.decode(value) ?: return null
@@ -336,7 +330,7 @@ class RoomHistoryRepository @Inject constructor(
 
     private fun TodoEntity.toHistorySnapshot(
         category: CategoryEntity?,
-        uncategorizedEndHour: Int,
+        dayEndHour: Int,
     ): HistoryTodoSnapshot {
         val domain = toDomain()
         return HistoryTodoSnapshot(
@@ -354,14 +348,14 @@ class RoomHistoryRepository @Inject constructor(
             categoryColorIndex = category?.colorIndex,
             categoryIconName = category?.iconName,
             categorySortOrder = category?.sortOrder,
-            endHour = category?.endHour ?: uncategorizedEndHour,
+            endHour = dayEndHour,
             weekStart = DayOfWeek.MONDAY,
             createdAt = createdAt,
         )
     }
 
     private fun TodoOccurrence.toPendingHistory(
-        uncategorizedEndHour: Int,
+        dayEndHour: Int,
         weekStart: DayOfWeek,
     ) = HistoryEntry(
         id = null,
@@ -385,7 +379,7 @@ class RoomHistoryRepository @Inject constructor(
             categoryColorIndex = category?.colorIndex,
             categoryIconName = category?.iconName,
             categorySortOrder = category?.sortOrder,
-            endHour = category?.endHour ?: uncategorizedEndHour,
+            endHour = dayEndHour,
             weekStart = weekStart,
             createdAt = todo.createdAt,
         ),
@@ -435,7 +429,7 @@ class RoomHistoryRepository @Inject constructor(
     private data class CurrentHistoryData(
         val todos: List<TodoEntity>,
         val categories: List<CategoryEntity>,
-        val uncategorizedEndHour: Int,
+        val dayEndHour: Int,
         val weekStart: DayOfWeek,
     )
 }
