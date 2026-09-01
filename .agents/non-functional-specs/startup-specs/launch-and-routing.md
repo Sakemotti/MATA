@@ -1,7 +1,7 @@
 # 起動・画面遷移仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-08-26
 - 親仕様: [アプリ起動・初期化・復帰仕様](README.md)
 - 関連仕様: [TODO一覧画面仕様](../../screen-specs/todo-list/spec.md)、[通知表示・操作仕様](../../functional-specs/notification-specs/display-and-actions.md)、[ウィジェット操作仕様](../../functional-specs/widget-specs/interactions.md)
 
@@ -90,7 +90,7 @@
 ## 7. PendingIntentとIntentの安全性
 
 - PendingIntentは明示的かつ変更不可能とする。
-- 用途が異なる通知本文、完了操作、元に戻す操作ではPendingIntentを共有しない。
+- 用途が異なる通知本文と完了操作ではPendingIntentを共有しない。
 - 起動引数には表示に必要な識別子だけを含め、TODO内容または購入情報を含めない。
 - 受信Intentの再送または改変によって完了、削除、購入などの状態変更が発生しないようにする。
 - OS連携に必要なコンポーネントだけを公開し、不要なActivity、Service、Receiver、Providerは`exported=false`とする。

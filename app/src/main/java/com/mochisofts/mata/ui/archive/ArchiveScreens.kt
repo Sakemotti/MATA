@@ -111,6 +111,11 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.ui.common.TodoDetailCategory
+import com.mochisofts.mata.ui.common.TodoDetailField
+import com.mochisofts.mata.ui.common.TodoDetailModal
+import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -1031,76 +1036,77 @@ private fun ArchiveActionDialog(
 
 @Composable
 private fun ArchiveHistoryDialog(item: ArchivedHistoryItem, onDismiss: () -> Unit) {
-    val snapshot = when (item) {
-        is ArchivedHistoryItem.Execution -> item.entry.snapshot
-        is ArchivedHistoryItem.Period -> item.entry.snapshot
+    TodoDetailModal(data = item.detailModalData(), onDismiss = onDismiss)
+}
+
+@Composable
+private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
+    val snapshot = when (this) {
+        is ArchivedHistoryItem.Execution -> entry.snapshot
+        is ArchivedHistoryItem.Period -> entry.snapshot
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(snapshot.title) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (snapshot.description.isNotBlank()) Text(snapshot.description)
-                ArchiveDetailLine(
-                    stringResource(R.string.label_category),
-                    snapshot.categoryName ?: stringResource(R.string.label_uncategorized),
+    val fields = mutableListOf(
+        TodoDetailField(
+            label = stringResource(R.string.archive_label_recurrence),
+            value = recurrenceDescription(snapshot.recurrenceRule),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.archive_label_due),
+            value = snapshot.dueMinutes?.let {
+                stringResource(R.string.time_format, it / 60, it % 60)
+            } ?: stringResource(R.string.label_not_set),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.archive_label_notifications),
+            value = todoNotificationSettingsText(snapshot.notifications),
+        ),
+    )
+    when (this) {
+        is ArchivedHistoryItem.Execution -> {
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_logical_date),
+                value = entry.logicalDate.toPlainDate(),
+            )
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_state),
+                value = todoStateLabel(entry.state),
+            )
+            entry.actedAt?.let {
+                fields += TodoDetailField(
+                    label = stringResource(R.string.calendar_history_operation_time),
+                    value = formatEpochMillis(it),
                 )
-                ArchiveDetailLine(
-                    stringResource(R.string.archive_label_recurrence),
-                    recurrenceDescription(snapshot.recurrenceRule),
-                )
-                ArchiveDetailLine(
-                    stringResource(R.string.archive_label_notifications),
-                    notificationDescription(snapshot.notifications),
-                )
-                when (item) {
-                    is ArchivedHistoryItem.Execution -> ExecutionDialogDetails(item.entry)
-                    is ArchivedHistoryItem.Period -> PeriodDialogDetails(item.entry)
-                }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
-        },
-    )
-}
-
-@Composable
-private fun ExecutionDialogDetails(entry: HistoryEntry) {
-    ArchiveDetailLine(
-        stringResource(R.string.calendar_history_logical_date),
-        entry.logicalDate.toPlainDate(),
-    )
-    ArchiveDetailLine(
-        stringResource(R.string.calendar_history_state),
-        todoStateLabel(entry.state),
-    )
-    entry.actedAt?.let {
-        ArchiveDetailLine(
-            stringResource(R.string.calendar_history_operation_time),
-            formatEpochMillis(it),
-        )
+        }
+        is ArchivedHistoryItem.Period -> {
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_period),
+                value = stringResource(
+                    R.string.calendar_history_period_range,
+                    entry.periodStart.toPlainDate(),
+                    entry.periodEnd.toPlainDate(),
+                ),
+            )
+            fields += TodoDetailField(
+                label = stringResource(R.string.calendar_history_result),
+                value = stringResource(
+                    R.string.calendar_history_result_count,
+                    entry.completedCount,
+                    entry.requiredCount,
+                    stringResource(if (entry.achieved) R.string.label_achieved else R.string.label_unachieved),
+                ),
+            )
+        }
     }
-}
-
-@Composable
-private fun PeriodDialogDetails(entry: PeriodHistoryEntry) {
-    ArchiveDetailLine(
-        stringResource(R.string.calendar_history_period),
-        stringResource(
-            R.string.calendar_history_period_range,
-            entry.periodStart.toPlainDate(),
-            entry.periodEnd.toPlainDate(),
+    return TodoDetailModalData(
+        title = snapshot.title,
+        description = snapshot.description,
+        category = TodoDetailCategory(
+            name = snapshot.categoryName ?: stringResource(R.string.label_uncategorized),
+            iconName = snapshot.categoryIconName,
+            colorIndex = snapshot.categoryColorIndex,
         ),
-    )
-    ArchiveDetailLine(
-        stringResource(R.string.calendar_history_result),
-        stringResource(
-            R.string.calendar_history_result_count,
-            entry.completedCount,
-            entry.requiredCount,
-            stringResource(if (entry.achieved) R.string.label_achieved else R.string.label_unachieved),
-        ),
+        fields = fields,
     )
 }
 

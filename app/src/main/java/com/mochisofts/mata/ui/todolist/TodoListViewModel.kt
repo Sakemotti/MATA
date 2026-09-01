@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +38,13 @@ import kotlinx.coroutines.launch
 data class TodoOccurrenceGroup(
     val category: Category?,
     val occurrences: List<TodoOccurrence>,
+)
+
+internal data class TodoListContent(
+    val occurrences: List<TodoOccurrence>,
+    val todos: List<Todo>,
+    val holidaySnapshot: HolidaySnapshot,
+    val date: LocalDate,
 )
 
 data class TodoListUiState(
@@ -52,8 +60,8 @@ data class TodoListUiState(
 
 sealed interface TodoListEffect {
     data class Message(@StringRes val messageRes: Int) : TodoListEffect
-    data class Completed(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
-    data class Skipped(val todoId: String, val logicalDate: LocalDate) : TodoListEffect
+    data object Completed : TodoListEffect
+    data object Skipped : TodoListEffect
     data object Archived : TodoListEffect
     data object Deleted : TodoListEffect
 }
@@ -83,24 +91,12 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    private val occurrenceFlow = selectedDate.flatMapLatest(todoRepository::observeOccurrences)
-
-    private val baseContent = combine(
-        occurrenceFlow,
-        todoRepository.observeTodos(),
-        holidayRepository.snapshot,
-    ) { occurrences, todos, holidaySnapshot ->
-        BaseContent(occurrences, todos, holidaySnapshot)
-    }
-
-    private val content = combine(baseContent, selectedDate) { base, date ->
-        Content(
-            base.occurrences,
-            base.todos,
-            base.holidaySnapshot,
-            date,
-        )
-    }
+    private val content = observeTodoListContent(
+        selectedDate = selectedDate,
+        occurrencesForDate = todoRepository::observeOccurrences,
+        todos = todoRepository.observeTodos(),
+        holidaySnapshot = holidayRepository.snapshot,
+    )
 
     val uiState: StateFlow<TodoListUiState> = combine(
         content,
@@ -155,9 +151,7 @@ class TodoListViewModel @Inject constructor(
         viewModelScope.launch {
             todoRepository.setCompleted(occurrence.todo.id, occurrence.logicalDate, true)
                 .onSuccess {
-                    effectsChannel.send(
-                        TodoListEffect.Completed(occurrence.todo.id, occurrence.logicalDate),
-                    )
+                    effectsChannel.send(TodoListEffect.Completed)
                 }
                 .onFailure { throwable ->
                     effectsChannel.send(
@@ -169,44 +163,16 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    fun undoCompletion(todoId: String, logicalDate: LocalDate) {
-        viewModelScope.launch {
-            todoRepository.setCompleted(todoId, logicalDate, false)
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_undo_completion_failed),
-                        ),
-                    )
-                }
-        }
-    }
-
     fun skip(occurrence: TodoOccurrence) {
         viewModelScope.launch {
             todoRepository.setSkipped(occurrence.todo.id, occurrence.logicalDate, true)
                 .onSuccess {
-                    effectsChannel.send(
-                        TodoListEffect.Skipped(occurrence.todo.id, occurrence.logicalDate),
-                    )
+                    effectsChannel.send(TodoListEffect.Skipped)
                 }
                 .onFailure { throwable ->
                     effectsChannel.send(
                         TodoListEffect.Message(
                             throwable.toUserMessageRes(R.string.error_todo_skip_failed),
-                        ),
-                    )
-                }
-        }
-    }
-
-    fun undoSkip(todoId: String, logicalDate: LocalDate) {
-        viewModelScope.launch {
-            todoRepository.setSkipped(todoId, logicalDate, false)
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_undo_skip_failed),
                         ),
                     )
                 }
@@ -240,19 +206,26 @@ class TodoListViewModel @Inject constructor(
                 }
         }
     }
+}
 
-    private data class Content(
-        val occurrences: List<TodoOccurrence>,
-        val todos: List<Todo>,
-        val holidaySnapshot: HolidaySnapshot,
-        val date: LocalDate,
-    )
-
-    private data class BaseContent(
-        val occurrences: List<TodoOccurrence>,
-        val todos: List<Todo>,
-        val holidaySnapshot: HolidaySnapshot,
-    )
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+internal fun observeTodoListContent(
+    selectedDate: Flow<LocalDate>,
+    occurrencesForDate: (LocalDate) -> Flow<List<TodoOccurrence>>,
+    todos: Flow<List<Todo>>,
+    holidaySnapshot: Flow<HolidaySnapshot>,
+): Flow<TodoListContent> {
+    val datedOccurrences = selectedDate.flatMapLatest { date ->
+        occurrencesForDate(date).map { occurrences -> date to occurrences }
+    }
+    return combine(datedOccurrences, todos, holidaySnapshot) { (date, occurrences), todoList, holidays ->
+        TodoListContent(
+            occurrences = occurrences,
+            todos = todoList,
+            holidaySnapshot = holidays,
+            date = date,
+        )
+    }
 }
 
 internal fun buildTodoOccurrenceGroups(
