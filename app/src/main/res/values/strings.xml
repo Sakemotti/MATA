@@ -171,7 +171,6 @@
     <string name="settings_section_display">表示</string>
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_data">データ管理</string>
-    <string name="settings_section_ads">広告</string>
     <string name="settings_section_app_info">アプリ情報</string>
     <string name="settings_app_name_title">アプリ名</string>
     <string name="settings_app_name_description">このアプリの正式名称</string>
@@ -199,9 +198,6 @@
     <string name="licenses_version_format">バージョン %1$s</string>
     <string name="licenses_detail_title">%1$sのライセンス</string>
     <string name="licenses_body_load_error">ライセンス本文を読み込めませんでした</string>
-    <string name="settings_ads_display_title">広告表示</string>
-    <string name="settings_ads_display_value">バナー広告あり</string>
-    <string name="settings_ads_display_description">TODO一覧、カテゴリ別TODO一覧、ウィジェット操作画面の下部に広告を表示します</string>
     <string name="settings_ads_privacy_options_title">プライバシーと広告の設定</string>
     <string name="settings_ads_privacy_options_value">設定を確認</string>
     <string name="settings_ads_privacy_options_description">Googleが提供する画面で広告に関する選択を変更します</string>
