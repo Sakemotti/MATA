@@ -45,6 +45,7 @@
 - [ ] 本番広告ID、Billing商品ID、法的URLが正しく、テスト値と開発URLがない。
 - [ ] 最終Manifestの権限、exported、backup、cleartext設定が仕様どおりである。
 - [ ] AABがUpload Keyで署名され、SHA-256を記録した。
+- [ ] AABの署名者が1件だけで、証明書SHA-256がGoogle Playへ登録するUpload Keyの値と一致した。
 - [ ] mapping、依存関係、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
 - [ ] `node tools/release/verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
 

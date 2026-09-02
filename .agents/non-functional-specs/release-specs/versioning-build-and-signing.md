@@ -1,7 +1,7 @@
 # バージョン・ビルド・署名仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-09-02
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. バージョン
@@ -61,6 +61,37 @@
 - keystoreパスワードと鍵パスワードはパスワードマネージャーまたはCI Secretで管理する。
 - CIでは保護されたRelease環境だけが署名Secretを参照できる。
 - Upload Key紛失・侵害時はGoogle Playのリセット手順を使用し、App Signing Keyの変更を試みない。
+
+### 5.1 Gradle入力
+
+本番用AABの生成時は次の4つの秘密値をすべてGradleプロパティとして設定する。1項目でも不足した部分設定を許可しない。さらに、登録済みUpload Keyとの照合用に証明書SHA-256を設定する。
+
+| プロパティ | 内容 |
+| --- | --- |
+| `MATA_UPLOAD_STORE_FILE` | リポジトリ外に保管したkeystoreの絶対パス |
+| `MATA_UPLOAD_STORE_PASSWORD` | keystoreのパスワード |
+| `MATA_UPLOAD_KEY_ALIAS` | Upload Keyのalias |
+| `MATA_UPLOAD_KEY_PASSWORD` | Upload Keyのパスワード |
+| `MATA_EXPECTED_UPLOAD_CERT_SHA256` | Google Playへ登録するUpload Key証明書のSHA-256。非秘密値、コロン区切りまたは小文字64桁を許可 |
+
+- ローカルでは`GRADLE_USER_HOME/gradle.properties`へ保存し、プロジェクト内の`gradle.properties`、`keystore.properties`、シェル履歴またはIDEの共有Run Configurationへ記載しない。
+- CIでは保護された環境のSecretから`ORG_GRADLE_PROJECT_`接頭辞付き環境変数として一時的に渡す。
+- keystoreは絶対パスで指定し、リポジトリ配下のパスを拒否する。
+- 秘密値4項目の名称や設定有無は検査できるが、値そのものをログ、JSONまたはActions artifactへ出力しない。
+- 署名秘密が設定されているのに`MATA_REQUIRE_UPLOAD_SIGNING=true`がない場合は、意図しない署名を防ぐためビルドを失敗させる。
+- `MATA_EXPECTED_UPLOAD_CERT_SHA256`は秘密ではないが、本番署名時に必須とし、実際のAAB署名者証明書と完全一致させる。
+
+### 5.2 本番署名ビルド
+
+本番公開候補では、非秘密値`MATA_REQUIRE_UPLOAD_SIGNING=true`も設定し、Configuration Cacheを無効化して次を実行する。
+
+    ./gradlew :app:generateReleaseArtifactMetadata -PMATA_REQUIRE_UPLOAD_SIGNING=true --no-configuration-cache --no-daemon
+
+- `MATA_REQUIRE_UPLOAD_SIGNING=true`で秘密値が不足する場合はビルドを失敗させる。
+- 署名秘密が設定された状態でConfiguration Cacheが有効な場合は、秘密値をプロジェクトキャッシュへ保持しないためビルドを失敗させる。
+- 生成したAABをJAR署名として検証し、署名者が1件だけであることと、その証明書SHA-256が`MATA_EXPECTED_UPLOAD_CERT_SHA256`に一致することを確認する。
+- Releaseメタデータの`publishable`は、署名必須フラグ、4秘密値、単一署名者および期待する証明書SHA-256がすべて一致した場合だけ`true`とする。署名済みであっても他の公開ゲートを省略しない。
+- 通常CIは署名秘密と`MATA_REQUIRE_UPLOAD_SIGNING`を設定せず、未署名で`publishable=false`の検証用AABを生成する。
 
 ## 6. 再現性と供給網
 
