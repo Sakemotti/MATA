@@ -117,6 +117,7 @@ jobs:
             app/build/outputs/release-metadata/release-readiness.json
             app/build/outputs/mapping/release/mapping.txt
             app/build/generated/aboutLibraries/release/res/raw/aboutlibraries.json
+            app/build/outputs/sbom/release-sbom.cdx.json
             app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
           if-no-files-found: error
           retention-days: 365
