@@ -1,7 +1,7 @@
 # 法的文書仕様
 
-- 文書状態: 方針確定・公開前原稿
-- 最終更新日: 2026-09-01
+- 文書状態: 公開運用開始・専門家確認前
+- 最終更新日: 2026-09-02
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[リリース・配布運用仕様](../release-specs/README.md)
 
 ## 1. 目的
@@ -21,6 +21,8 @@ MATAの一般公開に必要な法的文書、公開URLおよび更新手順を�
 
 特定商取引法に基づく表記の掲載要件は[commercial-transactions.md](commercial-transactions.md)、外部送信の掲載要件は[external-transmission.md](external-transmission.md)に定める。プライバシーのデータ要件は[データ・プライバシー仕様](../security-privacy-specs/data-and-privacy.md)、購入と払い戻しは[課金・権利状態仕様](../../functional-specs/monetization-specs/billing-and-entitlement.md)にも従う。
 
+本リポジトリから公開用GitHub Pagesリポジトリへ反映する手順は[法的サイト公開・同期運用仕様](publishing-workflow.md)に定める。
+
 ## 3. 運営者と連絡先
 
 | 項目 | 確定値 |
@@ -37,7 +39,8 @@ Google Playを決済手段として使用することだけを理由に、販売
 ## 4. 公開方式
 
 - `mochisofts.com`をカスタムドメインとするGitHub Pagesの静的公開を採用する。
-- MATA本体は非公開リポジトリのため、公開サイト用リポジトリの作成、DNS設定および公開は別作業とする。
+- GitHub Pages用の公開リポジトリ、カスタムドメイン、DNSおよびHTTPSは設定済みとする。
+- 本リポジトリの`legal-site`を正本、公開リポジトリを配信用コピーとし、正本の`main`へマージした後にユーザーがコピーする。
 - 認証、地域制限、Cookie同意を経ないと本文を読めない構成、PDFだけの公開、JavaScriptを必須とする本文表示を使用しない。
 - HTTPSを強制し、スマートフォンから4文書の全文を閲覧可能にする。
 - Webサイト独自のアクセス解析、広告、問い合わせフォームおよび独自Cookieは初期公開では設けない。
@@ -50,6 +53,7 @@ Google Playを決済手段として使用することだけを理由に、販売
 2. 仕様、公開HTML、Google Play Data safety、ストア掲載、UMPメッセージおよびアプリ実装を同時に一致させる。
 3. 実質的な変更では改定日と変更内容を更新し、必要に応じてアプリ内またはリリースノートで通知する。
 4. 公開内容をGitで版管理し、公開日と対応するリリースを追跡可能にする。
+5. 正本側commitと公開側commitを対応付け、公開リポジトリだけに存在する本文変更を作らない。
 
 ## 6. 公開ブロッカー
 
