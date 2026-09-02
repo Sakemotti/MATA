@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.aboutlibraries.android)
+    alias(libs.plugins.cyclonedx.bom)
 }
 
 def debugAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
@@ -348,6 +349,7 @@ def releaseGitCommit = providers.environmentVariable("GITHUB_SHA")
     )
 def releaseBuildTimestamp = providers.gradleProperty("MATA_BUILD_TIMESTAMP")
     .orElse(providers.provider { java.time.Instant.now().toString() })
+def releaseSbom = layout.buildDirectory.file("outputs/sbom/release-sbom.cdx.json")
 def releaseBundle = layout.buildDirectory.file("outputs/bundle/release/app-release.aab")
 def releaseMapping = layout.buildDirectory.file("outputs/mapping/release/mapping.txt")
 def releaseLicenseList = layout.buildDirectory.file(
@@ -361,11 +363,45 @@ def releaseMetadata = layout.buildDirectory.file(
 )
 def releaseRootPath = rootProject.layout.projectDirectory.asFile.absolutePath
 
+tasks.named("cyclonedxDirectBom", org.cyclonedx.gradle.CyclonedxDirectTask) {
+    description = "Generates a CycloneDX SBOM for the Release runtime dependency graph."
+    includeConfigs = ["releaseRuntimeClasspath"]
+    skipConfigs = []
+    testConfigs = []
+    projectType = org.cyclonedx.model.Component.Type.APPLICATION
+    componentGroup = "com.mochisofts"
+    componentName = "MATA"
+    componentVersion = releaseVersionName
+    includeBomSerialNumber = false
+    includeLicenseText = false
+    includeMetadataResolution = true
+    includeBuildEnvironment = false
+    includeBuildSystem = false
+    jsonOutput = releaseSbom
+    xmlOutput.convention((org.gradle.api.file.RegularFile) null)
+    inputs.property("mataBuildTimestamp", releaseBuildTimestamp)
+    doLast {
+        def timestamp
+        try {
+            timestamp = java.time.Instant.parse(releaseBuildTimestamp.get()).toString()
+        } catch (Exception ignored) {
+            throw new GradleException("MATA_BUILD_TIMESTAMP must be an ISO-8601 UTC timestamp.")
+        }
+        def output = releaseSbom.get().asFile
+        def bom = new groovy.json.JsonSlurper().parse(output)
+        bom.metadata.timestamp = timestamp
+        output.setText(
+            groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(bom)) + "\n",
+            "UTF-8",
+        )
+    }
+}
+
 tasks.register("generateReleaseArtifactMetadata") {
     group = "verification"
     description = "Builds the Release AAB and records signing, checksums, and release identity."
-    dependsOn("bundleRelease", verifyReleaseVersionConfiguration)
-    inputs.files(releaseBundle, releaseMapping, releaseLicenseList, releaseManifest)
+    dependsOn("bundleRelease", "cyclonedxDirectBom", verifyReleaseVersionConfiguration)
+    inputs.files(releaseBundle, releaseMapping, releaseLicenseList, releaseManifest, releaseSbom)
     inputs.property("applicationId", "com.mochisofts.mata")
     inputs.property("versionName", releaseVersionName)
     inputs.property("versionCode", releaseVersionCode)
@@ -396,6 +432,7 @@ tasks.register("generateReleaseArtifactMetadata") {
             [type: "r8Mapping", file: releaseMapping.get().asFile],
             [type: "openSourceLicenses", file: releaseLicenseList.get().asFile],
             [type: "mergedManifest", file: releaseManifest.get().asFile],
+            [type: "cycloneDxSbom", file: releaseSbom.get().asFile],
         ]
         requiredArtifacts.each { artifact ->
             if (!artifact.file.isFile()) {
@@ -463,7 +500,7 @@ tasks.register("generateReleaseArtifactMetadata") {
             signerFingerprints[0] == expectedUploadCertificateSha256
         def rootPath = java.nio.file.Paths.get(releaseRootPath)
         def metadata = [
-            schemaVersion: 2,
+            schemaVersion: 3,
             publishable: publishable,
             purpose: publishable
                 ? "Upload Key signed candidate; all remaining release gates still apply."

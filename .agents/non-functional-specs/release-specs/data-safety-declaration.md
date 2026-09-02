@@ -1,7 +1,7 @@
 # Google Play Data safety申告案
 
 - 文書状態: 申請案・Release実機通信確認前
-- 最終更新日: 2026-09-01
+- 最終更新日: 2026-09-02
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連仕様: [データ・プライバシー仕様](../security-privacy-specs/data-and-privacy.md)、[外部送信に関する公表](../legal-specs/external-transmission.md)
 
@@ -65,7 +65,8 @@ Google Playの定義では、アプリまたはSDKが端末外へ送信するデ
 
 ## 6. 送信前検証
 
-- [ ] 公開候補AABからSBOMまたは依存関係一覧を作り、未申告SDKがない。
+- 公開候補ごとに`generateReleaseArtifactMetadata`でRelease runtimeのCycloneDX SBOMを自動生成し、ハッシュと主要SDKの存在を機械検査する。
+- [ ] 公開候補AABと同じcommitのSBOMを確認し、追加・更新・削除されたcomponentに未申告SDKがない。
 - [ ] マージ済みManifestの権限を確認し、`AD_ID`、Billing、ネットワーク関連権限を本書と照合した。
 - [ ] Google Play SDK IndexでGMA Next-Gen SDK、UMP、Billingの警告と最新開示を確認した。
 - [ ] 広告同意前、同意後、同意拒否、広告削除購入後、購入復元、祝日取得の各状態で通信先と送信項目を検査した。

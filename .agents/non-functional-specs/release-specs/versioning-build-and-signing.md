@@ -45,12 +45,23 @@
   - AABのSHA-256
   - R8 mapping
   - Baseline Profileと生成元
-  - 依存関係一覧とライセンス一覧
+  - Release runtimeのCycloneDX SBOMとライセンス一覧
   - 最終Manifestと権限一覧
   - テスト・Lint・benchmark結果
   - ストア掲載文言とリリースノート
 - ネイティブライブラリを導入した場合はNative Debug Symbolsもアップロード・保管する。
 - CI成果物は原則1年、公開済みReleaseのメタデータとmappingは公開期間中および公開終了後3年以上保持する。
+
+### 4.1 Release SBOM
+
+- CycloneDX Gradle Pluginの固定バージョンを使用し、CycloneDX 1.6 JSONを`app/build/outputs/sbom/release-sbom.cdx.json`へ生成する。
+- 対象は`:app`の`releaseRuntimeClasspath`だけとし、Debug、テスト、benchmarkおよびビルドツールの依存関係を含めない。
+- Releaseへ解決された直接・推移依存関係と依存関係グラフを記録する。
+- ルートcomponentは`application`、groupは`com.mochisofts`、nameは`MATA`、versionはReleaseの`versionName`とする。
+- ランダムなserial numberを含めず、SBOMのUTC timestampはReleaseメタデータの`buildTimestamp`と一致させる。
+- ReleaseメタデータへSBOMの相対パス、バイト数およびSHA-256を記録し、AAB等と同じCI artifactへ保存する。
+- 自動検査ではCycloneDX形式、ルートcomponent、依存関係グラフ、およびBilling、GMA Next-Gen SDK、UMPの存在を確認する。
+- SBOMには依存ライブラリ情報だけを記録し、署名秘密、広告IDの値、購入トークン、ユーザーデータまたはローカルパスを含めない。
 
 ## 5. 署名
 
@@ -99,5 +110,5 @@
 - 動的依存を禁止し、Dependency VerificationとロックをCIで強制する。
 - CIは毎回クリーン環境からビルドする。
 - ビルドスクリプトからネットワーク上の任意スクリプトを直接実行しない。
-- 生成されたライセンス一覧と依存関係一覧をRelease前に差分確認する。
+- 生成されたライセンス一覧とCycloneDX SBOMをRelease前に差分確認し、追加・更新・削除されたSDKをData safety、権限および外部送信公表と照合する。
 - AABアップロード前にSHA-256を記録し、検証済みファイルと一致することを確認する。
