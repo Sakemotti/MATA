@@ -197,7 +197,6 @@ dependencies {
     implementation libs.androidx.work.runtime
     implementation libs.androidx.glance.appwidget
     implementation libs.androidx.glance.material3
-    implementation libs.google.play.billing
     implementation libs.google.mobile.ads.next.gen
     implementation libs.google.user.messaging.platform
     implementation libs.androidx.profileinstaller
@@ -600,7 +599,6 @@ tasks.register("verifyReleaseManifestSecurity") {
             "android.permission.RECEIVE_BOOT_COMPLETED",
             "android.permission.SCHEDULE_EXACT_ALARM",
             "android.permission.WAKE_LOCK",
-            "com.android.vending.BILLING",
             "com.google.android.gms.permission.AD_ID",
             "com.mochisofts.mata.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
         ] as Set

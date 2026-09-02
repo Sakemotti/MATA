@@ -12,7 +12,6 @@ import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AdsSdkInitialization
 import com.mochisofts.mata.domain.repository.AdsConsentRepository
-import com.mochisofts.mata.domain.repository.EntitlementRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -26,8 +25,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -38,7 +35,6 @@ import kotlinx.coroutines.withContext
 @Singleton
 class GoogleAdsConsentRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    entitlementRepository: EntitlementRepository,
 ) : AdsConsentRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val consentInformation = UserMessagingPlatform.getConsentInformation(context)
@@ -49,18 +45,6 @@ class GoogleAdsConsentRepository @Inject constructor(
     override val state = _state.asStateFlow()
     private val _events = MutableSharedFlow<AdsConsentEvent>(extraBufferCapacity = 4)
     override val events: Flow<AdsConsentEvent> = _events.asSharedFlow()
-
-    init {
-        scope.launch {
-            entitlementRepository.state
-                .map { it.entitlement.canShowAds }
-                .distinctUntilChanged()
-                .collect { allowsAds ->
-                    _state.update { it.copy(entitlementAllowsAds = allowsAds) }
-                    initializeAdsIfAllowed()
-                }
-        }
-    }
 
     override fun gatherConsent(activity: Activity) {
         if (!consentRequestStarted.compareAndSet(false, true)) return
@@ -145,7 +129,6 @@ class GoogleAdsConsentRepository @Inject constructor(
             val current = _state.value
             if (!current.consentUpdateAttempted ||
                 !current.canRequestAds ||
-                !current.entitlementAllowsAds ||
                 current.sdkInitialization != AdsSdkInitialization.NOT_INITIALIZED
             ) {
                 return

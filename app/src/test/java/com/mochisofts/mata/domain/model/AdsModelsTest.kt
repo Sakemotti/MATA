@@ -7,11 +7,10 @@ import org.junit.Test
 
 class AdsModelsTest {
     @Test
-    fun bannerCanLoadOnlyWhenConsentEntitlementAndSdkAreReady() {
+    fun bannerCanLoadOnlyWhenConsentAndSdkAreReady() {
         val ready = AdsRuntimeState(
             consentUpdateAttempted = true,
             canRequestAds = true,
-            entitlementAllowsAds = true,
             sdkInitialization = AdsSdkInitialization.INITIALIZED,
         )
 
@@ -20,7 +19,6 @@ class AdsModelsTest {
         assertFalse(ready.copy(canRequestAds = false).canLoadBanner)
         assertFalse(ready.copy(isGatheringConsent = true).canLoadBanner)
         assertFalse(ready.copy(isShowingPrivacyOptions = true).canLoadBanner)
-        assertFalse(ready.copy(entitlementAllowsAds = false).canLoadBanner)
         assertFalse(
             ready.copy(sdkInitialization = AdsSdkInitialization.INITIALIZING).canLoadBanner,
         )

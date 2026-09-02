@@ -8,9 +8,6 @@ import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.ArchivedHistoryItem
 import com.mochisofts.mata.domain.model.ArchivedTodoItem
 import com.mochisofts.mata.domain.model.Category
-import com.mochisofts.mata.domain.model.BillingEvent
-import com.mochisofts.mata.domain.model.BillingLaunchResult
-import com.mochisofts.mata.domain.model.BillingState
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
@@ -138,15 +135,6 @@ interface HolidayRepository {
     suspend fun markNotificationGenerationProcessed(generation: Long)
     suspend fun pendingWidgetGeneration(): Long?
     suspend fun markWidgetGenerationProcessed(generation: Long)
-}
-
-interface EntitlementRepository {
-    val state: StateFlow<BillingState>
-    val events: Flow<BillingEvent>
-    suspend fun start()
-    suspend fun refresh()
-    suspend fun restore()
-    suspend fun launchPurchase(activity: Activity): BillingLaunchResult
 }
 
 interface AdsConsentRepository {

@@ -6,7 +6,7 @@
 
 ## 1. 目的
 
-TODO、説明、カテゴリ、履歴、設定および購入状態を必要最小限の範囲で安全に扱い、外部送信、権限、端末内保存、コンポーネント公開、バックアップおよびGoogle Play申告を実装と一致させる。
+TODO、説明、カテゴリ、履歴および設定を必要最小限の範囲で安全に扱い、外部送信、権限、端末内保存、コンポーネント公開、バックアップおよびGoogle Play申告を実装と一致させる。
 
 ## 2. 文書構成
 
@@ -34,7 +34,7 @@ TODO、説明、カテゴリ、履歴、設定および購入状態を必要最�
 - Storage Access Frameworkでユーザーが選択したURI
 - Notification、AlarmManager、WorkManager、App WidgetのPendingIntentとReceiver
 - Holidays JP API
-- Google Mobile Ads SDK、UMP SDK、Google Play Billing
+- Google Mobile Ads SDK、UMP SDK
 - Google Play、OSバックアップ、端末ロック、他アプリ
 - Debug・CI・署名・公開環境
 

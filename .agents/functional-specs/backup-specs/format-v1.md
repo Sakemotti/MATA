@@ -130,7 +130,7 @@ manifest.json
 | theme | string | `system`、`light`、`dark` |
 
 - 将来バックアップ対象の設定を追加する場合は、バックアップ形式バージョンを更新する。
-- Google Playの購入状態、通知権限、正確なアラーム権限、ウィジェット設定は含めない。
+- UMPの同意状態、通知権限、正確なアラーム権限、ウィジェット設定は含めない。
 
 ## 8. categories
 
@@ -298,7 +298,7 @@ manifest.json
 
 次を含めない。
 
-- Google Playの広告削除購入状態
+- UMPの同意状態と広告の一時状態
 - 祝日キャッシュと祝日取得状態
 - OSへ登録済みのアラーム、`ScheduledNotificationEntity`、通知ID、配信済み通知の内部状態
 - Androidの通知権限と正確なアラーム権限

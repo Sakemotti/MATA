@@ -15,13 +15,11 @@ const requiredPages = [
   "index.html",
   "mata/privacy/index.html",
   "mata/terms/index.html",
-  "mata/commercial-transactions/index.html",
   "mata/external-transmission/index.html",
 ];
 const requiredRoutes = [
   "/mata/privacy",
   "/mata/terms",
-  "/mata/commercial-transactions",
   "/mata/external-transmission",
 ];
 const requiredUrls = [

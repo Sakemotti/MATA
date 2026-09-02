@@ -25,7 +25,7 @@ com.mochisofts.mata
 │   ├── local/           # Room、DataStore、entity、DAO、migration
 │   ├── remote/          # 祝日DTOと通信
 │   ├── repository/      # Repository実装
-│   └── sdk/             # Billing、Ads、UMP Adapter
+│   └── sdk/             # Ads、UMP Adapter
 ├── domain/
 │   ├── model/           # Android非依存モデル
 │   ├── repository/      # Repository interface
@@ -55,7 +55,7 @@ com.mochisofts.mata
 
 ## 4. RepositoryとUseCase
 
-- TODO、カテゴリ、履歴、設定、通知、祝日、購入権利ごとに責務が明確なRepositoryを定義する。
+- TODO、カテゴリ、履歴、設定、通知、祝日、広告同意ごとに責務が明確なRepositoryを定義する。
 - Repository interfaceはdomain、実装はdataへ置く。
 - 単純な読取を無条件にUseCaseへ包まず、複数Repository、繰り返し計算、トランザクションまたは複数画面共有がある処理をUseCaseとする。
 - TODO完了、取消、アーカイブ、復元、完全削除、論理日整合はUseCaseを入口とする。
@@ -81,7 +81,7 @@ com.mochisofts.mata
 - UUID／operationId生成器
 - Holidays API Client
 - Alarm、Notification、Widget、Work Scheduler
-- Billing、Ads、UMP Adapter
+- Ads、UMP Adapter
 - バックアップStream Factory
 - Logger
 
@@ -90,7 +90,7 @@ com.mochisofts.mata
 
 ## 7. 外部SDK Adapter
 
-- Billing、Ads、UMP、祝日通信、AlarmManager、NotificationManager、AppWidgetManagerをinterface越しに利用する。
+- Ads、UMP、祝日通信、AlarmManager、NotificationManager、AppWidgetManagerをinterface越しに利用する。
 - AdapterはSDK型、例外、コールバックをアプリ型、Flow、suspend関数へ変換する。
 - コールバックを1回だけ完了させ、キャンセルとライフサイクル終了を処理する。
 - SDKの生レスポンスをUI、domain、ログへ渡さない。
