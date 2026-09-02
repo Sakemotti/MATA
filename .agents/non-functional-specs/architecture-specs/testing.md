@@ -1,7 +1,7 @@
 # アーキテクチャ検証仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-09-02
 - 親仕様: [実装アーキテクチャ・データアクセス仕様](README.md)
 
 ## 1. 静的検査
@@ -29,6 +29,8 @@
 - 月集計、選択日明細、隣接月先読み、3か月キャッシュ、古い結果破棄を確認する。
 - DataStoreの既定値、複数値更新、破損時の安全なエラーを確認する。
 - 公開済み全Room schemaからMigration testを行う。
+- Pull Requestおよび手動CIでは、GitHub-hosted runner上のAPI 30・x86_64エミュレータで`connectedDebugAndroidTest`を実行する。
+- `main`へのマージ後pushでは、Pull Requestと同じinstrumented testの二重実行を避け、Release成果物検査を優先する。Pull Requestを経由しない公開候補では、手動CIのinstrumented test成功を必須とする。
 
 ## 4. Hiltと結合試験
 

@@ -191,3 +191,4 @@
 | REL-024 | P0 | AUTO/MANUAL | リポジトリ外の検証用keystore、4秘密値、署名必須フラグおよび期待する証明書SHA-256を設定してRelease成果物を生成する | AABの単一署名者が期待値と一致し、メタデータが`method=uploadKey`、証明書1件、`publishable=true`になる。不一致時は失敗する | 未実施 | 本番では登録済みUpload Keyで再実施 |
 | REL-025 | P0 | AUTO | 固定した`MATA_BUILD_TIMESTAMP`で`generateReleaseArtifactMetadata`を実行する | CycloneDX 1.6 JSONが生成され、ルートがMATA 1.0.0、日時がReleaseメタデータと一致し、Release runtimeのcomponent・依存グラフ・Billing・GMA Next-Gen SDK・UMPを含む。ローカルパス、署名入力、広告ID値は含まない | 未実施 | CIで実施 |
 | REL-026 | P0 | AUTO | SBOMの内容、パス、容量、SHA-256、必須componentまたは依存グラフを欠損・改変して`verify-readiness.mjs --artifacts`を実行する | Release成果物検査が失敗し、改変した検査対象を特定できる | 未実施 | |
+| REL-027 | P0 | AUTO | Pull Requestまたは手動CIで`connectedDebugAndroidTest`を実行する | GitHub-hosted runner上のAPI 30・x86_64エミュレータでRoom Migration、RepositoryおよびCompose UIのinstrumented testがすべて成功する。`main`へのマージ後pushでは二重実行せず、Pull Requestを経由しない公開候補は手動CIの成功を要求する | 未実施 | CIで実施 |

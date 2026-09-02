@@ -40,10 +40,16 @@ class MataTodoListItemTest {
             }
         }
 
-        val reservedBounds = composeRule.onNodeWithTag("reserved-body")
+        val reservedBounds = composeRule.onNodeWithTag(
+            testTag = "reserved-body",
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNode()
             .boundsInRoot
-        val visibleBounds = composeRule.onNodeWithTag("visible-body")
+        val visibleBounds = composeRule.onNodeWithTag(
+            testTag = "visible-body",
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNode()
             .boundsInRoot
 
@@ -72,10 +78,16 @@ class MataTodoListItemTest {
             }
         }
 
-        val emptyBounds = composeRule.onNodeWithTag("empty-status-body")
+        val emptyBounds = composeRule.onNodeWithTag(
+            testTag = "empty-status-body",
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNode()
             .boundsInRoot
-        val visibleBounds = composeRule.onNodeWithTag("visible-status-body")
+        val visibleBounds = composeRule.onNodeWithTag(
+            testTag = "visible-status-body",
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNode()
             .boundsInRoot
 
@@ -102,10 +114,16 @@ class MataTodoListItemTest {
             }
         }
 
-        val pendingBounds = composeRule.onNodeWithTag("pending-checkbox")
+        val pendingBounds = composeRule.onNodeWithTag(
+            testTag = "pending-checkbox",
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNode()
             .boundsInRoot
-        val completedBounds = composeRule.onNodeWithTag("completed-checkbox")
+        val completedBounds = composeRule.onNodeWithTag(
+            testTag = "completed-checkbox",
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNode()
             .boundsInRoot
 

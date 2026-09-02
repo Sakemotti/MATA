@@ -59,6 +59,7 @@ jobs:
             privacy_policy_url: ""
             terms_url: ""
             upload_release_artifacts: false
+            run_instrumented_tests: true
           - name: Release verification
             tasks: :app:lintRelease :app:generateReleaseArtifactMetadata :app:verifyReleaseManifestSecurity
             admob_app_id: ca-app-pub-0000000000000001~0000000001
@@ -66,6 +67,7 @@ jobs:
             privacy_policy_url: https://mochisofts.com/mata/privacy
             terms_url: https://mochisofts.com/mata/terms
             upload_release_artifacts: true
+            run_instrumented_tests: false
           - name: Performance APK verification
             tasks: :app:assembleBenchmark :benchmark:assembleBenchmarkRelease
             admob_app_id: ""
@@ -73,6 +75,7 @@ jobs:
             privacy_policy_url: ""
             terms_url: ""
             upload_release_artifacts: false
+            run_instrumented_tests: false
 
     steps:
       - name: Checkout
@@ -101,6 +104,45 @@ jobs:
           ORG_GRADLE_PROJECT_MATA_PRIVACY_POLICY_URL: ${{ matrix.privacy_policy_url }}
           ORG_GRADLE_PROJECT_MATA_TERMS_URL: ${{ matrix.terms_url }}
         run: ./gradlew ${{ matrix.tasks }} --no-daemon --stacktrace
+
+      - name: Assemble instrumented test APK
+        if: matrix.run_instrumented_tests && github.event_name != 'push'
+        run: ./gradlew :app:assembleDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Enable KVM access
+        if: matrix.run_instrumented_tests && github.event_name != 'push'
+        run: |
+          test -e /dev/kvm
+          sudo chmod 0666 /dev/kvm
+
+      - name: Free disk space for emulator
+        if: matrix.run_instrumented_tests && github.event_name != 'push'
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+          df -h /
+
+      - name: Run instrumented tests (API 30)
+        if: matrix.run_instrumented_tests && github.event_name != 'push'
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 30
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload failed instrumented test results
+        if: failure() && matrix.run_instrumented_tests && github.event_name != 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: instrumented-test-failure-${{ github.sha }}
+          path: |
+            app/build/reports/androidTests/connected/
+            app/build/outputs/androidTest-results/connected/
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Verify Release evidence
         if: matrix.upload_release_artifacts
