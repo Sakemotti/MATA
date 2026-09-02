@@ -183,3 +183,6 @@
 | REL-016 | P0 | MANUAL | 特定商取引法に基づく表示事項を購入前にメールで請求する | 氏名、所在地、電話番号が購入判断前に遅滞なく提供され、TODO内容や購入情報の提出を要求されない | 未実施 | 専門家確認後に実施 |
 | REL-017 | P0 | MANUAL | Releaseビルドの通信先・SDKと外部送信に関する公表を照合する | Google、Holidays JP、GitHub Pagesの送信情報・目的・停止方法が実装と一致し、未掲載の通信先やTODO内容の送信がない | 未実施 | |
 | REL-018 | P0 | AUTO | `node fastlane/verify-play-store.mjs --release`を実行する | 掲載文4種が正本と一致して文字数上限内であり、マニフェスト所定のアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット8枚が形式・寸法・容量を満たす | 未実施 | 画像完成後に実施 |
+| REL-019 | P0 | AUTO | `node tools/release/verify-readiness.mjs`を実行する | ビルド設定、Git識別、法的サイトおよびPlay掲載文のドラフト検証が成功し、`release-readiness.json`へ結果が記録される | 未実施 | |
+| REL-020 | P0 | AUTO | Release成果物生成後に`node tools/release/verify-readiness.mjs --artifacts`を実行する | AAB、mapping、ライセンス、最終Manifestの存在・容量・SHA-256とcommitがメタデータに一致する | 未実施 | CIで実施 |
+| REL-021 | P0 | AUTO/MANUAL | 正式な法的サイト・ストア画像・Upload Key署名済み成果物を揃え、クリーンな`main`で`node tools/release/verify-readiness.mjs --release`を実行する | 全自動検査が成功し、実機・Console・専門家・人的承認を残したまま公開候補として識別される | 未実施 | 公開候補作成時に実施 |

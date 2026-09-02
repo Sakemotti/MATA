@@ -45,6 +45,12 @@ node legal-site/verify.mjs
 
 この検査はGitHub Actionsのリポジトリ検査でも実行します。公開後のHTTPS、DNSおよび実際のモバイル表示は別途確認します。
 
+正式な`app-ads.txt`を配置した公開候補では、次のコマンドでCNAME、検索許可および公開必須ファイルも検査します。
+
+```shell
+node legal-site/verify.mjs --release
+```
+
 ## 公開前確認
 
 - 問い合わせ先が`com.mochisofts@gmail.com`で統一されている。

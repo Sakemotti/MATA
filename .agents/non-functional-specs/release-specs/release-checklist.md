@@ -1,7 +1,7 @@
 # リリースチェックリスト
 
 - 文書状態: 確定
-- 最終更新日: 2026-09-01
+- 最終更新日: 2026-09-02
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. リリース準備
@@ -34,6 +34,7 @@
 - [ ] `node fastlane/verify-play-store.mjs --release`が成功し、掲載文と全画像が公開仕様を満たした。
 - [ ] Macrobenchmarkと主要性能回帰が公開基準を満たした。
 - [ ] ログ検査でユーザー入力、トークン、URI、広告情報が検出されなかった。
+- [ ] `node tools/release/verify-readiness.mjs --artifacts`が成功し、Release成果物と同じActions artifactへ検査結果JSONを保存した。
 
 ## 3. Release成果物検査
 
@@ -43,6 +44,7 @@
 - [ ] 最終Manifestの権限、exported、backup、cleartext設定が仕様どおりである。
 - [ ] AABがUpload Keyで署名され、SHA-256を記録した。
 - [ ] mapping、依存関係、ライセンス、Manifest、テスト結果をversionCodeへ紐付けた。
+- [ ] `node tools/release/verify-readiness.mjs --release`が成功し、公開候補のcommit、法的文書、ストア画像、署名済みAABおよび各ハッシュが一致した。
 
 ## 4. 実機・Google Play検査
 
