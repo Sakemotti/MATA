@@ -78,7 +78,6 @@ import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.domain.model.AppTheme
-import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.data.backup.BACKUP_MIME_TYPE
 import com.mochisofts.mata.data.backup.BackupOperationPhase
 import com.mochisofts.mata.data.backup.BackupOperationState
@@ -321,15 +320,6 @@ fun SettingsScreen(
                             },
                         )
 
-                        SettingsSectionHeader(R.string.settings_section_ads)
-                        AdsSettings(
-                            adsRuntime = state.adsRuntime,
-                            canShowPrivacyOptions = activity != null,
-                            onPrivacyOptions = {
-                                activity?.let(viewModel::showPrivacyOptions)
-                            },
-                        )
-
                         SettingsSectionHeader(R.string.settings_section_app_info)
                         SettingsStaticRow(
                             title = stringResource(R.string.settings_app_name_title),
@@ -380,6 +370,22 @@ fun SettingsScreen(
                                 }
                             },
                         )
+                        if (state.adsRuntime.privacyOptionsRequired) {
+                            HorizontalDivider()
+                            SettingsValueRow(
+                                title = stringResource(R.string.settings_ads_privacy_options_title),
+                                value = stringResource(R.string.settings_ads_privacy_options_value),
+                                description = stringResource(
+                                    R.string.settings_ads_privacy_options_description,
+                                ),
+                                isSaving = state.adsRuntime.isShowingPrivacyOptions,
+                                enabled = activity != null &&
+                                    !state.adsRuntime.isShowingPrivacyOptions,
+                                onClick = {
+                                    activity?.let(viewModel::showPrivacyOptions)
+                                },
+                            )
+                        }
                         HorizontalDivider()
                         SettingsValueRow(
                             title = stringResource(R.string.settings_terms_title),
@@ -616,30 +622,6 @@ private fun SettingsStaticRow(
             }
         },
     )
-}
-
-@Composable
-private fun AdsSettings(
-    adsRuntime: AdsRuntimeState,
-    canShowPrivacyOptions: Boolean,
-    onPrivacyOptions: () -> Unit,
-) {
-    SettingsStaticRow(
-        title = stringResource(R.string.settings_ads_display_title),
-        value = stringResource(R.string.settings_ads_display_value),
-        description = stringResource(R.string.settings_ads_display_description),
-    )
-    if (adsRuntime.privacyOptionsRequired) {
-        HorizontalDivider()
-        SettingsValueRow(
-            title = stringResource(R.string.settings_ads_privacy_options_title),
-            value = stringResource(R.string.settings_ads_privacy_options_value),
-            description = stringResource(R.string.settings_ads_privacy_options_description),
-            isSaving = adsRuntime.isShowingPrivacyOptions,
-            enabled = canShowPrivacyOptions && !adsRuntime.isShowingPrivacyOptions,
-            onClick = onPrivacyOptions,
-        )
-    }
 }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
