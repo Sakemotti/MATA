@@ -31,6 +31,7 @@
 - [ ] Debug APKとRelease AABをビルドできた。
 - [ ] Room migrationとバックアップ互換性試験が全対応元バージョンから成功した。
 - [ ] Compose UI、アクセシビリティ、適応レイアウトの自動試験が成功した。
+- [ ] Pull Requestまたは手動CIの`connectedDebugAndroidTest`が成功し、Room Migration、RepositoryおよびCompose UIのinstrumented testをAPI 30で実行した。
 - [ ] 通知、ウィジェット、祝日、Billing、広告、同意のFake結合試験が成功した。
 - [ ] セキュリティ、Secret、CycloneDX SBOM、依存関係、Manifest検査が成功した。
 - [ ] `node fastlane/verify-play-store.mjs --release`が成功し、掲載文と全画像が公開仕様を満たした。
