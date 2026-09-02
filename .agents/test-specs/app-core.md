@@ -186,3 +186,4 @@
 | REL-019 | P0 | AUTO | `node tools/release/verify-readiness.mjs`を実行する | ビルド設定、Git識別、法的サイトおよびPlay掲載文のドラフト検証が成功し、`release-readiness.json`へ結果が記録される | 未実施 | |
 | REL-020 | P0 | AUTO | Release成果物生成後に`node tools/release/verify-readiness.mjs --artifacts`を実行する | AAB、mapping、ライセンス、最終Manifestの存在・容量・SHA-256とcommitがメタデータに一致する | 未実施 | CIで実施 |
 | REL-021 | P0 | AUTO/MANUAL | 正式な法的サイト・ストア画像・Upload Key署名済み成果物を揃え、クリーンな`main`で`node tools/release/verify-readiness.mjs --release`を実行する | 全自動検査が成功し、実機・Console・専門家・人的承認を残したまま公開候補として識別される | 未実施 | 公開候補作成時に実施 |
+| REL-022 | P0 | MANUAL | 法的サイト変更を本リポジトリの`main`へマージ後、`legal-site`を公開リポジトリへコピーしてGitHub Pagesの完了を待つ | 正本側commitと公開側commitが記録され、変更した公開URLとアプリ設定画面からのプライバシーポリシー・利用規約遷移が同じ最新版を表示する | 未実施 | 法的サイト変更ごとに実施 |
