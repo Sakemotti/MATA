@@ -140,7 +140,7 @@
 | WGT-011 | P0 | INT/MANUAL | 操作ダイアログ画面でスキップを押す | 対象論理日のTODOだけがスキップとなり、通知が取り消され、全ウィジェットから対象行が消えて一覧と履歴へ反映され、確認メッセージや取り消し操作を表示しない | 未実施 | Issue #36・#42 |
 | WGT-012 | P0 | INT/MANUAL | 操作ダイアログ画面でキャンセル、戻る、ダイアログ風操作領域の外側タップをそれぞれ行う | TODO状態を変更せずホーム画面へ戻り、専用画面が最近使ったアプリに残らない | 未実施 | Issue #36 |
 | WGT-013 | P0 | INT/MANUAL | 操作ダイアログ表示後に別経路で完了・スキップ・編集・削除し、元のダイアログから操作する | 最新状態を再検証し、重複履歴や無効な履歴を作らずウィジェットを最新表示へ更新する | 未実施 | Issue #36 |
-| WGT-014 | P1 | UI/MANUAL | 広告表示可能状態と広告削除購入済み状態で操作ダイアログ画面を開く | 広告表示条件成立時だけバナー広告を操作領域から分離してシステムナビゲーション領域より上の画面下部へ固定し、本文・ボタンと重ねない。広告非表示時は空の広告枠を残さない | 未実施 | Issue #36 |
+| WGT-014 | P1 | UI/MANUAL | 広告表示可能状態と広告読込失敗状態で操作ダイアログ画面を開く | 広告表示条件成立時だけバナー広告を操作領域から分離してシステムナビゲーション領域より上の画面下部へ固定し、本文・ボタンと重ねない。広告非表示時は空の広告枠を残さない | 未実施 | Issue #36 |
 
 ## 7. データ保存、外部通信、プライバシー
 
@@ -173,14 +173,14 @@
 | REL-006 | P0 | MANUAL | `assembleDebug`を実行する | Debug APKの生成に成功する | 未実施 | |
 | REL-007 | P0 | MANUAL | CIの対象コミットを確認する | 単体テスト、Lint、Debugビルドがすべて成功する | 未実施 | |
 | REL-008 | P1 | UI/MANUAL | 全主要画面をライト・ダーク・最大フォントで確認する | 内容と主要操作が欠けず、致命的な重なりや切れがない | 未実施 | |
-| REL-009 | P1 | MANUAL | 新しい権限、外部SDK、通信先、データ収集、課金および連絡先の差分を確認する | 仕様、法的文書、Google Play Console申請シート、Data safety、UMP、商品設定およびストア掲載がRelease実装と一致して更新される | 未実施 | |
+| REL-009 | P1 | MANUAL | 新しい権限、外部SDK、通信先、データ収集、有料機能および連絡先の差分を確認する | 仕様、法的文書、Google Play Console申請シート、Data safety、UMPおよびストア掲載がRelease実装と一致して更新される | 未実施 | |
 | REL-010 | P0 | MANUAL | 全項目の結果と未解決不具合を確認する | 全P0/P1が合格し、P2不合格に承認済み判断がある | 未実施 | |
 | REL-011 | P1 | MANUAL | ビルド設定と主要ソースを静的レビューする | Kotlin、AGP 9系内蔵Kotlin、Compose、Material 3、原則単一Activity、Coroutines、`java.time`を使用する | 未実施 | |
 | REL-012 | P1 | MANUAL | パッケージ依存と主要機能の実装位置をレビューする | `core`、`data`、`domain`、`ui`の責務を守り、UIが保存処理を直接呼ばずViewModelとRepositoryを経由する | 未実施 | |
 | REL-013 | P1 | MANUAL | 論理日・繰り返し計算とUIコード、状態公開方法をレビューする | 業務計算がAndroid UIから分離され、UI状態が不変データ、操作がイベントとして扱われる | 未実施 | |
 | REL-014 | P1 | MANUAL | 変更ファイルを静的解析・レビューする | UTF-8・LF・4空白、文字列リソース、テーマ/共通トークン、色以外の状態表現、複雑ルールのコメントまたはテストを満たす | 未実施 | |
-| REL-015 | P0 | AUTO/MANUAL | `node legal-site/verify.mjs`を実行し、公開後は4文書をスマートフォン幅・認証なし・JavaScript無効で開く | 必須ページ、内部リンク、問い合わせ先、サイトマップに不整合がなく、4文書の全文をHTTPSで閲覧できる | 未実施 | |
-| REL-016 | P0 | MANUAL | 特定商取引法に基づく表示事項を購入前にメールで請求する | 氏名、所在地、電話番号が購入判断前に遅滞なく提供され、TODO内容や購入情報の提出を要求されない | 未実施 | 専門家確認後に実施 |
+| REL-015 | P0 | AUTO/MANUAL | `node legal-site/verify.mjs`を実行し、公開後は3文書をスマートフォン幅・認証なし・JavaScript無効で開く | 必須ページ、内部リンク、問い合わせ先、サイトマップに不整合がなく、3文書の全文をHTTPSで閲覧できる | 未実施 | |
+| REL-016 | P0 | AUTO/MANUAL | アプリとストア掲載の有料機能を確認する | 有料商品、価格、購入、広告削除、購入復元および外部決済への導線がない | 未実施 | |
 | REL-017 | P0 | MANUAL | Releaseビルドの通信先・SDKと外部送信に関する公表を照合する | Google、Holidays JP、GitHub Pagesの送信情報・目的・停止方法が実装と一致し、未掲載の通信先やTODO内容の送信がない | 未実施 | |
 | REL-018 | P0 | AUTO | `node fastlane/verify-play-store.mjs --release`を実行する | 掲載文4種が正本と一致して文字数上限内であり、マニフェスト所定のアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット8枚が形式・寸法・容量を満たす | 未実施 | 画像完成後に実施 |
 | REL-019 | P0 | AUTO | `node tools/release/verify-readiness.mjs`を実行する | ビルド設定、Git識別、法的サイトおよびPlay掲載文のドラフト検証が成功し、`release-readiness.json`へ結果が記録される | 未実施 | |
@@ -189,6 +189,6 @@
 | REL-022 | P0 | MANUAL | 法的サイト変更を本リポジトリの`main`へマージ後、`legal-site`を公開リポジトリへコピーしてGitHub Pagesの完了を待つ | 正本側commitと公開側commitが記録され、変更した公開URLとアプリ設定画面からのプライバシーポリシー・利用規約遷移が同じ最新版を表示する | 未実施 | 法的サイト変更ごとに実施 |
 | REL-023 | P0 | AUTO | Upload Key秘密値の一部だけを設定する、相対・リポジトリ内keystoreを指定する、署名必須フラグを省略する、または署名時にConfiguration Cacheを有効化する | 設定段階で失敗し、秘密値をログ・JSON・成果物へ出力しない | 未実施 | |
 | REL-024 | P0 | AUTO/MANUAL | リポジトリ外の検証用keystore、4秘密値、署名必須フラグおよび期待する証明書SHA-256を設定してRelease成果物を生成する | AABの単一署名者が期待値と一致し、メタデータが`method=uploadKey`、証明書1件、`publishable=true`になる。不一致時は失敗する | 未実施 | 本番では登録済みUpload Keyで再実施 |
-| REL-025 | P0 | AUTO | 固定した`MATA_BUILD_TIMESTAMP`で`generateReleaseArtifactMetadata`を実行する | CycloneDX 1.6 JSONが生成され、ルートがMATA 1.0.0、日時がReleaseメタデータと一致し、Release runtimeのcomponent・依存グラフ・Billing・GMA Next-Gen SDK・UMPを含む。ローカルパス、署名入力、広告ID値は含まない | 未実施 | CIで実施 |
+| REL-025 | P0 | AUTO | 固定した`MATA_BUILD_TIMESTAMP`で`generateReleaseArtifactMetadata`を実行する | CycloneDX 1.6 JSONが生成され、ルートがMATA 1.0.0、日時がReleaseメタデータと一致し、Release runtimeのcomponent・依存グラフ・GMA Next-Gen SDK・UMPを含む。ローカルパス、署名入力、広告ID値は含まない | 未実施 | CIで実施 |
 | REL-026 | P0 | AUTO | SBOMの内容、パス、容量、SHA-256、必須componentまたは依存グラフを欠損・改変して`verify-readiness.mjs --artifacts`を実行する | Release成果物検査が失敗し、改変した検査対象を特定できる | 未実施 | |
 | REL-027 | P0 | AUTO | Pull Requestまたは手動CIで`connectedDebugAndroidTest`を実行する | GitHub-hosted runner上のAPI 30・x86_64エミュレータでRoom Migration、RepositoryおよびCompose UIのinstrumented testがすべて成功する。`main`へのマージ後pushでは二重実行せず、Pull Requestを経由しない公開候補は手動CIの成功を要求する | 未実施 | CIで実施 |

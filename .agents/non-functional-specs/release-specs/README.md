@@ -14,7 +14,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | --- | --- |
 | [バージョン・ビルド・署名仕様](versioning-build-and-signing.md) | versionName、versionCode、AAB、署名、成果物 |
 | [Google Play掲載・公開仕様](play-listing-and-rollout.md) | 対象地域、掲載情報、トラック、段階公開、法的URL |
-| [Google Play Console申請シート](play-console-submission.md) | App content、商品、権限、対象ユーザー、入力値、公開ブロッカー |
+| [Google Play Console申請シート](play-console-submission.md) | App content、権限、対象ユーザー、入力値、公開ブロッカー |
 | [Google Playストア掲載文・画像仕様](store-listing-copy-and-assets.md) | 確定掲載文、リリースノート、画像寸法、撮影構成 |
 | [Google Play Data safety申告案](data-safety-declaration.md) | 収集・共有データ、目的、削除、最終検証 |
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
@@ -23,10 +23,10 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 ## 3. 基本方針
 
 1. Google Playを唯一の一般配布経路とし、ReleaseはAndroid App Bundleで公開する。
-2. `com.mochisofts.mata`、署名系統、商品ID、バックアップ互換性を公開後に変更しない。
+2. `com.mochisofts.mata`、署名系統、バックアップ互換性を公開後に変更しない。
 3. 同じソースコミットから、CIで検証した成果物をそのまま昇格させる。
 4. テストを通していないローカルビルドを本番へアップロードしない。
-5. データ移行、通知、購入権利、プライバシーに重大な未解決事項がある場合は公開しない。
+5. データ移行、通知、広告同意、プライバシーに重大な未解決事項がある場合は公開しない。
 6. 初回公開前は内部・クローズドテストで検証し、更新は段階公開する。
 7. 公開後に問題があればロールアウトを停止し、versionCodeを上げた修正版を公開する。既存版へダウングレードしない。
 
@@ -40,10 +40,9 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | 初期配布地域 | 日本 |
 | Google Playカテゴリ | 仕事効率化 |
 | 価格 | 無料 |
-| アプリ内商品 | 広告削除の買い切り `remove_ads` |
+| アプリ内商品 | なし |
 | プライバシーポリシー | `https://mochisofts.com/mata/privacy` |
 | 利用規約 | `https://mochisofts.com/mata/terms` |
-| 特定商取引法に基づく表記 | `https://mochisofts.com/mata/commercial-transactions` |
 | 外部送信に関する公表 | `https://mochisofts.com/mata/external-transmission` |
 | デベロッパーWebサイト | `https://mochisofts.com/` |
 | app-ads.txt | `https://mochisofts.com/app-ads.txt` |
@@ -53,7 +52,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 
 連絡先とWebサイトはGoogle Play掲載および法的文書に使用する。設定画面には既存仕様どおり「開発者Webサイト」「お問い合わせ」の行を追加しない。
 
-GitHub Pages用の公開リポジトリ、DNS、カスタムドメインおよびHTTPSは設定済みである。本リポジトリの`legal-site`を正本とし、変更を`main`へマージした後にユーザーが公開リポジトリへコピーする。設定画面から公開中のプライバシーポリシーと利用規約を開けることを確認済みとする。特定商取引法上の請求時開示方法と実際の対応運用を専門家へ確認するまでアプリを本番公開しない。
+GitHub Pages用の公開リポジトリ、DNS、カスタムドメインおよびHTTPSは設定済みである。本リポジトリの`legal-site`を正本とし、変更を`main`へマージした後にユーザーが公開リポジトリへコピーする。設定画面から公開中のプライバシーポリシーと利用規約を開けることを確認済みとする。
 
 ## 5. 公式資料
 

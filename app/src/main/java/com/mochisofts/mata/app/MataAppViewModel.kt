@@ -8,7 +8,6 @@ import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HolidayRepository
-import com.mochisofts.mata.domain.repository.EntitlementRepository
 import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -35,7 +34,6 @@ class MataAppViewModel @Inject constructor(
     private val holidayRepository: HolidayRepository,
     private val holidayWorkScheduler: HolidayWorkScheduler,
     private val widgetUpdater: WidgetUpdater,
-    private val entitlementRepository: EntitlementRepository,
     private val adsConsentRepository: AdsConsentRepository,
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
@@ -127,7 +125,6 @@ class MataAppViewModel @Inject constructor(
                 } while (result.hasMore)
             }
             runCatching { notificationScheduler.reconcileAll() }
-            runCatching { entitlementRepository.refresh() }
         }
     }
 }

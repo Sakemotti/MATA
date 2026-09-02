@@ -9,7 +9,7 @@
 - domainからAndroid、Compose、Room、DataStore、SDKへの依存がないことを検査する。
 - UIからDAO、DataStore、SDKを直接参照しないことを検査する。
 - 依存関係の循環と禁止package参照を検出する。
-- Navigation引数にEntity、ユーザー入力、購入トークンがないことをレビューする。
+- Navigation引数にEntityまたはユーザー入力がないことをレビューする。
 - ComposableからRepositoryまたは長時間suspend処理を直接呼ばないことを確認する。
 
 ## 2. 単体試験

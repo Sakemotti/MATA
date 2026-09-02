@@ -102,7 +102,6 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 - 祝日情報: 取得成功、未取得、取得失敗、失敗後の取得成功
 - 通知権限: 許可、拒否
 - 正確なアラーム: 利用可能、利用不可、対象外OS
-- Google Play Billing: 未購入、保留、購入済み、キャンセル、接続失敗、非対応、払い戻し
 - バックアップ: 正常、旧対応形式、新しい未対応形式、破損、ハッシュ不一致、不正値、参照不整合、移行失敗
 
 ## 6. テスト環境マトリクス
@@ -121,14 +120,14 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 | ネットワーク | オンライン、オフライン、処理途中の切断と復帰 |
 | ライフサイクル | 回転、バックグラウンド復帰、プロセス再生成、端末再起動 |
 
-広告SDK、商品ID、課金、同意管理および収益化の公開判定は[収益化の試験・公開仕様](../functional-specs/monetization-specs/testing-and-release.md)、起動経路、復帰、初期化および起動性能は[起動の性能・試験仕様](../non-functional-specs/startup-specs/performance-and-testing.md)、テーマ、共通コンポーネント、モーションおよびアクセシビリティは[デザインシステムの試験仕様](../non-functional-specs/design-system-specs/motion-accessibility-and-testing.md)、ウィンドウ境界、2ペイン、Insets、折りたたみおよび入力方式は[適応レイアウトの試験・公開判定仕様](../non-functional-specs/adaptive-layout-specs/testing-and-release.md)、共通の失敗状態と回復は[エラー処理・障害回復の試験仕様](../non-functional-specs/error-handling-specs/testing.md)、UI・データ・バックグラウンドの性能は[性能計測・公開判定仕様](../non-functional-specs/performance-specs/benchmark-and-release.md)、署名、Google Play、公開URLおよび監視は[リリースチェックリスト](../non-functional-specs/release-specs/release-checklist.md)を併用して確認する。
+広告SDK、同意管理および収益化の公開判定は[収益化の試験・公開仕様](../functional-specs/monetization-specs/testing-and-release.md)、起動経路、復帰、初期化および起動性能は[起動の性能・試験仕様](../non-functional-specs/startup-specs/performance-and-testing.md)、テーマ、共通コンポーネント、モーションおよびアクセシビリティは[デザインシステムの試験仕様](../non-functional-specs/design-system-specs/motion-accessibility-and-testing.md)、ウィンドウ境界、2ペイン、Insets、折りたたみおよび入力方式は[適応レイアウトの試験・公開判定仕様](../non-functional-specs/adaptive-layout-specs/testing-and-release.md)、共通の失敗状態と回復は[エラー処理・障害回復の試験仕様](../non-functional-specs/error-handling-specs/testing.md)、UI・データ・バックグラウンドの性能は[性能計測・公開判定仕様](../non-functional-specs/performance-specs/benchmark-and-release.md)、署名、Google Play、公開URLおよび監視は[リリースチェックリスト](../non-functional-specs/release-specs/release-checklist.md)を併用して確認する。
 
 ## 7. 実行順序
 
 推奨順は次のとおり。
 
 1. `UNIT`で論理日、繰り返し、期限、集計を確認する。
-2. `INT`でDB、通知、バックアップ、課金状態を確認する。
+2. `INT`でDB、通知、バックアップ、広告同意状態を確認する。
 3. 各画面の`UI`項目を確認する。
 4. `E2E`で登録、実行、履歴、アーカイブ、復元、バックアップの主要フローを確認する。
 5. `MANUAL`で実機OS連携、TalkBack、テーマ、最大フォント、Google Play、広告を確認する。
@@ -146,7 +145,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 | `E2E-006` | TODOをアーカイブ→詳細・履歴確認→現在期間内に復元 | アーカイブ期間を埋め戻さず、履歴を保持して残り回数を再計算する |
 | `E2E-007` | アーカイブTODOを完全削除→カレンダー確認 | TODO、全履歴、期間結果、通知が消え、カレンダー集計も更新される |
 | `E2E-008` | バックアップ作成→データ変更→復元 | 対象データが全置換され、通知と画面状態が再構成される |
-| `E2E-009` | 広告削除購入→各広告表示箇所確認→購入復元 | 購入直後と復元後に広告だけが消え、機能差が生じない |
+| `E2E-009` | UMP同意状態変更→各広告表示箇所確認 | `canRequestAds`に従って広告だけが変化し、基本機能は制限されない |
 | `E2E-010` | 通知とウィジェットからTODOを完了 | 一覧、履歴、ウィジェットが同じ完了状態へ更新される |
 
 ## 9. リリース判定
@@ -155,7 +154,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 - すべての`P0`と`P1`が合格している。
 - `P2`の不合格は影響、回避策、対応時期が記録され、リリース判断者が承認している。
-- 未解決のデータ消失、履歴改変、通知誤発火、課金状態誤判定がない。
+- 未解決のデータ消失、履歴改変、通知誤発火、広告同意違反がない。
 - [app-core.md](app-core.md)の`REL`項目がすべて合格している。
 - 不合格項目には再現手順、期待結果、実際結果、ログまたは画像、不具合IDが紐づいている。
 

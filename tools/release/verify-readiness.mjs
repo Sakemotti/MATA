@@ -261,7 +261,6 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
                 componentRefs.add(component['bom-ref']);
               }
               const requiredRuntimeComponents = [
-                ['com.android.billingclient', 'billing-ktx'],
                 ['com.google.android.libraries.ads.mobile.sdk', 'ads-mobile-sdk'],
                 ['com.google.android.ump', 'user-messaging-platform'],
               ];
@@ -269,6 +268,9 @@ function verifyReleaseArtifacts(expectedGitCommit, requirePublishable) {
                 if (!sbom.components.some((component) => component.group === group && component.name === name)) {
                   problems.push(`SBOM is missing required runtime component ${group}:${name}`);
                 }
+              }
+              if (sbom.components.some((component) => component.group === 'com.android.billingclient')) {
+                problems.push('SBOM must not contain Google Play Billing components');
               }
               sbomSummary = `${sbom.components.length} runtime components`;
             }

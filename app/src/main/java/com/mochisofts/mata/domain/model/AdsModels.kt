@@ -13,7 +13,6 @@ data class AdsRuntimeState(
     val privacyOptionsRequired: Boolean = false,
     val isGatheringConsent: Boolean = false,
     val isShowingPrivacyOptions: Boolean = false,
-    val entitlementAllowsAds: Boolean = false,
     val sdkInitialization: AdsSdkInitialization = AdsSdkInitialization.NOT_INITIALIZED,
     val consentRevision: Long = 0,
 ) {
@@ -22,7 +21,6 @@ data class AdsRuntimeState(
             canRequestAds &&
             !isGatheringConsent &&
             !isShowingPrivacyOptions &&
-            entitlementAllowsAds &&
             sdkInitialization == AdsSdkInitialization.INITIALIZED
 }
 

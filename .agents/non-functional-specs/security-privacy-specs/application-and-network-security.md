@@ -18,18 +18,17 @@
 - Manifestで`allowBackup=false`を設定する。
 - 対応OS向けの`dataExtractionRules`と`fullBackupContent`でもクラウドバックアップと端末間転送を除外する。
 - Debug、Releaseの両Manifest統合結果で除外設定を確認する。
-- Room、DataStore、購入トークン、通知内部状態、一時ファイルをOS自動バックアップへ含めない。
+- Room、DataStore、通知内部状態、一時ファイルをOS自動バックアップへ含めない。
 
 ## 3. 権限
 
 初回公開で使用を許可する権限・特別アクセスは次に限定する。
 
-- `INTERNET`: 祝日、広告、同意、Billing
+- `INTERNET`: 祝日、広告、同意
 - `ACCESS_NETWORK_STATE`: 通信可否とSDK要件
 - `POST_NOTIFICATIONS`: Android 13以上の通知
 - `SCHEDULE_EXACT_ALARM`: ユーザーが時刻指定したTODO通知
 - `RECEIVE_BOOT_COMPLETED`: 再起動後の通知・ウィジェット整合
-- Google Play Billingに必要な権限
 - App WidgetとSDKがManifest統合で必要とする通常権限
 
 - `USE_EXACT_ALARM`は使用しない。
@@ -51,7 +50,7 @@
 - 可能な限り明示的かつ`FLAG_IMMUTABLE`とする。
 - RemoteViews等で可変性が技術的に必要な箇所だけ`FLAG_MUTABLE`を使用し、対象コンポーネント、テンプレート、入力範囲を限定する。
 - 用途、TODO ID、予定キー、定義リビジョンから衝突しない識別子を生成する。
-- Intent内のタイトル、状態、カテゴリ、購入状態を信頼せず、RoomまたはGoogle Playから最新値を再取得する。
+- Intent内のタイトル、状態、カテゴリを信頼せず、Roomから最新値を再取得する。
 - 受信時に対象存在、現在期間、状態、操作可否をトランザクション内で再検証する。
 
 ## 6. 通信
@@ -79,7 +78,7 @@
 - リリース署名鍵、keystoreパスワード、サービスアカウント、CIトークンをGitへコミットしない。
 - 秘密情報はCI Secretまたは開発者の保護されたローカル設定から注入する。
 - APKから取得できる値を秘密として扱わない。APIキーを置く場合はAPI、アプリID、署名証明書で制限する。
-- AdMob App ID、広告ユニットID、商品IDは識別子であり秘密情報ではないが、DebugとReleaseを分離する。
+- AdMob App IDと広告ユニットIDは識別子であり秘密情報ではないが、DebugとReleaseを分離する。
 - Release署名はGoogle Play App Signingを使用し、Upload Keyを別管理する。
 - Debug署名鍵でRelease成果物を署名できないようビルドを分離する。
 

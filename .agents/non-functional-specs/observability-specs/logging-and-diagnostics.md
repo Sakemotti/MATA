@@ -41,7 +41,6 @@
 - 履歴スナップショットと通知本文
 - 検索文字列、入力中の下書き
 - バックアップ本文、JSON、ZIP内容、ファイル名、完全なURIとパス
-- 購入トークン、注文ID、アカウント情報、価格表示以外のBilling応答本文
 - 広告ID、端末識別子、IPアドレス、同意文字列、広告応答
 - Authorization、Cookie、証明書、APIキー、署名、パスワード
 - 完全なIntent、PendingIntent、Bundle、Work入力
@@ -81,5 +80,5 @@
 - DebugビルドではStrictMode、テスト用Clock、Fake外部サービス、詳細状態表示を利用できる。
 - Debugメニューは`BuildConfig.DEBUG`だけでなくReleaseソースセットと依存関係から除外する。
 - Debugログでも記録禁止項目を出力しない。
-- テスト広告ID、Fake購入、障害注入をRelease成果物へ含めない。
+- テスト広告ID、Fake同意状態、障害注入をRelease成果物へ含めない。
 - 開発中の一時ログはコミット前に削除するか、構造化ログ規則へ移行する。

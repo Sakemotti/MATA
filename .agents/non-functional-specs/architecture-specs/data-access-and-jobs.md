@@ -27,7 +27,7 @@
 - Key、型、既定値を単一のSettingsDataSourceに集約する。
 - UIはDataStoreを直接参照せずSettingsRepositoryのFlowを購読する。
 - 複数設定を一貫して変える必要がある場合は1回の`edit`で更新する。
-- 権限、購入権利、通知チャンネルなどOSまたはGoogle Playが正の値を設定値として偽装しない。
+- 権限、広告同意、通知チャンネルなどOSまたは外部SDKが正の値を設定値として偽装しない。
 - バックアップ作成時はdomain設定モデルへ変換し、DataStore内部Keyを外部形式へ露出しない。
 
 ## 4. ページング

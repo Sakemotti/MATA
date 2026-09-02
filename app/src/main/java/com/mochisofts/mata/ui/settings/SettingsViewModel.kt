@@ -8,13 +8,9 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
-import com.mochisofts.mata.domain.model.BillingEvent
-import com.mochisofts.mata.domain.model.BillingLaunchResult
-import com.mochisofts.mata.domain.model.BillingState
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
-import com.mochisofts.mata.domain.repository.EntitlementRepository
 import com.mochisofts.mata.domain.repository.AdsConsentRepository
 import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.data.backup.BackupErrorCode
@@ -61,7 +57,6 @@ data class SettingsUiState(
     ),
     val savingSetting: SavingSetting? = null,
     val backupOperation: BackupOperationState = BackupOperationState(),
-    val billing: BillingState = BillingState(),
     val adsRuntime: AdsRuntimeState = AdsRuntimeState(),
 )
 
@@ -75,7 +70,6 @@ class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
     private val backupCoordinator: BackupCoordinator? = null,
-    private val entitlementRepository: EntitlementRepository,
     private val adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -94,24 +88,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
         refreshNotificationStatus(reconcile = false)
-        viewModelScope.launch {
-            entitlementRepository.state.collect { billing ->
-                _uiState.update { it.copy(billing = billing) }
-            }
-        }
-        viewModelScope.launch {
-            entitlementRepository.events.collect { event ->
-                val message = when (event) {
-                    BillingEvent.PURCHASED -> R.string.settings_ads_purchase_success
-                    BillingEvent.PENDING -> R.string.settings_ads_purchase_pending_message
-                    BillingEvent.RESTORED -> R.string.settings_ads_restore_success
-                    BillingEvent.NOTHING_TO_RESTORE -> R.string.settings_ads_nothing_to_restore
-                    BillingEvent.ERROR -> R.string.settings_ads_billing_error
-                    BillingEvent.USER_CANCELED -> null
-                }
-                if (message != null) effectsChannel.send(SettingsEffect.Message(message))
-            }
-        }
         viewModelScope.launch {
             adsConsentRepository.state.collect { adsRuntime ->
                 _uiState.update { it.copy(adsRuntime = adsRuntime) }
@@ -166,50 +142,6 @@ class SettingsViewModel @Inject constructor(
 
     fun setTheme(value: AppTheme) = save(SavingSetting.THEME) {
         repository.setTheme(value)
-    }
-
-    fun purchaseAdRemoval(activity: Activity) {
-        viewModelScope.launch {
-            val message = runCatching { entitlementRepository.launchPurchase(activity) }
-                .fold(
-                    onSuccess = { result ->
-                        when (result) {
-                            BillingLaunchResult.STARTED,
-                            BillingLaunchResult.ALREADY_IN_PROGRESS,
-                            -> null
-                            BillingLaunchResult.PRODUCT_UNAVAILABLE ->
-                                R.string.settings_ads_product_unavailable
-                            BillingLaunchResult.BILLING_UNAVAILABLE ->
-                                R.string.settings_ads_billing_unavailable
-                            BillingLaunchResult.ERROR -> R.string.settings_ads_billing_error
-                        }
-                    },
-                    onFailure = { R.string.settings_ads_billing_error },
-                )
-            if (message != null) effectsChannel.send(SettingsEffect.Message(message))
-        }
-    }
-
-    fun restoreAdRemoval() {
-        viewModelScope.launch {
-            runCatching { entitlementRepository.restore() }
-                .onFailure {
-                    effectsChannel.send(
-                        SettingsEffect.Message(R.string.settings_ads_billing_error),
-                    )
-                }
-        }
-    }
-
-    fun retryBilling() {
-        viewModelScope.launch {
-            runCatching { entitlementRepository.refresh() }
-                .onFailure {
-                    effectsChannel.send(
-                        SettingsEffect.Message(R.string.settings_ads_billing_error),
-                    )
-                }
-        }
     }
 
     fun showPrivacyOptions(activity: Activity) {

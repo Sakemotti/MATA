@@ -28,13 +28,13 @@
 
 - Application IDは`com.mochisofts.mata.debug`、表示名は`MATA Dev`とする。
 - Debug署名、テスト広告、Fake外部サービス、詳細診断を使用できる。
-- 本番商品を購入できず、本番広告を表示しない。
+- 本番広告を表示しない。
 
 ### 3.2 Release
 
 - Application IDは`com.mochisofts.mata`、表示名は`MATA`とする。
 - Debuggable無効、R8有効、resource shrink有効、Baseline Profile適用とする。
-- 本番用AdMob ID、Billing商品、法的URLを必須値として検証する。
+- 本番用AdMob IDと法的URLを必須値として検証する。
 - テスト用Activity、Fake、障害注入、開発URL、テスト広告IDを成果物へ含めない。
 
 ## 4. ビルド成果物
@@ -60,8 +60,8 @@
 - ルートcomponentは`application`、groupは`com.mochisofts`、nameは`MATA`、versionはReleaseの`versionName`とする。
 - ランダムなserial numberを含めず、SBOMのUTC timestampはReleaseメタデータの`buildTimestamp`と一致させる。
 - ReleaseメタデータへSBOMの相対パス、バイト数およびSHA-256を記録し、AAB等と同じCI artifactへ保存する。
-- 自動検査ではCycloneDX形式、ルートcomponent、依存関係グラフ、およびBilling、GMA Next-Gen SDK、UMPの存在を確認する。
-- SBOMには依存ライブラリ情報だけを記録し、署名秘密、広告IDの値、購入トークン、ユーザーデータまたはローカルパスを含めない。
+- 自動検査ではCycloneDX形式、ルートcomponent、依存関係グラフ、およびGMA Next-Gen SDKとUMPの存在を確認する。
+- SBOMには依存ライブラリ情報だけを記録し、署名秘密、広告IDの値、ユーザーデータまたはローカルパスを含めない。
 
 ## 5. 署名
 

@@ -1,7 +1,7 @@
 # MATA アプリ全体仕様
 
 - 文書状態: 初版
-- 最終更新日: 2026-09-01
+- 最終更新日: 2026-09-02
 
 ## 1. 概要
 
@@ -283,7 +283,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - 表示: 完了済みTODOの表示状態、テーマ
 - 通知: Androidの通知権限と正確なアラームの状態
 - データ管理: アーカイブ済みTODO、手動バックアップ、復元
-- 広告: 広告削除購入と購入状況の復元
+- 広告: 広告表示の説明とプライバシー設定
 - アプリ情報: アプリ名、バージョン、ライセンス、プライバシーポリシー、利用規約
 
 - 通常の設定は項目ごとに自動保存し、画面全体の保存ボタンを設けない。
@@ -304,7 +304,7 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 - ユーザー操作による手動バックアップと復元に対応する。
 - バックアップはZIPベースの独自形式とし、拡張子を`.mata-backup`とする。
 - バックアップにはTODO、通知設定、カテゴリ、設定、履歴、形式バージョン、作成情報を含める。
-- 広告削除購入状態、祝日キャッシュ、一時画面状態、未保存下書きは含めない。
+- UMPの同意状態、祝日キャッシュ、一時画面状態、未保存下書きは含めない。
 - Storage Access Frameworkを使用し、ストレージ全体への権限を要求しない。
 - バックアップと復元はデータ全体を一度にメモリへ読み込まず、ストリーミングで処理する。
 - 復元前に形式、ハッシュ、値、参照関係、互換性を検証する。
@@ -318,18 +318,13 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 ## 15. 収益化
 
 - 基本機能は広告付きで無料提供する。
-- Google Playの買い切り購入によって広告を削除できるようにする。
-- 無料版と有料版を別アプリとして公開せず、単一のMATAアプリ内で非消費型商品`remove_ads`を販売する。
-- 広告削除商品の商品IDは`remove_ads`、初期の日本向け基本価格は500円とする。
-- 表示価格はGoogle Playから取得したローカライズ済み価格を使用する。
-- 購入状態はGoogle Playを正とし、バックアップへ含めない。
-- オフライン時は最後に確認済みの購入状態を保持する。
-- 購入完了後は広告を即時非表示にし、払い戻しまたは購入取り消しを確認した場合は広告付きへ戻す。
-- 購入後に機能差は設けず、広告の有無のみを変更する。
+- 有料アプリ、アプリ内商品、サブスクリプション、寄付および広告削除機能を提供しない。
+- Google Play Billingを組み込まず、購入または復元の導線を設けない。
 - 広告にはGoogle AdMobの固定バナー、同意管理にはGoogle User Messaging Platformを使用する。
-- 広告はTODO一覧画面だけに表示する。
+- 広告はTODO一覧、カテゴリ別TODO一覧、ウィジェット操作専用画面だけに表示する。
+- 広告への同意を拒否した場合や広告を取得できない場合も、基本機能を制限しない。
 
-商品、購入状態、購入承認、復元、広告表示条件、同意管理、プライバシーおよび公開判定の詳細は[収益化仕様](functional-specs/monetization-specs/README.md)で定義する。
+広告表示条件、同意管理、プライバシーおよび公開判定の詳細は[収益化仕様](functional-specs/monetization-specs/README.md)で定義する。
 
 ## 16. 対象外
 
@@ -352,13 +347,12 @@ TODOを編集した場合、変更内容は現在表示中のTODOにも即時反
 
 - プライバシーポリシーは`https://mochisofts.com/mata/privacy`で公開する。
 - 利用規約は`https://mochisofts.com/mata/terms`で公開する。
-- 特定商取引法に基づく表記は`https://mochisofts.com/mata/commercial-transactions`で公開する。
 - 外部送信に関する公表は`https://mochisofts.com/mata/external-transmission`で公開する。
 - アプリ提供者はMochisofts（個人運営）、Google Playおよび法的文書の連絡先は`com.mochisofts@gmail.com`とする。
 - Google PlayのデベロッパーWebサイトは`https://mochisofts.com/`とし、GitHub Pagesを利用した認証不要の静的サイトとして公開する。
-- 購入のキャンセルと払い戻しはGoogle Playの方針および適用法令に従い、不具合等の問い合わせを上記連絡先で受け付ける。払い戻しまたは購入取消を確認した場合の権利状態は収益化仕様に従う。
+- 初期公開ではMATAから有料の商品またはサービスを販売しないため、特定商取引法に基づく表記ページは公開対象としない。有料機能を追加する場合は公開前に要否を再確認する。
 - 法的文書の原稿、公開ブロッカーおよび変更管理は[法的文書仕様](non-functional-specs/legal-specs/README.md)に従う。
 - 公開前に法的URLの実在、Data safety、権限、SDK、署名、テストトラック、段階公開を[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)で確認する。
 - Google PlayおよびAndroidの要件は公開候補ごとに現行内容を確認し、固定した過去要件だけを根拠に公開しない。
 
-Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](functional-specs/domain-specs/README.md)、祝日連携は[祝日情報連携仕様](functional-specs/holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](functional-specs/backup-specs/README.md)、広告と課金は[収益化仕様](functional-specs/monetization-specs/README.md)、法的文書は[法的文書仕様](non-functional-specs/legal-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)で確定済みとする。
+Android SDK、アプリケーションID、技術構成は[開発ガイドライン](development-guidelines.md)、データベースは[ドメイン仕様](functional-specs/domain-specs/README.md)、祝日連携は[祝日情報連携仕様](functional-specs/holiday-specs/README.md)、バックアップ形式は[手動バックアップ仕様](functional-specs/backup-specs/README.md)、広告は[収益化仕様](functional-specs/monetization-specs/README.md)、法的文書は[法的文書仕様](non-functional-specs/legal-specs/README.md)、アプリアイコンとテーマは[MATAデザインシステム仕様](non-functional-specs/design-system-specs/README.md)、大画面とマルチウィンドウは[画面サイズ・適応レイアウト仕様](non-functional-specs/adaptive-layout-specs/README.md)で確定済みとする。

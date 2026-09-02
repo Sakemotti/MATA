@@ -11,7 +11,6 @@ import com.mochisofts.mata.data.widget.WidgetPreviewPublisher
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
-import com.mochisofts.mata.domain.repository.EntitlementRepository
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +37,6 @@ class MataApplication : Application() {
     @Inject lateinit var categoryRepository: CategoryRepository
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var clock: Clock
-    @Inject lateinit var entitlementRepository: EntitlementRepository
     @Inject lateinit var startupCoordinator: StartupCoordinator
     @Inject @ApplicationCoroutineScope lateinit var applicationScope: CoroutineScope
 
@@ -53,7 +51,6 @@ class MataApplication : Application() {
             runCatching { widgetUpdater.ensureScheduledIfWidgetsExist() }
             supervisorScope {
                 launch { runCatching { widgetPreviewPublisher.publishIfNeeded() } }
-                launch { runCatching { entitlementRepository.start() } }
                 launch { runCatching { observeWidgetInvalidations() } }
                 launch { runCatching { runPostStartupReconciliation() } }
             }
