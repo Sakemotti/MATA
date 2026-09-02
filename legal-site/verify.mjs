@@ -8,6 +8,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const siteRoot = dirname(fileURLToPath(import.meta.url));
+const argumentsSet = new Set(process.argv.slice(2));
+const releaseMode = argumentsSet.has("--release");
 const errors = [];
 const requiredPages = [
   "index.html",
@@ -26,6 +28,11 @@ const requiredUrls = [
   "https://mochisofts.com/",
   ...requiredRoutes.map((route) => `https://mochisofts.com${route}`),
 ];
+
+if ([...argumentsSet].some((argument) => argument !== "--release")) {
+  console.error("Usage: node legal-site/verify.mjs [--release]");
+  process.exit(2);
+}
 
 function collectHtmlFiles(directory) {
   return readdirSync(directory).flatMap((name) => {
@@ -52,8 +59,17 @@ for (const relativePath of requiredPages) {
   }
 }
 
-if (existsSync(join(siteRoot, "app-ads.txt"))) {
-  errors.push("app-ads.txt must not be published before the AdMob publisher ID is set.");
+const appAdsPath = join(siteRoot, "app-ads.txt");
+if (existsSync(appAdsPath)) {
+  const appAds = readFileSync(appAdsPath, "utf8");
+  if (appAds.includes("REPLACE_WITH_ADMOB_PUBLISHER_ID")) {
+    errors.push("app-ads.txt contains the placeholder AdMob publisher ID.");
+  }
+  if (!/^google\.com, pub-\d{16}, DIRECT, f08c47fec0942fa0\s*$/m.test(appAds)) {
+    errors.push("app-ads.txt does not contain a valid direct AdMob publisher record.");
+  }
+} else if (releaseMode) {
+  errors.push("app-ads.txt is required for release verification.");
 }
 
 for (const file of collectHtmlFiles(siteRoot)) {
@@ -119,9 +135,42 @@ for (const relativePath of requiredPages.slice(1)) {
   }
 }
 
+if (releaseMode) {
+  const cnamePath = join(siteRoot, "CNAME");
+  if (!existsSync(cnamePath)) {
+    errors.push("CNAME is required for release verification.");
+  } else {
+    const cname = readFileSync(cnamePath, "utf8").trim();
+    if (cname !== "mochisofts.com") {
+      errors.push("CNAME must contain only mochisofts.com for release verification.");
+    }
+  }
+
+  const robotsPath = join(siteRoot, "robots.txt");
+  if (!existsSync(robotsPath)) {
+    errors.push("robots.txt is required for release verification.");
+  } else {
+    const robots = readFileSync(robotsPath, "utf8");
+    if (/^Disallow:\s*\/\s*$/im.test(robots)) {
+      errors.push("robots.txt blocks the entire site.");
+    }
+  }
+
+  for (const file of collectHtmlFiles(siteRoot)) {
+    const relativePath = file.slice(siteRoot.length + 1).replaceAll("\\", "/");
+    const html = readFileSync(file, "utf8");
+    if (/name="robots"[^>]*content="[^"]*noindex/i.test(html)) {
+      errors.push(`${relativePath}: noindex must not remain for release verification.`);
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error(errors.join("\n"));
   process.exitCode = 1;
 } else {
-  console.log(`Verified ${requiredPages.length} legal pages and ${requiredUrls.length} sitemap URLs.`);
+  const mode = releaseMode ? "release" : "draft";
+  console.log(
+    `Verified ${requiredPages.length} legal pages and ${requiredUrls.length} sitemap URLs (${mode}).`,
+  );
 }
