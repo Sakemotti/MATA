@@ -27,7 +27,7 @@ Google Play Consoleへ登録する日本語の掲載文と画像を、Fastlane S
 - 7インチタブレット4枚: metadata/android/ja-JP/images/sevenInchScreenshots
 - 10インチタブレット4枚: metadata/android/ja-JP/images/tenInchScreenshots
 
-ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。512pxストアアイコンは提供済みの高解像度画像を`icon.png`へ配置しています。ランチャー用画像からの単純拡大で置き換えないでください。
+ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。512pxストアアイコンは`icon.png`、1,024×500pxフィーチャーグラフィックは`featureGraphic.png`へ配置しています。ストアアイコンをランチャー用画像からの単純拡大で置き換えないでください。
 
 ## 公開候補の検証
 
