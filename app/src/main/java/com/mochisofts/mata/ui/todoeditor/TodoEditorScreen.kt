@@ -50,6 +50,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -334,8 +335,20 @@ fun TodoEditorScreen(
 
     dateField?.let { target ->
         val selectedDate = if (target == DatePickerTarget.START) state.startDate else state.endDate ?: state.startDate
+        val selectableDates = remember(target, state.isNew, state.today) {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    if (target != DatePickerTarget.START || !state.isNew) return true
+                    val date = Instant.ofEpochMilli(utcTimeMillis)
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDate()
+                    return !date.isBefore(state.today)
+                }
+            }
+        }
         val pickerState = rememberDatePickerState(
             initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            selectableDates = selectableDates,
         )
         DatePickerDialog(
             onDismissRequest = { dateField = null },
