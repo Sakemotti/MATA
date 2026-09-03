@@ -122,6 +122,7 @@ data class TodoEditorUiState(
         get() = !isLoading && !isSaving && title.trim().isNotEmpty() && title.trim().length <= 100 &&
             description.length <= 1000 && recurrenceRule.isValid() &&
             notificationErrors.isEmpty() &&
+            (!isNew || !startDate.isBefore(today)) &&
             (recurrenceType == RecurrenceType.ONCE || endDate == null || !endDate.isBefore(startDate))
 }
 
@@ -166,7 +167,22 @@ class TodoEditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             settingsRepository.dayEndHour.collect { endHour ->
-                _uiState.update { state -> refreshDerived(state.copy(dayEndHour = endHour)) }
+                _uiState.update { state ->
+                    val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), endHour)
+                    val usesInitialStartDate = state.isNew && !state.isDirty &&
+                        state.startDate == state.today
+                    refreshDerived(
+                        state.copy(
+                            dayEndHour = endHour,
+                            today = currentLogicalDate,
+                            startDate = if (usesInitialStartDate) {
+                                currentLogicalDate
+                            } else {
+                                state.startDate
+                            },
+                        ),
+                    )
+                }
             }
         }
         viewModelScope.launch {
