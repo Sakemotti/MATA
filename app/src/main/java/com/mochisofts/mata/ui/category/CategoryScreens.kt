@@ -32,7 +32,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
@@ -552,19 +551,6 @@ private fun CategoryListContent(
         modifier = modifier.mataPageKeyScroll(listState),
         state = listState,
     ) {
-        item(key = "uncategorized") {
-            ListItem(
-                leadingContent = { Icon(Icons.Outlined.Block, contentDescription = null) },
-                headlineContent = { Text(stringResource(R.string.label_uncategorized)) },
-                supportingContent = {
-                    Column {
-                        Text(stringResource(R.string.category_default_end_time))
-                        Text(stringResource(R.string.category_use_common_setting))
-                    }
-                },
-            )
-            HorizontalDivider()
-        }
         if (state.categories.isEmpty()) {
             item(key = "empty") {
                 Column(

@@ -375,8 +375,6 @@
     <!-- Category management and editor -->
     <string name="category_management_title">カテゴリ管理</string>
     <string name="action_add_category">カテゴリを追加</string>
-    <string name="category_default_end_time">一日の終了 0:00</string>
-    <string name="category_use_common_setting">設定画面の共通値を使用</string>
     <string name="category_empty_message">カテゴリを追加してTODOを整理しましょう</string>
     <string name="category_reorder_handle">%1$sを並べ替え</string>
     <string name="category_move_up">上へ移動</string>
