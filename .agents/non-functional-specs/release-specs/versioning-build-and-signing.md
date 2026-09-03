@@ -92,7 +92,15 @@
 - 署名秘密が設定されているのに`MATA_REQUIRE_UPLOAD_SIGNING=true`がない場合は、意図しない署名を防ぐためビルドを失敗させる。
 - `MATA_EXPECTED_UPLOAD_CERT_SHA256`は秘密ではないが、本番署名時に必須とし、実際のAAB署名者証明書と完全一致させる。
 
-### 5.2 本番署名ビルド
+### 5.2 Upload Key識別情報
+
+- 作成日: 2026-09-03
+- alias: `mata-upload`
+- 証明書SHA-256: `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D`
+- keystoreの保存先と秘密値は本リポジトリへ記録しない。
+- ローカルで生成した署名済みAABの署名者証明書が上記SHA-256と一致することを確認済みとする。Google Playへの登録後は、Play Consoleに表示されるUpload Key証明書とも再照合する。
+
+### 5.3 本番署名ビルド
 
 本番公開候補では、非秘密値`MATA_REQUIRE_UPLOAD_SIGNING=true`も設定し、Configuration Cacheを無効化して次を実行する。
 
@@ -109,6 +117,7 @@
 - Gradle Wrapper、JDK、AGP、Kotlin、依存関係バージョンを固定する。
 - 動的依存を禁止し、Dependency VerificationとロックをCIで強制する。
 - CIは毎回クリーン環境からビルドする。
+- Releaseのビルド日時はGradle実行ごとに1回だけ確定し、ReleaseメタデータとSBOMで同じ値を使用する。
 - ビルドスクリプトからネットワーク上の任意スクリプトを直接実行しない。
 - 生成されたライセンス一覧とCycloneDX SBOMをRelease前に差分確認し、追加・更新・削除されたSDKをData safety、権限および外部送信公表と照合する。
 - AABアップロード前にSHA-256を記録し、検証済みファイルと一致することを確認する。
