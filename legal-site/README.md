@@ -29,11 +29,11 @@ DNS設定値は変更される可能性があるため、このリポジトリ�
 
 ## app-ads.txt
 
-`app-ads.txt.example`は公開用ではありません。AdMobでMATAのパブリッシャーIDを取得した後、
-`pub-REPLACE_WITH_ADMOB_PUBLISHER_ID`を正式な値へ置換し、ファイル名を`app-ads.txt`に変更します。
-置換前のテンプレートを`app-ads.txt`として公開しないでください。
+`app-ads.txt`には、AdMobで確認済みのMATAの正式なパブリッシャーIDを設定しています。
+`app-ads.txt.example`は新しいパブリッシャーIDへ移行する場合のテンプレートであり、公開用ではありません。
+公開リポジトリへは`app-ads.txt`をコピーし、置換前のテンプレートを`app-ads.txt`として公開しないでください。
 
-公開後はAdMobのapp-ads.txtステータスが承認済みになることを確認します。
+Google Playの一般公開後にAdMobとストア掲載情報をリンクし、app-ads.txtステータスが承認済みになることを確認します。
 
 ## ローカル検証
 
