@@ -112,10 +112,10 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 
 ## 8. 初回公開前ブロッカー
 
-- [ ] Google Play個人デベロッパーアカウントの本人確認、連絡先メールおよび電話番号の確認を完了した。
+- [x] Google Play個人デベロッパーアカウントの本人確認、連絡先メールおよび電話番号の確認を完了した。
 - [ ] Play Consoleに表示される本番アクセス要件を確認し、必要なテスト要件を満たした。
 - [ ] `mochisofts.com`でプライバシーポリシー等3文書と`app-ads.txt`を公開した。
-- [ ] AdMobの正式なApp ID、バナー広告ユニットID、Publisher IDおよびUMPメッセージを設定した。
+- [x] AdMobの正式なApp ID、バナー広告ユニットID、Publisher IDおよびUMPメッセージを設定した。
 - [ ] 512pxストアアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット各4枚の画像を作成した。
 - [ ] Data safety、Advertising ID、Ads、Target audience、Content rating、Financial features、Health apps等の全カードを送信した。
 - [ ] アプリ内商品が未登録で、アプリとストア掲載に購入導線がないことを確認した。
