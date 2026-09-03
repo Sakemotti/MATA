@@ -27,7 +27,17 @@ Google Play Consoleへ登録する日本語の掲載文と画像を、Fastlane S
 - 7インチタブレット4枚: metadata/android/ja-JP/images/sevenInchScreenshots
 - 10インチタブレット4枚: metadata/android/ja-JP/images/tenInchScreenshots
 
-ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。512pxストアアイコンは`icon.png`、1,024×500pxフィーチャーグラフィックは`featureGraphic.png`へ配置しています。ストアアイコンをランチャー用画像からの単純拡大で置き換えないでください。
+ファイル名、寸法、順序、代替テキストは play-store-manifest.json を正とします。512pxストアアイコンは`icon.png`、1,024×500pxフィーチャーグラフィックは`featureGraphic.png`へ配置しています。スマートフォン6枚、7インチタブレット4枚、10インチタブレット4枚のスクリーンショットも配置済みです。ストアアイコンをランチャー用画像からの単純拡大で置き換えないでください。
+
+## スクリーンショットの再取得
+
+掲載用データはbenchmarkビルドだけに含まれるBroadcastReceiverから投入できます。既存データとの混在を避けるため、アプリを新規インストールしてから次の順序で実行します。
+
+    ./gradlew :app:assembleBenchmark
+    adb install -t app/build/outputs/apk/benchmark/app-benchmark.apk
+    adb shell am broadcast -a com.mochisofts.mata.action.SEED_STORE_SCREENSHOT_DATA
+
+投入されるデータは架空のTODO・カテゴリ・履歴です。撮影後は画像をこのリポジトリへ保存する前に、端末の時刻、通知、他アプリの情報などが写り込んでいないことを目視確認します。
 
 ## 公開候補の検証
 
