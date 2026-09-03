@@ -348,6 +348,7 @@ def releaseGitCommit = providers.environmentVariable("GITHUB_SHA")
     )
 def releaseBuildTimestamp = providers.gradleProperty("MATA_BUILD_TIMESTAMP")
     .orElse(providers.provider { java.time.Instant.now().toString() })
+    .get()
 def releaseSbom = layout.buildDirectory.file("outputs/sbom/release-sbom.cdx.json")
 def releaseBundle = layout.buildDirectory.file("outputs/bundle/release/app-release.aab")
 def releaseMapping = layout.buildDirectory.file("outputs/mapping/release/mapping.txt")
@@ -382,7 +383,7 @@ tasks.named("cyclonedxDirectBom", org.cyclonedx.gradle.CyclonedxDirectTask) {
     doLast {
         def timestamp
         try {
-            timestamp = java.time.Instant.parse(releaseBuildTimestamp.get()).toString()
+            timestamp = java.time.Instant.parse(releaseBuildTimestamp).toString()
         } catch (Exception ignored) {
             throw new GradleException("MATA_BUILD_TIMESTAMP must be an ISO-8601 UTC timestamp.")
         }
@@ -421,7 +422,7 @@ tasks.register("generateReleaseArtifactMetadata") {
         }
         def timestamp
         try {
-            timestamp = java.time.Instant.parse(releaseBuildTimestamp.get()).toString()
+            timestamp = java.time.Instant.parse(releaseBuildTimestamp).toString()
         } catch (Exception ignored) {
             throw new GradleException("MATA_BUILD_TIMESTAMP must be an ISO-8601 UTC timestamp.")
         }

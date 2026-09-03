@@ -189,6 +189,6 @@
 | REL-022 | P0 | MANUAL | 法的サイト変更を本リポジトリの`main`へマージ後、`legal-site`を公開リポジトリへコピーしてGitHub Pagesの完了を待つ | 正本側commitと公開側commitが記録され、変更した公開URLとアプリ設定画面からのプライバシーポリシー・利用規約遷移が同じ最新版を表示する | 未実施 | 法的サイト変更ごとに実施 |
 | REL-023 | P0 | AUTO | Upload Key秘密値の一部だけを設定する、相対・リポジトリ内keystoreを指定する、署名必須フラグを省略する、または署名時にConfiguration Cacheを有効化する | 設定段階で失敗し、秘密値をログ・JSON・成果物へ出力しない | 未実施 | |
 | REL-024 | P0 | AUTO/MANUAL | リポジトリ外の検証用keystore、4秘密値、署名必須フラグおよび期待する証明書SHA-256を設定してRelease成果物を生成する | AABの単一署名者が期待値と一致し、メタデータが`method=uploadKey`、証明書1件、`publishable=true`になる。不一致時は失敗する | 未実施 | 本番では登録済みUpload Keyで再実施 |
-| REL-025 | P0 | AUTO | 固定した`MATA_BUILD_TIMESTAMP`で`generateReleaseArtifactMetadata`を実行する | CycloneDX 1.6 JSONが生成され、ルートがMATA 1.0.0、日時がReleaseメタデータと一致し、Release runtimeのcomponent・依存グラフ・GMA Next-Gen SDK・UMPを含む。ローカルパス、署名入力、広告ID値は含まない | 未実施 | CIで実施 |
+| REL-025 | P0 | AUTO | 固定した`MATA_BUILD_TIMESTAMP`と未指定時の既定日時で、それぞれ`generateReleaseArtifactMetadata`を実行する | CycloneDX 1.6 JSONが生成され、ルートがMATA 1.0.0、日時が同一実行のReleaseメタデータと一致し、Release runtimeのcomponent・依存グラフ・GMA Next-Gen SDK・UMPを含む。ローカルパス、署名入力、広告ID値は含まない | 未実施 | CIで実施 |
 | REL-026 | P0 | AUTO | SBOMの内容、パス、容量、SHA-256、必須componentまたは依存グラフを欠損・改変して`verify-readiness.mjs --artifacts`を実行する | Release成果物検査が失敗し、改変した検査対象を特定できる | 未実施 | |
 | REL-027 | P0 | AUTO | Pull Requestまたは手動CIで`connectedDebugAndroidTest`を実行する | GitHub-hosted runner上のAPI 30・x86_64エミュレータでRoom Migration、RepositoryおよびCompose UIのinstrumented testがすべて成功する。`main`へのマージ後pushでは二重実行せず、Pull Requestを経由しない公開候補は手動CIの成功を要求する | 未実施 | CIで実施 |
