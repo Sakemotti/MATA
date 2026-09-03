@@ -8,6 +8,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.mochisofts.mata.action.SEED_BENCHMARK_DATA" />
+                <action android:name="com.mochisofts.mata.action.SEED_STORE_SCREENSHOT_DATA" />
             </intent-filter>
         </receiver>
     </application>
