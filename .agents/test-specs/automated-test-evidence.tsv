@@ -44,3 +44,5 @@ STA-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchive
 AT-016	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at016_restoreKeepsEveryNDaysAnchoredToOriginalStartDate	:app:connectedDebugAndroidTest
 AT-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at017_restoreDoesNotBackfillArchivedExecutionsOrPeriodResults	:app:connectedDebugAndroidTest
 AT-028	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at028_archivePermanentDeleteRemovesAllRelatedRowsAndScheduledNotifications	:app:connectedDebugAndroidTest
+ST-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st010_weekStartChangeImmediatelyRecalculatesCurrentCountPeriod	:app:connectedDebugAndroidTest
+ST-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st011_settingChangesNeverRewriteFinalizedHistoryOrPeriodSnapshot	:app:connectedDebugAndroidTest
