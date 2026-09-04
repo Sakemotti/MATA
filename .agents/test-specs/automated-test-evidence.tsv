@@ -78,3 +78,9 @@ ST-D02	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCovera
 ST-D03	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std03_archiveContainsRequiredMetadataSettingsOrderingAndHistory	:app:connectedDebugAndroidTest
 ST-D05	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std05_largeBackupAndRestoreStreamAcrossMultipleDatabasePages	:app:connectedDebugAndroidTest
 ST-D07	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsBuildConfigurationSpecCoverageTest.kt	std07_debugBuildUsesExplicitApprovedLegalUrlsAndIdentity	:app:connectedDebugAndroidTest
+DAT-001	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	dat001_roomAndDataStoreSurviveCompleteStorageReopen	:app:connectedDebugAndroidTest
+DAT-003	app/src/androidTest/java/com/mochisofts/mata/data/holiday/HolidayHttpRequestPrivacyTest.kt	dat003_holidayRequestContainsOnlyFixedProtocolMetadata	:app:connectedDebugAndroidTest
+DAT-005	app/src/androidTest/java/com/mochisofts/mata/security/DataProtectionConfigurationSpecCoverageTest.kt	dat005_installedApplicationRejectsEveryOsAutomaticBackupPath	:app:connectedDebugAndroidTest
+DAT-006	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	dat006_failedCategoryReferenceUpdateRollsBackDefinitionAndHistory	:app:connectedDebugAndroidTest
+DAT-007	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	dat007_largeJoinedSearchAndAggregationLoadStableBoundedPages	:app:connectedDebugAndroidTest
+DAT-008	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	dat008_replayingTheSameRestoreNeverDuplicatesProtectedRecords	:app:connectedDebugAndroidTest

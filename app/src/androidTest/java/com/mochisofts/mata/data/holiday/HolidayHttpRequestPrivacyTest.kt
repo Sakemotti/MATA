@@ -1,11 +1,14 @@
 package com.mochisofts.mata.data.holiday
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.net.URL
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class HolidayHttpRequestPrivacyTest {
     @Test
     fun dat003_holidayRequestContainsOnlyFixedProtocolMetadata() {
