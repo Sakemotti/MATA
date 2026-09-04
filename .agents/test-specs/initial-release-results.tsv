@@ -57,18 +57,18 @@ RPT-028	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleT
 RPT-029	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt029・testDebugUnitTest成功
 RPT-030	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt030・CI run 33925067768成功
 RPT-031	P0	app-core.md	未実施	-	-	-	-	-
-STA-001	P0	app-core.md	未実施	-	-	-	-	-
+STA-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta001・CI run 33927632450成功
 STA-002	P0	app-core.md	未実施	-	-	-	-	-
 STA-003	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#sta003・connectedDebugAndroidTest成功
-STA-004	P0	app-core.md	未実施	-	-	-	-	-
+STA-004	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta004・CI run 33927632450成功
 STA-005	P0	app-core.md	未実施	-	-	-	-	-
-STA-006	P0	app-core.md	未実施	-	-	-	-	-
-STA-007	P0	app-core.md	未実施	-	-	-	-	-
-STA-008	P0	app-core.md	未実施	-	-	-	-	-
-STA-009	P0	app-core.md	未実施	-	-	-	-	-
+STA-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta006・CI run 33927632450成功
+STA-007	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta007・CI run 33927632450成功
+STA-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta008・CI run 33927632450成功
+STA-009	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta009・CI run 33927632450成功
 STA-010	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#sta010・connectedDebugAndroidTest成功
 STA-011	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#sta011・connectedDebugAndroidTest成功
-STA-012	P0	app-core.md	未実施	-	-	-	-	-
+STA-012	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta012・CI run 33927632450成功
 NTF-001	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions Ubuntu	NotificationTestSpecCoverageTest#ntf001・CI run 33859640271成功
 NTF-002	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf002・CI run 33859640271成功
 NTF-003	P0	app-core.md	未実施	-	-	-	-	-
