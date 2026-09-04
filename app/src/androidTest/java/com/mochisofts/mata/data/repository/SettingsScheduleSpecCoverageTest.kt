@@ -237,6 +237,7 @@ class SettingsScheduleSpecCoverageTest {
         assertEquals(nextDate.plusDays(1), emissions.receive())
         collection.cancelAndJoin()
         emissions.close()
+        Unit
     }
 
     @Test
