@@ -29,7 +29,10 @@ import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.NotificationValidationError
 import com.mochisofts.mata.domain.model.nextNotificationCandidate
+import com.mochisofts.mata.domain.model.logicalDate
+import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
@@ -55,31 +58,148 @@ class AndroidNotificationScheduler @Inject constructor(
     private val holidayRepository: HolidayRepository,
     private val alarmGateway: AlarmGateway,
     private val presenter: NotificationPresenter,
+    private val systemStateProvider: NotificationSystemStateProvider,
     private val clock: Clock,
 ) : NotificationScheduler {
     private val mutex = Mutex()
 
     override val notificationCount: Flow<Int> = notificationDao.observeCount()
 
-    override fun systemState(): NotificationSystemState {
-        val manager = context.getSystemService(NotificationManager::class.java)
-        val runtimePermissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED
-        val channelEnabled = manager.getNotificationChannel(NotificationChannels.CHANNEL_ID)
-            ?.importance != NotificationManager.IMPORTANCE_NONE
-        val canPost = runtimePermissionGranted &&
-            NotificationManagerCompat.from(context).areNotificationsEnabled() && channelEnabled
-        val exactRelevant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-        val canExact = !exactRelevant || context.getSystemService(AlarmManager::class.java)
-            .canScheduleExactAlarms()
-        return NotificationSystemState(
-            canPostNotifications = canPost,
-            runtimePermissionRelevant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
-            runtimePermissionGranted = runtimePermissionGranted,
-            exactAlarmRelevant = exactRelevant,
-            canScheduleExactAlarms = canExact,
-        )
+    override fun systemState(): NotificationSystemState = systemStateProvider.current()
+
+    private suspend fun reconcileTodoLocked(
+        todoId: String,
+        holidays: Set<LocalDate>,
+        mode: AlarmReconciliationMode,
+    ) {
+        val entity = todoDao.findById(todoId)
+        val notificationEntities = notificationDao.findForTodo(todoId)
+        if (entity == null || entity.archivedAt != null || notificationEntities.isEmpty()) {
+            cancelTodoLocked(todoId)
+            return
+        }
+
+        val todo = entity.toDomain()
+        val endHour = settingsRepository.dayEndHour.first()
+        val weekStart = settingsRepository.weekStart.first()
+        val executions = executionDao.findForTodo(todoId)
+        val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }
+            .mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
+        val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
+        presenter.dismissReminders(todoId, actedDates)
+        val now = ZonedDateTime.now(clock)
+        val invalidDate = maxOf(todo.startDate, logicalDate(now, endHour))
+        val plans = notificationEntities.mapNotNull { setting ->
+            val notification = setting.toDomain()
+            val errors = validateNotifications(listOf(notification), todo.dueMinutes, endHour)
+            if (errors.isNotEmpty()) {
+                NotificationPlan.Invalid(
+                    notification = notification,
+                    logicalDate = invalidDate,
+                    failureCode = validationFailureCode(errors),
+                )
+            } else {
+                nextNotificationCandidate(
+                    todo = todo,
+                    notification = notification,
+                    endHour = endHour,
+                    now = now,
+                    weekStart = weekStart,
+                    completedDates = completedDates,
+                    actedDates = actedDates,
+                    holidays = holidays,
+                )?.let(NotificationPlan::Candidate)
+            }
+        }
+        val desiredKeys = plans.mapTo(mutableSetOf()) { plan ->
+            candidateKey(todo, plan.notification, plan.logicalDate)
+        }
+        val existing = scheduledDao.findForTodo(todoId)
+        existing.filterNot { it.candidateKey in desiredKeys }.forEach { stale ->
+            alarmGateway.cancel(stale.candidateKey, stale.requestCode)
+            scheduledDao.delete(stale.candidateKey)
+        }
+
+        val state = systemState()
+        var nextRequestCode = scheduledDao.maxRequestCode() + 1
+        plans.forEach { plan ->
+            val key = candidateKey(todo, plan.notification, plan.logicalDate)
+            val previous = existing.firstOrNull { it.candidateKey == key }
+            val requestCode = previous?.requestCode ?: nextRequestCode++
+            val createdAt = previous?.createdAt ?: clock.millis()
+            val desiredMode = if (state.canScheduleExactAlarms) MODE_EXACT else MODE_INEXACT
+            if (plan is NotificationPlan.Invalid) {
+                previous
+                    ?.takeIf { it.state == STATE_PENDING || it.state == STATE_SCHEDULED }
+                    ?.let { alarmGateway.cancel(it.candidateKey, it.requestCode) }
+                scheduledDao.upsert(
+                    ScheduledNotificationEntity(
+                        candidateKey = key,
+                        todoId = todoId,
+                        notificationSettingId = plan.notification.id,
+                        logicalDate = plan.logicalDate.toString(),
+                        definitionRevision = todo.definitionRevision,
+                        triggerAt = 0,
+                        requestCode = requestCode,
+                        schedulingMode = desiredMode,
+                        state = STATE_SUPPRESSED,
+                        failureCode = plan.failureCode,
+                        createdAt = createdAt,
+                        updatedAt = clock.millis(),
+                    ),
+                )
+                return@forEach
+            }
+
+            val candidate = (plan as NotificationPlan.Candidate).value
+            if (canReuseScheduledAlarm(
+                    previous = previous,
+                    desiredTriggerAt = candidate.triggerAt.toInstant().toEpochMilli(),
+                    desiredMode = desiredMode,
+                    canPostNotifications = state.canPostNotifications,
+                    reconciliationMode = mode,
+                )
+            ) {
+                return@forEach
+            }
+            previous?.let { alarmGateway.cancel(it.candidateKey, it.requestCode) }
+            var record = ScheduledNotificationEntity(
+                candidateKey = key,
+                todoId = todoId,
+                notificationSettingId = candidate.notification.id,
+                logicalDate = candidate.logicalDate.toString(),
+                definitionRevision = todo.definitionRevision,
+                triggerAt = candidate.triggerAt.toInstant().toEpochMilli(),
+                requestCode = requestCode,
+                schedulingMode = desiredMode,
+                state = if (state.canPostNotifications) STATE_PENDING else STATE_SUPPRESSED,
+                failureCode = if (state.canPostNotifications) null else FAILURE_PERMISSION,
+                createdAt = createdAt,
+                updatedAt = clock.millis(),
+            )
+            scheduledDao.upsert(record)
+            if (!state.canPostNotifications) return@forEach
+
+            record = try {
+                alarmGateway.schedule(key, requestCode, record.triggerAt, state.canScheduleExactAlarms)
+                record.copy(state = STATE_SCHEDULED, failureCode = null, updatedAt = clock.millis())
+            } catch (_: SecurityException) {
+                try {
+                    alarmGateway.schedule(key, requestCode, record.triggerAt, exact = false)
+                    record.copy(
+                        schedulingMode = MODE_INEXACT,
+                        state = STATE_SCHEDULED,
+                        failureCode = null,
+                        updatedAt = clock.millis(),
+                    )
+                } catch (_: RuntimeException) {
+                    record.copy(state = STATE_FAILED, failureCode = FAILURE_ALARM, updatedAt = clock.millis())
+                }
+            } catch (_: RuntimeException) {
+                record.copy(state = STATE_FAILED, failureCode = FAILURE_ALARM, updatedAt = clock.millis())
+            }
+            scheduledDao.upsert(record)
+        }
     }
 
     override suspend fun reconcileTodo(todoId: String) {
@@ -115,107 +235,6 @@ class AndroidNotificationScheduler @Inject constructor(
         mutex.withLock {
             cancelTodoLocked(todoId)
             updateReconcileReceiver()
-        }
-    }
-
-    private suspend fun reconcileTodoLocked(
-        todoId: String,
-        holidays: Set<LocalDate>,
-        mode: AlarmReconciliationMode,
-    ) {
-        val entity = todoDao.findById(todoId)
-        val notificationEntities = notificationDao.findForTodo(todoId)
-        if (entity == null || entity.archivedAt != null || notificationEntities.isEmpty()) {
-            cancelTodoLocked(todoId)
-            return
-        }
-
-        val todo = entity.toDomain()
-        val endHour = settingsRepository.dayEndHour.first()
-        val weekStart = settingsRepository.weekStart.first()
-        val executions = executionDao.findForTodo(todoId)
-        val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }
-            .mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
-        val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
-        presenter.dismissReminders(todoId, actedDates)
-        val now = ZonedDateTime.now(clock)
-        val desiredCandidates = notificationEntities.mapNotNull { setting ->
-            nextNotificationCandidate(
-                todo = todo,
-                notification = setting.toDomain(),
-                endHour = endHour,
-                now = now,
-                weekStart = weekStart,
-                completedDates = completedDates,
-                actedDates = actedDates,
-                holidays = holidays,
-            )
-        }
-        val desiredKeys = desiredCandidates.mapTo(mutableSetOf()) { candidate ->
-            candidateKey(todo, candidate.notification, candidate.logicalDate)
-        }
-        val existing = scheduledDao.findForTodo(todoId)
-        existing.filterNot { it.candidateKey in desiredKeys }.forEach { stale ->
-            alarmGateway.cancel(stale.candidateKey, stale.requestCode)
-            scheduledDao.delete(stale.candidateKey)
-        }
-
-        val state = systemState()
-        var nextRequestCode = scheduledDao.maxRequestCode() + 1
-        desiredCandidates.forEach { candidate ->
-            val key = candidateKey(todo, candidate.notification, candidate.logicalDate)
-            val previous = existing.firstOrNull { it.candidateKey == key }
-            val exact = state.canScheduleExactAlarms
-            val desiredMode = if (exact) MODE_EXACT else MODE_INEXACT
-            if (canReuseScheduledAlarm(
-                    previous = previous,
-                    desiredTriggerAt = candidate.triggerAt.toInstant().toEpochMilli(),
-                    desiredMode = desiredMode,
-                    canPostNotifications = state.canPostNotifications,
-                    reconciliationMode = mode,
-                )
-            ) {
-                return@forEach
-            }
-            previous?.let { alarmGateway.cancel(it.candidateKey, it.requestCode) }
-            val requestCode = previous?.requestCode ?: nextRequestCode++
-            val createdAt = previous?.createdAt ?: clock.millis()
-            var record = ScheduledNotificationEntity(
-                candidateKey = key,
-                todoId = todoId,
-                notificationSettingId = candidate.notification.id,
-                logicalDate = candidate.logicalDate.toString(),
-                definitionRevision = todo.definitionRevision,
-                triggerAt = candidate.triggerAt.toInstant().toEpochMilli(),
-                requestCode = requestCode,
-                schedulingMode = desiredMode,
-                state = if (state.canPostNotifications) STATE_PENDING else STATE_SUPPRESSED,
-                failureCode = if (state.canPostNotifications) null else FAILURE_PERMISSION,
-                createdAt = createdAt,
-                updatedAt = clock.millis(),
-            )
-            scheduledDao.upsert(record)
-            if (!state.canPostNotifications) return@forEach
-
-            record = try {
-                alarmGateway.schedule(key, requestCode, record.triggerAt, exact)
-                record.copy(state = STATE_SCHEDULED, failureCode = null, updatedAt = clock.millis())
-            } catch (_: SecurityException) {
-                try {
-                    alarmGateway.schedule(key, requestCode, record.triggerAt, exact = false)
-                    record.copy(
-                        schedulingMode = MODE_INEXACT,
-                        state = STATE_SCHEDULED,
-                        failureCode = null,
-                        updatedAt = clock.millis(),
-                    )
-                } catch (_: RuntimeException) {
-                    record.copy(state = STATE_FAILED, failureCode = FAILURE_ALARM, updatedAt = clock.millis())
-                }
-            } catch (_: RuntimeException) {
-                record.copy(state = STATE_FAILED, failureCode = FAILURE_ALARM, updatedAt = clock.millis())
-            }
-            scheduledDao.upsert(record)
         }
     }
 
@@ -268,6 +287,9 @@ class AndroidNotificationScheduler @Inject constructor(
         unit = NotificationUnit.fromStoredValue(unit),
     )
 
+    private fun validationFailureCode(errors: Set<NotificationValidationError>): String =
+        "$FAILURE_INVALID_PREFIX${errors.minBy { it.ordinal }.name.lowercase()}"
+
     companion object {
         const val MODE_EXACT = "exact"
         const val MODE_INEXACT = "inexact"
@@ -277,6 +299,53 @@ class AndroidNotificationScheduler @Inject constructor(
         const val STATE_FAILED = "failed"
         const val FAILURE_PERMISSION = "notification_permission"
         const val FAILURE_ALARM = "alarm_registration"
+        const val FAILURE_INVALID_PREFIX = "invalid_notification_"
+    }
+}
+
+internal sealed interface NotificationPlan {
+    val notification: TodoNotification
+    val logicalDate: LocalDate
+
+    data class Candidate(val value: com.mochisofts.mata.domain.model.NotificationCandidate) : NotificationPlan {
+        override val notification: TodoNotification = value.notification
+        override val logicalDate: LocalDate = value.logicalDate
+    }
+
+    data class Invalid(
+        override val notification: TodoNotification,
+        override val logicalDate: LocalDate,
+        val failureCode: String,
+    ) : NotificationPlan
+}
+
+interface NotificationSystemStateProvider {
+    fun current(): NotificationSystemState
+}
+
+@Singleton
+class AndroidNotificationSystemStateProvider @Inject constructor(
+    @ApplicationContext private val context: Context,
+) : NotificationSystemStateProvider {
+    override fun current(): NotificationSystemState {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val runtimePermissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        val channelEnabled = manager.getNotificationChannel(NotificationChannels.CHANNEL_ID)
+            ?.importance != NotificationManager.IMPORTANCE_NONE
+        val canPost = runtimePermissionGranted &&
+            NotificationManagerCompat.from(context).areNotificationsEnabled() && channelEnabled
+        val exactRelevant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val canExact = !exactRelevant || context.getSystemService(AlarmManager::class.java)
+            .canScheduleExactAlarms()
+        return NotificationSystemState(
+            canPostNotifications = canPost,
+            runtimePermissionRelevant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+            runtimePermissionGranted = runtimePermissionGranted,
+            exactAlarmRelevant = exactRelevant,
+            canScheduleExactAlarms = canExact,
+        )
     }
 }
 

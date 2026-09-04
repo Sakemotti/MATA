@@ -44,7 +44,7 @@ Closed testingではこのAABを再アップロードせず、Internal testing�
 - `main`は`origin/main`と一致し、作業ツリーはクリーンだった。
 - 未解決のGitHub IssueおよびPull Requestは0件だった。
 - 対象commitを含む[Android CI](https://github.com/Sakemotti/MATA/actions/runs/33751810640)は成功した。
-- 対象commit直前のPull Request CIではAPI 30エミュレータ上のinstrumented test 34件が成功し、対象commitのmain CIでは単体テスト、Lint、Debug・Release・Benchmark成果物生成とリリース成果物検査が成功した。
+- PR #124のCIではAPI 30エミュレータ上のinstrumented test 47件が成功し、単体テスト、Lint、Debug・Release・Benchmark成果物生成とリリース成果物検査も成功した。
 - Release成果物メタデータはAAB、R8 mapping、ライセンス、最終ManifestおよびCycloneDX SBOMの存在、容量、SHA-256を記録し、Upload Key証明書と一致した。
 - リリース進行状況だけを記録する文書変更は、既にGoogle Playへ登録したAABを無効化しない。アプリ実装、ビルド設定、掲載成果物または法的本文を変更した場合は、versionCodeを上げた最終公開候補を新しいcommitから生成して全ゲートを再実行する。
 

@@ -35,6 +35,8 @@ import com.mochisofts.mata.data.holiday.UrlConnectionHolidayHttpClient
 import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
 import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
+import com.mochisofts.mata.data.notification.AndroidNotificationSystemStateProvider
+import com.mochisofts.mata.data.notification.NotificationSystemStateProvider
 import com.mochisofts.mata.data.ads.GoogleAdsConsentRepository
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
@@ -84,6 +86,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindNotificationScheduler(scheduler: AndroidNotificationScheduler): NotificationScheduler
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationSystemStateProvider(
+        provider: AndroidNotificationSystemStateProvider,
+    ): NotificationSystemStateProvider
 
     @Binds
     @Singleton
