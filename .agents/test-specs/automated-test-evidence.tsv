@@ -17,6 +17,8 @@ RPT-001	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCover
 RPT-002	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt002_dailyOccursOnEveryActiveDate	:app:testDebugUnitTest
 RPT-003	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt003_weekdaysExcludeSaturdayAndSunday	:app:testDebugUnitTest
 RPT-004	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt004_weekdaysExcludeEveryHolidayKindProvidedByHolidayData	:app:testDebugUnitTest
+RPT-005	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt005_failedHolidayFetchUsesProvisionalWeekdaysAndDoesNotBlockSave	:app:connectedDebugAndroidTest
+RPT-006	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt006_holidayRecoveryRecalculatesOpenDatesButPreservesPastExecution	:app:connectedDebugAndroidTest
 RPT-007	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt007_selectedWeekdayIsNotExcludedOnlyBecauseItIsAHoliday	:app:testDebugUnitTest
 RPT-008	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt008_selectedWeekdaysOccurAcrossMultipleWeeks	:app:testDebugUnitTest
 RPT-009	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt009_monthlyDayFifteenOccursInEveryMonth	:app:testDebugUnitTest
@@ -29,10 +31,18 @@ RPT-015	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCover
 RPT-016	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt016_weeklyCountUsesConfiguredWeekStart	:app:testDebugUnitTest
 RPT-017	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt017_weeklyCountClampsFirstAndLastPartialPeriods	:app:testDebugUnitTest
 RPT-018	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt018_monthlyCountClampsFirstAndLastPartialMonths	:app:testDebugUnitTest
+RPT-019	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt019_differentOperationsCannotCompleteCountTodoTwiceOnSameLogicalDate	:app:connectedDebugAndroidTest
+RPT-020	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt020_unachievedCountTodoAppearsDailyWithoutPendingHistoryRows	:app:connectedDebugAndroidTest
+RPT-021	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt021_achievedCountTodoStaysHiddenUntilNextPeriod	:app:connectedDebugAndroidTest
+RPT-022	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt022_skipHidesOnlyTodayAndDoesNotReduceRequiredCount	:app:connectedDebugAndroidTest
+RPT-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt023_completionsOnDifferentDaysCreateSeparateHistoryRows	:app:connectedDebugAndroidTest
 RPT-024	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryReconcilerTest.kt	rpt024_countPeriodRecordsBothAchievedAndUnachievedResults	:app:connectedDebugAndroidTest
+RPT-025	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt025_undoInCurrentPeriodRecalculatesProgressAndTodayVisibility	:app:connectedDebugAndroidTest
+RPT-026	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt026_weekStartChangeRecalculatesCurrentPeriodAndKeepsFinalizedPeriod	:app:connectedDebugAndroidTest
 RPT-027	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt027_invalidCountAndIntervalRangesAreRejected	:app:testDebugUnitTest
 RPT-028	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt028_multipleNthWeekdaysSkipMissingFifthWithoutDuplicates	:app:testDebugUnitTest
 RPT-029	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt029_multiWeekPeriodsRemainAdjacentWhenWeekStartOrStartDateChanges	:app:testDebugUnitTest
+RPT-030	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	rpt030_twoWeekWeekendHolidayRuleIsSharedByListNotificationAndWidget	:app:connectedDebugAndroidTest
 NTF-001	app/src/test/java/com/mochisofts/mata/domain/model/NotificationTestSpecCoverageTest.kt	ntf001_beforeAtAndAfterUseMinuteHourAndCalendarDayOffsets	:app:testDebugUnitTest
 NTF-002	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	ntf002_multipleNotificationsAreRegisteredOnceInChronologicalOrder	:app:connectedDebugAndroidTest
 NTF-006	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	ntf006_permissionDenialKeepsSettingsAndSuppressesAlarmRegistration	:app:connectedDebugAndroidTest
