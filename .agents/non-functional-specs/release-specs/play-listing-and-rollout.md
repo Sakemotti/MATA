@@ -1,7 +1,7 @@
 # Google Play掲載・公開仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-09-02
+- 最終更新日: 2026-09-04
 - 親仕様: [リリース・配布運用仕様](README.md)
 
 ## 1. ストア掲載
@@ -47,7 +47,7 @@
 - SDK Indexの警告、Target API、広告SDKの期限を公開候補ごとに確認する。
 - Play Integrity APIは初回公開では導入しない。
 - 各App contentカード、Advertising ID、権限説明および初回公開ブロッカーは[Google Play Console申請シート](play-console-submission.md)に従う。
-- Data safetyは[Google Play Data safety申告案](data-safety-declaration.md)をRelease AABと実通信で検証してから送信する。
+- Data safetyは[Google Play Data safety申告](data-safety-declaration.md)をConsoleへ回答済みとし、Release AABと実通信で最終検証してから本番公開する。
 
 ## 5. テストトラック
 

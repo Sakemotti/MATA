@@ -1,7 +1,7 @@
 # Google Playストア掲載文・画像仕様
 
-- 文書状態: 掲載文成果物化済み・画像未作成
-- 最終更新日: 2026-09-01
+- 文書状態: 掲載文・画像成果物化済み・Play Console登録済み
+- 最終更新日: 2026-09-04
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連文書: [Google Play Console申請シート](play-console-submission.md)
 - 関連成果物: [Google Play掲載成果物](../../../fastlane/README.md)
@@ -128,7 +128,11 @@ Androidランチャー用の密度別画像を単純に拡大せず、提供済�
 - 広告枠を含む画面では本番広告や第三者の商標を撮影せず、Googleのテスト広告を使用するか広告読込み前のRelease相当レイアウトを撮影する。
 - 画像はぼかし、引き伸ばし、切れ、透明背景がなく、同じリリースのUIと一致することを確認する。
 
-## 10. 公式資料
+## 10. Play Console登録状況
+
+2026年9月4日時点で、本書を正とする掲載文、ストアアイコン、フィーチャーグラフィック、スマートフォン6枚、7インチタブレット4枚および10インチタブレット4枚をPlay Consoleへ登録済みとする。一般公開前に公開候補のUIとの差分とGoogle Play上のプレビューを再確認する。
+
+## 11. 公式資料
 
 - [Create and set up your app](https://support.google.com/googleplay/android-developer/answer/9859152)
 - [Add preview assets to showcase your app](https://support.google.com/googleplay/android-developer/answer/9866151)

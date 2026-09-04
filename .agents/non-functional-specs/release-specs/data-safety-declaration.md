@@ -1,13 +1,13 @@
-# Google Play Data safety申告案
+# Google Play Data safety申告
 
-- 文書状態: 申請案・Release実機通信確認前
-- 最終更新日: 2026-09-02
+- 文書状態: Console回答済み・Release実機通信確認前
+- 最終更新日: 2026-09-04
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連仕様: [データ・プライバシー仕様](../security-privacy-specs/data-and-privacy.md)、[外部送信に関する公表](../legal-specs/external-transmission.md)
 
 ## 1. 適用範囲
 
-本書は、2026年9月2日時点のRelease構成をGoogle Play ConsoleのData safetyフォームへ転記するための申請案である。MATA本体だけでなく、GMA Next-Gen SDK 1.4.0、UMP 4.0.0およびHolidays JPへの通信を含む。GMA Next-Gen SDKの公式開示は2026年8月31日更新版を確認した。
+本書は、2026年9月2日時点のRelease構成をGoogle Play ConsoleのData safetyフォームへ転記するための申告内容である。MATA本体だけでなく、GMA Next-Gen SDK 1.4.0、UMP 4.0.0およびHolidays JPへの通信を含む。GMA Next-Gen SDKの公式開示は2026年8月31日更新版を確認した。2026年9月4日時点でConsoleへの回答と全App contentカードの完了をユーザーが確認済みとする。
 
 Google Playの定義では、アプリまたはSDKが端末外へ送信するデータを「収集」に含める。最終回答はRelease AABのマージ済みManifest、Google Play SDK Index、各SDKの最新開示および実機通信検査を基に確定し、本書との差異があれば公開前に本書、プライバシーポリシーおよび外部送信に関する公表を同時更新する。
 
