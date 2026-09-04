@@ -396,6 +396,41 @@ class BackupSpecCoverageTest {
     }
 
     @Test
+    fun dat008_replayingTheSameRestoreNeverDuplicatesProtectedRecords() = runBlocking {
+        seedAllUserData()
+        val expected = backedUpState()
+        val archive = writeArchive()
+        val stagedData = temporaryDataFile()
+        val summary = reader.extractAndValidate(ByteArrayInputStream(archive), stagedData)
+        val scheduler = BackupTestNotificationScheduler()
+        val restorer = backupRestorer(scheduler)
+
+        repeat(2) {
+            val rollbackArchive = absentTemporaryFile(BACKUP_EXTENSION)
+            val rollbackData = absentTemporaryFile(".json")
+            restorer.restore(
+                dataFile = stagedData,
+                summary = summary,
+                rollbackArchive = rollbackArchive,
+                rollbackData = rollbackData,
+                onProgress = { _, _ -> },
+            )
+
+            assertEquals(expected, backedUpState())
+            assertEquals(listOf(OPERATION_ID), database.todoExecutionDao().findForTodo(TODO_ID).map {
+                it.operationId
+            })
+            assertEquals(1, database.todoNotificationDao().findForTodo(TODO_ID).size)
+            assertEquals(1, database.periodResultDao().findForTodo(TODO_ID).size)
+            assertFalse(rollbackArchive.exists())
+            assertFalse(rollbackData.exists())
+        }
+
+        assertEquals(2, scheduler.reconcileAllCount)
+        assertTrue(stagedData.delete())
+    }
+
+    @Test
     fun st029_nextLaunchRecoversInterruptedBackupAndRestoreToConsistentState() = runBlocking {
         seedAllUserData()
         val expected = backedUpState()
