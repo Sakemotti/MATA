@@ -5,6 +5,7 @@ DAY-003	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCover
 DAY-006	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day006_dueTimeBeforeBoundaryFallsOnNextCalendarDay	:app:testDebugUnitTest
 DAY-007	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day007_dueTimeAtOrAfterBoundaryStaysOnLogicalDate	:app:testDebugUnitTest
 DAY-008	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day008_missingDueTimeUsesLogicalDayEnd	:app:testDebugUnitTest
+DAY-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryReconcilerTest.kt	day010_dailyTodoCreatesMissedRecordsOnlyForFinishedLogicalDays	:app:connectedDebugAndroidTest
 DAY-013	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day013_monthYearAndLeapDayBoundariesRemainContinuous	:app:testDebugUnitTest
 RPT-001	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt001_onceOccursOnlyOnItsExecutionDate	:app:testDebugUnitTest
 RPT-002	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt002_dailyOccursOnEveryActiveDate	:app:testDebugUnitTest
@@ -22,6 +23,13 @@ RPT-015	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCover
 RPT-016	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt016_weeklyCountUsesConfiguredWeekStart	:app:testDebugUnitTest
 RPT-017	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt017_weeklyCountClampsFirstAndLastPartialPeriods	:app:testDebugUnitTest
 RPT-018	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt018_monthlyCountClampsFirstAndLastPartialMonths	:app:testDebugUnitTest
+RPT-024	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryReconcilerTest.kt	rpt024_countPeriodRecordsBothAchievedAndUnachievedResults	:app:connectedDebugAndroidTest
 RPT-027	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt027_invalidCountAndIntervalRangesAreRejected	:app:testDebugUnitTest
 RPT-028	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt028_multipleNthWeekdaysSkipMissingFifthWithoutDuplicates	:app:testDebugUnitTest
 RPT-029	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt029_multiWeekPeriodsRemainAdjacentWhenWeekStartOrStartDateChanges	:app:testDebugUnitTest
+STA-003	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	sta003_currentActionsCanBeUndoneButPastActionsCannot	:app:connectedDebugAndroidTest
+STA-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	sta010_restoreReconcilesCurrentAndFutureFromOriginalDefinition	:app:connectedDebugAndroidTest
+STA-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	sta011_todoRepositoryDeleteRemovesDefinitionHistoryStateAndNotifications	:app:connectedDebugAndroidTest
+AT-016	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at016_restoreKeepsEveryNDaysAnchoredToOriginalStartDate	:app:connectedDebugAndroidTest
+AT-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at017_restoreDoesNotBackfillArchivedExecutionsOrPeriodResults	:app:connectedDebugAndroidTest
+AT-028	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at028_archivePermanentDeleteRemovesAllRelatedRowsAndScheduledNotifications	:app:connectedDebugAndroidTest

@@ -21,7 +21,10 @@ import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.ArchivedHistoryItem
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoNotification
+import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.nextOccurrences
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.Clock
@@ -30,11 +33,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -45,6 +47,7 @@ import org.junit.runner.RunWith
 class RoomArchiveRepositoryTest {
     private lateinit var database: MataDatabase
     private lateinit var repository: RoomArchiveRepository
+    private lateinit var todoRepository: RoomTodoRepository
     private lateinit var scheduler: ArchiveTestNotificationScheduler
     private val settings = ArchiveTestSettingsRepository()
     private val clock = Clock.fixed(
@@ -60,7 +63,7 @@ class RoomArchiveRepositoryTest {
             .allowMainThreadQueries()
             .build()
         scheduler = ArchiveTestNotificationScheduler(database)
-        val todoRepository = RoomTodoRepository(
+        todoRepository = RoomTodoRepository(
             database = database,
             todoDao = database.todoDao(),
             categoryDao = database.categoryDao(),
@@ -107,30 +110,80 @@ class RoomArchiveRepositoryTest {
     }
 
     @Test
-    fun restore_keepsHistoryAndSkipsArchivedPeriodBackfill() = runBlocking {
+    fun sta010_restoreReconcilesCurrentAndFutureFromOriginalDefinition() = runBlocking {
         val values = insertArchivedTodo()
 
         repository.restore(values.todo.id).getOrThrow()
 
         assertNull(database.todoDao().findById(values.todo.id)?.archivedAt)
-        assertEquals(1, database.todoExecutionDao().findForTodo(values.todo.id).size)
-        assertEquals(1, database.periodResultDao().findForTodo(values.todo.id).size)
-        assertNotNull(database.todoRuntimeStateDao().find(values.todo.id))
+        val restored = requireNotNull(todoRepository.getTodo(values.todo.id))
+        assertEquals(LocalDate.parse(values.todo.startDate), restored.startDate)
+        assertEquals(listOf(date, date.plusDays(1)), restored.nextOccurrences(date, limit = 2))
+        val occurrence = todoRepository.observeOccurrences(date).first().single()
+        assertEquals(date, occurrence.logicalDate)
+        assertEquals(TodoState.PENDING, occurrence.state)
         assertTrue(scheduler.reconciledTodoIds.contains(values.todo.id))
     }
 
     @Test
-    fun permanentDelete_removesAllRelatedRowsAndScheduledNotifications() = runBlocking {
+    fun at016_restoreKeepsEveryNDaysAnchoredToOriginalStartDate() = runBlocking {
+        val start = date.minusDays(20)
+        val values = insertArchivedTodo(
+            rule = RecurrenceRule(RecurrenceType.EVERY_N_DAYS, intervalDays = 3),
+            startDate = start,
+        )
+
+        repository.restore(values.todo.id).getOrThrow()
+
+        val restored = requireNotNull(todoRepository.getTodo(values.todo.id))
+        assertEquals(start, restored.startDate)
+        assertEquals(
+            listOf(date.plusDays(1), date.plusDays(4)),
+            restored.nextOccurrences(date, limit = 2),
+        )
+    }
+
+    @Test
+    fun at017_restoreDoesNotBackfillArchivedExecutionsOrPeriodResults() = runBlocking {
+        val values = insertArchivedTodo()
+        val executionIds = database.todoExecutionDao().findForTodo(values.todo.id).map { it.id }
+        val periodIds = database.periodResultDao().findForTodo(values.todo.id).map { it.id }
+
+        repository.restore(values.todo.id).getOrThrow()
+
+        assertEquals(
+            executionIds,
+            database.todoExecutionDao().findForTodo(values.todo.id).map { it.id },
+        )
+        assertEquals(
+            periodIds,
+            database.periodResultDao().findForTodo(values.todo.id).map { it.id },
+        )
+        assertEquals(1, database.todoExecutionDao().findForTodo(values.todo.id).size)
+        assertEquals(1, database.periodResultDao().findForTodo(values.todo.id).size)
+        assertEquals(
+            date.minusDays(1).toString(),
+            database.todoRuntimeStateDao().find(values.todo.id)?.lastFinalizedLogicalDate,
+        )
+    }
+
+    @Test
+    fun sta011_todoRepositoryDeleteRemovesDefinitionHistoryStateAndNotifications() = runBlocking {
+        val values = insertArchivedTodo()
+
+        todoRepository.deleteTodo(values.todo.id).getOrThrow()
+
+        assertAllRelatedRowsDeleted(values.todo.id)
+        assertTrue(scheduler.cancelledTodoIds.contains(values.todo.id))
+    }
+
+    @Test
+    fun at028_archivePermanentDeleteRemovesAllRelatedRowsAndScheduledNotifications() = runBlocking {
         val values = insertArchivedTodo()
 
         repository.deletePermanently(values.todo.id).getOrThrow()
 
-        assertNull(database.todoDao().findById(values.todo.id))
-        assertTrue(database.todoExecutionDao().findForTodo(values.todo.id).isEmpty())
-        assertTrue(database.periodResultDao().findForTodo(values.todo.id).isEmpty())
-        assertNull(database.todoRuntimeStateDao().find(values.todo.id))
-        assertTrue(database.todoNotificationDao().findForTodo(values.todo.id).isEmpty())
-        assertTrue(database.scheduledNotificationDao().findForTodo(values.todo.id).isEmpty())
+        assertAllRelatedRowsDeleted(values.todo.id)
         assertTrue(scheduler.cancelledTodoIds.contains(values.todo.id))
     }
 
@@ -160,7 +213,10 @@ class RoomArchiveRepositoryTest {
         assertEquals(values.category.name, migrated.entry.snapshot.categoryName)
     }
 
-    private suspend fun insertArchivedTodo(): TestValues {
+    private suspend fun insertArchivedTodo(
+        rule: RecurrenceRule = RecurrenceRule.daily(),
+        startDate: LocalDate = date.minusDays(20),
+    ): TestValues {
         val category = CategoryEntity(
             id = "category",
             name = "生活",
@@ -172,13 +228,13 @@ class RoomArchiveRepositoryTest {
             createdAt = 1,
         )
         database.categoryDao().upsert(category)
-        val encoded = RecurrenceRuleJson.encode(RecurrenceRule.daily())
+        val encoded = RecurrenceRuleJson.encode(rule)
         val todo = TodoEntity(
             id = "todo",
             title = "検索語を含むTODO",
             description = "説明",
             categoryId = category.id,
-            startDate = date.minusDays(20).toString(),
+            startDate = startDate.toString(),
             endDate = null,
             recurrenceType = encoded.typeCode,
             repeatParamsVersion = encoded.paramsVersion,
@@ -271,6 +327,15 @@ class RoomArchiveRepositoryTest {
             ),
         )
         return TestValues(todo, category)
+    }
+
+    private suspend fun assertAllRelatedRowsDeleted(todoId: String) {
+        assertNull(database.todoDao().findById(todoId))
+        assertTrue(database.todoExecutionDao().findForTodo(todoId).isEmpty())
+        assertTrue(database.periodResultDao().findForTodo(todoId).isEmpty())
+        assertNull(database.todoRuntimeStateDao().find(todoId))
+        assertTrue(database.todoNotificationDao().findForTodo(todoId).isEmpty())
+        assertTrue(database.scheduledNotificationDao().findForTodo(todoId).isEmpty())
     }
 
     private data class TestValues(val todo: TodoEntity, val category: CategoryEntity)

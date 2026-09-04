@@ -8,7 +8,10 @@ const assignmentsPath = resolve(repositoryRoot, '.agents/test-specs/initial-rele
 const resultsPath = resolve(repositoryRoot, '.agents/test-specs/initial-release-results.tsv');
 const evidencePath = resolve(repositoryRoot, '.agents/test-specs/automated-test-evidence.tsv');
 const evidenceHeader = ['id', 'testFile', 'testMethod', 'gradleTask'];
-const expectedTask = ':app:testDebugUnitTest';
+const testSourceTasks = new Map([
+  ['app/src/test/', ':app:testDebugUnitTest'],
+  ['app/src/androidTest/', ':app:connectedDebugAndroidTest'],
+]);
 
 function readTsv(path) {
   const lines = readFileSync(path, 'utf8').replace(/\r\n/g, '\n').trimEnd().split('\n');
@@ -76,20 +79,23 @@ function validate() {
     if (assignment[assignmentColumns.lane] !== 'DEV_AUTO') {
       errors.push(`Line ${lineNumber}: ${id} must be assigned to DEV_AUTO.`);
     }
-    if (!assignment[assignmentColumns.type].split('/').includes('UNIT')) {
-      errors.push(`Line ${lineNumber}: ${id} must include UNIT in its test type.`);
-    }
     if (!testMethod.startsWith(`${normalizedId}_`)) {
       errors.push(`Line ${lineNumber}: ${testMethod} must start with ${normalizedId}_.`);
     }
-    if (gradleTask !== expectedTask) {
-      errors.push(`Line ${lineNumber}: ${id} must use ${expectedTask}.`);
-    }
 
     const absoluteTestFile = resolve(repositoryRoot, testFile);
-    if (!insideRepository(absoluteTestFile) || !testFile.startsWith('app/src/test/') || !testFile.endsWith('.kt')) {
-      errors.push(`Line ${lineNumber}: invalid unit test path ${testFile}.`);
+    const sourceEntry = [...testSourceTasks.entries()].find(([prefix]) => testFile.startsWith(prefix));
+    if (!insideRepository(absoluteTestFile) || sourceEntry === undefined || !testFile.endsWith('.kt')) {
+      errors.push(`Line ${lineNumber}: invalid automated test path ${testFile}.`);
       continue;
+    }
+    const [sourcePrefix, expectedTask] = sourceEntry;
+    const expectedType = sourcePrefix === 'app/src/test/' ? 'UNIT' : 'INT';
+    if (!assignment[assignmentColumns.type].split('/').includes(expectedType)) {
+      errors.push(`Line ${lineNumber}: ${id} must include ${expectedType} in its test type.`);
+    }
+    if (gradleTask !== expectedTask) {
+      errors.push(`Line ${lineNumber}: ${id} must use ${expectedTask}.`);
     }
     if (!existsSync(absoluteTestFile)) {
       errors.push(`Line ${lineNumber}: missing test file ${testFile}.`);
