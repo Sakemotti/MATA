@@ -7,6 +7,7 @@
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
+- テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 
 ## 1. 目的と記録ルール
