@@ -25,13 +25,14 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -214,31 +215,28 @@ class SettingsScheduleSpecCoverageTest {
     fun day014_timePassageWaitsForRefreshOrDateSelectionEvent() = runBlocking {
         val firstDate = LocalDate.of(2026, 8, 11)
         val selection = TodoListDateSelection(firstDate, followsTodayInitially = true)
-        val emissions = mutableListOf<LocalDate>()
-        val collection = launch(start = CoroutineStart.UNDISPATCHED) {
-            selection.requests.collect(emissions::add)
+        val emissions = Channel<LocalDate>(Channel.UNLIMITED)
+        val collection = launch {
+            selection.requests.collect(emissions::send)
         }
 
-        yield()
-        assertEquals(listOf(firstDate), emissions)
+        assertEquals(firstDate, emissions.receive())
 
         // Advancing the clock does not mutate this state: callers explicitly signal a refresh.
         yield()
-        assertEquals(listOf(firstDate), emissions)
+        assertTrue(emissions.tryReceive().isFailure)
 
         selection.refresh(firstDate)
-        yield()
-        assertEquals(listOf(firstDate, firstDate), emissions)
+        assertEquals(firstDate, emissions.receive())
 
         val nextDate = firstDate.plusDays(1)
         selection.refresh(nextDate)
-        yield()
-        assertEquals(listOf(firstDate, firstDate, nextDate), emissions)
+        assertEquals(nextDate, emissions.receive())
 
         selection.select(nextDate.plusDays(1))
-        yield()
-        assertEquals(listOf(firstDate, firstDate, nextDate, nextDate.plusDays(1)), emissions)
+        assertEquals(nextDate.plusDays(1), emissions.receive())
         collection.cancelAndJoin()
+        emissions.close()
     }
 
     @Test
