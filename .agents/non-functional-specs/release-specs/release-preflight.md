@@ -58,3 +58,11 @@ CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ラ
 - Git commit不一致またはハッシュ不一致では成果物を破棄し、クリーンな同一commitから再生成する。
 - Application ID、署名、権限、SDKまたは収集データの差異は公開を停止し、仕様・申告・実装を同時に見直す。
 - 本番公開候補モードの失敗項目は公開ブロッカーとしてリリース記録へ残す。
+
+## 5. 検査ロジックの回帰試験
+
+次のコマンドでRelease成果物の整合性検査自体を回帰試験する。この試験は一時ディレクトリ内の架空の成果物だけを使用し、実際のAABや署名情報を変更しない。
+
+    node --test tools/release/release-artifact-verifier.test.mjs
+
+正常な成果物一式を受理し、SBOMの内容、パス、ファイル有無、容量、SHA-256、必須componentおよび依存関係グラフの欠損・改変を、それぞれ対象名を含む理由で拒否できることを確認する。Pull Requestと`main`のCIではRepository security checksの一部として毎回実行する。
