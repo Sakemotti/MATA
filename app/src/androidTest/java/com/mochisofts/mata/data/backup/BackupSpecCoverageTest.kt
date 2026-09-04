@@ -135,7 +135,7 @@ class BackupSpecCoverageTest {
         assertTrue(progress.zipWithNext().all { (before, after) -> before <= after })
         assertTrue(summary.manifest.dataUncompressedBytes > 0)
         assertEquals(64, summary.manifest.dataSha256.length)
-        extracted.delete()
+        assertTrue(extracted.delete())
     }
 
     @Test
