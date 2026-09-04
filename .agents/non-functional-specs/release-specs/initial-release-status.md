@@ -6,6 +6,7 @@
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
+- Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
 
 ## 1. 記録方針
 

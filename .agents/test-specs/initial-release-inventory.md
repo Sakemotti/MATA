@@ -4,6 +4,7 @@
 - 対象ソースcommit: `e57ababd3b6fb4ad12bf57dada776e9189288dbc`
 - 棚卸し日: 2026-09-04
 - 試験項目書: [MATA 総合動作確認項目書](README.md)
+- Closed testing台帳: [初回Closed testing実施台帳](closed-testing-log.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 
 ## 1. 判定
