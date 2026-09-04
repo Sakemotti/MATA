@@ -28,7 +28,7 @@
 | カテゴリ別TODO一覧 | 7 | 4 | 0 | 11 |
 | 合計 | 233 | 154 | 16 | 403 |
 
-リリース必須のP0/P1は387件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月4日時点では、項目単位の証跡が揃ったP0のリリース検査12件を`合格`、残り391件を`未実施`として登録した。広い範囲をまとめた実機確認だけから個々の項目を一律に`合格`とは扱わない。
+リリース必須のP0/P1は387件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月4日時点では、項目単位の証跡が揃ったP0を35件、P1を3件`合格`、残り365件を`未実施`として登録した。広い範囲をまとめた実機確認だけから個々の項目を一律に`合格`とは扱わない。
 
 ## 3. 自動検査の証跡
 
@@ -44,8 +44,9 @@
 | Upload Key設定ガード | 秘密値の一部設定、相対パス、リポジトリ内ファイル、署名必須フラグなし、Configuration Cache有効化の5異常系を拒否し、例外へ架空の秘密値を含めないことを確認 | 2026-09-04に`:app:verifyUploadSigningGuards`を実行 | `REL-023` |
 | 署名済みAAB | Upload KeyのSHA-256が成果物とPlay Consoleで一致 | [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md) | `REL-024` |
 | Release成果物改変検出 | 正常系1件とSBOMの内容・パス・欠損・容量・SHA-256・必須component・依存グラフの異常系6件が成功 | 2026-09-04に`node --test tools/release/release-artifact-verifier.test.mjs`を実行 | `REL-026` |
+| 論理日・繰り返し計算 | 試験IDを接頭辞に持つ専用JUnitテスト26件が成功し、ID・テストメソッド・実行タスクの1対1対応を機械検証 | 2026-09-04に`:app:testDebugUnitTest --tests com.mochisofts.mata.domain.model.ScheduleTestSpecCoverageTest`と`verify-automated-evidence.mjs`を実行 | `DAY-001`〜`DAY-003`、`DAY-006`〜`DAY-008`、`DAY-013`、`RPT-001`〜`RPT-004`、`RPT-007`〜`RPT-018`、`RPT-027`〜`RPT-029` |
 
-自動テスト名と試験IDは現状1対1で機械的に関連付けられていない。このため、自動テスト成功は対応領域の証跡として利用するが、関連する全項目を自動的に合格扱いにはしない。
+上表の論理日・繰り返し計算26件は[自動試験証跡TSV](automated-test-evidence.tsv)で1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 

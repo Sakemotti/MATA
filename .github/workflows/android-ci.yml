@@ -47,6 +47,12 @@ jobs:
       - name: Verify Release artifact integrity checks
         run: node --test tools/release/release-artifact-verifier.test.mjs
 
+      - name: Verify test specification evidence
+        run: |
+          node tools/test-specs/verify-assignments.mjs
+          node tools/test-specs/verify-results.mjs
+          node tools/test-specs/verify-automated-evidence.mjs
+
   android_verification:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
