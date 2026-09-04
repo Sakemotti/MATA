@@ -30,8 +30,8 @@ RPT-001	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleT
 RPT-002	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt002・testDebugUnitTest成功
 RPT-003	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt003・testDebugUnitTest成功
 RPT-004	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt004・testDebugUnitTest成功
-RPT-005	P0	app-core.md	未実施	-	-	-	-	-
-RPT-006	P0	app-core.md	未実施	-	-	-	-	-
+RPT-005	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt005・CI run 33925067768成功
+RPT-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt006・CI run 33925067768成功
 RPT-007	P1	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt007・testDebugUnitTest成功
 RPT-008	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt008・testDebugUnitTest成功
 RPT-009	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt009・testDebugUnitTest成功
@@ -44,18 +44,18 @@ RPT-015	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleT
 RPT-016	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt016・testDebugUnitTest成功
 RPT-017	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt017・testDebugUnitTest成功
 RPT-018	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt018・testDebugUnitTest成功
-RPT-019	P0	app-core.md	未実施	-	-	-	-	-
-RPT-020	P0	app-core.md	未実施	-	-	-	-	-
-RPT-021	P0	app-core.md	未実施	-	-	-	-	-
-RPT-022	P0	app-core.md	未実施	-	-	-	-	-
-RPT-023	P0	app-core.md	未実施	-	-	-	-	-
+RPT-019	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt019・CI run 33925067768成功
+RPT-020	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt020・CI run 33925067768成功
+RPT-021	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt021・CI run 33925067768成功
+RPT-022	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt022・CI run 33925067768成功
+RPT-023	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt023・CI run 33925067768成功
 RPT-024	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryReconcilerTest#rpt024・connectedDebugAndroidTest成功
-RPT-025	P0	app-core.md	未実施	-	-	-	-	-
-RPT-026	P0	app-core.md	未実施	-	-	-	-	-
+RPT-025	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt025・CI run 33925067768成功
+RPT-026	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt026・CI run 33925067768成功
 RPT-027	P1	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt027・testDebugUnitTest成功
 RPT-028	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt028・testDebugUnitTest成功
 RPT-029	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt029・testDebugUnitTest成功
-RPT-030	P0	app-core.md	未実施	-	-	-	-	-
+RPT-030	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt030・CI run 33925067768成功
 RPT-031	P0	app-core.md	未実施	-	-	-	-	-
 STA-001	P0	app-core.md	未実施	-	-	-	-	-
 STA-002	P0	app-core.md	未実施	-	-	-	-	-

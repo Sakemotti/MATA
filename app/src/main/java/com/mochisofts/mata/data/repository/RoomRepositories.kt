@@ -346,9 +346,6 @@ class RoomTodoRepository @Inject constructor(
             if (completed) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existingExecution = executionDao.find(todoId, logicalDate.toString())
-                if (existingExecution?.let { TodoState.fromStoredValue(it.status) } == TodoState.COMPLETED) {
-                    return@withTransaction
-                }
                 if (existingExecution != null) {
                     throw ValidationException(ValidationError.TODO_ALREADY_ACTED)
                 }
