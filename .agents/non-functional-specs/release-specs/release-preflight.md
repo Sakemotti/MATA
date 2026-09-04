@@ -1,7 +1,7 @@
 # Release事前検査仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-09-02
+- 最終更新日: 2026-09-04
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連文書: [リリースチェックリスト](release-checklist.md)、[バージョン・ビルド・署名仕様](versioning-build-and-signing.md)
 
@@ -66,3 +66,11 @@ CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ラ
     node --test tools/release/release-artifact-verifier.test.mjs
 
 正常な成果物一式を受理し、SBOMの内容、パス、ファイル有無、容量、SHA-256、必須componentおよび依存関係グラフの欠損・改変を、それぞれ対象名を含む理由で拒否できることを確認する。Pull Requestと`main`のCIではRepository security checksの一部として毎回実行する。
+
+Upload Key設定の安全側失敗は次のコマンドで確認する。
+
+    ./gradlew :app:verifyUploadSigningGuards --no-configuration-cache --no-daemon
+
+秘密値の一部設定、相対パス、リポジトリ内ファイル、署名必須フラグなし、および署名時のConfiguration Cache有効化をすべて拒否し、例外へ架空の秘密値を含めないことを検証する。Release verificationのCIでも同じタスクを実行する。
+
+ローカルのGradleユーザープロパティへUpload Keyの4秘密値を保存している環境では、通常の署名ビルドと同様に`-PMATA_REQUIRE_UPLOAD_SIGNING=true`を付ける。これは実際のローカル設定に対する安全確認であり、タスク内の異常系には架空の値だけを使用する。
