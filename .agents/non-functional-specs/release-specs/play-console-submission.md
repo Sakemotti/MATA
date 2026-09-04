@@ -120,7 +120,7 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 - [x] Data safety、Advertising ID、Ads、Target audience、Content rating、Financial features、Health apps等の全カードを送信し、未完了カードがないことを確認した。
 - [x] アプリ内商品が未登録で、アプリとストア掲載に購入導線がないことを確認した。
 - [x] Upload Keyをリポジトリ外に作成し、ローカルの署名済みAABと証明書SHA-256が一致することを確認した。
-- [ ] Upload Keyのkeystoreと復旧情報を暗号化した安全な場所へバックアップした。
+- [x] Upload Keyのkeystoreと復旧情報を暗号化した安全な場所へバックアップした。
 - [x] Play App Signingを設定し、Play ConsoleのUpload Key証明書SHA-256と仕様書の値が一致することを確認した。
 - [ ] アカウント条件に該当する場合、12人・14日間のClosed testとProduction access申請を完了した。
 - [ ] Release AAB、Pre-launch report、全P0/P1試験、SDK Indexおよびポリシー状態が合格した。

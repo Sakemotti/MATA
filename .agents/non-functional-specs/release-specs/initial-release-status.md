@@ -60,6 +60,7 @@ Closed testingではこのAABを再アップロードせず、Internal testing�
 | ストア掲載文・画像・連絡先・Webサイト | 登録済み | CONSOLE / USER |
 | Internal testing | `1.0.0 (1)`を公開し、参加URL経由でインストール済み | CONSOLE / DEVICE |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
+| Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
 | TODO等の主要機能 | 現状問題なし | DEVICE / USER |
 | 通知・ウィジェット | 現状問題なし | DEVICE / USER |
@@ -91,7 +92,6 @@ Closed testingではこのAABを再アップロードせず、Internal testing�
 - Closed testingの公開、テスターのオプトインおよび14日間の継続参加
 - テスターの端末・OS・操作範囲・結果・フィードバックの記録
 - API 26、33、36、タブレット、分割画面、最大フォント、ダークテーマおよびTalkBackの不足分確認
-- Upload Keyと復旧情報の暗号化された別保管先へのバックアップ
 - Google PlayのSDK Index、権限申告およびポリシー警告の最終確認
 - 利用規約と外部送信に関する公表について必要な専門家確認
 - Data safety、UMP、SDK、実通信および公開法的文書の最終突合
