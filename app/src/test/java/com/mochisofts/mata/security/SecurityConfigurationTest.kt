@@ -114,6 +114,34 @@ class SecurityConfigurationTest {
         }
     }
 
+    @Test
+    fun dat005_manifestAndExtractionRulesDisableEveryAutomaticBackupPath() {
+        val application = document("src/main/AndroidManifest.xml")
+            .elements("application")
+            .single()
+        assertEquals("false", application.androidAttribute("allowBackup"))
+        assertEquals("false", application.androidAttribute("fullBackupContent"))
+        assertEquals("@xml/data_extraction_rules", application.androidAttribute("dataExtractionRules"))
+
+        val rules = document("src/main/res/xml/data_extraction_rules.xml")
+        val expectedDomains = setOf(
+            "root",
+            "file",
+            "database",
+            "sharedpref",
+            "external",
+            "device_root",
+            "device_file",
+            "device_database",
+            "device_sharedpref",
+        )
+        listOf("cloud-backup", "device-transfer").forEach { sectionName ->
+            val exclusions = rules.elements(sectionName).single().childElements("exclude")
+            assertEquals(expectedDomains, exclusions.map { it.attribute("domain") }.toSet())
+            assertTrue(exclusions.all { it.attribute("path") == "." })
+        }
+    }
+
     private fun document(relativePath: String): Document {
         val file = locate(relativePath)
         val factory = DocumentBuilderFactory.newInstance().apply {

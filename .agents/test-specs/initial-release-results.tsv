@@ -98,14 +98,14 @@ WGT-011	P0	app-core.md	未実施	-	-	-	-	-
 WGT-012	P0	app-core.md	未実施	-	-	-	-	-
 WGT-013	P0	app-core.md	未実施	-	-	-	-	-
 WGT-014	P1	app-core.md	未実施	-	-	-	-	-
-DAT-001	P0	app-core.md	未実施	-	-	-	-	-
+DAT-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat001・CI run 33929968497成功
 DAT-002	P0	app-core.md	未実施	-	-	-	-	-
-DAT-003	P0	app-core.md	未実施	-	-	-	-	-
+DAT-003	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	HolidayHttpRequestPrivacyTest#dat003・CI run 33929968497成功
 DAT-004	P1	app-core.md	未実施	-	-	-	-	-
-DAT-005	P1	app-core.md	未実施	-	-	-	-	-
-DAT-006	P0	app-core.md	未実施	-	-	-	-	-
-DAT-007	P0	app-core.md	未実施	-	-	-	-	-
-DAT-008	P0	app-core.md	未実施	-	-	-	-	-
+DAT-005	P1	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	DataProtectionConfigurationSpecCoverageTest#dat005・CI run 33929968497成功
+DAT-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat006・CI run 33929968497成功
+DAT-007	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat007・CI run 33929968497成功
+DAT-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#dat008・CI run 33929968497成功
 DAT-009	P1	app-core.md	未実施	-	-	-	-	-
 DAT-010	P1	app-core.md	未実施	-	-	-	-	-
 REL-001	P0	app-core.md	合格	2026-09-03	AUTO	1	ローカルJDK 17・GitHub Actions Ubuntu	ローカルJUnit XML 134件成功・main CI https://github.com/Sakemotti/MATA/actions/runs/33751810640

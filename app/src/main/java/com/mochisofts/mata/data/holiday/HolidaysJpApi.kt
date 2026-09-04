@@ -44,6 +44,29 @@ interface HolidayHttpClient {
     suspend fun fetch(validators: HolidayHttpValidators?): HolidayHttpResponse
 }
 
+internal data class HolidayHttpRequest(
+    val target: URL,
+    val method: String,
+    val headers: Map<String, String>,
+    val hasBody: Boolean,
+)
+
+internal fun holidayHttpRequest(
+    target: URL,
+    validators: HolidayHttpValidators?,
+): HolidayHttpRequest = HolidayHttpRequest(
+    target = target,
+    method = "GET",
+    headers = buildMap {
+        put("Accept", "application/json")
+        put("Accept-Encoding", "gzip")
+        put("User-Agent", "MATA")
+        validators?.etag?.let { put("If-None-Match", it) }
+        validators?.lastModified?.let { put("If-Modified-Since", it) }
+    },
+    hasBody = false,
+)
+
 @Singleton
 class UrlConnectionHolidayHttpClient @Inject constructor() : HolidayHttpClient {
     override suspend fun fetch(validators: HolidayHttpValidators?): HolidayHttpResponse =
@@ -55,16 +78,14 @@ class UrlConnectionHolidayHttpClient @Inject constructor() : HolidayHttpClient {
                 if (target.protocol != "https") {
                     throw HolidayDataException(ERROR_INSECURE_REDIRECT)
                 }
-                val connection = (target.openConnection() as HttpURLConnection).apply {
+                val request = holidayHttpRequest(target, validators)
+                val connection = (request.target.openConnection() as HttpURLConnection).apply {
                     instanceFollowRedirects = false
-                    requestMethod = "GET"
+                    requestMethod = request.method
+                    doOutput = request.hasBody
                     connectTimeout = CONNECT_TIMEOUT_MILLIS
                     readTimeout = READ_TIMEOUT_MILLIS
-                    setRequestProperty("Accept", "application/json")
-                    setRequestProperty("Accept-Encoding", "gzip")
-                    setRequestProperty("User-Agent", "MATA")
-                    validators?.etag?.let { setRequestProperty("If-None-Match", it) }
-                    validators?.lastModified?.let { setRequestProperty("If-Modified-Since", it) }
+                    request.headers.forEach(::setRequestProperty)
                 }
                 try {
                     val status = connection.responseCode
