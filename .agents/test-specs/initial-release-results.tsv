@@ -364,10 +364,10 @@ ST-022	P1	settings.md	未実施	-	-	-	-	-
 ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
 ST-024	P0	settings.md	未実施	-	-	-	-	-
 ST-025	P0	settings.md	未実施	-	-	-	-	-
-ST-026	P0	settings.md	未実施	-	-	-	-	-
+ST-026	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st026・CI run 33871324075成功
 ST-027	P0	settings.md	未実施	-	-	-	-	-
 ST-028	P0	settings.md	未実施	-	-	-	-	-
-ST-029	P0	settings.md	未実施	-	-	-	-	-
+ST-029	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st029・CI run 33871324075成功
 ST-030	P0	settings.md	未実施	-	-	-	-	-
 ST-031	P0	settings.md	未実施	-	-	-	-	-
 ST-032	P1	settings.md	未実施	-	-	-	-	-
@@ -388,7 +388,7 @@ ST-D01	P2	settings.md	未実施	-	-	-	-	-
 ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std02・CI run 33867709111成功
 ST-D03	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std03・CI run 33867709111成功
 ST-D04	P0	settings.md	未実施	-	-	-	-	-
-ST-D05	P0	settings.md	未実施	-	-	-	-	-
+ST-D05	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std05・CI run 33871324075成功
 ST-D06	P0	settings.md	未実施	-	-	-	-	-
 ST-D07	P0	settings.md	未実施	-	-	-	-	-
 CTL-001	P0	category-todo-list.md	未実施	-	-	-	-	-
