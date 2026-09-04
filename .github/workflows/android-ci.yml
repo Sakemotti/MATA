@@ -162,7 +162,7 @@ jobs:
             app/build/outputs/sbom/release-sbom.cdx.json
             app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
           if-no-files-found: error
-          retention-days: 365
+          retention-days: 90
 
   verify:
     name: Test, lint, and build
