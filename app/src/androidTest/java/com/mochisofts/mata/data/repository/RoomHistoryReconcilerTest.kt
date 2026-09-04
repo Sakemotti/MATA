@@ -62,7 +62,7 @@ class RoomHistoryReconcilerTest {
     }
 
     @Test
-    fun dailyTodo_createsMissedRecordsOnlyForFinishedLogicalDays() = runBlocking {
+    fun day010_dailyTodoCreatesMissedRecordsOnlyForFinishedLogicalDays() = runBlocking {
         database.todoDao().upsert(todo("daily", RecurrenceRule.daily(), "2026-08-08"))
 
         val result = reconciler.reconcile()
@@ -78,39 +78,48 @@ class RoomHistoryReconcilerTest {
     }
 
     @Test
-    fun weeklyCountTodo_finalizesOnePeriodUsingCompletedExecutions() = runBlocking {
-        database.todoDao().upsert(
-            todo(
-                id = "weekly",
-                rule = RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 3),
-                startDate = "2026-08-03",
-            ),
-        )
-        listOf("2026-08-03", "2026-08-05").forEachIndexed { index, date ->
-            database.todoExecutionDao().insert(
-                TodoExecutionEntity(
-                    id = "execution-$index",
-                    operationId = "operation-$index",
-                    todoId = "weekly",
-                    logicalDate = date,
-                    status = "completed",
-                    actedAt = index.toLong(),
-                    finalizedAt = index.toLong(),
-                    definitionRevision = 1,
-                    snapshotVersion = 1,
-                    snapshotJson = "{}",
+    fun rpt024_countPeriodRecordsBothAchievedAndUnachievedResults() = runBlocking {
+        listOf("weekly-unmet", "weekly-met").forEach { id ->
+            database.todoDao().upsert(
+                todo(
+                    id = id,
+                    rule = RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 3),
+                    startDate = "2026-08-03",
                 ),
             )
+        }
+        mapOf("weekly-unmet" to 2, "weekly-met" to 3).forEach { (id, completedCount) ->
+            repeat(completedCount) { index ->
+                database.todoExecutionDao().insert(
+                    TodoExecutionEntity(
+                        id = "$id-execution-$index",
+                        operationId = "$id-operation-$index",
+                        todoId = id,
+                        logicalDate = LocalDate.of(2026, 8, 3).plusDays(index.toLong()).toString(),
+                        status = "completed",
+                        actedAt = index.toLong(),
+                        finalizedAt = index.toLong(),
+                        definitionRevision = 1,
+                        snapshotVersion = 1,
+                        snapshotJson = "{}",
+                    ),
+                )
+            }
         }
 
         reconciler.reconcile()
 
-        val result = database.periodResultDao().findForTodo("weekly").single()
-        assertEquals("2026-08-03", result.periodStart)
-        assertEquals("2026-08-09", result.periodEnd)
-        assertEquals(3, result.requiredCount)
-        assertEquals(2, result.completedCount)
-        assertFalse(result.achieved)
+        val unmet = database.periodResultDao().findForTodo("weekly-unmet").single()
+        assertEquals("2026-08-03", unmet.periodStart)
+        assertEquals("2026-08-09", unmet.periodEnd)
+        assertEquals(3, unmet.requiredCount)
+        assertEquals(2, unmet.completedCount)
+        assertFalse(unmet.achieved)
+
+        val achieved = database.periodResultDao().findForTodo("weekly-met").single()
+        assertEquals(3, achieved.requiredCount)
+        assertEquals(3, achieved.completedCount)
+        assertEquals(true, achieved.achieved)
     }
 
     @Test

@@ -21,7 +21,7 @@ DAY-006	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleT
 DAY-007	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day007・testDebugUnitTest成功
 DAY-008	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day008・testDebugUnitTest成功
 DAY-009	P0	app-core.md	未実施	-	-	-	-	-
-DAY-010	P0	app-core.md	未実施	-	-	-	-	-
+DAY-010	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryReconcilerTest#day010・connectedDebugAndroidTest成功
 DAY-011	P0	app-core.md	未実施	-	-	-	-	-
 DAY-012	P0	app-core.md	未実施	-	-	-	-	-
 DAY-013	P1	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day013・testDebugUnitTest成功
@@ -49,7 +49,7 @@ RPT-020	P0	app-core.md	未実施	-	-	-	-	-
 RPT-021	P0	app-core.md	未実施	-	-	-	-	-
 RPT-022	P0	app-core.md	未実施	-	-	-	-	-
 RPT-023	P0	app-core.md	未実施	-	-	-	-	-
-RPT-024	P0	app-core.md	未実施	-	-	-	-	-
+RPT-024	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryReconcilerTest#rpt024・connectedDebugAndroidTest成功
 RPT-025	P0	app-core.md	未実施	-	-	-	-	-
 RPT-026	P0	app-core.md	未実施	-	-	-	-	-
 RPT-027	P1	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt027・testDebugUnitTest成功
@@ -59,15 +59,15 @@ RPT-030	P0	app-core.md	未実施	-	-	-	-	-
 RPT-031	P0	app-core.md	未実施	-	-	-	-	-
 STA-001	P0	app-core.md	未実施	-	-	-	-	-
 STA-002	P0	app-core.md	未実施	-	-	-	-	-
-STA-003	P0	app-core.md	未実施	-	-	-	-	-
+STA-003	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#sta003・connectedDebugAndroidTest成功
 STA-004	P0	app-core.md	未実施	-	-	-	-	-
 STA-005	P0	app-core.md	未実施	-	-	-	-	-
 STA-006	P0	app-core.md	未実施	-	-	-	-	-
 STA-007	P0	app-core.md	未実施	-	-	-	-	-
 STA-008	P0	app-core.md	未実施	-	-	-	-	-
 STA-009	P0	app-core.md	未実施	-	-	-	-	-
-STA-010	P0	app-core.md	未実施	-	-	-	-	-
-STA-011	P0	app-core.md	未実施	-	-	-	-	-
+STA-010	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#sta010・connectedDebugAndroidTest成功
+STA-011	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#sta011・connectedDebugAndroidTest成功
 STA-012	P0	app-core.md	未実施	-	-	-	-	-
 NTF-001	P0	app-core.md	未実施	-	-	-	-	-
 NTF-002	P0	app-core.md	未実施	-	-	-	-	-
@@ -307,8 +307,8 @@ AT-012	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-013	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-014	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-015	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-016	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-017	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-016	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at016・connectedDebugAndroidTest成功
+AT-017	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at017・connectedDebugAndroidTest成功
 AT-018	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-019	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-020	P0	archived-todos.md	未実施	-	-	-	-	-
@@ -319,7 +319,7 @@ AT-024	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-025	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-026	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-027	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-028	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-028	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at028・connectedDebugAndroidTest成功
 AT-029	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-030	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-031	P1	archived-todos.md	未実施	-	-	-	-	-

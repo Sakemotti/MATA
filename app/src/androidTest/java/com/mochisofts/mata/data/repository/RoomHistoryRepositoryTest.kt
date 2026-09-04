@@ -77,7 +77,7 @@ class RoomHistoryRepositoryTest {
     }
 
     @Test
-    fun currentPeriodCompletionAndSkip_useSnapshotAndCanBeUndoneAndRestored() = runBlocking {
+    fun sta003_currentActionsCanBeUndoneButPastActionsCannot() = runBlocking {
         val category = CategoryEntity(
             id = "category",
             name = "当時のカテゴリ",
@@ -168,6 +168,17 @@ class RoomHistoryRepositoryTest {
             TodoState.SKIPPED.code,
             database.todoExecutionDao().findById(skippedExecution.id)?.status,
         )
+
+        database.todoExecutionDao().deleteById(skippedExecution.id)
+        val pastExecution = execution.copy(
+            id = "past-execution",
+            operationId = "past-operation",
+            logicalDate = date.minusDays(1).toString(),
+        )
+        database.todoExecutionDao().insert(pastExecution)
+
+        assertTrue(repository.undoAction(pastExecution.id).isFailure)
+        assertNotNull(database.todoExecutionDao().findById(pastExecution.id))
     }
 
     private fun immediateUpdateWorkIds() =
