@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
@@ -13,8 +14,10 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.deadlineAt
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
+import com.mochisofts.mata.ui.todolist.TodoListDateSelection
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -22,7 +25,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -77,6 +84,161 @@ class SettingsScheduleSpecCoverageTest {
     @After
     fun tearDown() {
         database.close()
+    }
+
+    @Test
+    fun day004_commonBoundaryProvidesOneLogicalDateAcrossAllCategories() = runBlocking {
+        settings.setDayEndHour(13)
+        val categories = listOf(category("work", 0), category("home", 1))
+        categories.forEach { database.categoryDao().upsert(it) }
+        listOf(
+            dailyTodo("uncategorized", null),
+            dailyTodo("work-todo", categories[0].id),
+            dailyTodo("home-todo", categories[1].id),
+        ).forEach { database.todoDao().upsert(it) }
+
+        val occurrences = todoRepository.observeOccurrences(LocalDate.of(2026, 8, 11)).first()
+
+        assertEquals(
+            setOf("uncategorized", "work-todo", "home-todo"),
+            occurrences.map { it.todo.id }.toSet(),
+        )
+        assertEquals(setOf(LocalDate.of(2026, 8, 10)), occurrences.map { it.logicalDate }.toSet())
+    }
+
+    @Test
+    fun day005_boundaryChangeImmediatelyAppliesRegardlessOfCategoryId() = runBlocking {
+        val category = category("category", 0)
+        database.categoryDao().upsert(category)
+        listOf(
+            dailyTodo("uncategorized", null),
+            dailyTodo("categorized", category.id),
+        ).forEach { database.todoDao().upsert(it) }
+        settings.setDayEndHour(13)
+        val selectedDate = LocalDate.of(2026, 8, 11)
+
+        assertEquals(
+            setOf(LocalDate.of(2026, 8, 10)),
+            todoRepository.observeOccurrences(selectedDate).first().map { it.logicalDate }.toSet(),
+        )
+
+        settings.setDayEndHour(11)
+
+        assertEquals(
+            setOf(LocalDate.of(2026, 8, 11)),
+            todoRepository.observeOccurrences(selectedDate).first().map { it.logicalDate }.toSet(),
+        )
+    }
+
+    @Test
+    fun day009_overduePendingTodoRemainsUntilLogicalDayEnd() = runBlocking {
+        settings.setDayEndHour(13)
+        database.todoDao().upsert(
+            dailyTodo(
+                id = "overdue",
+                categoryId = null,
+                dueMinutes = 11 * 60,
+            ),
+        )
+
+        val occurrence = todoRepository.observeOccurrences(LocalDate.of(2026, 8, 11))
+            .first()
+            .single()
+
+        assertEquals(LocalDate.of(2026, 8, 10), occurrence.logicalDate)
+        assertEquals("pending", occurrence.state.code)
+        assertEquals(true, occurrence.isOverdue)
+    }
+
+    @Test
+    fun day012_boundaryChangeMovesLiveScheduleButKeepsFinalizedSnapshots() = runBlocking {
+        settings.setDayEndHour(13)
+        val category = category("category", 0)
+        database.categoryDao().upsert(category)
+        val todos = listOf(
+            dailyTodo("uncategorized", null),
+            dailyTodo("categorized", category.id),
+        )
+        todos.forEach { todo ->
+            database.todoDao().upsert(todo)
+            database.todoExecutionDao().insert(
+                completedExecution(
+                    id = "history-${todo.id}",
+                    todoId = todo.id,
+                    logicalDate = "2026-08-09",
+                    snapshotJson = HistorySnapshotJson.encode(
+                        todo = todo,
+                        category = todo.categoryId?.let { category },
+                        notifications = emptyList(),
+                        endHour = 13,
+                        weekStart = DayOfWeek.MONDAY,
+                        logicalDate = LocalDate.of(2026, 8, 9),
+                    ),
+                ),
+            )
+        }
+        val selectedDate = LocalDate.of(2026, 8, 11)
+        assertEquals(
+            setOf(LocalDate.of(2026, 8, 10)),
+            todoRepository.observeOccurrences(selectedDate).first().map { it.logicalDate }.toSet(),
+        )
+        val historyBefore = todos.associate { todo ->
+            todo.id to database.todoExecutionDao().findForTodo(todo.id).single()
+        }
+
+        settings.setDayEndHour(11)
+
+        assertEquals(
+            setOf(LocalDate.of(2026, 8, 11)),
+            todoRepository.observeOccurrences(selectedDate).first().map { it.logicalDate }.toSet(),
+        )
+        todos.forEach { todo ->
+            val historyAfter = database.todoExecutionDao().findForTodo(todo.id).single()
+            assertEquals(historyBefore.getValue(todo.id), historyAfter)
+            val snapshot = requireNotNull(HistorySnapshotJson.decode(historyAfter.snapshotJson))
+            assertEquals(13, snapshot.endHour)
+            assertEquals("2026-08-09", snapshot.logicalDate)
+            assertEquals(
+                "2026-08-10T13:00+09:00[Asia/Tokyo]",
+                deadlineAt(
+                    LocalDate.parse(historyAfter.logicalDate),
+                    snapshot.endHour,
+                    snapshot.dueMinutes,
+                    ZoneId.of("Asia/Tokyo"),
+                ).toString(),
+            )
+        }
+    }
+
+    @Test
+    fun day014_timePassageWaitsForRefreshOrDateSelectionEvent() = runBlocking {
+        val firstDate = LocalDate.of(2026, 8, 11)
+        val selection = TodoListDateSelection(firstDate, followsTodayInitially = true)
+        val emissions = mutableListOf<LocalDate>()
+        val collection = launch(start = CoroutineStart.UNDISPATCHED) {
+            selection.requests.collect(emissions::add)
+        }
+
+        yield()
+        assertEquals(listOf(firstDate), emissions)
+
+        // Advancing the clock does not mutate this state: callers explicitly signal a refresh.
+        yield()
+        assertEquals(listOf(firstDate), emissions)
+
+        selection.refresh(firstDate)
+        yield()
+        assertEquals(listOf(firstDate, firstDate), emissions)
+
+        val nextDate = firstDate.plusDays(1)
+        selection.refresh(nextDate)
+        yield()
+        assertEquals(listOf(firstDate, firstDate, nextDate), emissions)
+
+        selection.select(nextDate.plusDays(1))
+        yield()
+        assertEquals(listOf(firstDate, firstDate, nextDate, nextDate.plusDays(1)), emissions)
+        collection.cancelAndJoin()
     }
 
     @Test
@@ -188,6 +350,41 @@ class SettingsScheduleSpecCoverageTest {
             archivedAt = null,
         )
     }
+
+    private fun dailyTodo(
+        id: String,
+        categoryId: String?,
+        dueMinutes: Int? = null,
+    ): TodoEntity {
+        val encoded = RecurrenceRuleJson.encode(RecurrenceRule.daily())
+        return TodoEntity(
+            id = id,
+            title = id,
+            description = "",
+            categoryId = categoryId,
+            startDate = "2026-08-01",
+            endDate = null,
+            recurrenceType = encoded.typeCode,
+            repeatParamsVersion = encoded.paramsVersion,
+            repeatParamsJson = encoded.paramsJson,
+            dueMinutes = dueMinutes,
+            definitionRevision = 1,
+            createdAt = 1,
+            updatedAt = 1,
+            archivedAt = null,
+        )
+    }
+
+    private fun category(id: String, sortOrder: Int) = CategoryEntity(
+        id = id,
+        name = id,
+        normalizedName = id,
+        colorIndex = sortOrder,
+        iconName = "Category",
+        legacyEndHour = 0,
+        sortOrder = sortOrder,
+        createdAt = 1,
+    )
 
     private fun completedExecution(
         id: String,
