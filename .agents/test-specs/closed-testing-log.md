@@ -6,6 +6,7 @@
 - テスト開始日: 未定
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
+- 担当割り当て: [初回リリース試験担当割り当て](closed-testing-assignments.md)
 - 項目別結果: [MATA 1.0.0 (1) 試験結果](initial-release-results.tsv)
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
