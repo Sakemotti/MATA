@@ -133,7 +133,7 @@ REL-022	P0	app-core.md	未実施	-	-	-	-	-
 REL-023	P0	app-core.md	未実施	-	-	-	-	-
 REL-024	P0	app-core.md	合格	2026-09-03	AUTO+USER	1	署名済みAAB・Play Console	単一署名者publishable=true・Upload Key SHA-256 EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D一致
 REL-025	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	Release SBOM生成と成果物検証成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-026	P0	app-core.md	未実施	-	-	-	-	-
+REL-026	P0	app-core.md	合格	2026-09-04	AUTO	1	Node.js 18.13.0 / Windows	release-artifact-verifier.test.mjsの正常系・改変検出7ケース成功
 REL-027	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions API 30 x86_64	instrumented test 34件成功 https://github.com/Sakemotti/MATA/actions/runs/33750730765
 TL-001	P0	todo-list.md	未実施	-	-	-	-	-
 TL-002	P0	todo-list.md	未実施	-	-	-	-	-
