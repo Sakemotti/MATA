@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mochisofts.mata.ui.ads.MataBannerAd
 import com.mochisofts.mata.R
@@ -137,6 +138,10 @@ fun TodoListScreen(
     var archiveTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
     var deleteTarget by remember { mutableStateOf<TodoActionTarget?>(null) }
     val currentOnContentReady by rememberUpdatedState(onContentReady)
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refresh()
+    }
 
     LaunchedEffect(state.isLoading, contentReadinessEnabled) {
         if (!state.isLoading && contentReadinessEnabled) {
@@ -561,7 +566,13 @@ private fun TodoOccurrenceRow(
                             ),
                         )
                     } ?: Text(stringResource(R.string.todo_due_none))
-                    when (occurrence.state) {
+                    if (occurrence.isOverdue && occurrence.state == TodoState.PENDING) {
+                        MataStatusLabel(
+                            text = stringResource(R.string.todo_overdue),
+                            icon = Icons.Outlined.ErrorOutline,
+                            type = MataStatusType.ERROR,
+                        )
+                    } else when (occurrence.state) {
                         TodoState.COMPLETED -> MataStatusLabel(
                             text = stringResource(R.string.label_completed),
                             icon = Icons.Outlined.CheckCircle,

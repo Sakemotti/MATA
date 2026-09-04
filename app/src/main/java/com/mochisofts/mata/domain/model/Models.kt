@@ -139,4 +139,5 @@ data class TodoOccurrence(
     val logicalDate: LocalDate,
     val state: TodoState,
     val progress: RecurrenceProgress? = null,
+    val isOverdue: Boolean = false,
 )

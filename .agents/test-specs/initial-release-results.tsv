@@ -15,17 +15,17 @@ APP-013	P0	app-core.md	未実施	-	-	-	-	-
 DAY-001	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day001・testDebugUnitTest成功
 DAY-002	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day002・testDebugUnitTest成功
 DAY-003	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day003・testDebugUnitTest成功
-DAY-004	P0	app-core.md	未実施	-	-	-	-	-
-DAY-005	P0	app-core.md	未実施	-	-	-	-	-
+DAY-004	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#day004・connectedDebugAndroidTest成功
+DAY-005	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#day005・connectedDebugAndroidTest成功
 DAY-006	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day006・testDebugUnitTest成功
 DAY-007	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day007・testDebugUnitTest成功
 DAY-008	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day008・testDebugUnitTest成功
-DAY-009	P0	app-core.md	未実施	-	-	-	-	-
+DAY-009	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#day009・connectedDebugAndroidTest成功
 DAY-010	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryReconcilerTest#day010・connectedDebugAndroidTest成功
-DAY-011	P0	app-core.md	未実施	-	-	-	-	-
-DAY-012	P0	app-core.md	未実施	-	-	-	-	-
+DAY-011	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day011・testDebugUnitTest成功
+DAY-012	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#day012・connectedDebugAndroidTest成功
 DAY-013	P1	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day013・testDebugUnitTest成功
-DAY-014	P1	app-core.md	未実施	-	-	-	-	-
+DAY-014	P1	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#day014・connectedDebugAndroidTest成功
 RPT-001	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt001・testDebugUnitTest成功
 RPT-002	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt002・testDebugUnitTest成功
 RPT-003	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt003・testDebugUnitTest成功

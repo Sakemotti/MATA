@@ -1,8 +1,10 @@
 package com.mochisofts.mata.domain.model
 
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -73,6 +75,40 @@ class ScheduleTestSpecCoverageTest {
         assertEquals(
             ZonedDateTime.of(2026, 8, 12, 4, 0, 0, 0, tokyo),
             deadlineAt(date, endHour = 4, dueMinutes = scheduled.dueMinutes, zoneId = tokyo),
+        )
+    }
+
+    @Test
+    fun day011_clockZoneAndDstChangesRecalculateLogicalDateAndDeadline() {
+        val instant = Instant.parse("2026-08-11T03:00:00Z")
+        val losAngeles = ZoneId.of("America/Los_Angeles")
+
+        assertEquals(
+            LocalDate.of(2026, 8, 11),
+            logicalDate(instant.atZone(tokyo), endHour = 4),
+        )
+        assertEquals(
+            LocalDate.of(2026, 8, 10),
+            logicalDate(instant.atZone(losAngeles), endHour = 4),
+        )
+        assertEquals(
+            LocalDate.of(2026, 8, 10),
+            logicalDate(ZonedDateTime.of(2026, 8, 11, 3, 59, 0, 0, tokyo), endHour = 4),
+        )
+        assertEquals(
+            LocalDate.of(2026, 8, 11),
+            logicalDate(ZonedDateTime.of(2026, 8, 11, 4, 0, 0, 0, tokyo), endHour = 4),
+        )
+
+        val newYork = ZoneId.of("America/New_York")
+        val missingBoundary = logicalDayStart(LocalDate.of(2026, 3, 8), endHour = 2, newYork)
+        assertEquals(3, missingBoundary.hour)
+        assertEquals(ZoneOffset.of("-04:00"), missingBoundary.offset)
+        val repeatedBoundary = logicalDayStart(LocalDate.of(2026, 11, 1), endHour = 1, newYork)
+        assertEquals(ZoneOffset.of("-04:00"), repeatedBoundary.offset)
+        assertEquals(
+            ZonedDateTime.of(2026, 3, 8, 3, 0, 0, 0, newYork),
+            deadlineAt(LocalDate.of(2026, 3, 7), endHour = 2, dueMinutes = null, newYork),
         )
     }
 

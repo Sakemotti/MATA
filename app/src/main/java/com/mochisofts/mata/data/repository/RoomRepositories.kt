@@ -26,6 +26,7 @@ import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.NotificationValidationError
+import com.mochisofts.mata.domain.model.deadlineAt
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
@@ -194,6 +195,9 @@ class RoomTodoRepository @Inject constructor(
                     logicalDate = targetDate,
                     state = execution?.let { TodoState.fromStoredValue(it.status) } ?: TodoState.PENDING,
                     progress = progress,
+                    isOverdue = execution == null && !now.isBefore(
+                        deadlineAt(targetDate, input.dayEndHour, todo.dueMinutes, now.zone),
+                    ),
                 )
             }.sortedWith(
                 compareBy<TodoOccurrence> { occurrence -> occurrence.effectiveDueMinutes(input.dayEndHour) }
