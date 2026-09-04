@@ -2,11 +2,17 @@ id	testFile	testMethod	gradleTask
 DAY-001	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day001_midnightBoundaryMatchesCalendarDate	:app:testDebugUnitTest
 DAY-002	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day002_fourOClockBoundaryChangesAtExactlyFour	:app:testDebugUnitTest
 DAY-003	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day003_twentyThreeOClockBoundaryChangesAtExactlyTwentyThree	:app:testDebugUnitTest
+DAY-004	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day004_commonBoundaryProvidesOneLogicalDateAcrossAllCategories	:app:connectedDebugAndroidTest
+DAY-005	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day005_boundaryChangeImmediatelyAppliesRegardlessOfCategoryId	:app:connectedDebugAndroidTest
 DAY-006	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day006_dueTimeBeforeBoundaryFallsOnNextCalendarDay	:app:testDebugUnitTest
 DAY-007	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day007_dueTimeAtOrAfterBoundaryStaysOnLogicalDate	:app:testDebugUnitTest
 DAY-008	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day008_missingDueTimeUsesLogicalDayEnd	:app:testDebugUnitTest
+DAY-009	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day009_overduePendingTodoRemainsUntilLogicalDayEnd	:app:connectedDebugAndroidTest
 DAY-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryReconcilerTest.kt	day010_dailyTodoCreatesMissedRecordsOnlyForFinishedLogicalDays	:app:connectedDebugAndroidTest
+DAY-011	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day011_clockZoneAndDstChangesRecalculateLogicalDateAndDeadline	:app:testDebugUnitTest
+DAY-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day012_boundaryChangeMovesLiveScheduleButKeepsFinalizedSnapshots	:app:connectedDebugAndroidTest
 DAY-013	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day013_monthYearAndLeapDayBoundariesRemainContinuous	:app:testDebugUnitTest
+DAY-014	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day014_timePassageWaitsForRefreshOrDateSelectionEvent	:app:connectedDebugAndroidTest
 RPT-001	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt001_onceOccursOnlyOnItsExecutionDate	:app:testDebugUnitTest
 RPT-002	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt002_dailyOccursOnEveryActiveDate	:app:testDebugUnitTest
 RPT-003	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt003_weekdaysExcludeSaturdayAndSunday	:app:testDebugUnitTest
