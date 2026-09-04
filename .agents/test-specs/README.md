@@ -1,14 +1,16 @@
 # MATA 総合動作確認項目書
 
-- 文書状態: 初版
-- 最終更新日: 2026-08-10
+- 文書状態: 第2版
+- 最終更新日: 2026-09-04
 - 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../functional-specs/monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../non-functional-specs/startup-specs/README.md)、[MATAデザインシステム仕様](../non-functional-specs/design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../non-functional-specs/adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../non-functional-specs/error-handling-specs/README.md)、[性能・省電力仕様](../non-functional-specs/performance-specs/README.md)、[セキュリティ・プライバシー仕様](../non-functional-specs/security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../non-functional-specs/observability-specs/README.md)、[リリース・配布運用仕様](../non-functional-specs/release-specs/README.md)、[実装アーキテクチャ・データアクセス仕様](../non-functional-specs/architecture-specs/README.md)
 
 ## 1. 目的
 
 MATAの実装が、現時点で確定しているアプリ全体仕様と7画面の仕様を満たすことを、リリース単位で再現可能な形で確認する。
 
-画面仕様の受け入れ条件226件を1件ずつテストIDへ対応付ける。加えて、画面仕様本文の詳細確認37件と、画面単体の受け入れ条件だけでは確認しにくい論理日、繰り返し、祝日、通知、ウィジェット、端末内保存、プライバシー、ビルド品質の横断確認117件を定義する。実行結果を記録する項目は合計380件とする。
+画面仕様の受け入れ条件227件を1件ずつテストIDへ対応付ける。加えて、画面仕様本文の詳細確認40件と、画面単体の受け入れ条件だけでは確認しにくい論理日、繰り返し、祝日、通知、ウィジェット、端末内保存、プライバシー、ビルド品質の横断確認136件を定義する。実行結果を記録する項目は合計403件とする。
+
+初回リリース候補に対する実行証跡と残項目は、[初回リリース試験棚卸し](initial-release-inventory.md)へ記録する。
 
 ## 2. 正とする文書
 
@@ -24,16 +26,16 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 | ファイル | 対象 | テストID |
 | --- | --- | --- |
-| [app-core.md](app-core.md) | アプリ全体、論理日、繰り返し、通知、ウィジェット、非機能、リリースゲート | `APP`、`DAY`、`RPT`、`STA`、`NTF`、`WGT`、`DAT`、`REL` |
-| [todo-list.md](todo-list.md) | SCR-001 TODO一覧 | `TL-001`〜`TL-028` |
-| [todo-editor.md](todo-editor.md) | SCR-002 TODO登録・編集 | `TE-001`〜`TE-033` |
-| [calendar-history.md](calendar-history.md) | SCR-003 カレンダー履歴 | `CH-001`〜`CH-035` |
-| [category-management.md](category-management.md) | SCR-004 カテゴリ管理 | `CM-001`〜`CM-035` |
-| [archived-todos.md](archived-todos.md) | SCR-005 アーカイブ済みTODO一覧 | `AT-001`〜`AT-040` |
-| [settings.md](settings.md) | SCR-006 設定 | `ST-001`〜`ST-045` |
-| [category-todo-list.md](category-todo-list.md) | SCR-007 カテゴリ別TODO一覧 | `CTL-001`〜`CTL-010` |
+| [app-core.md](app-core.md) | アプリ全体、論理日、繰り返し、通知、ウィジェット、非機能、リリースゲート（136件） | `APP-001`〜`APP-013`、`DAY-001`〜`DAY-014`、`RPT-001`〜`RPT-031`、`STA-001`〜`STA-012`、`NTF-001`〜`NTF-015`、`WGT-001`〜`WGT-014`、`DAT-001`〜`DAT-010`、`REL-001`〜`REL-027` |
+| [todo-list.md](todo-list.md) | SCR-001 TODO一覧（39件） | `TL-001`〜`TL-032`、`TL-D01`〜`TL-D07` |
+| [todo-editor.md](todo-editor.md) | SCR-002 TODO登録・編集（39件） | `TE-001`〜`TE-033`、`TE-D01`〜`TE-D06` |
+| [calendar-history.md](calendar-history.md) | SCR-003 カレンダー履歴（42件） | `CH-001`〜`CH-035`、`CH-D01`〜`CH-D07` |
+| [category-management.md](category-management.md) | SCR-004 カテゴリ管理（37件） | `CM-001`〜`CM-031`、`CM-D01`〜`CM-D06` |
+| [archived-todos.md](archived-todos.md) | SCR-005 アーカイブ済みTODO一覧（47件） | `AT-001`〜`AT-040`、`AT-D01`〜`AT-D07` |
+| [settings.md](settings.md) | SCR-006 設定（52件） | `ST-001`〜`ST-045`、`ST-D01`〜`ST-D07` |
+| [category-todo-list.md](category-todo-list.md) | SCR-007 カテゴリ別TODO一覧（11件） | `CTL-001`〜`CTL-011` |
 
-各画面ファイルのテストID末尾番号は、その画面仕様の受け入れ条件番号と1対1で対応する。例として、`TL-013`はTODO一覧画面仕様の受け入れ条件13を確認する。
+各画面ファイルの通常テストID末尾番号は、その画面仕様の受け入れ条件番号と1対1で対応する。例として、`TL-013`はTODO一覧画面仕様の受け入れ条件13を確認する。`D`を含むIDは、仕様本文から追加した詳細確認を表す。
 
 ### 3.1 アプリ全体仕様の追跡
 
@@ -49,7 +51,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 | 8. TODO一覧 | `TL`全項目 |
 | 9. 履歴とカレンダー | `CH`全項目、`AT-012`〜`AT-013`、`AT-030` |
 | 10. 通知 | `NTF-001`〜`NTF-015`、`TE-016`〜`TE-021`、`ST-014`〜`ST-016` |
-| 11. ウィジェット | `WGT-001`〜`WGT-008` |
+| 11. ウィジェット | `WGT-001`〜`WGT-014` |
 | 13. 設定 | `ST`全項目 |
 | 14. データ保存とバックアップ | `DAT-001`〜`DAT-010`、`ST-018`〜`ST-029` |
 | 15. 収益化 | `ST-030`〜`ST-036`、`ST-D06` |
