@@ -46,3 +46,8 @@ AT-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveR
 AT-028	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at028_archivePermanentDeleteRemovesAllRelatedRowsAndScheduledNotifications	:app:connectedDebugAndroidTest
 ST-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st010_weekStartChangeImmediatelyRecalculatesCurrentCountPeriod	:app:connectedDebugAndroidTest
 ST-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st011_settingChangesNeverRewriteFinalizedHistoryOrPeriodSnapshot	:app:connectedDebugAndroidTest
+ST-019	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st019_allUserDataStreamsToAValidatedBackup	:app:connectedDebugAndroidTest
+ST-020	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st020_externalCachesConsentAndTransientStateAreExcluded	:app:connectedDebugAndroidTest
+ST-023	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st023_formatHashStructureTypeRangeReferenceAndCompatibilityFailBeforeMutation	:app:connectedDebugAndroidTest
+ST-D02	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std02_fileNameAndPayloadUseTheSpecifiedZipContainer	:app:connectedDebugAndroidTest
+ST-D03	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std03_archiveContainsRequiredMetadataSettingsOrderingAndHistory	:app:connectedDebugAndroidTest

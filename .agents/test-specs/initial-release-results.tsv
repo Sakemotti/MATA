@@ -357,11 +357,11 @@ ST-015	P1	settings.md	未実施	-	-	-	-	-
 ST-016	P2	settings.md	未実施	-	-	-	-	-
 ST-017	P1	settings.md	未実施	-	-	-	-	-
 ST-018	P0	settings.md	未実施	-	-	-	-	-
-ST-019	P0	settings.md	未実施	-	-	-	-	-
-ST-020	P0	settings.md	未実施	-	-	-	-	-
+ST-019	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st019・CI run 33867709111成功
+ST-020	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st020・CI run 33867709111成功
 ST-021	P0	settings.md	未実施	-	-	-	-	-
 ST-022	P1	settings.md	未実施	-	-	-	-	-
-ST-023	P0	settings.md	未実施	-	-	-	-	-
+ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
 ST-024	P0	settings.md	未実施	-	-	-	-	-
 ST-025	P0	settings.md	未実施	-	-	-	-	-
 ST-026	P0	settings.md	未実施	-	-	-	-	-
@@ -385,8 +385,8 @@ ST-043	P1	settings.md	未実施	-	-	-	-	-
 ST-044	P1	settings.md	未実施	-	-	-	-	-
 ST-045	P1	settings.md	未実施	-	-	-	-	-
 ST-D01	P2	settings.md	未実施	-	-	-	-	-
-ST-D02	P0	settings.md	未実施	-	-	-	-	-
-ST-D03	P0	settings.md	未実施	-	-	-	-	-
+ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std02・CI run 33867709111成功
+ST-D03	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std03・CI run 33867709111成功
 ST-D04	P0	settings.md	未実施	-	-	-	-	-
 ST-D05	P0	settings.md	未実施	-	-	-	-	-
 ST-D06	P0	settings.md	未実施	-	-	-	-	-
