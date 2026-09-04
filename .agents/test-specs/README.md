@@ -10,7 +10,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 画面仕様の受け入れ条件227件を1件ずつテストIDへ対応付ける。加えて、画面仕様本文の詳細確認40件と、画面単体の受け入れ条件だけでは確認しにくい論理日、繰り返し、祝日、通知、ウィジェット、端末内保存、プライバシー、ビルド品質の横断確認136件を定義する。実行結果を記録する項目は合計403件とする。
 
-初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、Closed testingの参加・端末・実施結果は[初回Closed testing実施台帳](closed-testing-log.md)へ記録する。テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。
+初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、403件の項目別結果は[リリース別試験結果の管理](results-management.md)、Closed testingの参加・端末・実施結果は[初回Closed testing実施台帳](closed-testing-log.md)へ記録する。テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。
 
 ## 2. 正とする文書
 

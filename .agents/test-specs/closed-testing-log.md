@@ -6,6 +6,7 @@
 - テスト開始日: 未定
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
+- 項目別結果: [MATA 1.0.0 (1) 試験結果](initial-release-results.tsv)
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
@@ -141,12 +142,12 @@ versionCode `1`はInternal testingで使用済みである。Closed testingに�
 
 | 優先度 | 母数 | 合格 | 不合格 | 保留 | 対象外 | 未実施 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| P0 | 233 | 未集計 | 未集計 | 未集計 | 未集計 | 未集計 |
-| P1 | 154 | 未集計 | 未集計 | 未集計 | 未集計 | 未集計 |
-| P2 | 16 | 未集計 | 未集計 | 未集計 | 未集計 | 未集計 |
-| 合計 | 403 | 未集計 | 未集計 | 未集計 | 未集計 | 未集計 |
+| P0 | 233 | 10 | 0 | 0 | 0 | 223 |
+| P1 | 154 | 0 | 0 | 0 | 0 | 154 |
+| P2 | 16 | 0 | 0 | 0 | 0 | 16 |
+| 合計 | 403 | 10 | 0 | 0 | 0 | 393 |
 
-自動テストの既存証跡は[初回リリース試験棚卸し](initial-release-inventory.md)を参照する。試験IDと自動テストが1対1で対応していない項目は、実行結果を推測で加算しない。
+集計値は[項目別結果TSV](initial-release-results.tsv)を`node tools/test-specs/verify-results.mjs`で検証した出力から転記する。自動テストの既存証跡は[初回リリース試験棚卸し](initial-release-inventory.md)を参照し、試験IDと自動テストが1対1で対応していない項目は、実行結果を推測で加算しない。
 
 ## 10. Production access申請用まとめ
 
