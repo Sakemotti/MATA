@@ -1,404 +1,404 @@
 id	priority	specFile	result	executedAt	testerId	versionCode	environment	evidence
-APP-001	P0	app-core.md	未実施					
-APP-002	P0	app-core.md	未実施					
-APP-003	P1	app-core.md	未実施					
-APP-004	P1	app-core.md	未実施					
-APP-005	P0	app-core.md	未実施					
-APP-006	P1	app-core.md	未実施					
-APP-007	P1	app-core.md	未実施					
-APP-008	P1	app-core.md	未実施					
-APP-009	P1	app-core.md	未実施					
-APP-010	P0	app-core.md	未実施					
-APP-011	P1	app-core.md	未実施					
-APP-012	P1	app-core.md	未実施					
-APP-013	P0	app-core.md	未実施					
-DAY-001	P0	app-core.md	未実施					
-DAY-002	P0	app-core.md	未実施					
-DAY-003	P0	app-core.md	未実施					
-DAY-004	P0	app-core.md	未実施					
-DAY-005	P0	app-core.md	未実施					
-DAY-006	P0	app-core.md	未実施					
-DAY-007	P0	app-core.md	未実施					
-DAY-008	P0	app-core.md	未実施					
-DAY-009	P0	app-core.md	未実施					
-DAY-010	P0	app-core.md	未実施					
-DAY-011	P0	app-core.md	未実施					
-DAY-012	P0	app-core.md	未実施					
-DAY-013	P1	app-core.md	未実施					
-DAY-014	P1	app-core.md	未実施					
-RPT-001	P0	app-core.md	未実施					
-RPT-002	P0	app-core.md	未実施					
-RPT-003	P0	app-core.md	未実施					
-RPT-004	P0	app-core.md	未実施					
-RPT-005	P0	app-core.md	未実施					
-RPT-006	P0	app-core.md	未実施					
-RPT-007	P1	app-core.md	未実施					
-RPT-008	P0	app-core.md	未実施					
-RPT-009	P0	app-core.md	未実施					
-RPT-010	P0	app-core.md	未実施					
-RPT-011	P0	app-core.md	未実施					
-RPT-012	P0	app-core.md	未実施					
-RPT-013	P0	app-core.md	未実施					
-RPT-014	P0	app-core.md	未実施					
-RPT-015	P0	app-core.md	未実施					
-RPT-016	P0	app-core.md	未実施					
-RPT-017	P0	app-core.md	未実施					
-RPT-018	P0	app-core.md	未実施					
-RPT-019	P0	app-core.md	未実施					
-RPT-020	P0	app-core.md	未実施					
-RPT-021	P0	app-core.md	未実施					
-RPT-022	P0	app-core.md	未実施					
-RPT-023	P0	app-core.md	未実施					
-RPT-024	P0	app-core.md	未実施					
-RPT-025	P0	app-core.md	未実施					
-RPT-026	P0	app-core.md	未実施					
-RPT-027	P1	app-core.md	未実施					
-RPT-028	P0	app-core.md	未実施					
-RPT-029	P0	app-core.md	未実施					
-RPT-030	P0	app-core.md	未実施					
-RPT-031	P0	app-core.md	未実施					
-STA-001	P0	app-core.md	未実施					
-STA-002	P0	app-core.md	未実施					
-STA-003	P0	app-core.md	未実施					
-STA-004	P0	app-core.md	未実施					
-STA-005	P0	app-core.md	未実施					
-STA-006	P0	app-core.md	未実施					
-STA-007	P0	app-core.md	未実施					
-STA-008	P0	app-core.md	未実施					
-STA-009	P0	app-core.md	未実施					
-STA-010	P0	app-core.md	未実施					
-STA-011	P0	app-core.md	未実施					
-STA-012	P0	app-core.md	未実施					
-NTF-001	P0	app-core.md	未実施					
-NTF-002	P0	app-core.md	未実施					
-NTF-003	P0	app-core.md	未実施					
-NTF-004	P0	app-core.md	未実施					
-NTF-005	P1	app-core.md	未実施					
-NTF-006	P0	app-core.md	未実施					
-NTF-007	P0	app-core.md	未実施					
-NTF-008	P1	app-core.md	未実施					
-NTF-009	P1	app-core.md	未実施					
-NTF-010	P0	app-core.md	未実施					
-NTF-011	P0	app-core.md	未実施					
-NTF-012	P0	app-core.md	未実施					
-NTF-013	P0	app-core.md	未実施					
-NTF-014	P0	app-core.md	未実施					
-NTF-015	P1	app-core.md	未実施					
-WGT-001	P0	app-core.md	未実施					
-WGT-002	P1	app-core.md	未実施					
-WGT-003	P0	app-core.md	未実施					
-WGT-004	P0	app-core.md	未実施					
-WGT-005	P0	app-core.md	未実施					
-WGT-006	P1	app-core.md	未実施					
-WGT-007	P1	app-core.md	未実施					
-WGT-008	P0	app-core.md	未実施					
-WGT-009	P0	app-core.md	未実施					
-WGT-010	P0	app-core.md	未実施					
-WGT-011	P0	app-core.md	未実施					
-WGT-012	P0	app-core.md	未実施					
-WGT-013	P0	app-core.md	未実施					
-WGT-014	P1	app-core.md	未実施					
-DAT-001	P0	app-core.md	未実施					
-DAT-002	P0	app-core.md	未実施					
-DAT-003	P0	app-core.md	未実施					
-DAT-004	P1	app-core.md	未実施					
-DAT-005	P1	app-core.md	未実施					
-DAT-006	P0	app-core.md	未実施					
-DAT-007	P0	app-core.md	未実施					
-DAT-008	P0	app-core.md	未実施					
-DAT-009	P1	app-core.md	未実施					
-DAT-010	P1	app-core.md	未実施					
+APP-001	P0	app-core.md	未実施	-	-	-	-	-
+APP-002	P0	app-core.md	未実施	-	-	-	-	-
+APP-003	P1	app-core.md	未実施	-	-	-	-	-
+APP-004	P1	app-core.md	未実施	-	-	-	-	-
+APP-005	P0	app-core.md	未実施	-	-	-	-	-
+APP-006	P1	app-core.md	未実施	-	-	-	-	-
+APP-007	P1	app-core.md	未実施	-	-	-	-	-
+APP-008	P1	app-core.md	未実施	-	-	-	-	-
+APP-009	P1	app-core.md	未実施	-	-	-	-	-
+APP-010	P0	app-core.md	未実施	-	-	-	-	-
+APP-011	P1	app-core.md	未実施	-	-	-	-	-
+APP-012	P1	app-core.md	未実施	-	-	-	-	-
+APP-013	P0	app-core.md	未実施	-	-	-	-	-
+DAY-001	P0	app-core.md	未実施	-	-	-	-	-
+DAY-002	P0	app-core.md	未実施	-	-	-	-	-
+DAY-003	P0	app-core.md	未実施	-	-	-	-	-
+DAY-004	P0	app-core.md	未実施	-	-	-	-	-
+DAY-005	P0	app-core.md	未実施	-	-	-	-	-
+DAY-006	P0	app-core.md	未実施	-	-	-	-	-
+DAY-007	P0	app-core.md	未実施	-	-	-	-	-
+DAY-008	P0	app-core.md	未実施	-	-	-	-	-
+DAY-009	P0	app-core.md	未実施	-	-	-	-	-
+DAY-010	P0	app-core.md	未実施	-	-	-	-	-
+DAY-011	P0	app-core.md	未実施	-	-	-	-	-
+DAY-012	P0	app-core.md	未実施	-	-	-	-	-
+DAY-013	P1	app-core.md	未実施	-	-	-	-	-
+DAY-014	P1	app-core.md	未実施	-	-	-	-	-
+RPT-001	P0	app-core.md	未実施	-	-	-	-	-
+RPT-002	P0	app-core.md	未実施	-	-	-	-	-
+RPT-003	P0	app-core.md	未実施	-	-	-	-	-
+RPT-004	P0	app-core.md	未実施	-	-	-	-	-
+RPT-005	P0	app-core.md	未実施	-	-	-	-	-
+RPT-006	P0	app-core.md	未実施	-	-	-	-	-
+RPT-007	P1	app-core.md	未実施	-	-	-	-	-
+RPT-008	P0	app-core.md	未実施	-	-	-	-	-
+RPT-009	P0	app-core.md	未実施	-	-	-	-	-
+RPT-010	P0	app-core.md	未実施	-	-	-	-	-
+RPT-011	P0	app-core.md	未実施	-	-	-	-	-
+RPT-012	P0	app-core.md	未実施	-	-	-	-	-
+RPT-013	P0	app-core.md	未実施	-	-	-	-	-
+RPT-014	P0	app-core.md	未実施	-	-	-	-	-
+RPT-015	P0	app-core.md	未実施	-	-	-	-	-
+RPT-016	P0	app-core.md	未実施	-	-	-	-	-
+RPT-017	P0	app-core.md	未実施	-	-	-	-	-
+RPT-018	P0	app-core.md	未実施	-	-	-	-	-
+RPT-019	P0	app-core.md	未実施	-	-	-	-	-
+RPT-020	P0	app-core.md	未実施	-	-	-	-	-
+RPT-021	P0	app-core.md	未実施	-	-	-	-	-
+RPT-022	P0	app-core.md	未実施	-	-	-	-	-
+RPT-023	P0	app-core.md	未実施	-	-	-	-	-
+RPT-024	P0	app-core.md	未実施	-	-	-	-	-
+RPT-025	P0	app-core.md	未実施	-	-	-	-	-
+RPT-026	P0	app-core.md	未実施	-	-	-	-	-
+RPT-027	P1	app-core.md	未実施	-	-	-	-	-
+RPT-028	P0	app-core.md	未実施	-	-	-	-	-
+RPT-029	P0	app-core.md	未実施	-	-	-	-	-
+RPT-030	P0	app-core.md	未実施	-	-	-	-	-
+RPT-031	P0	app-core.md	未実施	-	-	-	-	-
+STA-001	P0	app-core.md	未実施	-	-	-	-	-
+STA-002	P0	app-core.md	未実施	-	-	-	-	-
+STA-003	P0	app-core.md	未実施	-	-	-	-	-
+STA-004	P0	app-core.md	未実施	-	-	-	-	-
+STA-005	P0	app-core.md	未実施	-	-	-	-	-
+STA-006	P0	app-core.md	未実施	-	-	-	-	-
+STA-007	P0	app-core.md	未実施	-	-	-	-	-
+STA-008	P0	app-core.md	未実施	-	-	-	-	-
+STA-009	P0	app-core.md	未実施	-	-	-	-	-
+STA-010	P0	app-core.md	未実施	-	-	-	-	-
+STA-011	P0	app-core.md	未実施	-	-	-	-	-
+STA-012	P0	app-core.md	未実施	-	-	-	-	-
+NTF-001	P0	app-core.md	未実施	-	-	-	-	-
+NTF-002	P0	app-core.md	未実施	-	-	-	-	-
+NTF-003	P0	app-core.md	未実施	-	-	-	-	-
+NTF-004	P0	app-core.md	未実施	-	-	-	-	-
+NTF-005	P1	app-core.md	未実施	-	-	-	-	-
+NTF-006	P0	app-core.md	未実施	-	-	-	-	-
+NTF-007	P0	app-core.md	未実施	-	-	-	-	-
+NTF-008	P1	app-core.md	未実施	-	-	-	-	-
+NTF-009	P1	app-core.md	未実施	-	-	-	-	-
+NTF-010	P0	app-core.md	未実施	-	-	-	-	-
+NTF-011	P0	app-core.md	未実施	-	-	-	-	-
+NTF-012	P0	app-core.md	未実施	-	-	-	-	-
+NTF-013	P0	app-core.md	未実施	-	-	-	-	-
+NTF-014	P0	app-core.md	未実施	-	-	-	-	-
+NTF-015	P1	app-core.md	未実施	-	-	-	-	-
+WGT-001	P0	app-core.md	未実施	-	-	-	-	-
+WGT-002	P1	app-core.md	未実施	-	-	-	-	-
+WGT-003	P0	app-core.md	未実施	-	-	-	-	-
+WGT-004	P0	app-core.md	未実施	-	-	-	-	-
+WGT-005	P0	app-core.md	未実施	-	-	-	-	-
+WGT-006	P1	app-core.md	未実施	-	-	-	-	-
+WGT-007	P1	app-core.md	未実施	-	-	-	-	-
+WGT-008	P0	app-core.md	未実施	-	-	-	-	-
+WGT-009	P0	app-core.md	未実施	-	-	-	-	-
+WGT-010	P0	app-core.md	未実施	-	-	-	-	-
+WGT-011	P0	app-core.md	未実施	-	-	-	-	-
+WGT-012	P0	app-core.md	未実施	-	-	-	-	-
+WGT-013	P0	app-core.md	未実施	-	-	-	-	-
+WGT-014	P1	app-core.md	未実施	-	-	-	-	-
+DAT-001	P0	app-core.md	未実施	-	-	-	-	-
+DAT-002	P0	app-core.md	未実施	-	-	-	-	-
+DAT-003	P0	app-core.md	未実施	-	-	-	-	-
+DAT-004	P1	app-core.md	未実施	-	-	-	-	-
+DAT-005	P1	app-core.md	未実施	-	-	-	-	-
+DAT-006	P0	app-core.md	未実施	-	-	-	-	-
+DAT-007	P0	app-core.md	未実施	-	-	-	-	-
+DAT-008	P0	app-core.md	未実施	-	-	-	-	-
+DAT-009	P1	app-core.md	未実施	-	-	-	-	-
+DAT-010	P1	app-core.md	未実施	-	-	-	-	-
 REL-001	P0	app-core.md	合格	2026-09-03	AUTO	1	ローカルJDK 17・GitHub Actions Ubuntu	ローカルJUnit XML 134件成功・main CI https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-002	P0	app-core.md	未実施					
-REL-003	P0	app-core.md	未実施					
-REL-004	P0	app-core.md	未実施					
+REL-002	P0	app-core.md	未実施	-	-	-	-	-
+REL-003	P0	app-core.md	未実施	-	-	-	-	-
+REL-004	P0	app-core.md	未実施	-	-	-	-	-
 REL-005	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	lintDebug成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-006	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	assembleDebug成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-007	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	対象commit e57ababdのmain CI成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-008	P1	app-core.md	未実施					
-REL-009	P1	app-core.md	未実施					
-REL-010	P0	app-core.md	未実施					
-REL-011	P1	app-core.md	未実施					
-REL-012	P1	app-core.md	未実施					
-REL-013	P1	app-core.md	未実施					
-REL-014	P1	app-core.md	未実施					
-REL-015	P0	app-core.md	未実施					
-REL-016	P0	app-core.md	未実施					
-REL-017	P0	app-core.md	未実施					
+REL-008	P1	app-core.md	未実施	-	-	-	-	-
+REL-009	P1	app-core.md	未実施	-	-	-	-	-
+REL-010	P0	app-core.md	未実施	-	-	-	-	-
+REL-011	P1	app-core.md	未実施	-	-	-	-	-
+REL-012	P1	app-core.md	未実施	-	-	-	-	-
+REL-013	P1	app-core.md	未実施	-	-	-	-	-
+REL-014	P1	app-core.md	未実施	-	-	-	-	-
+REL-015	P0	app-core.md	未実施	-	-	-	-	-
+REL-016	P0	app-core.md	未実施	-	-	-	-	-
+REL-017	P0	app-core.md	未実施	-	-	-	-	-
 REL-018	P0	app-core.md	合格	2026-09-04	AUTO	1	Windows・Node.js	fastlane/verify-play-store.mjs --release成功
 REL-019	P0	app-core.md	合格	2026-09-04	AUTO	1	Windows・Node.js	tools/release/verify-readiness.mjsのドラフト検証成功
 REL-020	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	Release成果物生成とverify-readiness --artifacts成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-021	P0	app-core.md	未実施					
-REL-022	P0	app-core.md	未実施					
-REL-023	P0	app-core.md	未実施					
+REL-021	P0	app-core.md	未実施	-	-	-	-	-
+REL-022	P0	app-core.md	未実施	-	-	-	-	-
+REL-023	P0	app-core.md	未実施	-	-	-	-	-
 REL-024	P0	app-core.md	合格	2026-09-03	AUTO+USER	1	署名済みAAB・Play Console	単一署名者publishable=true・Upload Key SHA-256 EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D一致
 REL-025	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	Release SBOM生成と成果物検証成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-026	P0	app-core.md	未実施					
+REL-026	P0	app-core.md	未実施	-	-	-	-	-
 REL-027	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions API 30 x86_64	instrumented test 34件成功 https://github.com/Sakemotti/MATA/actions/runs/33750730765
-TL-001	P0	todo-list.md	未実施					
-TL-002	P0	todo-list.md	未実施					
-TL-003	P0	todo-list.md	未実施					
-TL-004	P1	todo-list.md	未実施					
-TL-005	P0	todo-list.md	未実施					
-TL-006	P0	todo-list.md	未実施					
-TL-007	P1	todo-list.md	未実施					
-TL-008	P0	todo-list.md	未実施					
-TL-009	P0	todo-list.md	未実施					
-TL-010	P1	todo-list.md	未実施					
-TL-011	P0	todo-list.md	未実施					
-TL-012	P1	todo-list.md	未実施					
-TL-013	P0	todo-list.md	未実施					
-TL-014	P0	todo-list.md	未実施					
-TL-015	P0	todo-list.md	未実施					
-TL-016	P0	todo-list.md	未実施					
-TL-017	P0	todo-list.md	未実施					
-TL-018	P1	todo-list.md	未実施					
-TL-019	P1	todo-list.md	未実施					
-TL-020	P0	todo-list.md	未実施					
-TL-021	P1	todo-list.md	未実施					
-TL-022	P1	todo-list.md	未実施					
-TL-023	P1	todo-list.md	未実施					
-TL-024	P1	todo-list.md	未実施					
-TL-025	P1	todo-list.md	未実施					
-TL-026	P0	todo-list.md	未実施					
-TL-027	P0	todo-list.md	未実施					
-TL-028	P1	todo-list.md	未実施					
-TL-029	P1	todo-list.md	未実施					
-TL-030	P1	todo-list.md	未実施					
-TL-031	P0	todo-list.md	未実施					
-TL-032	P0	todo-list.md	未実施					
-TL-D01	P2	todo-list.md	未実施					
-TL-D02	P2	todo-list.md	未実施					
-TL-D03	P2	todo-list.md	未実施					
-TL-D04	P1	todo-list.md	未実施					
-TL-D05	P2	todo-list.md	未実施					
-TL-D06	P1	todo-list.md	未実施					
-TL-D07	P1	todo-list.md	未実施					
-TE-001	P0	todo-editor.md	未実施					
-TE-002	P1	todo-editor.md	未実施					
-TE-003	P0	todo-editor.md	未実施					
-TE-004	P1	todo-editor.md	未実施					
-TE-005	P0	todo-editor.md	未実施					
-TE-006	P0	todo-editor.md	未実施					
-TE-007	P0	todo-editor.md	未実施					
-TE-008	P1	todo-editor.md	未実施					
-TE-009	P0	todo-editor.md	未実施					
-TE-010	P1	todo-editor.md	未実施					
-TE-011	P0	todo-editor.md	未実施					
-TE-012	P1	todo-editor.md	未実施					
-TE-013	P1	todo-editor.md	未実施					
-TE-014	P0	todo-editor.md	未実施					
-TE-015	P0	todo-editor.md	未実施					
-TE-016	P0	todo-editor.md	未実施					
-TE-017	P1	todo-editor.md	未実施					
-TE-018	P0	todo-editor.md	未実施					
-TE-019	P0	todo-editor.md	未実施					
-TE-020	P1	todo-editor.md	未実施					
-TE-021	P0	todo-editor.md	未実施					
-TE-022	P0	todo-editor.md	未実施					
-TE-023	P0	todo-editor.md	未実施					
-TE-024	P0	todo-editor.md	未実施					
-TE-025	P0	todo-editor.md	未実施					
-TE-026	P1	todo-editor.md	未実施					
-TE-027	P1	todo-editor.md	未実施					
-TE-028	P0	todo-editor.md	未実施					
-TE-029	P1	todo-editor.md	未実施					
-TE-030	P1	todo-editor.md	未実施					
-TE-031	P0	todo-editor.md	未実施					
-TE-032	P0	todo-editor.md	未実施					
-TE-033	P1	todo-editor.md	未実施					
-TE-D01	P2	todo-editor.md	未実施					
-TE-D02	P1	todo-editor.md	未実施					
-TE-D03	P0	todo-editor.md	未実施					
-TE-D04	P0	todo-editor.md	未実施					
-TE-D05	P0	todo-editor.md	未実施					
-TE-D06	P1	todo-editor.md	未実施					
-CH-001	P1	calendar-history.md	未実施					
-CH-002	P0	calendar-history.md	未実施					
-CH-003	P1	calendar-history.md	未実施					
-CH-004	P1	calendar-history.md	未実施					
-CH-005	P0	calendar-history.md	未実施					
-CH-006	P1	calendar-history.md	未実施					
-CH-007	P1	calendar-history.md	未実施					
-CH-008	P1	calendar-history.md	未実施					
-CH-009	P0	calendar-history.md	未実施					
-CH-010	P0	calendar-history.md	未実施					
-CH-011	P0	calendar-history.md	未実施					
-CH-012	P0	calendar-history.md	未実施					
-CH-013	P0	calendar-history.md	未実施					
-CH-014	P0	calendar-history.md	未実施					
-CH-015	P1	calendar-history.md	未実施					
-CH-016	P1	calendar-history.md	未実施					
-CH-017	P0	calendar-history.md	未実施					
-CH-018	P1	calendar-history.md	未実施					
-CH-019	P0	calendar-history.md	未実施					
-CH-020	P0	calendar-history.md	未実施					
-CH-021	P1	calendar-history.md	未実施					
-CH-022	P0	calendar-history.md	未実施					
-CH-023	P0	calendar-history.md	未実施					
-CH-024	P1	calendar-history.md	未実施					
-CH-025	P0	calendar-history.md	未実施					
-CH-026	P1	calendar-history.md	未実施					
-CH-027	P1	calendar-history.md	未実施					
-CH-028	P0	calendar-history.md	未実施					
-CH-029	P1	calendar-history.md	未実施					
-CH-030	P1	calendar-history.md	未実施					
-CH-031	P0	calendar-history.md	未実施					
-CH-032	P1	calendar-history.md	未実施					
-CH-033	P2	calendar-history.md	未実施					
-CH-034	P1	calendar-history.md	未実施					
-CH-035	P1	calendar-history.md	未実施					
-CH-D01	P2	calendar-history.md	未実施					
-CH-D02	P1	calendar-history.md	未実施					
-CH-D03	P1	calendar-history.md	未実施					
-CH-D04	P0	calendar-history.md	未実施					
-CH-D05	P0	calendar-history.md	未実施					
-CH-D06	P1	calendar-history.md	未実施					
-CH-D07	P1	calendar-history.md	未実施					
-CM-001	P1	category-management.md	未実施					
-CM-002	P0	category-management.md	未実施					
-CM-003	P1	category-management.md	未実施					
-CM-004	P2	category-management.md	未実施					
-CM-005	P1	category-management.md	未実施					
-CM-006	P1	category-management.md	未実施					
-CM-007	P0	category-management.md	未実施					
-CM-008	P1	category-management.md	未実施					
-CM-009	P1	category-management.md	未実施					
-CM-010	P0	category-management.md	未実施					
-CM-011	P1	category-management.md	未実施					
-CM-012	P0	category-management.md	未実施					
-CM-013	P1	category-management.md	未実施					
-CM-014	P1	category-management.md	未実施					
-CM-015	P1	category-management.md	未実施					
-CM-016	P1	category-management.md	未実施					
-CM-017	P2	category-management.md	未実施					
-CM-018	P0	category-management.md	未実施					
-CM-019	P1	category-management.md	未実施					
-CM-020	P0	category-management.md	未実施					
-CM-021	P0	category-management.md	未実施					
-CM-022	P0	category-management.md	未実施					
-CM-023	P0	category-management.md	未実施					
-CM-024	P0	category-management.md	未実施					
-CM-025	P1	category-management.md	未実施					
-CM-026	P1	category-management.md	未実施					
-CM-027	P1	category-management.md	未実施					
-CM-028	P1	category-management.md	未実施					
-CM-029	P1	category-management.md	未実施					
-CM-030	P1	category-management.md	未実施					
-CM-031	P2	category-management.md	未実施					
-CM-D01	P1	category-management.md	未実施					
-CM-D02	P2	category-management.md	未実施					
-CM-D03	P1	category-management.md	未実施					
-CM-D04	P1	category-management.md	未実施					
-CM-D05	P1	category-management.md	未実施					
-CM-D06	P2	category-management.md	未実施					
-AT-001	P1	archived-todos.md	未実施					
-AT-002	P0	archived-todos.md	未実施					
-AT-003	P1	archived-todos.md	未実施					
-AT-004	P1	archived-todos.md	未実施					
-AT-005	P1	archived-todos.md	未実施					
-AT-006	P1	archived-todos.md	未実施					
-AT-007	P1	archived-todos.md	未実施					
-AT-008	P1	archived-todos.md	未実施					
-AT-009	P0	archived-todos.md	未実施					
-AT-010	P1	archived-todos.md	未実施					
-AT-011	P1	archived-todos.md	未実施					
-AT-012	P1	archived-todos.md	未実施					
-AT-013	P0	archived-todos.md	未実施					
-AT-014	P0	archived-todos.md	未実施					
-AT-015	P0	archived-todos.md	未実施					
-AT-016	P0	archived-todos.md	未実施					
-AT-017	P0	archived-todos.md	未実施					
-AT-018	P0	archived-todos.md	未実施					
-AT-019	P0	archived-todos.md	未実施					
-AT-020	P0	archived-todos.md	未実施					
-AT-021	P0	archived-todos.md	未実施					
-AT-022	P0	archived-todos.md	未実施					
-AT-023	P0	archived-todos.md	未実施					
-AT-024	P1	archived-todos.md	未実施					
-AT-025	P1	archived-todos.md	未実施					
-AT-026	P0	archived-todos.md	未実施					
-AT-027	P1	archived-todos.md	未実施					
-AT-028	P0	archived-todos.md	未実施					
-AT-029	P0	archived-todos.md	未実施					
-AT-030	P0	archived-todos.md	未実施					
-AT-031	P1	archived-todos.md	未実施					
-AT-032	P0	archived-todos.md	未実施					
-AT-033	P0	archived-todos.md	未実施					
-AT-034	P1	archived-todos.md	未実施					
-AT-035	P1	archived-todos.md	未実施					
-AT-036	P1	archived-todos.md	未実施					
-AT-037	P0	archived-todos.md	未実施					
-AT-038	P2	archived-todos.md	未実施					
-AT-039	P1	archived-todos.md	未実施					
-AT-040	P1	archived-todos.md	未実施					
-AT-D01	P1	archived-todos.md	未実施					
-AT-D02	P1	archived-todos.md	未実施					
-AT-D03	P1	archived-todos.md	未実施					
-AT-D04	P1	archived-todos.md	未実施					
-AT-D05	P0	archived-todos.md	未実施					
-AT-D06	P0	archived-todos.md	未実施					
-AT-D07	P1	archived-todos.md	未実施					
-ST-001	P1	settings.md	未実施					
-ST-002	P1	settings.md	未実施					
-ST-003	P1	settings.md	未実施					
-ST-004	P2	settings.md	未実施					
-ST-005	P0	settings.md	未実施					
-ST-006	P1	settings.md	未実施					
-ST-007	P0	settings.md	未実施					
-ST-008	P0	settings.md	未実施					
-ST-009	P0	settings.md	未実施					
-ST-010	P0	settings.md	未実施					
-ST-011	P0	settings.md	未実施					
-ST-012	P1	settings.md	未実施					
-ST-013	P1	settings.md	未実施					
-ST-014	P1	settings.md	未実施					
-ST-015	P1	settings.md	未実施					
-ST-016	P2	settings.md	未実施					
-ST-017	P1	settings.md	未実施					
-ST-018	P0	settings.md	未実施					
-ST-019	P0	settings.md	未実施					
-ST-020	P0	settings.md	未実施					
-ST-021	P0	settings.md	未実施					
-ST-022	P1	settings.md	未実施					
-ST-023	P0	settings.md	未実施					
-ST-024	P0	settings.md	未実施					
-ST-025	P0	settings.md	未実施					
-ST-026	P0	settings.md	未実施					
-ST-027	P0	settings.md	未実施					
-ST-028	P0	settings.md	未実施					
-ST-029	P0	settings.md	未実施					
-ST-030	P0	settings.md	未実施					
-ST-031	P0	settings.md	未実施					
-ST-032	P1	settings.md	未実施					
-ST-033	P0	settings.md	未実施					
-ST-034	P0	settings.md	未実施					
-ST-035	P0	settings.md	未実施					
-ST-036	P1	settings.md	未実施					
-ST-037	P1	settings.md	未実施					
-ST-038	P1	settings.md	未実施					
-ST-039	P1	settings.md	未実施					
-ST-040	P1	settings.md	未実施					
-ST-041	P0	settings.md	未実施					
-ST-042	P1	settings.md	未実施					
-ST-043	P1	settings.md	未実施					
-ST-044	P1	settings.md	未実施					
-ST-045	P1	settings.md	未実施					
-ST-D01	P2	settings.md	未実施					
-ST-D02	P0	settings.md	未実施					
-ST-D03	P0	settings.md	未実施					
-ST-D04	P0	settings.md	未実施					
-ST-D05	P0	settings.md	未実施					
-ST-D06	P0	settings.md	未実施					
-ST-D07	P0	settings.md	未実施					
-CTL-001	P0	category-todo-list.md	未実施					
-CTL-002	P0	category-todo-list.md	未実施					
-CTL-003	P0	category-todo-list.md	未実施					
-CTL-004	P0	category-todo-list.md	未実施					
-CTL-005	P1	category-todo-list.md	未実施					
-CTL-006	P0	category-todo-list.md	未実施					
-CTL-007	P0	category-todo-list.md	未実施					
-CTL-008	P1	category-todo-list.md	未実施					
-CTL-009	P0	category-todo-list.md	未実施					
-CTL-010	P1	category-todo-list.md	未実施					
-CTL-011	P1	category-todo-list.md	未実施					
+TL-001	P0	todo-list.md	未実施	-	-	-	-	-
+TL-002	P0	todo-list.md	未実施	-	-	-	-	-
+TL-003	P0	todo-list.md	未実施	-	-	-	-	-
+TL-004	P1	todo-list.md	未実施	-	-	-	-	-
+TL-005	P0	todo-list.md	未実施	-	-	-	-	-
+TL-006	P0	todo-list.md	未実施	-	-	-	-	-
+TL-007	P1	todo-list.md	未実施	-	-	-	-	-
+TL-008	P0	todo-list.md	未実施	-	-	-	-	-
+TL-009	P0	todo-list.md	未実施	-	-	-	-	-
+TL-010	P1	todo-list.md	未実施	-	-	-	-	-
+TL-011	P0	todo-list.md	未実施	-	-	-	-	-
+TL-012	P1	todo-list.md	未実施	-	-	-	-	-
+TL-013	P0	todo-list.md	未実施	-	-	-	-	-
+TL-014	P0	todo-list.md	未実施	-	-	-	-	-
+TL-015	P0	todo-list.md	未実施	-	-	-	-	-
+TL-016	P0	todo-list.md	未実施	-	-	-	-	-
+TL-017	P0	todo-list.md	未実施	-	-	-	-	-
+TL-018	P1	todo-list.md	未実施	-	-	-	-	-
+TL-019	P1	todo-list.md	未実施	-	-	-	-	-
+TL-020	P0	todo-list.md	未実施	-	-	-	-	-
+TL-021	P1	todo-list.md	未実施	-	-	-	-	-
+TL-022	P1	todo-list.md	未実施	-	-	-	-	-
+TL-023	P1	todo-list.md	未実施	-	-	-	-	-
+TL-024	P1	todo-list.md	未実施	-	-	-	-	-
+TL-025	P1	todo-list.md	未実施	-	-	-	-	-
+TL-026	P0	todo-list.md	未実施	-	-	-	-	-
+TL-027	P0	todo-list.md	未実施	-	-	-	-	-
+TL-028	P1	todo-list.md	未実施	-	-	-	-	-
+TL-029	P1	todo-list.md	未実施	-	-	-	-	-
+TL-030	P1	todo-list.md	未実施	-	-	-	-	-
+TL-031	P0	todo-list.md	未実施	-	-	-	-	-
+TL-032	P0	todo-list.md	未実施	-	-	-	-	-
+TL-D01	P2	todo-list.md	未実施	-	-	-	-	-
+TL-D02	P2	todo-list.md	未実施	-	-	-	-	-
+TL-D03	P2	todo-list.md	未実施	-	-	-	-	-
+TL-D04	P1	todo-list.md	未実施	-	-	-	-	-
+TL-D05	P2	todo-list.md	未実施	-	-	-	-	-
+TL-D06	P1	todo-list.md	未実施	-	-	-	-	-
+TL-D07	P1	todo-list.md	未実施	-	-	-	-	-
+TE-001	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-002	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-003	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-004	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-005	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-006	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-007	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-008	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-009	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-010	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-011	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-012	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-013	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-014	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-015	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-016	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-017	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-018	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-019	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-020	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-021	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-022	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-023	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-024	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-025	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-026	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-027	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-028	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-029	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-030	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-031	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-032	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-033	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-D01	P2	todo-editor.md	未実施	-	-	-	-	-
+TE-D02	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-D03	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-D04	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-D05	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-D06	P1	todo-editor.md	未実施	-	-	-	-	-
+CH-001	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-002	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-003	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-004	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-005	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-006	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-007	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-008	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-009	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-010	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-011	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-012	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-013	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-014	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-015	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-016	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-017	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-018	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-019	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-020	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-021	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-022	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-023	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-024	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-025	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-026	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-027	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-028	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-029	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-030	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-031	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-033	P2	calendar-history.md	未実施	-	-	-	-	-
+CH-034	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-035	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D01	P2	calendar-history.md	未実施	-	-	-	-	-
+CH-D02	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D03	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D04	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-D05	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-D06	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D07	P1	calendar-history.md	未実施	-	-	-	-	-
+CM-001	P1	category-management.md	未実施	-	-	-	-	-
+CM-002	P0	category-management.md	未実施	-	-	-	-	-
+CM-003	P1	category-management.md	未実施	-	-	-	-	-
+CM-004	P2	category-management.md	未実施	-	-	-	-	-
+CM-005	P1	category-management.md	未実施	-	-	-	-	-
+CM-006	P1	category-management.md	未実施	-	-	-	-	-
+CM-007	P0	category-management.md	未実施	-	-	-	-	-
+CM-008	P1	category-management.md	未実施	-	-	-	-	-
+CM-009	P1	category-management.md	未実施	-	-	-	-	-
+CM-010	P0	category-management.md	未実施	-	-	-	-	-
+CM-011	P1	category-management.md	未実施	-	-	-	-	-
+CM-012	P0	category-management.md	未実施	-	-	-	-	-
+CM-013	P1	category-management.md	未実施	-	-	-	-	-
+CM-014	P1	category-management.md	未実施	-	-	-	-	-
+CM-015	P1	category-management.md	未実施	-	-	-	-	-
+CM-016	P1	category-management.md	未実施	-	-	-	-	-
+CM-017	P2	category-management.md	未実施	-	-	-	-	-
+CM-018	P0	category-management.md	未実施	-	-	-	-	-
+CM-019	P1	category-management.md	未実施	-	-	-	-	-
+CM-020	P0	category-management.md	未実施	-	-	-	-	-
+CM-021	P0	category-management.md	未実施	-	-	-	-	-
+CM-022	P0	category-management.md	未実施	-	-	-	-	-
+CM-023	P0	category-management.md	未実施	-	-	-	-	-
+CM-024	P0	category-management.md	未実施	-	-	-	-	-
+CM-025	P1	category-management.md	未実施	-	-	-	-	-
+CM-026	P1	category-management.md	未実施	-	-	-	-	-
+CM-027	P1	category-management.md	未実施	-	-	-	-	-
+CM-028	P1	category-management.md	未実施	-	-	-	-	-
+CM-029	P1	category-management.md	未実施	-	-	-	-	-
+CM-030	P1	category-management.md	未実施	-	-	-	-	-
+CM-031	P2	category-management.md	未実施	-	-	-	-	-
+CM-D01	P1	category-management.md	未実施	-	-	-	-	-
+CM-D02	P2	category-management.md	未実施	-	-	-	-	-
+CM-D03	P1	category-management.md	未実施	-	-	-	-	-
+CM-D04	P1	category-management.md	未実施	-	-	-	-	-
+CM-D05	P1	category-management.md	未実施	-	-	-	-	-
+CM-D06	P2	category-management.md	未実施	-	-	-	-	-
+AT-001	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-002	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-003	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-004	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-005	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-006	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-007	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-008	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-009	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-010	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-011	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-012	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-013	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-014	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-015	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-016	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-017	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-018	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-019	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-020	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-021	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-022	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-023	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-024	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-025	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-026	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-027	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-028	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-029	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-030	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-031	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-032	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-033	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-034	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-035	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-036	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-037	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-038	P2	archived-todos.md	未実施	-	-	-	-	-
+AT-039	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-040	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D01	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D02	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D03	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D04	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D05	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-D06	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-D07	P1	archived-todos.md	未実施	-	-	-	-	-
+ST-001	P1	settings.md	未実施	-	-	-	-	-
+ST-002	P1	settings.md	未実施	-	-	-	-	-
+ST-003	P1	settings.md	未実施	-	-	-	-	-
+ST-004	P2	settings.md	未実施	-	-	-	-	-
+ST-005	P0	settings.md	未実施	-	-	-	-	-
+ST-006	P1	settings.md	未実施	-	-	-	-	-
+ST-007	P0	settings.md	未実施	-	-	-	-	-
+ST-008	P0	settings.md	未実施	-	-	-	-	-
+ST-009	P0	settings.md	未実施	-	-	-	-	-
+ST-010	P0	settings.md	未実施	-	-	-	-	-
+ST-011	P0	settings.md	未実施	-	-	-	-	-
+ST-012	P1	settings.md	未実施	-	-	-	-	-
+ST-013	P1	settings.md	未実施	-	-	-	-	-
+ST-014	P1	settings.md	未実施	-	-	-	-	-
+ST-015	P1	settings.md	未実施	-	-	-	-	-
+ST-016	P2	settings.md	未実施	-	-	-	-	-
+ST-017	P1	settings.md	未実施	-	-	-	-	-
+ST-018	P0	settings.md	未実施	-	-	-	-	-
+ST-019	P0	settings.md	未実施	-	-	-	-	-
+ST-020	P0	settings.md	未実施	-	-	-	-	-
+ST-021	P0	settings.md	未実施	-	-	-	-	-
+ST-022	P1	settings.md	未実施	-	-	-	-	-
+ST-023	P0	settings.md	未実施	-	-	-	-	-
+ST-024	P0	settings.md	未実施	-	-	-	-	-
+ST-025	P0	settings.md	未実施	-	-	-	-	-
+ST-026	P0	settings.md	未実施	-	-	-	-	-
+ST-027	P0	settings.md	未実施	-	-	-	-	-
+ST-028	P0	settings.md	未実施	-	-	-	-	-
+ST-029	P0	settings.md	未実施	-	-	-	-	-
+ST-030	P0	settings.md	未実施	-	-	-	-	-
+ST-031	P0	settings.md	未実施	-	-	-	-	-
+ST-032	P1	settings.md	未実施	-	-	-	-	-
+ST-033	P0	settings.md	未実施	-	-	-	-	-
+ST-034	P0	settings.md	未実施	-	-	-	-	-
+ST-035	P0	settings.md	未実施	-	-	-	-	-
+ST-036	P1	settings.md	未実施	-	-	-	-	-
+ST-037	P1	settings.md	未実施	-	-	-	-	-
+ST-038	P1	settings.md	未実施	-	-	-	-	-
+ST-039	P1	settings.md	未実施	-	-	-	-	-
+ST-040	P1	settings.md	未実施	-	-	-	-	-
+ST-041	P0	settings.md	未実施	-	-	-	-	-
+ST-042	P1	settings.md	未実施	-	-	-	-	-
+ST-043	P1	settings.md	未実施	-	-	-	-	-
+ST-044	P1	settings.md	未実施	-	-	-	-	-
+ST-045	P1	settings.md	未実施	-	-	-	-	-
+ST-D01	P2	settings.md	未実施	-	-	-	-	-
+ST-D02	P0	settings.md	未実施	-	-	-	-	-
+ST-D03	P0	settings.md	未実施	-	-	-	-	-
+ST-D04	P0	settings.md	未実施	-	-	-	-	-
+ST-D05	P0	settings.md	未実施	-	-	-	-	-
+ST-D06	P0	settings.md	未実施	-	-	-	-	-
+ST-D07	P0	settings.md	未実施	-	-	-	-	-
+CTL-001	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-002	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-003	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-004	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-005	P1	category-todo-list.md	未実施	-	-	-	-	-
+CTL-006	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-007	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-008	P1	category-todo-list.md	未実施	-	-	-	-	-
+CTL-009	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-010	P1	category-todo-list.md	未実施	-	-	-	-	-
+CTL-011	P1	category-todo-list.md	未実施	-	-	-	-	-

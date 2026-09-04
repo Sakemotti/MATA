@@ -80,7 +80,7 @@ function initialize(path, catalog) {
   const lines = [
     header.join('\t'),
     ...catalog.map(({ id, priority, specFile }) =>
-      [id, priority, specFile, '未実施', '', '', '', '', ''].join('\t'),
+      [id, priority, specFile, '未実施', '-', '-', '-', '-', '-'].join('\t'),
     ),
   ];
   writeFileSync(path, `${lines.join('\n')}\n`, 'utf8');
@@ -139,8 +139,8 @@ function validate(path, catalog) {
 
     const executionFields = [executedAt, testerId, versionCode, environment, evidence];
     if (result === '未実施') {
-      if (executionFields.some(Boolean)) {
-        errors.push(`Line ${lineNumber}: ${id} is unexecuted but has execution data.`);
+      if (executionFields.some((value) => value !== '-')) {
+        errors.push(`Line ${lineNumber}: ${id} is unexecuted but does not use '-' placeholders.`);
       }
       return;
     }
