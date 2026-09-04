@@ -1,6 +1,7 @@
 package com.mochisofts.mata.data.backup
 
 import android.content.Context
+import androidx.room.withTransaction
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -9,6 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.WorkManager
+import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.HolidayEntity
 import com.mochisofts.mata.data.local.MataDatabase
@@ -22,18 +25,26 @@ import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.data.repository.HistorySnapshotJson
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.repository.HistoryReconciler
+import com.mochisofts.mata.domain.repository.HistoryReconciliationResult
+import com.mochisofts.mata.domain.repository.NotificationScheduler
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -41,6 +52,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -332,6 +344,156 @@ class BackupSpecCoverageTest {
         assertNotNull(singleObject(root, "periodResults")["snapshot"])
     }
 
+    @Test
+    fun st026_restoreFailureAtEveryDataStageRollsBackWithoutIntermediateState() = runBlocking {
+        seedAllUserData()
+        val expected = backedUpState()
+        val archive = writeArchive()
+        val stagedData = temporaryDataFile()
+        val summary = reader.extractAndValidate(ByteArrayInputStream(archive), stagedData)
+        val validData = stagedData.readText(Charsets.UTF_8)
+        val mutations = listOf(
+            "category" to ("\"colorIndex\":2" to "\"colorIndex\":99"),
+            "todo" to ("\"repeatType\":\"weekly_count\"" to "\"repeatType\":\"invalid\""),
+            "notification" to ("\"relation\":\"at\"" to "\"relation\":\"invalid\""),
+            "execution" to ("\"status\":\"completed\"" to "\"status\":\"invalid\""),
+            "period result" to (
+                "\"completedCount\":1,\"achieved\":true" to
+                    "\"completedCount\":0,\"achieved\":true"
+                ),
+            "runtime state" to (
+                "\"appliedDefinitionRevision\":1" to "\"appliedDefinitionRevision\":2"
+                ),
+        )
+        val scheduler = BackupTestNotificationScheduler()
+        val restorer = backupRestorer(scheduler)
+
+        mutations.forEach { (stage, replacement) ->
+            val corrupted = validData.replaceFirst(replacement.first, replacement.second)
+            assertFalse("Missing mutation marker for $stage", corrupted == validData)
+            stagedData.writeText(corrupted, Charsets.UTF_8)
+            val rollbackArchive = absentTemporaryFile(".mata-backup")
+            val rollbackData = absentTemporaryFile(".json")
+            val phases = mutableListOf<BackupOperationPhase>()
+
+            val error = runCatching {
+                restorer.restore(
+                    dataFile = stagedData,
+                    summary = summary,
+                    rollbackArchive = rollbackArchive,
+                    rollbackData = rollbackData,
+                ) { phase, _ -> phases += phase }
+            }.exceptionOrNull()
+
+            assertTrue(stage, error is BackupFormatException)
+            assertEquals(stage, expected, backedUpState())
+            assertTrue(stage, BackupOperationPhase.ROLLING_BACK in phases)
+            rollbackArchive.delete()
+            rollbackData.delete()
+        }
+        assertEquals(mutations.size, scheduler.reconcileAllCount)
+        assertTrue(stagedData.delete())
+    }
+
+    @Test
+    fun st029_nextLaunchRecoversInterruptedBackupAndRestoreToConsistentState() = runBlocking {
+        seedAllUserData()
+        val expected = backedUpState()
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME).result.get()
+
+        val createId = UUID.randomUUID().toString()
+        val createFiles = operationFiles(context, createId)
+        BackupOperationStore(context).also { store ->
+            store.clear()
+            assertTrue(
+                store.start(
+                    createId,
+                    BackupOperationType.CREATE,
+                    "content://com.mochisofts.mata.test/missing-partial-backup",
+                ),
+            )
+        }
+        createFiles.directory.mkdirs()
+        createFiles.data.writeText("partial")
+
+        val reloadedCreateStore = BackupOperationStore(context)
+        BackupCoordinator(context, reloadedCreateStore, clock).recoverInterruptedOperation()
+
+        assertEquals(BackupOperationStatus.FAILED, reloadedCreateStore.state.value.status)
+        assertEquals(BackupErrorCode.INCOMPLETE_FILE_REMAINS, reloadedCreateStore.state.value.errorCode)
+        assertFalse(createFiles.directory.exists())
+        assertEquals(expected, backedUpState())
+
+        reloadedCreateStore.clear()
+        val restoreId = UUID.randomUUID().toString()
+        val restoreFiles = operationFiles(context, restoreId)
+        val originalStore = BackupOperationStore(context)
+        assertTrue(
+            originalStore.start(
+                restoreId,
+                BackupOperationType.RESTORE,
+                "content://com.mochisofts.mata.test/interrupted-restore",
+            ),
+        )
+        restoreFiles.directory.mkdirs()
+        restoreFiles.rollbackArchive.writeText("partial rollback")
+
+        val reloadedRestoreStore = BackupOperationStore(context)
+        BackupCoordinator(context, reloadedRestoreStore, clock).recoverInterruptedOperation()
+
+        assertEquals(BackupOperationStatus.FAILED, reloadedRestoreStore.state.value.status)
+        assertEquals(BackupErrorCode.STORAGE_UNAVAILABLE, reloadedRestoreStore.state.value.errorCode)
+        assertFalse(restoreFiles.directory.exists())
+        assertEquals(expected, backedUpState())
+    }
+
+    @Test
+    fun std05_largeBackupAndRestoreStreamAcrossMultipleDatabasePages() = runBlocking {
+        val recordCount = 513
+        database.withTransaction {
+            repeat(recordCount) { index ->
+                val name = "Category $index"
+                database.categoryDao().upsert(
+                    CategoryEntity(
+                        id = UUID(0L, index.toLong() + 1).toString(),
+                        name = name,
+                        normalizedName = name.lowercase(),
+                        colorIndex = index % 16,
+                        iconName = "Home",
+                        sortOrder = index,
+                        createdAt = index.toLong(),
+                        updatedAt = index.toLong(),
+                    ),
+                )
+            }
+        }
+        val archive = File.createTempFile("backup-large-", BACKUP_EXTENSION, context.cacheDir)
+        val stagedData = temporaryDataFile()
+        val writeProgress = mutableListOf<Int>()
+
+        FileOutputStream(archive).use { output ->
+            writer.write(output) { phase, progress ->
+                if (phase == BackupOperationPhase.WRITING && progress != null) writeProgress += progress
+            }
+        }
+        val summary = FileInputStream(archive).use { input ->
+            reader.extractAndValidate(input, stagedData)
+        }
+        val sink = CountingBackupSink()
+        val parsed = reader.parseValidatedData(stagedData, summary.manifest, sink)
+
+        assertEquals(BackupCounts(recordCount, 0, 0, 0, 0, 0), summary.manifest.counts)
+        assertEquals(summary.manifest.counts, parsed.counts)
+        assertEquals(summary.manifest.counts, sink.counts())
+        assertEquals(recordCount, writeProgress.size)
+        assertEquals(100, writeProgress.last())
+        assertTrue(writeProgress.zipWithNext().all { (before, after) -> before <= after })
+        assertTrue(archive.length() > 0)
+        assertTrue(stagedData.length() > 0)
+        assertTrue(archive.delete())
+        assertTrue(stagedData.delete())
+    }
+
     private suspend fun seedAllUserData() {
         settingsRepository.setDayEndHour(4)
         settingsRepository.setWeekStart(DayOfWeek.SUNDAY)
@@ -457,6 +619,40 @@ class BackupSpecCoverageTest {
         writer.write(output)
     }.toByteArray()
 
+    private fun backupRestorer(scheduler: BackupTestNotificationScheduler) = BackupArchiveRestorer(
+        database = database,
+        categoryDao = database.categoryDao(),
+        todoDao = database.todoDao(),
+        notificationDao = database.todoNotificationDao(),
+        executionDao = database.todoExecutionDao(),
+        periodResultDao = database.periodResultDao(),
+        runtimeStateDao = database.todoRuntimeStateDao(),
+        scheduledNotificationDao = database.scheduledNotificationDao(),
+        widgetInstanceStateDao = database.widgetInstanceStateDao(),
+        settingsRepository = settingsRepository,
+        notificationScheduler = scheduler,
+        historyReconciler = NoOpBackupHistoryReconciler(),
+        widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+        writer = writer,
+        reader = reader,
+    )
+
+    private suspend fun backedUpState() = BackedUpState(
+        categories = database.categoryDao().backupPage(database.categoryDao().backupCount(), 0),
+        todos = database.todoDao().backupPage(database.todoDao().backupCount(), 0),
+        notifications = database.todoNotificationDao().backupPage(database.todoNotificationDao().count(), 0),
+        executions = database.todoExecutionDao().backupPage(database.todoExecutionDao().backupCount(), 0),
+        periodResults = database.periodResultDao().backupPage(database.periodResultDao().backupCount(), 0),
+        runtimeStates = database.todoRuntimeStateDao().backupPage(database.todoRuntimeStateDao().backupCount(), 0),
+        settings = settingsRepository.backupSnapshot(),
+    )
+
+    private fun absentTemporaryFile(suffix: String): File = File.createTempFile(
+        "backup-rollback-",
+        suffix,
+        context.cacheDir,
+    ).also { check(it.delete()) }
+
     private fun replaceManifest(archive: ByteArray, manifest: String): ByteArray {
         val entries = zipEntries(archive)
         return zip(entries.getValue(DATA_ENTRY), manifest.toByteArray(Charsets.UTF_8))
@@ -536,6 +732,44 @@ class BackupSpecCoverageTest {
             executions,
             periodResults,
             runtimeStates,
+        )
+    }
+
+    private data class BackedUpState(
+        val categories: List<CategoryEntity>,
+        val todos: List<TodoEntity>,
+        val notifications: List<TodoNotificationEntity>,
+        val executions: List<TodoExecutionEntity>,
+        val periodResults: List<PeriodResultEntity>,
+        val runtimeStates: List<TodoRuntimeStateEntity>,
+        val settings: BackupSettings,
+    )
+
+    private class BackupTestNotificationScheduler : NotificationScheduler {
+        override val notificationCount = MutableStateFlow(0)
+        var reconcileAllCount = 0
+
+        override fun systemState() = NotificationSystemState(
+            canPostNotifications = true,
+            runtimePermissionRelevant = false,
+            runtimePermissionGranted = true,
+            exactAlarmRelevant = false,
+            canScheduleExactAlarms = true,
+        )
+
+        override suspend fun reconcileTodo(todoId: String) = Unit
+
+        override suspend fun reconcileAll() {
+            reconcileAllCount++
+        }
+
+        override suspend fun cancelTodo(todoId: String) = Unit
+    }
+
+    private class NoOpBackupHistoryReconciler : HistoryReconciler {
+        override suspend fun reconcile(maxRecords: Int) = HistoryReconciliationResult(
+            generatedRecords = 0,
+            hasMore = false,
         )
     }
 

@@ -92,10 +92,17 @@ class BackupCoordinator @Inject constructor(
                         "Interrupted restore did not reach a consistent state"
                     }
                 } else if (activeWork == null) {
-                    if (current.type == BackupOperationType.CREATE) deleteDocument(store.uri())
+                    val incompleteFileRemains = current.type == BackupOperationType.CREATE &&
+                        !deleteDocument(store.uri())
                     releaseUri(store.uri())
                     files.deleteAll()
-                    store.fail(BackupErrorCode.STORAGE_UNAVAILABLE)
+                    store.fail(
+                        if (incompleteFileRemains) {
+                            BackupErrorCode.INCOMPLETE_FILE_REMAINS
+                        } else {
+                            BackupErrorCode.STORAGE_UNAVAILABLE
+                        },
+                    )
                 }
             }
             else -> Unit

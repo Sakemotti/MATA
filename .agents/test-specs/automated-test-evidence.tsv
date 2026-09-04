@@ -49,5 +49,8 @@ ST-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsSche
 ST-019	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st019_allUserDataStreamsToAValidatedBackup	:app:connectedDebugAndroidTest
 ST-020	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st020_externalCachesConsentAndTransientStateAreExcluded	:app:connectedDebugAndroidTest
 ST-023	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st023_formatHashStructureTypeRangeReferenceAndCompatibilityFailBeforeMutation	:app:connectedDebugAndroidTest
+ST-026	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st026_restoreFailureAtEveryDataStageRollsBackWithoutIntermediateState	:app:connectedDebugAndroidTest
+ST-029	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st029_nextLaunchRecoversInterruptedBackupAndRestoreToConsistentState	:app:connectedDebugAndroidTest
 ST-D02	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std02_fileNameAndPayloadUseTheSpecifiedZipContainer	:app:connectedDebugAndroidTest
 ST-D03	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std03_archiveContainsRequiredMetadataSettingsOrderingAndHistory	:app:connectedDebugAndroidTest
+ST-D05	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std05_largeBackupAndRestoreStreamAcrossMultipleDatabasePages	:app:connectedDebugAndroidTest
