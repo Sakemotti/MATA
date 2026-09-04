@@ -67,7 +67,7 @@ GitHub Actionsは `main` へのpush、`main` 向けPull Request、手動実行�
 
 Release検証ジョブは、AAB、R8 mapping、依存ライセンス一覧、最終Manifestと、
 各ファイルのSHA-256・`versionName`・`versionCode`・Git commit・ビルド日時を記録した
-メタデータを生成します。`main` 更新時と手動実行時には、これらを365日間保存します。
+メタデータを生成します。`main` 更新時と手動実行時には、リポジトリの成果物保持上限に合わせてこれらを90日間保存します。
 Pull Requestではビルドと検査のみを行い、CI時間と保存容量を抑えます。このAABはCI検証専用の
 未署名成果物であり、Google Playへ公開する成果物には使用しません。公開用AABは保護された
 Release環境でUpload Keyにより署名します。
