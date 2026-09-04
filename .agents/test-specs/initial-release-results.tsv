@@ -348,8 +348,8 @@ ST-006	P1	settings.md	未実施	-	-	-	-	-
 ST-007	P0	settings.md	未実施	-	-	-	-	-
 ST-008	P0	settings.md	未実施	-	-	-	-	-
 ST-009	P0	settings.md	未実施	-	-	-	-	-
-ST-010	P0	settings.md	未実施	-	-	-	-	-
-ST-011	P0	settings.md	未実施	-	-	-	-	-
+ST-010	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st010・CI run 33863729049成功
+ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st011・CI run 33863729049成功
 ST-012	P1	settings.md	未実施	-	-	-	-	-
 ST-013	P1	settings.md	未実施	-	-	-	-	-
 ST-014	P1	settings.md	未実施	-	-	-	-	-

@@ -28,7 +28,7 @@
 | カテゴリ別TODO一覧 | 7 | 4 | 0 | 11 |
 | 合計 | 233 | 154 | 16 | 403 |
 
-リリース必須のP0/P1は387件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月4日時点では、項目単位の証跡が揃ったP0を52件、P1を5件`合格`、残り346件を`未実施`として登録した。広い範囲をまとめた実機確認だけから個々の項目を一律に`合格`とは扱わない。
+リリース必須のP0/P1は387件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月4日時点では、項目単位の証跡が揃ったP0を54件、P1を5件`合格`、残り344件を`未実施`として登録した。広い範囲をまとめた実機確認だけから個々の項目を一律に`合格`とは扱わない。
 
 ## 3. 自動検査の証跡
 
@@ -36,7 +36,7 @@
 | --- | --- | --- | --- |
 | 単体テスト | 38 test suite、161件、失敗0・エラー0・スキップ0 | 2026-09-04のローカル`testDebugUnitTest`結果、[PR #124 CI run 33859640271](https://github.com/Sakemotti/MATA/actions/runs/33859640271) | `REL-001`、論理日・繰り返し・通知・ViewModel等の一部 |
 | Debug検証 | `testDebugUnitTest`、`lintDebug`、`assembleDebug`成功 | [main CI run 33751810640](https://github.com/Sakemotti/MATA/actions/runs/33751810640) | `REL-005`〜`REL-007` |
-| Instrumented test | API 30 x86_64で47件完了、失敗なし | [PR #124 CI run 33859640271](https://github.com/Sakemotti/MATA/actions/runs/33859640271)。ログに`Starting 47 tests`、`Finished 47 tests`、`BUILD SUCCESSFUL` | `REL-027`、Room Migration・Repository・通知・Compose UIの一部 |
+| Instrumented test | API 30 x86_64で49件完了、失敗なし | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)。ログに`Starting 49 tests`、`Finished 49 tests`、`BUILD SUCCESSFUL` | `REL-027`、Room Migration・Repository・通知・設定変更・Compose UIの一部 |
 | Release検証 | `lintRelease`、成果物メタデータ生成、Manifest security、成果物検証が成功 | main CI run 33751810640 | `REL-020`、`REL-025`の正常系 |
 | 性能用成果物 | Benchmark APKとMacrobenchmark APKの生成成功 | main CI run 33751810640 | 性能試験を開始できることの確認 |
 | リポジトリ検査 | 秘密情報・署名ファイル検査、法的サイト検証、Play掲載情報検証が成功 | main CI run 33751810640 | `REL-015`と`REL-018`の自動検査部分 |
@@ -47,8 +47,9 @@
 | 論理日・繰り返し計算 | 試験IDを接頭辞に持つ専用JUnitテスト26件が成功し、ID・テストメソッド・実行タスクの1対1対応を機械検証 | 2026-09-04に`:app:testDebugUnitTest --tests com.mochisofts.mata.domain.model.ScheduleTestSpecCoverageTest`と`verify-automated-evidence.mjs`を実行 | `DAY-001`〜`DAY-003`、`DAY-006`〜`DAY-008`、`DAY-013`、`RPT-001`〜`RPT-004`、`RPT-007`〜`RPT-018`、`RPT-027`〜`RPT-029` |
 | 履歴・復元・完全削除 | 終了済み論理日の履歴確定、回数期間の達成・未達成、履歴取り消し範囲、復元時の基準と埋め戻し防止、関連データ完全削除をRoom上の専用instrumented test 8件で検証 | `:app:connectedDebugAndroidTest`と`verify-automated-evidence.mjs`を実行 | `DAY-010`、`RPT-024`、`STA-003`、`STA-010`、`STA-011`、`AT-016`、`AT-017`、`AT-028` |
 | 通知候補・登録・再構成 | 分・時間・日単位の候補計算と、複数登録、権限変更、exact切替、再起動・時刻・設定変更、無効設定、アーカイブ・削除、冪等性を専用テスト11件で検証 | [PR #124 CI run 33859640271](https://github.com/Sakemotti/MATA/actions/runs/33859640271)の`:app:testDebugUnitTest`とAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `NTF-001`、`NTF-002`、`NTF-006`、`NTF-007`、`NTF-009`〜`NTF-015` |
+| 設定変更時の再計算・履歴不変 | 週開始曜日変更後の現在期間・必要数・完了数・残数の即時再計算と、終了時刻・週開始曜日変更後の確定済み履歴・期間スナップショット不変を専用instrumented test 2件で検証 | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-010`、`ST-011` |
 
-上表の専用テスト45件は[自動試験証跡TSV](automated-test-evidence.tsv)で1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
+上表の専用テスト47件は[自動試験証跡TSV](automated-test-evidence.tsv)で1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 
