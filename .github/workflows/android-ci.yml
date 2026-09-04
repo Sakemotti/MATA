@@ -57,6 +57,7 @@ jobs:
         include:
           - name: Debug verification
             tasks: testDebugUnitTest lintDebug assembleDebug
+            configuration_cache_argument: ""
             admob_app_id: ""
             admob_banner_id: ""
             privacy_policy_url: ""
@@ -64,7 +65,8 @@ jobs:
             upload_release_artifacts: false
             run_instrumented_tests: true
           - name: Release verification
-            tasks: :app:lintRelease :app:generateReleaseArtifactMetadata :app:verifyReleaseManifestSecurity
+            tasks: :app:verifyUploadSigningGuards :app:lintRelease :app:generateReleaseArtifactMetadata :app:verifyReleaseManifestSecurity
+            configuration_cache_argument: --no-configuration-cache
             admob_app_id: ca-app-pub-0000000000000001~0000000001
             admob_banner_id: ca-app-pub-0000000000000001/0000000001
             privacy_policy_url: https://mochisofts.com/mata/privacy
@@ -73,6 +75,7 @@ jobs:
             run_instrumented_tests: false
           - name: Performance APK verification
             tasks: :app:assembleBenchmark :benchmark:assembleBenchmarkRelease
+            configuration_cache_argument: ""
             admob_app_id: ""
             admob_banner_id: ""
             privacy_policy_url: ""
@@ -106,7 +109,7 @@ jobs:
           ORG_GRADLE_PROJECT_MATA_ADMOB_BANNER_AD_UNIT_ID: ${{ matrix.admob_banner_id }}
           ORG_GRADLE_PROJECT_MATA_PRIVACY_POLICY_URL: ${{ matrix.privacy_policy_url }}
           ORG_GRADLE_PROJECT_MATA_TERMS_URL: ${{ matrix.terms_url }}
-        run: ./gradlew ${{ matrix.tasks }} --no-daemon --stacktrace
+        run: ./gradlew ${{ matrix.tasks }} ${{ matrix.configuration_cache_argument }} --no-daemon --stacktrace
 
       - name: Assemble instrumented test APK
         if: matrix.run_instrumented_tests && github.event_name != 'push'

@@ -37,6 +37,60 @@ if (!(requireUploadSigningValue ==~ /(?i:true|false)/)) {
     throw new GradleException("MATA_REQUIRE_UPLOAD_SIGNING must be true or false.")
 }
 def requireUploadSigning = requireUploadSigningValue.toBoolean()
+
+def validateUploadSigningConfiguration = { Map configuration ->
+    def signingValues = [
+        configuration.storeFilePath,
+        configuration.storePassword,
+        configuration.keyAlias,
+        configuration.keyPassword,
+    ]
+    def signingConfigured = signingValues.every { !it.isEmpty() }
+    def signingPartiallyConfigured = signingValues.any { !it.isEmpty() } && !signingConfigured
+    if (signingPartiallyConfigured) {
+        throw new GradleException(
+            "Upload Key signing is partially configured. Set all four MATA_UPLOAD_* properties or none."
+        )
+    }
+    if (!configuration.expectedCertificateSha256.isEmpty() &&
+        !(configuration.expectedCertificateSha256 ==~ /[0-9a-f]{64}/)) {
+        throw new GradleException(
+            "MATA_EXPECTED_UPLOAD_CERT_SHA256 must be a 64-character SHA-256 fingerprint " +
+                "with optional colon separators."
+        )
+    }
+    if (signingConfigured && !configuration.requireSigning) {
+        throw new GradleException(
+            "Upload Key credentials are configured without MATA_REQUIRE_UPLOAD_SIGNING=true. " +
+                "Remove the credentials for verification builds or explicitly require signing."
+        )
+    }
+    if (!configuration.expectedCertificateSha256.isEmpty() && !configuration.requireSigning) {
+        throw new GradleException(
+            "MATA_EXPECTED_UPLOAD_CERT_SHA256 requires MATA_REQUIRE_UPLOAD_SIGNING=true."
+        )
+    }
+    if (!signingConfigured) {
+        return null
+    }
+    if (configuration.configurationCacheRequested) {
+        throw new GradleException(
+            "Upload Key signing requires --no-configuration-cache so signing secrets are not " +
+                "retained in the project configuration cache."
+        )
+    }
+    def storeFile = new File(configuration.storeFilePath)
+    if (!storeFile.isAbsolute()) {
+        throw new GradleException("MATA_UPLOAD_STORE_FILE must be an absolute path.")
+    }
+    if (!storeFile.isFile()) {
+        throw new GradleException("The configured Upload Key keystore file does not exist.")
+    }
+    if (storeFile.canonicalFile.toPath().startsWith(configuration.repositoryPath)) {
+        throw new GradleException("The Upload Key keystore must be stored outside the repository.")
+    }
+    storeFile
+}
 def uploadSigningValues = [
     uploadStoreFilePath,
     uploadStorePassword,
@@ -44,50 +98,16 @@ def uploadSigningValues = [
     uploadKeyPassword,
 ]
 def uploadSigningConfigured = uploadSigningValues.every { !it.isEmpty() }
-def uploadSigningPartiallyConfigured = uploadSigningValues.any { !it.isEmpty() } &&
-    !uploadSigningConfigured
-if (uploadSigningPartiallyConfigured) {
-    throw new GradleException(
-        "Upload Key signing is partially configured. Set all four MATA_UPLOAD_* properties or none."
-    )
-}
-if (!expectedUploadCertificateSha256.isEmpty() &&
-    !(expectedUploadCertificateSha256 ==~ /[0-9a-f]{64}/)) {
-    throw new GradleException(
-        "MATA_EXPECTED_UPLOAD_CERT_SHA256 must be a 64-character SHA-256 fingerprint " +
-            "with optional colon separators."
-    )
-}
-if (uploadSigningConfigured && !requireUploadSigning) {
-    throw new GradleException(
-        "Upload Key credentials are configured without MATA_REQUIRE_UPLOAD_SIGNING=true. " +
-            "Remove the credentials for verification builds or explicitly require signing."
-    )
-}
-if (!expectedUploadCertificateSha256.isEmpty() && !requireUploadSigning) {
-    throw new GradleException(
-        "MATA_EXPECTED_UPLOAD_CERT_SHA256 requires MATA_REQUIRE_UPLOAD_SIGNING=true."
-    )
-}
-def uploadStoreFile = uploadSigningConfigured ? new File(uploadStoreFilePath) : null
-if (uploadSigningConfigured) {
-    if (gradle.startParameter.configurationCacheRequested) {
-        throw new GradleException(
-            "Upload Key signing requires --no-configuration-cache so signing secrets are not " +
-                "retained in the project configuration cache."
-        )
-    }
-    if (!uploadStoreFile.isAbsolute()) {
-        throw new GradleException("MATA_UPLOAD_STORE_FILE must be an absolute path.")
-    }
-    if (!uploadStoreFile.isFile()) {
-        throw new GradleException("The configured Upload Key keystore file does not exist.")
-    }
-    def repositoryPath = rootProject.projectDir.canonicalFile.toPath()
-    if (uploadStoreFile.canonicalFile.toPath().startsWith(repositoryPath)) {
-        throw new GradleException("The Upload Key keystore must be stored outside the repository.")
-    }
-}
+def uploadStoreFile = validateUploadSigningConfiguration([
+    storeFilePath: uploadStoreFilePath,
+    storePassword: uploadStorePassword,
+    keyAlias: uploadKeyAlias,
+    keyPassword: uploadKeyPassword,
+    expectedCertificateSha256: expectedUploadCertificateSha256,
+    requireSigning: requireUploadSigning,
+    configurationCacheRequested: gradle.startParameter.configurationCacheRequested,
+    repositoryPath: rootProject.projectDir.canonicalFile.toPath(),
+])
 
 android {
     namespace 'com.mochisofts.mata'
@@ -324,6 +344,92 @@ def verifyReleaseSigningConfiguration = tasks.register("verifyReleaseSigningConf
                     "configured key can be matched to the registered Upload Key."
             )
         }
+    }
+}
+
+tasks.register("verifyUploadSigningGuards") {
+    group = "verification"
+    description = "Verifies that unsafe Upload Key configurations fail without exposing inputs."
+
+    doLast {
+        def secretValues = [
+            "mata-guard-store-password",
+            "mata-guard-key-alias",
+            "mata-guard-key-password",
+        ]
+        def safeDefaults = [
+            storeFilePath: new File(
+                System.getProperty("java.io.tmpdir"),
+                "mata-guard-keystore-outside-repository",
+            ).absolutePath,
+            storePassword: secretValues[0],
+            keyAlias: secretValues[1],
+            keyPassword: secretValues[2],
+            expectedCertificateSha256: "0" * 64,
+            requireSigning: true,
+            configurationCacheRequested: false,
+            repositoryPath: rootProject.projectDir.canonicalFile.toPath(),
+        ]
+        def cases = [
+            [
+                name: "partial credentials",
+                expectedMessage: "partially configured",
+                configuration: safeDefaults + [
+                    storePassword: "",
+                    keyAlias: "",
+                    keyPassword: "",
+                ],
+            ],
+            [
+                name: "relative keystore path",
+                expectedMessage: "must be an absolute path",
+                configuration: safeDefaults + [storeFilePath: "relative-mata-guard-keystore"],
+            ],
+            [
+                name: "repository keystore path",
+                expectedMessage: "must be stored outside the repository",
+                configuration: safeDefaults + [
+                    storeFilePath: rootProject.file("README.md").absolutePath,
+                ],
+            ],
+            [
+                name: "credentials without signing requirement",
+                expectedMessage: "configured without MATA_REQUIRE_UPLOAD_SIGNING=true",
+                configuration: safeDefaults + [requireSigning: false],
+            ],
+            [
+                name: "configuration cache with credentials",
+                expectedMessage: "requires --no-configuration-cache",
+                configuration: safeDefaults + [configurationCacheRequested: true],
+            ],
+        ]
+
+        cases.each { testCase ->
+            String failureMessage = null
+            try {
+                validateUploadSigningConfiguration(testCase.configuration)
+            } catch (GradleException error) {
+                failureMessage = error.message
+            }
+            if (failureMessage == null) {
+                throw new GradleException(
+                    "Upload Key guard test '${testCase.name}' unexpectedly succeeded."
+                )
+            }
+            if (!failureMessage.contains(testCase.expectedMessage)) {
+                throw new GradleException(
+                    "Upload Key guard test '${testCase.name}' failed for an unexpected reason."
+                )
+            }
+            secretValues.each { secretValue ->
+                if (failureMessage.contains(secretValue)) {
+                    throw new GradleException(
+                        "Upload Key guard test '${testCase.name}' exposed a signing input."
+                    )
+                }
+            }
+        }
+        logger.lifecycle("Verified {} Upload Key configuration guard cases.", cases.size())
     }
 }
 
