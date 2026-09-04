@@ -18,6 +18,8 @@
 
 すべての試験IDに主担当を1件だけ設定する。これは責任範囲の重複を避けるための主担当であり、他のテスターが同じ操作を行うことを禁止しない。全テスターは担当項目とは別に、参加ガイドの基本操作をスモーク確認する。
 
+`DEV_AUTO`のうち、論理日・期限7件と繰り返し計算19件は[自動試験証跡TSV](automated-test-evidence.tsv)でJUnitテストと1対1に対応済みである。残る項目は、専用テストと対応表が揃うまで既存テストの包括的な成功だけで合格にしない。
+
 ## 2. テスター別パック
 
 | 担当 | 件数 | 主な範囲 |
@@ -63,6 +65,7 @@
 ```powershell
 node tools/test-specs/verify-assignments.mjs
 node tools/test-specs/verify-results.mjs
+node tools/test-specs/verify-automated-evidence.mjs
 ```
 
 割り当て検証は、403件のID漏れ・重複、仕様書との優先度・種別不一致、不適切なレーン、無効な担当IDおよび担当件数を確認する。試験結果検証は別途、結果値と証跡の整合性を確認する。

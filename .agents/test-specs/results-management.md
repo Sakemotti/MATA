@@ -1,8 +1,9 @@
 # リリース別試験結果の管理
 
 - 現在の結果台帳: [MATA 1.0.0 (1)](initial-release-results.tsv)
+- 自動試験証跡: [試験IDとJUnitテストの対応](automated-test-evidence.tsv)
 - 実施記録: [初回Closed testing実施台帳](closed-testing-log.md)
-- 検証ツール: [`tools/test-specs/verify-results.mjs`](../../tools/test-specs/verify-results.mjs)
+- 検証ツール: [`verify-results.mjs`](../../tools/test-specs/verify-results.mjs)、[`verify-automated-evidence.mjs`](../../tools/test-specs/verify-automated-evidence.mjs)
 
 ## 1. 目的
 
@@ -34,9 +35,10 @@
 
 ```powershell
 node tools/test-specs/verify-results.mjs
+node tools/test-specs/verify-automated-evidence.mjs
 ```
 
-検証では、仕様書とのID集合、優先度、参照ファイル、重複、許可された結果値、必須実行情報および件数を確認し、優先度別集計を出力する。
+結果検証では、仕様書とのID集合、優先度、参照ファイル、重複、許可された結果値、必須実行情報および件数を確認し、優先度別集計を出力する。自動試験証跡検証では、`DEV_AUTO`の合格項目について、試験IDを接頭辞に持つ専用JUnitメソッド、ソースファイル、Gradleタスクおよび結果行の1対1対応を確認する。
 
 ## 4. 将来のリリース
 
@@ -54,4 +56,5 @@ node tools/test-specs/verify-results.mjs --initialize .agents/test-specs/release
 - P2の`不合格`、`保留`、`対象外`には影響と判断理由を記録する。
 - `対象外`は環境と理由を証跡へ明記し、単なる未実施の代用にしない。
 - 自動テストと試験IDが1対1で対応しない場合は、推測で合格へ変更しない。
+- `DEV_AUTO`を`AUTO`で合格にする場合は、`automated-test-evidence.tsv`へ専用テストを登録し、対応するGradleタスクと証跡検証を成功させる。
 - 氏名、Googleアカウント、メールアドレス、実際のTODO内容等の個人情報をTSVへ記録しない。
