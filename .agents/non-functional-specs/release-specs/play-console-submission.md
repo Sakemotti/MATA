@@ -1,9 +1,9 @@
 # Google Play Console申請シート
 
-- 文書状態: 入力値確定・外部設定未完了
-- 最終更新日: 2026-09-02
+- 文書状態: Console初期設定済み・Closed testing準備中
+- 最終更新日: 2026-09-04
 - 親仕様: [リリース・配布運用仕様](README.md)
-- 関連文書: [ストア掲載文・画像仕様](store-listing-copy-and-assets.md)、[Data safety申告案](data-safety-declaration.md)、[法的文書仕様](../legal-specs/README.md)
+- 関連文書: [ストア掲載文・画像仕様](store-listing-copy-and-assets.md)、[Data safety申告](data-safety-declaration.md)、[法的文書仕様](../legal-specs/README.md)
 
 ## 1. 用途
 
@@ -45,7 +45,7 @@
 | Health apps | My app doesn't provide any health features | 健康データ、運動、医療、ウェルネスの記録・助言機能はない。 |
 | 広告ID | はい | GMA Next-Gen SDKが`AD_ID`を使用し得る。目的は広告またはマーケティング、分析、詐欺防止・セキュリティ・コンプライアンス。 |
 | アカウント作成・削除 | アカウントを作成できない | Google PlayアカウントはMATA独自アカウントではない。アカウント削除URLは不要。 |
-| Data safety | [Data safety申告案](data-safety-declaration.md)のとおり | Release AABと実通信の確認後に送信する。 |
+| Data safety | [Data safety申告](data-safety-declaration.md)のとおり | Console回答済み。Release AABと実通信の最終突合後、必要なら公開前に修正する。 |
 
 Consoleに追加の宣言カードが表示された場合は、表示を無視せず、公開候補の実装を根拠に回答と証跡を本書へ追加する。
 
@@ -95,7 +95,7 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 | 項目 | 初期値・方針 |
 | --- | --- |
 | Version name | `1.0.0` |
-| Version code | `1`。未使用であることをConsoleで確認する。 |
+| Version code | `1`。Internal testingで使用済み。Closed testingでは昇格またはライブラリから追加し、新しいAABは`2`以上とする。 |
 | Target API | 36 |
 | 配布形式 | Android App Bundle（AAB） |
 | App signing | Play App Signingを有効化し、Upload KeyでAABへ署名する。 |
@@ -113,17 +113,19 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 ## 8. 初回公開前ブロッカー
 
 - [x] Google Play個人デベロッパーアカウントの本人確認、連絡先メールおよび電話番号の確認を完了した。
-- [ ] Play Consoleに表示される本番アクセス要件を確認し、必要なテスト要件を満たした。
-- [ ] `mochisofts.com`でプライバシーポリシー等3文書と`app-ads.txt`を公開した。
+- [x] Play Consoleに表示される本番アクセス要件を確認し、Closed testの準備を開始した。テスト要件の達成とProduction access申請は未完了である。
+- [x] `mochisofts.com`でプライバシーポリシー等3文書と`app-ads.txt`を公開し、2026年9月4日に各URLのHTTP 200を確認した。
 - [x] AdMobの正式なApp ID、バナー広告ユニットID、Publisher IDおよびUMPメッセージを設定した。
-- [ ] 512pxストアアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット各4枚の画像を作成した。
-- [ ] Data safety、Advertising ID、Ads、Target audience、Content rating、Financial features、Health apps等の全カードを送信した。
-- [ ] アプリ内商品が未登録で、アプリとストア掲載に購入導線がないことを確認した。
+- [x] 512pxストアアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット各4枚の画像を作成し、Play Consoleへ登録した。
+- [x] Data safety、Advertising ID、Ads、Target audience、Content rating、Financial features、Health apps等の全カードを送信し、未完了カードがないことを確認した。
+- [x] アプリ内商品が未登録で、アプリとストア掲載に購入導線がないことを確認した。
 - [x] Upload Keyをリポジトリ外に作成し、ローカルの署名済みAABと証明書SHA-256が一致することを確認した。
-- [ ] Upload Keyのkeystoreと復旧情報を暗号化した安全な場所へバックアップした。
-- [ ] Play App Signingを設定し、Play ConsoleのUpload Key証明書SHA-256と仕様書の値が一致することを確認した。
+- [x] Upload Keyのkeystoreと復旧情報を暗号化した安全な場所へバックアップした。
+- [x] Play App Signingを設定し、Play ConsoleのUpload Key証明書SHA-256と仕様書の値が一致することを確認した。
 - [ ] アカウント条件に該当する場合、12人・14日間のClosed testとProduction access申請を完了した。
 - [ ] Release AAB、Pre-launch report、全P0/P1試験、SDK Indexおよびポリシー状態が合格した。
+
+現在の外部設定と実機確認の詳細は[初回リリース進行記録](initial-release-status.md)を参照する。実広告はInternal testing限定の掲載情報をAdMobから検索できないため、本番公開後の連携・審査・表示確認として保留する。
 
 ## 9. 公式資料
 
