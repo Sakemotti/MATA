@@ -269,6 +269,26 @@ def verifyReleaseAdMobConfiguration = tasks.register("verifyReleaseAdMobConfigur
     }
 }
 
+def validateLegalDocumentUrl = { String label, String configuredUrl, String expectedPath ->
+    def parsedUrl
+    try {
+        parsedUrl = new URI(configuredUrl)
+    } catch (Exception ignored) {
+        throw new GradleException("Release ${label} URL is invalid: ${configuredUrl}")
+    }
+    if (parsedUrl.scheme != "https" ||
+        parsedUrl.host != "mochisofts.com" ||
+        parsedUrl.path != expectedPath ||
+        parsedUrl.query != null ||
+        parsedUrl.fragment != null) {
+        throw new GradleException(
+            "Release ${label} URL is missing or invalid. " +
+                "Set MATA_${label == 'privacyPolicy' ? 'PRIVACY_POLICY' : 'TERMS'}_URL " +
+                "to the approved HTTPS URL."
+        )
+    }
+}
+
 def verifyReleaseLegalUrls = tasks.register("verifyReleaseLegalUrls") {
     group = "verification"
     description = "Verifies the required public legal-document URLs."
@@ -278,26 +298,58 @@ def verifyReleaseLegalUrls = tasks.register("verifyReleaseLegalUrls") {
             terms: [releaseTermsUrl, "/mata/terms"],
         ]
         expectedUrls.each { label, configuration ->
-            def configuredUrl = configuration[0]
-            def expectedPath = configuration[1]
-            def parsedUrl
+            validateLegalDocumentUrl(label, configuration[0], configuration[1])
+        }
+    }
+}
+
+tasks.register("verifyLegalUrlGuards") {
+    group = "verification"
+    description = "Verifies missing and unsafe Release legal URLs are rejected and Debug values are explicit."
+
+    doLast {
+        def invalidCases = [
+            [name: "missing privacy policy", label: "privacyPolicy", url: "", path: "/mata/privacy"],
+            [name: "missing terms", label: "terms", url: "", path: "/mata/terms"],
+            [
+                name: "insecure scheme",
+                label: "privacyPolicy",
+                url: "http://mochisofts.com/mata/privacy",
+                path: "/mata/privacy",
+            ],
+            [
+                name: "unexpected host",
+                label: "terms",
+                url: "https://example.com/mata/terms",
+                path: "/mata/terms",
+            ],
+            [
+                name: "query parameters",
+                label: "privacyPolicy",
+                url: "https://mochisofts.com/mata/privacy?redirect=1",
+                path: "/mata/privacy",
+            ],
+        ]
+        invalidCases.each { testCase ->
+            def rejected = false
             try {
-                parsedUrl = new URI(configuredUrl)
-            } catch (Exception ignored) {
-                throw new GradleException("Release ${label} URL is invalid: ${configuredUrl}")
+                validateLegalDocumentUrl(testCase.label, testCase.url, testCase.path)
+            } catch (GradleException ignored) {
+                rejected = true
             }
-            if (parsedUrl.scheme != "https" ||
-                parsedUrl.host != "mochisofts.com" ||
-                parsedUrl.path != expectedPath ||
-                parsedUrl.query != null ||
-                parsedUrl.fragment != null) {
+            if (!rejected) {
                 throw new GradleException(
-                    "Release ${label} URL is missing or invalid. " +
-                        "Set MATA_${label == 'privacyPolicy' ? 'PRIVACY_POLICY' : 'TERMS'}_URL " +
-                        "to the approved HTTPS URL."
+                    "Legal URL guard test '${testCase.name}' unexpectedly succeeded."
                 )
             }
         }
+
+        validateLegalDocumentUrl("privacyPolicy", debugPrivacyPolicyUrl, "/mata/privacy")
+        validateLegalDocumentUrl("terms", debugTermsUrl, "/mata/terms")
+        logger.lifecycle(
+            "Verified {} invalid Release legal URL cases and explicit Debug legal URLs.",
+            invalidCases.size(),
+        )
     }
 }
 

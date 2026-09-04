@@ -71,7 +71,7 @@ jobs:
             upload_release_artifacts: false
             run_instrumented_tests: true
           - name: Release verification
-            tasks: :app:verifyUploadSigningGuards :app:lintRelease :app:generateReleaseArtifactMetadata :app:verifyReleaseManifestSecurity
+            tasks: :app:verifyUploadSigningGuards :app:verifyLegalUrlGuards :app:lintRelease :app:generateReleaseArtifactMetadata :app:verifyReleaseManifestSecurity
             configuration_cache_argument: --no-configuration-cache
             admob_app_id: ca-app-pub-0000000000000001~0000000001
             admob_banner_id: ca-app-pub-0000000000000001/0000000001
