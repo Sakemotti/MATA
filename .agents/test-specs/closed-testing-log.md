@@ -9,6 +9,7 @@
 - 担当割り当て: [初回リリース試験担当割り当て](closed-testing-assignments.md)
 - 項目別結果: [MATA 1.0.0 (1) 試験結果](initial-release-results.tsv)
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
+- テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 
@@ -94,8 +95,8 @@ versionCode `1`はInternal testingで使用済みである。Closed testingに�
 | スマートフォン縦・横 | 未定 | 全主要画面 | 未実施 |
 | タブレットまたは幅600dp以上 | 未定 | 適応レイアウト、2ペイン | 未実施 |
 | 分割画面・回転 | 未定 | 状態維持、Insets、再構成 | 未実施 |
-| ライト・ダーク・端末追従 | 未定 | `REL-008`、全主要画面 | 未実施 |
-| 最大フォント・表示サイズ拡大 | 未定 | `REL-008`、主要操作 | 未実施 |
+| ライト・ダーク・端末追従 | T10（予定） | `REL-008`、全主要画面 | [専用手順](rel-008-visual-check.md)を用意済み・未実施 |
+| 最大フォント・表示サイズ拡大 | T10（予定） | `REL-008`、主要操作 | [専用手順](rel-008-visual-check.md)を用意済み・未実施 |
 | TalkBack | 未定 | 読み上げ、順序、操作名 | 未実施 |
 | 通知権限の許可・拒否 | 未定 | `NTF-003`、`NTF-006`、`NTF-007` | 未実施 |
 | 正確なアラーム利用不可 | 未定 | `NTF-008`、`NTF-009` | 未実施 |
