@@ -309,10 +309,10 @@ AT-014	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-015	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-016	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at016・connectedDebugAndroidTest成功
 AT-017	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at017・connectedDebugAndroidTest成功
-AT-018	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-019	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-018	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at018・CI run 34027426978成功
+AT-019	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at019・CI run 34027426978成功
 AT-020	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-021	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-021	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#at021・CI run 34027426978成功
 AT-022	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-023	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-024	P1	archived-todos.md	未実施	-	-	-	-	-
@@ -322,7 +322,7 @@ AT-027	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-028	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at028・connectedDebugAndroidTest成功
 AT-029	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-030	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-031	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-031	P1	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at031・CI run 34027426978成功
 AT-032	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-033	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-034	P1	archived-todos.md	未実施	-	-	-	-	-
@@ -336,8 +336,8 @@ AT-D01	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-D02	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-D03	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-D04	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-D05	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-D06	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-D05	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd05・CI run 34027426978成功
+AT-D06	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd06・CI run 34027426978成功
 AT-D07	P1	archived-todos.md	未実施	-	-	-	-	-
 ST-001	P1	settings.md	未実施	-	-	-	-	-
 ST-002	P1	settings.md	未実施	-	-	-	-	-
