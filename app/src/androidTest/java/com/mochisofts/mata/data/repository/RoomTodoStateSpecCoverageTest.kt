@@ -160,7 +160,13 @@ class RoomTodoStateSpecCoverageTest {
     @Test
     fun te022_editUpdatesCurrentAndFutureDefinitionWithoutRewritingPastRecord() = runBlocking {
         val oldCategory = categoryEntity("old-category", "Before", colorIndex = 2, iconName = "Home")
-        val newCategory = categoryEntity("new-category", "After", colorIndex = 6, iconName = "Work")
+        val newCategory = categoryEntity(
+            "new-category",
+            "After",
+            colorIndex = 6,
+            iconName = "Work",
+            sortOrder = 1,
+        )
         database.categoryDao().upsert(oldCategory)
         database.categoryDao().upsert(newCategory)
         val original = todoEntity(
