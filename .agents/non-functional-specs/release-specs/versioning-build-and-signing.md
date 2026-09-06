@@ -49,7 +49,7 @@
   - 最終Manifestと権限一覧
   - テスト・Lint・benchmark結果
   - ストア掲載文言とリリースノート
-- ネイティブライブラリを導入した場合はNative Debug Symbolsもアップロード・保管する。
+- Releaseでは`ndk.debugSymbolLevel=SYMBOL_TABLE`を設定し、取得可能なNative Debug SymbolsをAABへ含める。依存ライブラリ側ですでにシンボルが除去されている場合は生成できないため、ビルド警告、AAB内容およびPlay Consoleの警告をversionCodeごとに記録する。
 - CI成果物は原則1年、公開済みReleaseのメタデータとmappingは公開期間中および公開終了後3年以上保持する。
 
 ### 4.1 Release SBOM

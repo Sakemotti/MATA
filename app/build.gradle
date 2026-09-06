@@ -152,6 +152,9 @@ android {
             optimization {
                 enable true
             }
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
             manifestPlaceholders.admobAppId = releaseAdMobAppId ?: "missing-admob-app-id"
             buildConfigField "String", "ADMOB_APP_ID", "\"${releaseAdMobAppId}\""
             buildConfigField "String", "ADMOB_BANNER_AD_UNIT_ID", "\"${releaseBannerAdUnitId}\""
