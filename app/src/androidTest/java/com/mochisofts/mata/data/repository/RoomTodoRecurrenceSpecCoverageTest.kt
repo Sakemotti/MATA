@@ -24,6 +24,7 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.nextNotificationCandidate
+import com.mochisofts.mata.domain.model.nextOccurrences
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.Clock
@@ -133,6 +134,58 @@ class RoomTodoRecurrenceSpecCoverageTest {
         assertEquals(
             TodoState.COMPLETED,
             todoRepository.observeOccurrences(pastDate).first().single().state,
+        )
+    }
+
+    @Test
+    fun te011_schedulePreviewAppliesHolidaysOnlyToHolidayAwareDayFilters() = runBlocking {
+        val previewStart = LocalDate.of(2026, 11, 2)
+        val weekdayHoliday = LocalDate.of(2026, 11, 3)
+        val holidayDates = setOf(weekdayHoliday)
+        val weekdays = todoEntity(
+            id = "preview-weekdays",
+            rule = RecurrenceRule(RecurrenceType.WEEKDAYS),
+            startDate = previewStart,
+        )
+        val weekendsAndHolidays = todoEntity(
+            id = "preview-weekends-holidays",
+            rule = RecurrenceRule(
+                type = RecurrenceType.SELECTED_WEEKDAYS,
+                dayFilter = RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+            ),
+            startDate = previewStart,
+        )
+        val arbitraryTuesday = todoEntity(
+            id = "preview-arbitrary-tuesday",
+            rule = RecurrenceRule(
+                type = RecurrenceType.SELECTED_WEEKDAYS,
+                selectedWeekdays = setOf(DayOfWeek.TUESDAY),
+                dayFilter = RecurrenceDayFilter.CUSTOM,
+            ),
+            startDate = previewStart,
+        )
+        listOf(weekdays, weekendsAndHolidays, arbitraryTuesday).forEach { todo ->
+            database.todoDao().upsert(todo)
+        }
+
+        val weekdayPreview = requireNotNull(todoRepository.getTodo(weekdays.id))
+            .nextOccurrences(previewStart, limit = 3, holidays = holidayDates)
+        val weekendHolidayPreview = requireNotNull(todoRepository.getTodo(weekendsAndHolidays.id))
+            .nextOccurrences(previewStart, limit = 3, holidays = holidayDates)
+        val arbitraryPreview = requireNotNull(todoRepository.getTodo(arbitraryTuesday.id))
+            .nextOccurrences(previewStart, limit = 3, holidays = holidayDates)
+
+        assertEquals(
+            listOf(previewStart, previewStart.plusDays(2), previewStart.plusDays(3)),
+            weekdayPreview,
+        )
+        assertEquals(
+            listOf(weekdayHoliday, previewStart.plusDays(5), previewStart.plusDays(6)),
+            weekendHolidayPreview,
+        )
+        assertEquals(
+            listOf(weekdayHoliday, weekdayHoliday.plusWeeks(1), weekdayHoliday.plusWeeks(2)),
+            arbitraryPreview,
         )
     }
 

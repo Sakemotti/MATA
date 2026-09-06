@@ -90,3 +90,8 @@ AT-021	app/src/androidTest/java/com/mochisofts/mata/data/notification/Notificati
 AT-031	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at031_archiveListAndHistoryUseStableBoundedPages	:app:connectedDebugAndroidTest
 AT-D05	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	atd05_restoreClearsOldArchiveTimeAndRearchiveRecordsNewTime	:app:connectedDebugAndroidTest
 AT-D06	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	atd06_permanentDeletePersistsInvalidationBeforeCancellationFailure	:app:connectedDebugAndroidTest
+TE-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	te011_schedulePreviewAppliesHolidaysOnlyToHolidayAwareDayFilters	:app:connectedDebugAndroidTest
+TE-021	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	te021_platformAndHolidayChangesRebuildOnlyOneFutureNotification	:app:connectedDebugAndroidTest
+TE-022	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	te022_editUpdatesCurrentAndFutureDefinitionWithoutRewritingPastRecord	:app:connectedDebugAndroidTest
+TE-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	te023_editReconcilesPendingTodayAndPreservesActedTodayHistory	:app:connectedDebugAndroidTest
+TE-D05	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	ted05_historySnapshotsKeepEveryDefinitionFieldBeforeAndAfterEdit	:app:connectedDebugAndroidTest

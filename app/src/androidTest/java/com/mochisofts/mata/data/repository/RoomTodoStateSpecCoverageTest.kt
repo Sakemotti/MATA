@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.ScheduledNotificationEntity
 import com.mochisofts.mata.data.local.TodoEntity
@@ -15,9 +16,12 @@ import com.mochisofts.mata.data.widget.WidgetSourceData
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.data.widget.buildWidgetDisplayModel
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.nextOccurrenceOnOrAfter
 import com.mochisofts.mata.domain.repository.NotificationScheduler
@@ -151,6 +155,186 @@ class RoomTodoStateSpecCoverageTest {
         assertEquals("before edit", historical.snapshot.title)
         assertEquals(9 * 60, historical.snapshot.dueMinutes)
         assertEquals(TodoState.COMPLETED, historical.state)
+    }
+
+    @Test
+    fun te022_editUpdatesCurrentAndFutureDefinitionWithoutRewritingPastRecord() = runBlocking {
+        val oldCategory = categoryEntity("old-category", "Before", colorIndex = 2, iconName = "Home")
+        val newCategory = categoryEntity(
+            "new-category",
+            "After",
+            colorIndex = 6,
+            iconName = "Work",
+            sortOrder = 1,
+        )
+        database.categoryDao().upsert(oldCategory)
+        database.categoryDao().upsert(newCategory)
+        val original = todoEntity(
+            id = "full-definition-edit",
+            title = "before title",
+            description = "before description",
+            categoryId = oldCategory.id,
+            dueMinutes = 9 * 60,
+        )
+        database.todoDao().upsert(original)
+        database.todoNotificationDao().upsertAll(
+            listOf(notificationEntity(original.id, "before-notification", NotificationRelation.BEFORE, 30)),
+        )
+        todoRepository.setCompleted(original.id, clock.date, true, operationId = "before-edit").getOrThrow()
+        val pastRecord = database.todoExecutionDao().findForTodo(original.id).single()
+        clock.setDate(clock.date.plusDays(2))
+        val newRule = RecurrenceRule(RecurrenceType.EVERY_N_DAYS, intervalDays = 2)
+        val newNotifications = listOf(
+            TodoNotification(
+                id = "after-notification",
+                relation = NotificationRelation.AFTER,
+                amount = 1,
+                unit = NotificationUnit.HOUR,
+            ),
+        )
+
+        todoRepository.saveTodo(
+            id = original.id,
+            title = "after title",
+            description = "after description",
+            categoryId = newCategory.id,
+            startDate = LocalDate.of(2026, 8, 10),
+            endDate = LocalDate.of(2026, 9, 30),
+            recurrenceRule = newRule,
+            dueMinutes = 18 * 60,
+            notifications = newNotifications,
+        ).getOrThrow()
+
+        val current = requireNotNull(todoRepository.getTodo(original.id))
+        assertEquals("after title", current.title)
+        assertEquals("after description", current.description)
+        assertEquals(newCategory.id, current.categoryId)
+        assertEquals(LocalDate.of(2026, 9, 30), current.endDate)
+        assertEquals(newRule, current.recurrenceRule)
+        assertEquals(18 * 60, current.dueMinutes)
+        assertEquals(newNotifications, current.notifications)
+        val currentOccurrence = todoRepository.observeOccurrences(clock.date).first().single()
+        assertEquals(newCategory.id, currentOccurrence.category?.id)
+        assertEquals(clock.date.plusDays(2), current.nextOccurrenceOnOrAfter(clock.date.plusDays(1)))
+        assertEquals(pastRecord, database.todoExecutionDao().findForTodo(original.id).single())
+        val pastSnapshot = historyRepository().observeDay(LocalDate.of(2026, 8, 10)).first().entries.single().snapshot
+        assertEquals("before title", pastSnapshot.title)
+        assertEquals(oldCategory.id, pastSnapshot.categoryId)
+        assertEquals(9 * 60, pastSnapshot.dueMinutes)
+    }
+
+    @Test
+    fun te023_editReconcilesPendingTodayAndPreservesActedTodayHistory() = runBlocking {
+        val excludedRule = RecurrenceRule(
+            type = RecurrenceType.SELECTED_WEEKDAYS,
+            selectedWeekdays = setOf(DayOfWeek.TUESDAY),
+        )
+        val becomesIncluded = todoEntity("becomes-included", rule = excludedRule)
+        val becomesExcluded = todoEntity("becomes-excluded")
+        val completed = todoEntity("completed-then-excluded")
+        val skipped = todoEntity("skipped-then-excluded")
+        listOf(becomesIncluded, becomesExcluded, completed, skipped).forEach { todo ->
+            database.todoDao().upsert(todo)
+        }
+        todoRepository.setCompleted(completed.id, clock.date, true, operationId = "completed").getOrThrow()
+        todoRepository.setSkipped(skipped.id, clock.date, true, operationId = "skipped").getOrThrow()
+
+        editRule(becomesIncluded.id, RecurrenceRule.daily())
+        editRule(becomesExcluded.id, excludedRule)
+        editRule(completed.id, excludedRule)
+        editRule(skipped.id, excludedRule)
+
+        val occurrences = todoRepository.observeOccurrences(clock.date).first().associateBy { it.todo.id }
+        assertEquals(TodoState.PENDING, occurrences[becomesIncluded.id]?.state)
+        assertTrue(becomesExcluded.id !in occurrences)
+        assertEquals(TodoState.COMPLETED, occurrences[completed.id]?.state)
+        assertEquals(TodoState.SKIPPED, occurrences[skipped.id]?.state)
+        assertTrue(database.todoExecutionDao().findForTodo(becomesIncluded.id).isEmpty())
+        assertTrue(database.todoExecutionDao().findForTodo(becomesExcluded.id).isEmpty())
+        assertEquals(TodoState.COMPLETED.code, database.todoExecutionDao().findForTodo(completed.id).single().status)
+        assertEquals(TodoState.SKIPPED.code, database.todoExecutionDao().findForTodo(skipped.id).single().status)
+    }
+
+    @Test
+    fun ted05_historySnapshotsKeepEveryDefinitionFieldBeforeAndAfterEdit() = runBlocking {
+        settings.dayEndHour.value = 4
+        settings.weekStart.value = DayOfWeek.SUNDAY
+        val oldCategory = categoryEntity("snapshot-old", "Old category", 3, "Home", sortOrder = 4)
+        val newCategory = categoryEntity("snapshot-new", "New category", 8, "Work", sortOrder = 7)
+        database.categoryDao().upsert(oldCategory)
+        database.categoryDao().upsert(newCategory)
+        val original = todoEntity(
+            id = "snapshot-edit",
+            title = "old title",
+            description = "old description",
+            categoryId = oldCategory.id,
+            startDate = LocalDate.of(2026, 8, 1),
+            endDate = LocalDate.of(2026, 8, 31),
+            dueMinutes = 9 * 60,
+            rule = RecurrenceRule.daily(),
+        )
+        database.todoDao().upsert(original)
+        database.todoNotificationDao().upsertAll(
+            listOf(notificationEntity(original.id, "old-reminder", NotificationRelation.BEFORE, 30)),
+        )
+        val beforeDate = clock.date
+        todoRepository.setCompleted(original.id, beforeDate, true, operationId = "snapshot-before").getOrThrow()
+        clock.setDate(beforeDate.plusDays(1))
+        val editedRule = RecurrenceRule(
+            type = RecurrenceType.SELECTED_WEEKDAYS,
+            selectedWeekdays = setOf(DayOfWeek.TUESDAY),
+        )
+
+        todoRepository.saveTodo(
+            id = original.id,
+            title = "new title",
+            description = "new description",
+            categoryId = newCategory.id,
+            startDate = LocalDate.of(2026, 8, 1),
+            endDate = LocalDate.of(2026, 9, 30),
+            recurrenceRule = editedRule,
+            dueMinutes = 18 * 60,
+            notifications = listOf(
+                TodoNotification("new-reminder", NotificationRelation.AFTER, 2, NotificationUnit.HOUR),
+            ),
+        ).getOrThrow()
+        val afterDate = clock.date
+        todoRepository.setCompleted(original.id, afterDate, true, operationId = "snapshot-after").getOrThrow()
+
+        val before = historyRepository().observeDay(beforeDate).first().entries.single().snapshot
+        val after = historyRepository().observeDay(afterDate).first().entries.single().snapshot
+        assertEquals("old title", before.title)
+        assertEquals("old description", before.description)
+        assertEquals(oldCategory.id, before.categoryId)
+        assertEquals(oldCategory.name, before.categoryName)
+        assertEquals(oldCategory.colorIndex, before.categoryColorIndex)
+        assertEquals(oldCategory.iconName, before.categoryIconName)
+        assertEquals(oldCategory.sortOrder, before.categorySortOrder)
+        assertEquals(LocalDate.of(2026, 8, 1), before.startDate)
+        assertEquals(LocalDate.of(2026, 8, 31), before.endDate)
+        assertEquals(RecurrenceRule.daily(), before.recurrenceRule)
+        assertEquals(9 * 60, before.dueMinutes)
+        assertEquals(NotificationRelation.BEFORE, before.notifications.single().relation)
+        assertEquals(30, before.notifications.single().amount)
+        assertEquals(NotificationUnit.MINUTE, before.notifications.single().unit)
+        assertEquals(4, before.endHour)
+        assertEquals(DayOfWeek.SUNDAY, before.weekStart)
+
+        assertEquals("new title", after.title)
+        assertEquals("new description", after.description)
+        assertEquals(newCategory.id, after.categoryId)
+        assertEquals(newCategory.name, after.categoryName)
+        assertEquals(newCategory.colorIndex, after.categoryColorIndex)
+        assertEquals(newCategory.iconName, after.categoryIconName)
+        assertEquals(newCategory.sortOrder, after.categorySortOrder)
+        assertEquals(LocalDate.of(2026, 9, 30), after.endDate)
+        assertEquals(editedRule, after.recurrenceRule)
+        assertEquals(18 * 60, after.dueMinutes)
+        assertEquals(NotificationRelation.AFTER, after.notifications.single().relation)
+        assertEquals(2, after.notifications.single().amount)
+        assertEquals(NotificationUnit.HOUR, after.notifications.single().unit)
+        assertEquals(4, after.endHour)
+        assertEquals(DayOfWeek.SUNDAY, after.weekStart)
     }
 
     @Test
@@ -335,9 +519,61 @@ class RoomTodoStateSpecCoverageTest {
         )
     }
 
+    private suspend fun editRule(todoId: String, rule: RecurrenceRule) {
+        val current = requireNotNull(todoRepository.getTodo(todoId))
+        todoRepository.saveTodo(
+            id = current.id,
+            title = current.title,
+            description = current.description,
+            categoryId = current.categoryId,
+            startDate = current.startDate,
+            endDate = current.endDate,
+            recurrenceRule = rule,
+            dueMinutes = current.dueMinutes,
+            notifications = current.notifications,
+        ).getOrThrow()
+    }
+
+    private fun categoryEntity(
+        id: String,
+        name: String,
+        colorIndex: Int,
+        iconName: String,
+        sortOrder: Int = 0,
+    ) = CategoryEntity(
+        id = id,
+        name = name,
+        normalizedName = name.lowercase(),
+        colorIndex = colorIndex,
+        iconName = iconName,
+        legacyEndHour = 0,
+        sortOrder = sortOrder,
+        createdAt = 1,
+    )
+
+    private fun notificationEntity(
+        todoId: String,
+        id: String,
+        relation: NotificationRelation,
+        amount: Int,
+    ) = TodoNotificationEntity(
+        id = id,
+        todoId = todoId,
+        relation = relation.code,
+        amount = amount,
+        unit = NotificationUnit.MINUTE.code,
+        sortOrder = 0,
+        createdAt = 1,
+        updatedAt = 1,
+    )
+
     private fun todoEntity(
         id: String,
         title: String = id,
+        description: String = "",
+        categoryId: String? = null,
+        startDate: LocalDate = LocalDate.of(2026, 8, 10),
+        endDate: LocalDate? = null,
         dueMinutes: Int? = null,
         rule: RecurrenceRule = RecurrenceRule.daily(),
     ): TodoEntity {
@@ -345,10 +581,10 @@ class RoomTodoStateSpecCoverageTest {
         return TodoEntity(
             id = id,
             title = title,
-            description = "",
-            categoryId = null,
-            startDate = LocalDate.of(2026, 8, 10).toString(),
-            endDate = null,
+            description = description,
+            categoryId = categoryId,
+            startDate = startDate.toString(),
+            endDate = endDate?.toString(),
             recurrenceType = encoded.typeCode,
             repeatParamsVersion = encoded.paramsVersion,
             repeatParamsJson = encoded.paramsJson,
