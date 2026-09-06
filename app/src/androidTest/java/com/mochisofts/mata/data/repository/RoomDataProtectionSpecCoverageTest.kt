@@ -18,13 +18,19 @@ import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
+import com.mochisofts.mata.domain.model.HolidayRefreshResult
+import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import java.io.File
+import java.net.UnknownHostException
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -124,6 +130,128 @@ class RoomDataProtectionSpecCoverageTest {
             reopenedDatabase?.close()
             scopes.forEach { scope -> scope.coroutineContext[Job]?.cancelAndJoin() }
             assertTrue(context.deleteDatabase(databaseName) || !context.getDatabasePath(databaseName).exists())
+            assertTrue(dataStoreFile.delete() || !dataStoreFile.exists())
+        }
+    }
+
+    @Test
+    fun app005_networkFailureDoesNotBlockLocalCoreWorkflowOrRequireAuthentication() = runBlocking {
+        val dataStoreFile = File(context.cacheDir, "offline-core-${System.nanoTime()}.preferences_pb")
+        val dataStoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        dataStoreFile.delete()
+        val settings = DataStoreSettingsRepository(
+            PreferenceDataStoreFactory.create(
+                scope = dataStoreScope,
+                produceFile = { dataStoreFile },
+            ),
+            DataMutationGate(),
+        )
+        val networkUnavailableHolidays = NetworkUnavailableHolidayRepository()
+        val notificationScheduler = DataProtectionNotificationScheduler()
+        val widgetUpdater = WidgetUpdater(context, DiagnosticLogger())
+        val todoRepository = RoomTodoRepository(
+            database = database,
+            todoDao = database.todoDao(),
+            categoryDao = database.categoryDao(),
+            executionDao = database.todoExecutionDao(),
+            notificationDao = database.todoNotificationDao(),
+            runtimeStateDao = database.todoRuntimeStateDao(),
+            settingsRepository = settings,
+            notificationScheduler = notificationScheduler,
+            widgetUpdater = widgetUpdater,
+            holidayRepository = networkUnavailableHolidays,
+            clock = TEST_CLOCK,
+        )
+        val historyRepository = RoomHistoryRepository(
+            database = database,
+            todoDao = database.todoDao(),
+            categoryDao = database.categoryDao(),
+            executionDao = database.todoExecutionDao(),
+            periodResultDao = database.periodResultDao(),
+            todoRepository = todoRepository,
+            settingsRepository = settings,
+            notificationScheduler = notificationScheduler,
+            widgetUpdater = widgetUpdater,
+            clock = TEST_CLOCK,
+        )
+        val logicalDate = LocalDate.of(2026, 9, 5)
+
+        try {
+            val categoryId = categoryRepository.saveCategory(
+                id = null,
+                name = "オフラインカテゴリ",
+                colorIndex = 2,
+                iconName = "Category",
+            ).getOrThrow()
+            val todoId = todoRepository.saveTodo(
+                id = null,
+                title = "オフラインTODO",
+                description = "接続なしでも保持する内容",
+                categoryId = categoryId,
+                startDate = logicalDate,
+                endDate = null,
+                recurrenceRule = RecurrenceRule.daily(),
+                dueMinutes = 12 * 60,
+                notifications = emptyList(),
+            ).getOrThrow()
+            todoRepository.setCompleted(
+                todoId = todoId,
+                logicalDate = logicalDate,
+                completed = true,
+                operationId = "offline-existing-history",
+            ).getOrThrow()
+            settings.setDayEndHour(0)
+            settings.setWeekStart(DayOfWeek.MONDAY)
+            settings.setShowCompleted(false)
+
+            assertTrue(runCatching { networkUnavailableHolidays.refresh() }.isFailure)
+            assertEquals(1, networkUnavailableHolidays.refreshAttempts)
+
+            categoryRepository.saveCategory(
+                id = categoryId,
+                name = "オフライン更新カテゴリ",
+                colorIndex = 4,
+                iconName = "Work",
+            ).getOrThrow()
+            todoRepository.saveTodo(
+                id = todoId,
+                title = "オフライン更新TODO",
+                description = "ネットワーク障害後に編集",
+                categoryId = categoryId,
+                startDate = logicalDate,
+                endDate = null,
+                recurrenceRule = RecurrenceRule.daily(),
+                dueMinutes = 18 * 60,
+                notifications = emptyList(),
+            ).getOrThrow()
+            val existingHistory = historyRepository.observeDay(logicalDate).first().entries.single()
+            assertEquals(TodoState.COMPLETED, existingHistory.state)
+            assertEquals("オフラインTODO", existingHistory.snapshot.title)
+            assertEquals("オフラインカテゴリ", existingHistory.snapshot.categoryName)
+            val undoToken = historyRepository.undoAction(requireNotNull(existingHistory.id)).getOrThrow()
+            assertNull(database.todoExecutionDao().findById(requireNotNull(existingHistory.id)))
+            historyRepository.restoreAction(undoToken).getOrThrow()
+            assertNotNull(database.todoExecutionDao().findById(requireNotNull(existingHistory.id)))
+
+            settings.setDayEndHour(4)
+            settings.setWeekStart(DayOfWeek.SUNDAY)
+            settings.setShowCompleted(true)
+            todoRepository.archiveTodo(todoId).getOrThrow()
+            todoRepository.restoreTodo(todoId).getOrThrow()
+            categoryRepository.deleteCategory(categoryId).getOrThrow()
+
+            val updatedTodo = requireNotNull(todoRepository.getTodo(todoId))
+            assertEquals("オフライン更新TODO", updatedTodo.title)
+            assertNull(updatedTodo.categoryId)
+            assertEquals(4, settings.dayEndHour.first())
+            assertEquals(DayOfWeek.SUNDAY, settings.weekStart.first())
+            assertTrue(settings.showCompleted.first())
+            val restoredHistory = historyRepository.observeDay(logicalDate).first().entries.single()
+            assertEquals(TodoState.COMPLETED, restoredHistory.state)
+            assertEquals("オフラインTODO", restoredHistory.snapshot.title)
+            assertEquals("オフラインカテゴリ", restoredHistory.snapshot.categoryName)
+        } finally {
+            dataStoreScope.coroutineContext[Job]?.cancelAndJoin()
             assertTrue(dataStoreFile.delete() || !dataStoreFile.exists())
         }
     }
@@ -296,4 +424,23 @@ private class DataProtectionNotificationScheduler : NotificationScheduler {
     override suspend fun reconcileTodo(todoId: String) = Unit
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) = Unit
+}
+
+private class NetworkUnavailableHolidayRepository : HolidayRepository {
+    override val snapshot = MutableStateFlow(HolidaySnapshot())
+    var refreshAttempts: Int = 0
+        private set
+
+    override suspend fun currentSnapshot(): HolidaySnapshot = snapshot.value
+    override suspend fun needsRefresh(): Boolean = true
+
+    override suspend fun refresh(): HolidayRefreshResult {
+        refreshAttempts += 1
+        throw UnknownHostException("network unavailable")
+    }
+
+    override suspend fun pendingNotificationGeneration(): Long? = null
+    override suspend fun markNotificationGenerationProcessed(generation: Long) = Unit
+    override suspend fun pendingWidgetGeneration(): Long? = null
+    override suspend fun markWidgetGenerationProcessed(generation: Long) = Unit
 }
