@@ -113,6 +113,12 @@ if (!existsSync(canonicalPath)) {
 const manifest = JSON.parse(readUtf8(manifestPath));
 const canonical = readUtf8(canonicalPath);
 const metadataRoot = resolve(fastlaneRoot, manifest.metadataRoot);
+const build = readUtf8(resolve(repositoryRoot, 'app/build.gradle'));
+const releaseVersionCodeMatch = /def\s+releaseVersionCode\s*=\s*(\d+)\b/.exec(build);
+if (releaseVersionCodeMatch === null) {
+  throw new Error('Release versionCode was not found in app/build.gradle.');
+}
+const releaseVersionCode = Number(releaseVersionCodeMatch[1]);
 const titleMatch = /^\| アプリ名 \| ([^|]+) \|$/m.exec(canonical);
 if (titleMatch === null) {
   throw new Error('Canonical app title was not found.');
@@ -132,10 +138,10 @@ verifyText(
   'Full description',
 );
 verifyText(
-  resolve(metadataRoot, 'changelogs/1.txt'),
+  resolve(metadataRoot, `changelogs/${releaseVersionCode}.txt`),
   extractBlockQuote(extractSection(canonical, 4, 5)),
   500,
-  'Release notes',
+  `Release notes (versionCode ${releaseVersionCode})`,
 );
 
 if (manifest.locale !== 'ja-JP') {
