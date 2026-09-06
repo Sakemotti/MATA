@@ -2,7 +2,7 @@
 
 - 対象: MATA `1.0.0 (1)`
 - 状態: Internal testing確認済み・Closed testing準備中
-- 最終更新日: 2026-09-04
+- 最終更新日: 2026-09-07
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -76,6 +76,12 @@ Closed testingではこのAABを再アップロードせず、Internal testing�
 - `https://mochisofts.com/app-ads.txt`
 
 `app-ads.txt`は`text/plain`で配信され、Publisher ID `pub-6387608801909086`を含む正式な1行と一致した。
+
+### 4.1 法的サイト同期
+
+2026年9月7日に、正本側commit`45ead6a73ac742899cb812e93fbbb0c01f1cf68f`と公開側commit`ad26db4aed4f97eaed7d74d66bcc44d63d90fda2`を対応付けた。公開側の[Pages deployment run 33757973477](https://github.com/Sakemotti/matadoc/actions/runs/33757973477)は成功している。
+
+正本13ファイルと公開リポジトリmainの対応する13ファイルはGit blob SHAがすべて一致した。2026年9月7日06:50 JSTにモバイルUser-Agentでプライバシーポリシー、利用規約、外部送信公表および`app-ads.txt`を再取得し、全件HTTP 200かつ正本と同一であることを確認した。アプリ設定画面からのプライバシーポリシー・利用規約遷移は実機確認済みである。詳細は[法的サイト同期結果](../../test-specs/legal-site-sync-results.md)に記録する。
 
 ## 5. Closed testingと本番アクセス
 
