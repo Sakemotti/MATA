@@ -1,7 +1,7 @@
 # MATA Closed testing参加ガイド
 
 - 対象: MATAの初回Closed testingへ参加するテスター
-- 対象版: `1.0.0 (1)`。変更時は配布連絡を正とする
+- 対象版: `1.0.0 (2)`。変更時は配布連絡を正とする
 - 問い合わせ・フィードバック: `com.mochisofts@gmail.com`
 - 運営用台帳: [初回Closed testing実施台帳](closed-testing-log.md)
 - 担当試験: [初回リリース試験担当割り当て](closed-testing-assignments.md)

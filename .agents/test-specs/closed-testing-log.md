@@ -1,13 +1,13 @@
 # 初回Closed testing実施台帳
 
-- 対象アプリ: MATA `1.0.0 (1)`
-- 対象ソースcommit: `e57ababd3b6fb4ad12bf57dada776e9189288dbc`
-- 状態: 準備中
+- 対象アプリ: MATA `1.0.0 (2)`
+- 対象ソースcommit: `1222267981f2a7887e8c2073bbd7c2bd1a18a78e`
+- 状態: 準備中（versionCode 2未配布）
 - テスト開始日: 未定
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
 - 担当割り当て: [初回リリース試験担当割り当て](closed-testing-assignments.md)
-- 項目別結果: [MATA 1.0.0 (1) 試験結果](initial-release-results.tsv)
+- 項目別結果: [MATA 1.0.0 (2) 試験結果](initial-release-results.tsv)
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
@@ -36,7 +36,7 @@
 | Play Console上の参加要件 | `未記入`人以上・`未記入`日間 |
 | Production access申請可能予定日 | `未記入` |
 
-versionCode `1`はInternal testingで使用済みである。Closed testingには同じ成果物を昇格または成果物ライブラリから追加し、新しいAABをアップロードする場合はversionCodeを`2`以上にする。
+versionCode `1`はInternal testingで使用済みであり、その後に実装変更がある。Closed testingには[公開候補生成結果](release-candidate-1.0.0-2.md)のversionCode `2`を登録し、配布日時とPlay Console上の状態を本節へ記録する。
 
 ## 3. テスター・端末台帳
 
@@ -114,11 +114,11 @@ versionCode `1`はInternal testingで使用済みである。Closed testingに�
 
 | 実施ID | 日時 | テスター | versionCode | 試験ID | 環境・事前条件 | 結果 | 証跡・Issue |
 | --- | --- | --- | ---: | --- | --- | --- | --- |
-| CT-001 | 未記入 | 未記入 | 1 | 未記入 | 未記入 | 未実施 | 未記入 |
-| CT-002 | 未記入 | 未記入 | 1 | 未記入 | 未記入 | 未実施 | 未記入 |
-| CT-003 | 未記入 | 未記入 | 1 | 未記入 | 未記入 | 未実施 | 未記入 |
-| CT-004 | 未記入 | 未記入 | 1 | 未記入 | 未記入 | 未実施 | 未記入 |
-| CT-005 | 未記入 | 未記入 | 1 | 未記入 | 未記入 | 未実施 | 未記入 |
+| CT-001 | 未記入 | 未記入 | 2 | 未記入 | 未記入 | 未実施 | 未記入 |
+| CT-002 | 未記入 | 未記入 | 2 | 未記入 | 未記入 | 未実施 | 未記入 |
+| CT-003 | 未記入 | 未記入 | 2 | 未記入 | 未記入 | 未実施 | 未記入 |
+| CT-004 | 未記入 | 未記入 | 2 | 未記入 | 未記入 | 未実施 | 未記入 |
+| CT-005 | 未記入 | 未記入 | 2 | 未記入 | 未記入 | 未実施 | 未記入 |
 
 行が不足したら実施IDを連番で追加する。結果は`合格`、`不合格`、`保留`、`対象外`のいずれかとする。
 

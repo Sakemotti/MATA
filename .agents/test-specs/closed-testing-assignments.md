@@ -1,7 +1,7 @@
 # 初回リリース試験担当割り当て
 
-- 対象: MATA `1.0.0 (1)`
-- 対象ソースcommit: `e57ababd3b6fb4ad12bf57dada776e9189288dbc`
+- 対象: MATA `1.0.0 (2)`
+- 対象ソースcommit: `1222267981f2a7887e8c2073bbd7c2bd1a18a78e`
 - 項目別割り当て: [initial-release-assignments.tsv](initial-release-assignments.tsv)
 - 項目別結果: [initial-release-results.tsv](initial-release-results.tsv)
 - 実施台帳: [初回Closed testing実施台帳](closed-testing-log.md)
