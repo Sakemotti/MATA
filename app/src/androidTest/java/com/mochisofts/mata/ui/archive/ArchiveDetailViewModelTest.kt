@@ -92,6 +92,9 @@ class ArchiveDetailViewModelTest {
             SavedStateHandle(mapOf("todoId" to "todo")),
             repository,
         )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
         val effect = async { viewModel.effects.first() }
 
         viewModel.requestAction(ArchiveAction.RESTORE)
@@ -122,6 +125,9 @@ class ArchiveDetailViewModelTest {
             SavedStateHandle(mapOf("todoId" to "todo")),
             repository,
         )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
         viewModel.requestAction(ArchiveAction.RESTORE)
         runCurrent()
         val effect = async { viewModel.effects.first() }
