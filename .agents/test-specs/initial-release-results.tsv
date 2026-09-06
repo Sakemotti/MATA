@@ -184,7 +184,7 @@ TE-007	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-008	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-009	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-010	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-011	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-011	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#te011・CI run 34029287328成功
 TE-012	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-013	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-014	P0	todo-editor.md	未実施	-	-	-	-	-
@@ -194,9 +194,9 @@ TE-017	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-018	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-019	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-020	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-021	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-022	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-023	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-021	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#te021・CI run 34029287328成功
+TE-022	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te022・CI run 34029287328成功
+TE-023	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te023・CI run 34029287328成功
 TE-024	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-025	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-026	P1	todo-editor.md	未実施	-	-	-	-	-
@@ -211,7 +211,7 @@ TE-D01	P2	todo-editor.md	未実施	-	-	-	-	-
 TE-D02	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-D03	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-D04	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-D05	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-D05	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#ted05・CI run 34029287328成功
 TE-D06	P1	todo-editor.md	未実施	-	-	-	-	-
 CH-001	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-002	P0	calendar-history.md	未実施	-	-	-	-	-
