@@ -95,3 +95,5 @@ TE-021	app/src/androidTest/java/com/mochisofts/mata/data/notification/Notificati
 TE-022	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	te022_editUpdatesCurrentAndFutureDefinitionWithoutRewritingPastRecord	:app:connectedDebugAndroidTest
 TE-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	te023_editReconcilesPendingTodayAndPreservesActedTodayHistory	:app:connectedDebugAndroidTest
 TE-D05	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	ted05_historySnapshotsKeepEveryDefinitionFieldBeforeAndAfterEdit	:app:connectedDebugAndroidTest
+CH-014	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	ch014_finalizedWeekRemainsImmutableAfterScheduleAndCategoryEdits	:app:connectedDebugAndroidTest
+CH-029	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch029_monthAndDayQueriesStayBoundedWithLargeHistory	:app:connectedDebugAndroidTest

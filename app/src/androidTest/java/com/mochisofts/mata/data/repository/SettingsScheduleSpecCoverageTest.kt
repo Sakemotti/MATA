@@ -325,6 +325,82 @@ class SettingsScheduleSpecCoverageTest {
         )
     }
 
+    @Test
+    fun ch014_finalizedWeekRemainsImmutableAfterScheduleAndCategoryEdits() = runBlocking {
+        val oldCategory = category("history-category-before", 0)
+        val newCategory = category("history-category-after", 1)
+        database.categoryDao().upsert(oldCategory)
+        database.categoryDao().upsert(newCategory)
+        val originalTodo = todo(
+            id = "finalized-week-edit",
+            startDate = "2026-08-03",
+            requiredCount = 3,
+        ).copy(categoryId = oldCategory.id)
+        database.todoDao().upsert(originalTodo)
+        database.todoExecutionDao().insert(
+            completedExecution(
+                id = "finalized-week-completion",
+                todoId = originalTodo.id,
+                logicalDate = "2026-08-04",
+                snapshotJson = HistorySnapshotJson.encode(
+                    todo = originalTodo,
+                    category = oldCategory,
+                    notifications = emptyList(),
+                    endHour = 0,
+                    weekStart = DayOfWeek.MONDAY,
+                    logicalDate = LocalDate.of(2026, 8, 4),
+                ),
+            ),
+        )
+        historyReconciler.reconcile()
+        val executionBefore = database.todoExecutionDao().findForTodo(originalTodo.id).single()
+        val periodBefore = database.periodResultDao().findForTodo(originalTodo.id).single()
+        val periodSnapshotBefore = requireNotNull(HistorySnapshotJson.decode(periodBefore.snapshotJson))
+        val periodRuleBefore = RecurrenceRuleJson.decode(
+            periodSnapshotBefore.recurrenceType,
+            periodSnapshotBefore.repeatParamsVersion,
+            periodSnapshotBefore.repeatParamsJson,
+        )
+        assertEquals("2026-08-03", periodBefore.periodStart)
+        assertEquals("2026-08-09", periodBefore.periodEnd)
+        assertEquals(3, periodBefore.requiredCount)
+        assertEquals(1, periodBefore.completedCount)
+        assertEquals(false, periodBefore.achieved)
+        assertEquals(oldCategory.id, periodSnapshotBefore.categoryId)
+        assertEquals(DayOfWeek.MONDAY.value, periodSnapshotBefore.weekStart)
+        assertEquals(3, periodRuleBefore.requiredCount)
+
+        settings.setWeekStart(DayOfWeek.SUNDAY)
+        todoRepository.saveTodo(
+            id = originalTodo.id,
+            title = "edited weekly todo",
+            description = "edited after finalization",
+            categoryId = newCategory.id,
+            startDate = LocalDate.of(2026, 8, 3),
+            endDate = null,
+            recurrenceRule = RecurrenceRule(
+                type = RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 5,
+            ),
+            dueMinutes = null,
+            notifications = emptyList(),
+        ).getOrThrow()
+        historyReconciler.reconcile()
+
+        assertEquals(
+            listOf(executionBefore),
+            database.todoExecutionDao().findForTodo(originalTodo.id),
+        )
+        assertEquals(
+            listOf(periodBefore),
+            database.periodResultDao().findForTodo(originalTodo.id),
+        )
+        val currentTodo = requireNotNull(todoRepository.getTodo(originalTodo.id))
+        assertEquals(newCategory.id, currentTodo.categoryId)
+        assertEquals(5, currentTodo.recurrenceRule.requiredCount)
+        assertEquals(DayOfWeek.SUNDAY, settings.weekStart.value)
+    }
+
     private fun todo(id: String, startDate: String, requiredCount: Int): TodoEntity {
         val encoded = RecurrenceRuleJson.encode(
             RecurrenceRule(
