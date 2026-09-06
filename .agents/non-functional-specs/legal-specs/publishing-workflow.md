@@ -1,14 +1,14 @@
 # 法的サイト公開・同期運用仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-09-02
+- 最終更新日: 2026-09-07
 - 親仕様: [法的文書仕様](README.md)
 - 関連文書: [法的サイト原稿](../../../legal-site/README.md)、[リリースチェックリスト](../release-specs/release-checklist.md)
 
 ## 1. 正本と公開先
 
 - 本リポジトリの`legal-site`を、法的文書、トップページ、サイトマップ、robotsおよび`app-ads.txt`の正本とする。
-- 別途設定済みのGitHub Pages公開リポジトリは配信用コピーとし、公開リポジトリだけで本文を変更しない。
+- GitHub Pages公開リポジトリ[`Sakemotti/matadoc`](https://github.com/Sakemotti/matadoc)は配信用コピーとし、公開リポジトリだけで本文を変更しない。
 - 公開URLは`https://mochisofts.com/`配下とし、アプリの設定画面も同じURLを開く。
 - 公開リポジトリへのコピー、commitおよびpushはユーザーが手動で行う。
 
@@ -23,6 +23,8 @@
 7. GitHub Pagesのデプロイ完了後、変更対象を含む公開URLを認証なしで開く。
 8. アプリの設定画面からプライバシーポリシーと利用規約を開き、公開した最新版が表示されることを確認する。
 9. 正本側commit SHA、公開側commit SHA、公開確認日時、確認URLおよび確認者をリリース記録へ残す。
+
+同期結果は[法的サイト同期結果](../../test-specs/legal-site-sync-results.md)へ追記し、過去の記録を上書きしない。
 
 ## 3. 公開時の禁止事項
 
