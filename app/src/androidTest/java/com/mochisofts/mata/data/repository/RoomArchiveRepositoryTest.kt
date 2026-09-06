@@ -29,6 +29,7 @@ import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -50,15 +51,16 @@ class RoomArchiveRepositoryTest {
     private lateinit var todoRepository: RoomTodoRepository
     private lateinit var scheduler: ArchiveTestNotificationScheduler
     private val settings = ArchiveTestSettingsRepository()
-    private val clock = Clock.fixed(
-        Instant.parse("2026-08-11T03:00:00Z"),
-        ZoneId.of("Asia/Tokyo"),
-    )
+    private lateinit var clock: MutableArchiveClock
     private val date = LocalDate.of(2026, 8, 11)
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        clock = MutableArchiveClock(
+            Instant.parse("2026-08-11T03:00:00Z"),
+            ZoneId.of("Asia/Tokyo"),
+        )
         database = Room.inMemoryDatabaseBuilder(context, MataDatabase::class.java)
             .allowMainThreadQueries()
             .build()
@@ -168,6 +170,148 @@ class RoomArchiveRepositoryTest {
     }
 
     @Test
+    fun at018_restoreKeepsCurrentCompletedAndSkippedOccurrencesWithoutDuplicates() = runBlocking {
+        val states = listOf(TodoState.COMPLETED, TodoState.SKIPPED)
+        states.forEachIndexed { index, state ->
+            val values = insertArchivedTodo(
+                todoId = "current-$index",
+                includeBaseHistory = false,
+            )
+            insertExecution(
+                values = values,
+                id = "current-execution-$index",
+                logicalDate = date,
+                state = state,
+            )
+
+            repository.restore(values.todo.id).getOrThrow()
+
+            val matching = todoRepository.observeOccurrences(date).first()
+                .filter { occurrence -> occurrence.todo.id == values.todo.id }
+            assertEquals(1, matching.size)
+            assertEquals(state, matching.single().state)
+            assertEquals(
+                1,
+                database.todoExecutionDao().findForTodo(values.todo.id)
+                    .count { execution -> execution.logicalDate == date.toString() },
+            )
+        }
+    }
+
+    @Test
+    fun at019_restoreRecalculatesWeeklyAndMonthlyCountProgressFromPreservedHistory() = runBlocking {
+        val weekly = insertArchivedTodo(
+            todoId = "weekly-progress",
+            rule = RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 3),
+            includeBaseHistory = false,
+        )
+        insertExecution(weekly, "weekly-completed", date.minusDays(1), TodoState.COMPLETED)
+        insertExecution(weekly, "weekly-skipped", date, TodoState.SKIPPED)
+
+        val monthly = insertArchivedTodo(
+            todoId = "monthly-achieved",
+            rule = RecurrenceRule(RecurrenceType.MONTHLY_COUNT, requiredCount = 2),
+            includeBaseHistory = false,
+        )
+        insertExecution(monthly, "monthly-completed-1", date.withDayOfMonth(1), TodoState.COMPLETED)
+        insertExecution(monthly, "monthly-completed-2", date.withDayOfMonth(2), TodoState.COMPLETED)
+        insertExecution(monthly, "monthly-skipped", date.withDayOfMonth(3), TodoState.SKIPPED)
+
+        repository.restore(weekly.todo.id).getOrThrow()
+        repository.restore(monthly.todo.id).getOrThrow()
+
+        val occurrences = todoRepository.observeOccurrences(date).first()
+        val weeklyOccurrence = occurrences.single { occurrence -> occurrence.todo.id == weekly.todo.id }
+        assertEquals(TodoState.SKIPPED, weeklyOccurrence.state)
+        assertEquals(3, weeklyOccurrence.progress?.period?.requiredCount)
+        assertEquals(1, weeklyOccurrence.progress?.completedCount)
+        assertEquals(2, weeklyOccurrence.progress?.remainingCount)
+        assertTrue(occurrences.none { occurrence -> occurrence.todo.id == monthly.todo.id })
+        assertEquals(3, database.todoExecutionDao().findForTodo(monthly.todo.id).size)
+    }
+
+    @Test
+    fun at031_archiveListAndHistoryUseStableBoundedPages() = runBlocking {
+        val encoded = RecurrenceRuleJson.encode(RecurrenceRule.daily())
+        repeat(120) { index ->
+            val suffix = index.toString().padStart(3, '0')
+            database.todoDao().upsert(
+                TodoEntity(
+                    id = "paged-todo-$suffix",
+                    title = "Archive $suffix",
+                    description = "",
+                    categoryId = null,
+                    startDate = date.minusDays(150).toString(),
+                    endDate = null,
+                    recurrenceType = encoded.typeCode,
+                    repeatParamsVersion = encoded.paramsVersion,
+                    repeatParamsJson = encoded.paramsJson,
+                    dueMinutes = null,
+                    definitionRevision = 1,
+                    createdAt = index.toLong(),
+                    updatedAt = index.toLong(),
+                    archivedAt = 1_000L + index,
+                ),
+            )
+        }
+        repeat(120) { index ->
+            database.todoExecutionDao().insert(
+                TodoExecutionEntity(
+                    id = "paged-execution-${index.toString().padStart(3, '0')}",
+                    operationId = "paged-operation-${index.toString().padStart(3, '0')}",
+                    todoId = "paged-todo-000",
+                    logicalDate = date.minusDays(index.toLong()).toString(),
+                    status = TodoState.COMPLETED.code,
+                    actedAt = index.toLong(),
+                    finalizedAt = index.toLong(),
+                    definitionRevision = 1,
+                    snapshotVersion = 1,
+                    snapshotJson = "{}",
+                ),
+            )
+        }
+
+        val todoPages = loadThreePages(database.todoDao().pageArchivedNewest(""))
+        val historyPages = loadThreePages(
+            database.todoExecutionDao().pageArchiveHistory("paged-todo-000"),
+        )
+
+        assertEquals(listOf(50, 50, 20), todoPages.map { page -> page.size })
+        assertEquals(listOf(50, 50, 20), historyPages.map { page -> page.size })
+        assertEquals(120, todoPages.flatten().map { row -> row.todo.id }.distinct().size)
+        assertEquals(120, historyPages.flatten().map { row -> row.id }.distinct().size)
+        assertEquals("paged-todo-119", todoPages.first().first().todo.id)
+        assertEquals("paged-execution-000", historyPages.first().first().id)
+    }
+
+    @Test
+    fun atd05_restoreClearsOldArchiveTimeAndRearchiveRecordsNewTime() = runBlocking {
+        val values = insertArchivedTodo()
+        val oldArchiveTime = requireNotNull(values.todo.archivedAt)
+
+        repository.restore(values.todo.id).getOrThrow()
+        assertNull(database.todoDao().findById(values.todo.id)?.archivedAt)
+        clock.advance(Duration.ofHours(2))
+        todoRepository.archiveTodo(values.todo.id).getOrThrow()
+
+        val newArchiveTime = requireNotNull(database.todoDao().findById(values.todo.id)?.archivedAt)
+        assertEquals(clock.millis(), newArchiveTime)
+        assertTrue(newArchiveTime != oldArchiveTime)
+    }
+
+    @Test
+    fun atd06_permanentDeletePersistsInvalidationBeforeCancellationFailure() = runBlocking {
+        val values = insertArchivedTodo()
+        scheduler.failCancellation = true
+
+        repository.deletePermanently(values.todo.id).getOrThrow()
+
+        assertNull(database.todoDao().findById(values.todo.id))
+        assertTrue(scheduler.todoWasAbsentWhenCancellationAttempted)
+        assertTrue(!scheduler.isDeliveryEligible("candidate"))
+    }
+
+    @Test
     fun sta011_todoRepositoryDeleteRemovesDefinitionHistoryStateAndNotifications() = runBlocking {
         val values = insertArchivedTodo()
 
@@ -214,8 +358,10 @@ class RoomArchiveRepositoryTest {
     }
 
     private suspend fun insertArchivedTodo(
+        todoId: String = "todo",
         rule: RecurrenceRule = RecurrenceRule.daily(),
         startDate: LocalDate = date.minusDays(20),
+        includeBaseHistory: Boolean = true,
     ): TestValues {
         val category = CategoryEntity(
             id = "category",
@@ -230,7 +376,7 @@ class RoomArchiveRepositoryTest {
         database.categoryDao().upsert(category)
         val encoded = RecurrenceRuleJson.encode(rule)
         val todo = TodoEntity(
-            id = "todo",
+            id = todoId,
             title = "検索語を含むTODO",
             description = "説明",
             categoryId = category.id,
@@ -249,7 +395,7 @@ class RoomArchiveRepositoryTest {
         database.todoNotificationDao().upsertAll(
             listOf(
                 TodoNotificationEntity(
-                    id = "notification",
+                    id = if (todoId == "todo") "notification" else "notification-$todoId",
                     todoId = todo.id,
                     relation = "at",
                     amount = 0,
@@ -279,42 +425,45 @@ class RoomArchiveRepositoryTest {
             weekStart = DayOfWeek.MONDAY,
             logicalDate = date.minusDays(15),
         )
-        database.todoExecutionDao().insert(
-            TodoExecutionEntity(
-                id = "execution",
-                operationId = "operation",
-                todoId = todo.id,
-                logicalDate = date.minusDays(15).toString(),
-                status = "completed",
-                actedAt = 100,
-                finalizedAt = 100,
-                definitionRevision = 1,
-                snapshotVersion = 1,
-                snapshotJson = snapshot,
-            ),
-        )
-        database.periodResultDao().insert(
-            PeriodResultEntity(
-                id = "period",
-                todoId = todo.id,
-                periodType = "weekly_count",
-                periodStart = date.minusDays(14).toString(),
-                periodEnd = date.minusDays(8).toString(),
-                requiredCount = 1,
-                completedCount = 1,
-                achieved = true,
-                displayDate = date.minusDays(8).toString(),
-                finalizedAt = 200,
-                definitionRevision = 1,
-                snapshotVersion = 1,
-                snapshotJson = snapshot,
-            ),
-        )
+        if (includeBaseHistory) {
+            val suffix = if (todoId == "todo") "" else "-$todoId"
+            database.todoExecutionDao().insert(
+                TodoExecutionEntity(
+                    id = "execution$suffix",
+                    operationId = "operation$suffix",
+                    todoId = todo.id,
+                    logicalDate = date.minusDays(15).toString(),
+                    status = "completed",
+                    actedAt = 100,
+                    finalizedAt = 100,
+                    definitionRevision = 1,
+                    snapshotVersion = 1,
+                    snapshotJson = snapshot,
+                ),
+            )
+            database.periodResultDao().insert(
+                PeriodResultEntity(
+                    id = "period$suffix",
+                    todoId = todo.id,
+                    periodType = "weekly_count",
+                    periodStart = date.minusDays(14).toString(),
+                    periodEnd = date.minusDays(8).toString(),
+                    requiredCount = 1,
+                    completedCount = 1,
+                    achieved = true,
+                    displayDate = date.minusDays(8).toString(),
+                    finalizedAt = 200,
+                    definitionRevision = 1,
+                    snapshotVersion = 1,
+                    snapshotJson = snapshot,
+                ),
+            )
+        }
         database.scheduledNotificationDao().upsert(
             ScheduledNotificationEntity(
-                candidateKey = "candidate",
+                candidateKey = if (todoId == "todo") "candidate" else "candidate-$todoId",
                 todoId = todo.id,
-                notificationSettingId = "notification",
+                notificationSettingId = if (todoId == "todo") "notification" else "notification-$todoId",
                 logicalDate = date.toString(),
                 definitionRevision = 1,
                 triggerAt = 999,
@@ -329,6 +478,48 @@ class RoomArchiveRepositoryTest {
         return TestValues(todo, category)
     }
 
+    private suspend fun insertExecution(
+        values: TestValues,
+        id: String,
+        logicalDate: LocalDate,
+        state: TodoState,
+    ) {
+        database.todoExecutionDao().insert(
+            TodoExecutionEntity(
+                id = id,
+                operationId = "operation-$id",
+                todoId = values.todo.id,
+                logicalDate = logicalDate.toString(),
+                status = state.code,
+                actedAt = 300,
+                finalizedAt = 300,
+                definitionRevision = values.todo.definitionRevision,
+                snapshotVersion = 1,
+                snapshotJson = "{}",
+            ),
+        )
+    }
+
+    private suspend fun <T : Any> loadThreePages(source: PagingSource<Int, T>): List<List<T>> {
+        val first = source.load(refreshParams()) as PagingSource.LoadResult.Page
+        val second = source.load(appendParams(requireNotNull(first.nextKey))) as PagingSource.LoadResult.Page
+        val third = source.load(appendParams(requireNotNull(second.nextKey))) as PagingSource.LoadResult.Page
+        assertNull(third.nextKey)
+        return listOf(first.data, second.data, third.data)
+    }
+
+    private fun refreshParams() = PagingSource.LoadParams.Refresh<Int>(
+        key = null,
+        loadSize = PAGE_SIZE,
+        placeholdersEnabled = false,
+    )
+
+    private fun appendParams(key: Int) = PagingSource.LoadParams.Append(
+        key = key,
+        loadSize = PAGE_SIZE,
+        placeholdersEnabled = false,
+    )
+
     private suspend fun assertAllRelatedRowsDeleted(todoId: String) {
         assertNull(database.todoDao().findById(todoId))
         assertTrue(database.todoExecutionDao().findForTodo(todoId).isEmpty())
@@ -339,6 +530,10 @@ class RoomArchiveRepositoryTest {
     }
 
     private data class TestValues(val todo: TodoEntity, val category: CategoryEntity)
+
+    private companion object {
+        const val PAGE_SIZE = 50
+    }
 }
 
 private class ArchiveTestSettingsRepository : SettingsRepository {
@@ -366,6 +561,8 @@ private class ArchiveTestNotificationScheduler(
     override val notificationCount = MutableStateFlow(0)
     val reconciledTodoIds = mutableListOf<String>()
     val cancelledTodoIds = mutableListOf<String>()
+    var failCancellation = false
+    var todoWasAbsentWhenCancellationAttempted = false
     override fun systemState() = NotificationSystemState(
         canPostNotifications = true,
         runtimePermissionRelevant = false,
@@ -377,6 +574,25 @@ private class ArchiveTestNotificationScheduler(
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) {
         cancelledTodoIds += todoId
+        todoWasAbsentWhenCancellationAttempted = database.todoDao().findById(todoId) == null
+        if (failCancellation) throw IllegalStateException("injected cancellation failure")
         database.scheduledNotificationDao().deleteForTodo(todoId)
     }
+
+    suspend fun isDeliveryEligible(candidateKey: String): Boolean {
+        val scheduled = database.scheduledNotificationDao().find(candidateKey) ?: return false
+        val todo = database.todoDao().findById(scheduled.todoId) ?: return false
+        return todo.archivedAt == null &&
+            database.todoNotificationDao().find(todo.id, scheduled.notificationSettingId) != null
+    }
+}
+
+private class MutableArchiveClock(
+    private var currentInstant: Instant,
+    private val zoneId: ZoneId,
+) : Clock() {
+    override fun getZone(): ZoneId = zoneId
+    override fun withZone(zone: ZoneId): Clock = MutableArchiveClock(currentInstant, zone)
+    override fun instant(): Instant = currentInstant
+    fun advance(duration: Duration) { currentInstant = currentInstant.plus(duration) }
 }

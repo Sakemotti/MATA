@@ -239,11 +239,21 @@ class AndroidNotificationScheduler @Inject constructor(
     }
 
     private suspend fun cancelTodoLocked(todoId: String) {
-        scheduledDao.findForTodo(todoId).forEach { scheduled ->
-            alarmGateway.cancel(scheduled.candidateKey, scheduled.requestCode)
-        }
+        val scheduledNotifications = scheduledDao.findForTodo(todoId)
+        // Invalidate delivery first. If AlarmManager cancellation fails, a late
+        // broadcast is still ignored because NotificationDeliveryService can no
+        // longer resolve the candidate key.
         scheduledDao.deleteForTodo(todoId)
+        var cancellationFailure: Throwable? = null
+        scheduledNotifications.forEach { scheduled ->
+            runCatching {
+                alarmGateway.cancel(scheduled.candidateKey, scheduled.requestCode)
+            }.onFailure { error ->
+                if (cancellationFailure == null) cancellationFailure = error
+            }
+        }
         presenter.dismissTodo(todoId)
+        cancellationFailure?.let { throw it }
     }
 
     private suspend fun updateReconcileReceiver() {
