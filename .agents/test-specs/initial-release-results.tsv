@@ -226,7 +226,7 @@ CH-010	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-011	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-012	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-013	P0	calendar-history.md	未実施	-	-	-	-	-
-CH-014	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-014	P0	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#ch014・CI run 34030219484成功
 CH-015	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-016	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-017	P0	calendar-history.md	未実施	-	-	-	-	-
@@ -241,7 +241,7 @@ CH-025	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-026	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-027	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-028	P0	calendar-history.md	未実施	-	-	-	-	-
-CH-029	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功
 CH-030	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-031	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
