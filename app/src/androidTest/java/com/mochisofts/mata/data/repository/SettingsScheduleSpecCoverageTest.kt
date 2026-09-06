@@ -43,11 +43,12 @@ class SettingsScheduleSpecCoverageTest {
     private lateinit var settings: MutableTestSettingsRepository
     private lateinit var todoRepository: RoomTodoRepository
     private lateinit var historyReconciler: RoomHistoryReconciler
+    private lateinit var clock: Clock
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val clock = Clock.fixed(
+        clock = Clock.fixed(
             Instant.parse("2026-08-11T03:00:00Z"),
             ZoneId.of("Asia/Tokyo"),
         )
@@ -129,6 +130,72 @@ class SettingsScheduleSpecCoverageTest {
             setOf(LocalDate.of(2026, 8, 11)),
             todoRepository.observeOccurrences(selectedDate).first().map { it.logicalDate }.toSet(),
         )
+    }
+
+    @Test
+    fun cm024_categoryMutationsNeverChangeTheCommonLogicalDayBoundary() = runBlocking {
+        settings.setDayEndHour(13)
+        val work = category("work-boundary", 0).copy(legacyEndHour = 4)
+        val home = category("home-boundary", 1).copy(legacyEndHour = 23)
+        database.categoryDao().upsert(work)
+        database.categoryDao().upsert(home)
+        listOf(
+            dailyTodo("uncategorized-boundary", null, dueMinutes = 11 * 60),
+            dailyTodo("work-boundary-todo", work.id, dueMinutes = 11 * 60),
+            dailyTodo("home-boundary-todo", home.id, dueMinutes = 11 * 60),
+        ).forEach { database.todoDao().upsert(it) }
+        val selectedDate = LocalDate.of(2026, 8, 11)
+
+        val before = todoRepository.observeOccurrences(selectedDate).first()
+        assertEquals(3, before.size)
+        assertEquals(setOf(LocalDate.of(2026, 8, 10)), before.map { it.logicalDate }.toSet())
+        assertTrue(before.all { it.isOverdue })
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val categoryRepository = RoomCategoryRepository(
+            database = database,
+            categoryDao = database.categoryDao(),
+            clock = clock,
+            notificationScheduler = NoOpSettingsNotificationScheduler(),
+            widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+        )
+        val addedCategoryId = categoryRepository.saveCategory(
+            id = null,
+            name = "追加カテゴリ",
+            colorIndex = 2,
+            iconName = "Category",
+        ).getOrThrow()
+        database.todoDao().upsert(
+            dailyTodo("added-boundary-todo", addedCategoryId, dueMinutes = 11 * 60),
+        )
+        categoryRepository.saveCategory(
+            id = work.id,
+            name = "仕事（編集後）",
+            colorIndex = 3,
+            iconName = "Work",
+        ).getOrThrow()
+        categoryRepository.deleteCategory(home.id).getOrThrow()
+
+        val after = todoRepository.observeOccurrences(selectedDate).first()
+        assertEquals(
+            setOf(
+                "uncategorized-boundary",
+                "work-boundary-todo",
+                "home-boundary-todo",
+                "added-boundary-todo",
+            ),
+            after.map { it.todo.id }.toSet(),
+        )
+        assertEquals(setOf(LocalDate.of(2026, 8, 10)), after.map { it.logicalDate }.toSet())
+        assertTrue(after.all { it.isOverdue })
+        assertEquals(13, settings.dayEndHour.value)
+        assertEquals("仕事（編集後）", after.single { it.todo.id == "work-boundary-todo" }.category?.name)
+        assertEquals(
+            addedCategoryId,
+            after.single { it.todo.id == "added-boundary-todo" }.category?.id,
+        )
+        assertEquals(null, after.single { it.todo.id == "home-boundary-todo" }.category)
+        assertEquals(null, after.single { it.todo.id == "uncategorized-boundary" }.category)
     }
 
     @Test
