@@ -98,3 +98,4 @@ TE-D05	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStat
 CH-014	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	ch014_finalizedWeekRemainsImmutableAfterScheduleAndCategoryEdits	:app:connectedDebugAndroidTest
 CH-029	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch029_monthAndDayQueriesStayBoundedWithLargeHistory	:app:connectedDebugAndroidTest
 CM-024	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	cm024_categoryMutationsNeverChangeTheCommonLogicalDayBoundary	:app:connectedDebugAndroidTest
+APP-005	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	app005_networkFailureDoesNotBlockLocalCoreWorkflowOrRequireAuthentication	:app:connectedDebugAndroidTest
