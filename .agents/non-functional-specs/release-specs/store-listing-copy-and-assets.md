@@ -67,6 +67,8 @@ Google Playの「このリリースの新機能」へ次を登録する。500文
 
 リリースノートは宣伝やインストールの呼びかけに使用しない。
 
+Google Playへ配布する`versionCode`と同名の`fastlane/metadata/android/ja-JP/changelogs/<versionCode>.txt`へ確定文案を同期する。旧`versionCode`のファイルは、過去に登録した成果物の記録として削除または上書きしない。
+
 ## 5. ストアアイコン
 
 | 項目 | 仕様 |
