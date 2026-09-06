@@ -225,6 +225,13 @@ class TodoEditorViewModelTest {
         assertFalse(viewModel.uiState.value.isSaving)
         assertNotNull(viewModel.uiState.value.errorMessageRes)
         assertTrue(viewModel.uiState.value.canSave)
+
+        repository.saveResult = Result.success("saved-todo")
+        viewModel.save()
+        runCurrent()
+
+        assertEquals(2, repository.saveCount)
+        assertEquals(TodoEditorEffect.Saved(isNew = true), viewModel.effects.first())
     }
 
     private fun createViewModel(

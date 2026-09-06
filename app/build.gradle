@@ -238,6 +238,7 @@ dependencies {
     testImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.espresso.core
     androidTestImplementation libs.androidx.junit
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0"
     androidTestImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.paging.testing
     androidTestImplementation libs.androidx.compose.ui.test.junit4

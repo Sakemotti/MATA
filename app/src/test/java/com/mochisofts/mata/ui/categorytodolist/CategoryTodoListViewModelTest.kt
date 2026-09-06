@@ -1,17 +1,80 @@
 package com.mochisofts.mata.ui.categorytodolist
 
+import android.app.Activity
+import androidx.lifecycle.SavedStateHandle
+import com.mochisofts.mata.MainDispatcherRule
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.TodoRepository
+import java.time.Clock
 import java.time.LocalDate
+import java.time.ZoneId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CategoryTodoListViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun viewModelTransitionsFromLoadingToEmptyThenSelectedContent() = runTest {
+        val categoryRepository = CategoryTodoListTestCategoryRepository()
+        val todoRepository = CategoryTodoListTestTodoRepository()
+        val viewModel = CategoryTodoListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            todoRepository = todoRepository,
+            categoryRepository = categoryRepository,
+            clock = Clock.fixed(
+                LocalDate.of(2026, 9, 6).atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
+                ZoneId.of("Asia/Tokyo"),
+            ),
+            adsConsentRepository = CategoryTodoListTestAdsRepository(),
+        )
+
+        assertTrue(viewModel.uiState.value.isLoading)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.items.isEmpty())
+
+        val category = category("category", 0)
+        val todo = todo("todo", category.id, 1)
+        categoryRepository.categories.value = listOf(category)
+        todoRepository.todos.value = listOf(todo)
+        todoRepository.occurrences.value = listOf(occurrence(todo, TodoState.COMPLETED, LocalDate.of(2026, 9, 6)))
+        viewModel.selectCategory(category.id)
+        runCurrent()
+
+        assertEquals(category.id, viewModel.uiState.value.selectedCategoryId)
+        assertEquals(listOf("todo"), viewModel.uiState.value.items.map { it.todo.id })
+        assertEquals(TodoState.COMPLETED, viewModel.uiState.value.items.single().todayState)
+    }
+
     @Test
     fun selectedCategoryShowsEveryTodayStateWithoutFiltering() {
         val category = category(id = "category", sortOrder = 1)
@@ -86,4 +149,59 @@ class CategoryTodoListViewModelTest {
         logicalDate = date,
         state = state,
     )
+}
+
+private class CategoryTodoListTestTodoRepository : TodoRepository {
+    val todos = MutableStateFlow<List<Todo>>(emptyList())
+    val occurrences = MutableStateFlow<List<TodoOccurrence>>(emptyList())
+    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = occurrences
+    override fun observeTodos(): Flow<List<Todo>> = todos
+    override suspend fun getTodo(id: String): Todo? = todos.value.firstOrNull { it.id == id }
+    override suspend fun saveTodo(
+        id: String?,
+        title: String,
+        description: String,
+        categoryId: String?,
+        startDate: LocalDate,
+        endDate: LocalDate?,
+        recurrenceRule: RecurrenceRule,
+        dueMinutes: Int?,
+        notifications: List<TodoNotification>,
+    ): Result<String> = Result.success(id ?: "todo")
+    override suspend fun setCompleted(
+        todoId: String,
+        logicalDate: LocalDate,
+        completed: Boolean,
+        operationId: String,
+    ): Result<Unit> = Result.success(Unit)
+    override suspend fun setSkipped(
+        todoId: String,
+        logicalDate: LocalDate,
+        skipped: Boolean,
+        operationId: String,
+    ): Result<Unit> = Result.success(Unit)
+    override suspend fun archiveTodo(id: String): Result<Unit> = Result.success(Unit)
+    override suspend fun restoreTodo(id: String): Result<Unit> = Result.success(Unit)
+    override suspend fun deleteTodo(id: String): Result<Unit> = Result.success(Unit)
+}
+
+private class CategoryTodoListTestCategoryRepository : CategoryRepository {
+    val categories = MutableStateFlow<List<Category>>(emptyList())
+    override fun observeCategories(): Flow<List<Category>> = categories
+    override suspend fun getCategory(id: String): Category? = categories.value.firstOrNull { it.id == id }
+    override suspend fun saveCategory(
+        id: String?,
+        name: String,
+        colorIndex: Int,
+        iconName: String,
+    ): Result<String> = Result.success(id ?: "category")
+    override suspend fun reorderCategories(orderedIds: List<String>): Result<Unit> = Result.success(Unit)
+    override suspend fun deleteCategory(id: String): Result<Unit> = Result.success(Unit)
+}
+
+private class CategoryTodoListTestAdsRepository : AdsConsentRepository {
+    override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
+    override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+    override fun gatherConsent(activity: Activity) = Unit
+    override fun showPrivacyOptions(activity: Activity) = Unit
 }
