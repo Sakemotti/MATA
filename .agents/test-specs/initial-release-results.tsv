@@ -109,9 +109,9 @@ DAT-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	Bac
 DAT-009	P1	app-core.md	未実施	-	-	-	-	-
 DAT-010	P1	app-core.md	未実施	-	-	-	-	-
 REL-001	P0	app-core.md	合格	2026-09-03	AUTO	1	ローカルJDK 17・GitHub Actions Ubuntu	ローカルJUnit XML 134件成功・main CI https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-002	P0	app-core.md	未実施	-	-	-	-	-
+REL-002	P0	app-core.md	合格	2026-09-06	OWNER	1	JUnit・Room試験一覧・CI run 34033551344	論理日・繰り返し・期限・履歴の正常/境界/異常を56件の専用テストで確認
 REL-003	P0	app-core.md	未実施	-	-	-	-	-
-REL-004	P0	app-core.md	未実施	-	-	-	-	-
+REL-004	P0	app-core.md	合格	2026-09-06	OWNER	1	Room schema 1〜7・API 30 CI run 33867709111	MIGRATION_1_2〜6_7の全6段階でスキーマ検証と既存データ維持を確認
 REL-005	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	lintDebug成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-006	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	assembleDebug成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-007	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	対象commit e57ababdのmain CI成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
