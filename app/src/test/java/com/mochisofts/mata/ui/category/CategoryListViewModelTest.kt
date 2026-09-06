@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -126,11 +127,53 @@ class CategoryListViewModelTest {
     )
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
+class CategoryEditorViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun failedSaveKeepsDraftThenRetrySucceedsWithoutDuplicateWrite() = runTest {
+        val repository = FakeCategoryRepository(emptyList()).apply {
+            saveResult = Result.failure(IllegalStateException("write failed"))
+            saveGate = CompletableDeferred()
+        }
+        val viewModel = CategoryEditorViewModel(SavedStateHandle(), repository)
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals("", viewModel.uiState.value.name)
+        viewModel.setName("日常")
+
+        viewModel.save()
+        runCurrent()
+        viewModel.save()
+        assertEquals(1, repository.saveCount)
+        assertTrue(viewModel.uiState.value.isSaving)
+
+        repository.saveGate?.complete(Unit)
+        runCurrent()
+        assertEquals("日常", viewModel.uiState.value.name)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertNotNull(viewModel.uiState.value.errorMessageRes)
+
+        repository.saveResult = Result.success("new")
+        viewModel.save()
+        runCurrent()
+
+        assertEquals(2, repository.saveCount)
+        assertEquals(CategoryEditorEffect.Saved("new", isNew = true), viewModel.effects.first())
+    }
+
+}
+
 private class FakeCategoryRepository(initialCategories: List<Category>) : CategoryRepository {
     private val categories = MutableStateFlow(initialCategories)
     var reorderResult: Result<Unit> = Result.success(Unit)
+    var saveResult: Result<String> = Result.success("new")
     var lastOrderedIds: List<String>? = null
     var reorderGate: CompletableDeferred<Unit>? = null
+    var saveGate: CompletableDeferred<Unit>? = null
+    var saveCount = 0
 
     override fun observeCategories() = categories
 
@@ -142,17 +185,21 @@ private class FakeCategoryRepository(initialCategories: List<Category>) : Catego
         colorIndex: Int,
         iconName: String,
     ): Result<String> {
+        saveCount += 1
+        saveGate?.await()
         val savedId = id ?: "new"
-        val existing = categories.value.firstOrNull { it.id == savedId }
-        val saved = Category(
-            id = savedId,
-            name = name,
-            colorIndex = colorIndex,
-            iconName = iconName,
-            sortOrder = existing?.sortOrder ?: categories.value.size,
-        )
-        categories.value = categories.value.filterNot { it.id == savedId } + saved
-        return Result.success(savedId)
+        return saveResult.map { resultId ->
+            val existing = categories.value.firstOrNull { it.id == savedId }
+            val saved = Category(
+                id = savedId,
+                name = name,
+                colorIndex = colorIndex,
+                iconName = iconName,
+                sortOrder = existing?.sortOrder ?: categories.value.size,
+            )
+            categories.value = categories.value.filterNot { it.id == savedId } + saved
+            resultId.takeIf { id == null } ?: savedId
+        }
     }
 
     override suspend fun reorderCategories(orderedIds: List<String>): Result<Unit> {

@@ -85,6 +85,7 @@ class TodoListViewModel @Inject constructor(
         followsTodayInitially = route.selectedDate == null,
     )
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
+    private val activeTodoOperations = mutableSetOf<String>()
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
     val adsRuntimeState = adsConsentRepository.state
 
@@ -155,62 +156,66 @@ class TodoListViewModel @Inject constructor(
     }
 
     fun complete(occurrence: TodoOccurrence) {
-        viewModelScope.launch {
+        runTodoOperation(
+            todoId = occurrence.todo.id,
+            successEffect = TodoListEffect.Completed,
+            fallbackErrorRes = R.string.error_todo_complete_failed,
+        ) {
             todoRepository.setCompleted(occurrence.todo.id, occurrence.logicalDate, true)
-                .onSuccess {
-                    effectsChannel.send(TodoListEffect.Completed)
-                }
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_complete_failed),
-                        ),
-                    )
-                }
         }
     }
 
     fun skip(occurrence: TodoOccurrence) {
-        viewModelScope.launch {
+        runTodoOperation(
+            todoId = occurrence.todo.id,
+            successEffect = TodoListEffect.Skipped,
+            fallbackErrorRes = R.string.error_todo_skip_failed,
+        ) {
             todoRepository.setSkipped(occurrence.todo.id, occurrence.logicalDate, true)
-                .onSuccess {
-                    effectsChannel.send(TodoListEffect.Skipped)
-                }
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_skip_failed),
-                        ),
-                    )
-                }
         }
     }
 
     fun archive(todoId: String) {
-        viewModelScope.launch {
+        runTodoOperation(
+            todoId = todoId,
+            successEffect = TodoListEffect.Archived,
+            fallbackErrorRes = R.string.error_todo_archive_failed,
+        ) {
             todoRepository.archiveTodo(todoId)
-                .onSuccess { effectsChannel.send(TodoListEffect.Archived) }
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_archive_failed),
-                        ),
-                    )
-                }
         }
     }
 
     fun delete(todoId: String) {
-        viewModelScope.launch {
+        runTodoOperation(
+            todoId = todoId,
+            successEffect = TodoListEffect.Deleted,
+            fallbackErrorRes = R.string.error_todo_delete_failed,
+        ) {
             todoRepository.deleteTodo(todoId)
-                .onSuccess { effectsChannel.send(TodoListEffect.Deleted) }
-                .onFailure { throwable ->
-                    effectsChannel.send(
-                        TodoListEffect.Message(
-                            throwable.toUserMessageRes(R.string.error_todo_delete_failed),
-                        ),
-                    )
-                }
+        }
+    }
+
+    private fun runTodoOperation(
+        todoId: String,
+        successEffect: TodoListEffect,
+        @StringRes fallbackErrorRes: Int,
+        operation: suspend () -> Result<Unit>,
+    ) {
+        if (!activeTodoOperations.add(todoId)) return
+        viewModelScope.launch {
+            try {
+                operation()
+                    .onSuccess { effectsChannel.send(successEffect) }
+                    .onFailure { throwable ->
+                        effectsChannel.send(
+                            TodoListEffect.Message(
+                                throwable.toUserMessageRes(fallbackErrorRes),
+                            ),
+                        )
+                    }
+            } finally {
+                activeTodoOperations.remove(todoId)
+            }
         }
     }
 }

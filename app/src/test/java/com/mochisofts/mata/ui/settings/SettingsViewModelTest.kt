@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -65,6 +66,29 @@ class SettingsViewModelTest {
             R.string.settings_save_error,
             (viewModel.effects.first() as SettingsEffect.Message).messageRes,
         )
+    }
+
+    @Test
+    fun loadFailureCanBeRetriedWithoutKeepingFallbackValuesVisible() = runTest {
+        val repository = RetrySettingsRepository()
+        val viewModel = SettingsViewModel(
+            repository,
+            FakeNotificationScheduler(),
+            adsConsentRepository = FakeAdsConsentRepository(),
+        )
+
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals(true, viewModel.uiState.value.hasLoadError)
+
+        repository.failLoad = false
+        viewModel.retry()
+
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.hasLoadError)
+        assertEquals(4, viewModel.uiState.value.endHour)
+        assertEquals(DayOfWeek.SUNDAY, viewModel.uiState.value.weekStart)
+        assertEquals(true, viewModel.uiState.value.showCompleted)
+        assertEquals(AppTheme.DARK, viewModel.uiState.value.theme)
     }
 
     private class FakeSettingsRepository : SettingsRepository {
@@ -145,5 +169,33 @@ class SettingsViewModelTest {
 
         override fun gatherConsent(activity: Activity) = Unit
         override fun showPrivacyOptions(activity: Activity) = Unit
+    }
+
+    private class RetrySettingsRepository : SettingsRepository {
+        var failLoad = true
+        override val showCompleted: Flow<Boolean>
+            get() = loadFlow(true)
+        override val todoListMode: Flow<String>
+            get() = loadFlow("DATE")
+        override val dayEndHour: Flow<Int>
+            get() = loadFlow(4)
+        override val weekStart: Flow<DayOfWeek>
+            get() = loadFlow(DayOfWeek.SUNDAY)
+        override val theme: Flow<AppTheme>
+            get() = loadFlow(AppTheme.DARK)
+        override val notificationPermissionRequested: Flow<Boolean>
+            get() = loadFlow(false)
+
+        private fun <T> loadFlow(value: T): Flow<T> = flow {
+            if (failLoad) error("load failed")
+            emit(value)
+        }
+
+        override suspend fun setShowCompleted(value: Boolean) = Unit
+        override suspend fun setTodoListMode(value: String) = Unit
+        override suspend fun setDayEndHour(value: Int) = Unit
+        override suspend fun setWeekStart(value: DayOfWeek) = Unit
+        override suspend fun setTheme(value: AppTheme) = Unit
+        override suspend fun setNotificationPermissionRequested(value: Boolean) = Unit
     }
 }
