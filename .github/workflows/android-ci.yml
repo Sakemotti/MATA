@@ -53,6 +53,9 @@ jobs:
           node tools/test-specs/verify-results.mjs
           node tools/test-specs/verify-automated-evidence.mjs
 
+      - name: Verify architecture boundaries
+        run: node tools/test-specs/verify-architecture.mjs
+
   android_verification:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest

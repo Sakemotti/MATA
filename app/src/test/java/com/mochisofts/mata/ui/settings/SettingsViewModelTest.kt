@@ -7,7 +7,7 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek

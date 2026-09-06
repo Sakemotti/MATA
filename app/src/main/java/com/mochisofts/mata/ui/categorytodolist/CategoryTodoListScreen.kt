@@ -54,9 +54,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
-import com.mochisofts.mata.app.MataAdaptiveNavigation
-import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataNavigationType
+import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveNavigation
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
 import com.mochisofts.mata.core.designsystem.MataTodoListItem

@@ -52,6 +52,9 @@ import androidx.window.layout.WindowInfoTracker
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.designsystem.mataUsesDarkTheme
+import com.mochisofts.mata.core.designsystem.navigation.LocalMataFoldingFeatures
+import com.mochisofts.mata.core.designsystem.navigation.MataContentFrame
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.core.navigation.CategoryListRoute
 import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
@@ -62,6 +65,7 @@ import com.mochisofts.mata.core.navigation.OpenSourceLicensesRoute
 import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
+import com.mochisofts.mata.core.navigation.UNCATEGORIZED_CATEGORY_KEY
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
 import com.mochisofts.mata.ui.category.CategoryListScreen
 import com.mochisofts.mata.ui.categorytodolist.CategoryTodoListScreen
@@ -164,7 +168,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_WIDGET_CATEGORY_KEY = "widget_category_key"
         const val WIDGET_MODE_DATE = "DATE"
         const val WIDGET_MODE_CATEGORY = "CATEGORY"
-        const val WIDGET_UNCATEGORIZED_KEY = "__uncategorized__"
+        const val WIDGET_UNCATEGORIZED_KEY = UNCATEGORIZED_CATEGORY_KEY
     }
 }
 

@@ -5,6 +5,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.JsonWriter
 import androidx.room.withTransaction
+import com.mochisofts.mata.core.backup.BackupCounts
+import com.mochisofts.mata.core.backup.BackupManifest
+import com.mochisofts.mata.core.backup.BackupOperationPhase
 import com.mochisofts.mata.data.local.CategoryDao
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
@@ -90,6 +93,7 @@ class BackupArchiveWriter @Inject constructor(
                     dataSha256 = measuredOutput.sha256(),
                     dataUncompressedBytes = measuredOutput.byteCount,
                     counts = counts,
+                    formatVersion = BACKUP_FORMAT_VERSION,
                 )
                 zip.putNextEntry(ZipEntry(MANIFEST_ENTRY).apply { time = entryTime })
                 writeManifest(NonClosingOutputStream(zip), manifest)

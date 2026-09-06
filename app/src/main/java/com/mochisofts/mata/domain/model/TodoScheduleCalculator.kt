@@ -40,6 +40,17 @@ fun deadlineAt(
     return dueDate.atTime(dueTime).atZone(zoneId)
 }
 
+/**
+ * Produces a monotonic key within a logical day so presentation layers can order TODOs without
+ * duplicating the boundary calculation. A missing deadline is placed at the logical-day end.
+ */
+fun Todo.effectiveDueSortMinutes(endHour: Int): Int {
+    require(endHour in 0..23)
+    val logicalStartMinutes = endHour * MINUTES_PER_HOUR
+    val due = dueMinutes ?: logicalStartMinutes
+    return due + if (dueMinutes == null || due < logicalStartMinutes) MINUTES_PER_DAY else 0
+}
+
 fun Todo.occursOn(date: LocalDate, holidays: Set<LocalDate> = emptySet()): Boolean {
     if (archivedAt != null || date.isBefore(startDate) || endDate?.let(date::isAfter) == true) {
         return false
@@ -147,3 +158,6 @@ private fun RecurrenceRule.matchesDayFilter(date: LocalDate, holidays: Set<Local
 
 private operator fun ClosedRange<DayOfWeek>.contains(value: DayOfWeek): Boolean =
     value.value in start.value..endInclusive.value
+
+private const val MINUTES_PER_HOUR = 60
+private const val MINUTES_PER_DAY = 1_440

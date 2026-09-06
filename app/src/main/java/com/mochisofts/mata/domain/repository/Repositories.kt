@@ -1,6 +1,5 @@
 package com.mochisofts.mata.domain.repository
 
-import android.app.Activity
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
@@ -8,8 +7,6 @@ import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.ArchivedHistoryItem
 import com.mochisofts.mata.domain.model.ArchivedTodoItem
 import com.mochisofts.mata.domain.model.Category
-import com.mochisofts.mata.domain.model.AdsConsentEvent
-import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
@@ -26,7 +23,6 @@ import java.util.UUID
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.StateFlow
 
 interface CategoryRepository {
     fun observeCategories(): Flow<List<Category>>
@@ -135,11 +131,4 @@ interface HolidayRepository {
     suspend fun markNotificationGenerationProcessed(generation: Long)
     suspend fun pendingWidgetGeneration(): Long?
     suspend fun markWidgetGenerationProcessed(generation: Long)
-}
-
-interface AdsConsentRepository {
-    val state: StateFlow<AdsRuntimeState>
-    val events: Flow<AdsConsentEvent>
-    fun gatherConsent(activity: Activity)
-    fun showPrivacyOptions(activity: Activity)
 }

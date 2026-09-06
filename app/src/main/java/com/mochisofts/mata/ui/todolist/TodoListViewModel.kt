@@ -13,11 +13,12 @@ import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.effectiveDueSortMinutes
 import com.mochisofts.mata.domain.model.usesHolidayData
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -290,7 +291,7 @@ internal fun buildTodoOccurrenceGroups(
             category = category,
             occurrences = items.sortedWith(
                 compareBy<TodoOccurrence> {
-                    it.effectiveDueMinutes(dayEndHour)
+                    it.todo.effectiveDueSortMinutes(dayEndHour)
                 }.thenBy { it.todo.createdAt }
                     .thenBy { it.todo.id },
             ),
@@ -300,15 +301,3 @@ internal fun buildTodoOccurrenceGroups(
         compareBy<TodoOccurrenceGroup> { it.category?.sortOrder ?: -1 }
             .thenBy { it.category?.id.orEmpty() },
     )
-
-private fun TodoOccurrence.effectiveDueMinutes(dayEndHour: Int): Int {
-    val due = todo.dueMinutes ?: dayEndHour * MINUTES_PER_HOUR
-    return due + if (todo.dueMinutes == null || due < dayEndHour * MINUTES_PER_HOUR) {
-        MINUTES_PER_DAY
-    } else {
-        0
-    }
-}
-
-private const val MINUTES_PER_HOUR = 60
-private const val MINUTES_PER_DAY = 1_440

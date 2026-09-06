@@ -118,10 +118,10 @@ REL-007	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	対象comm
 REL-008	P1	app-core.md	未実施	-	-	-	-	-
 REL-009	P1	app-core.md	未実施	-	-	-	-	-
 REL-010	P0	app-core.md	未実施	-	-	-	-	-
-REL-011	P1	app-core.md	未実施	-	-	-	-	-
-REL-012	P1	app-core.md	未実施	-	-	-	-	-
-REL-013	P1	app-core.md	未実施	-	-	-	-	-
-REL-014	P1	app-core.md	未実施	-	-	-	-	-
+REL-011	P1	app-core.md	合格	2026-09-07	OWNER	1	AGP 9.3.2・主要ソース・PR CI	内蔵Kotlin・Compose・Material 3・単一画面Activity・Coroutines・java.timeを静的確認
+REL-012	P1	app-core.md	合格	2026-09-07	OWNER	1	レイヤー静的検査・PR CI	domain禁止依存0件・data→ui 0件・ui→app/data 0件・画面の直接データアクセス0件
+REL-013	P1	app-core.md	合格	2026-09-07	OWNER	1	domain/UI静的検査・JUnit	業務計算をdomainへ分離・不変UiState 9個・StateFlowとイベント経路を確認
+REL-014	P1	app-core.md	合格	2026-09-07	OWNER	1	156ソース静的検査・lintDebug	UTF-8/LF/4空白・文字列/テーマ/状態表現・複雑ルール試験を確認
 REL-015	P0	app-core.md	合格	2026-09-06	AUTO+USER	1	公開GitHub Pages・Android Mobile UA・静的HTML	3文書がHTTPS 200・viewportあり・script 0・CSPでscript禁止・レスポンシブCSSあり、アプリ内遷移確認済み
 REL-016	P0	app-core.md	合格	2026-09-06	AUTO+USER	1	Release依存関係・アプリソース・Play掲載情報	releaseRuntimeClasspathのBilling依存0件・購入等の導線なし・掲載文にアプリ内購入とサブスクリプションなし
 REL-017	P0	app-core.md	未実施	-	-	-	-	-

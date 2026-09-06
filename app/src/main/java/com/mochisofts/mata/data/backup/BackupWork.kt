@@ -10,6 +10,11 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.mochisofts.mata.core.backup.BackupErrorCode
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -33,16 +38,18 @@ class BackupCoordinator @Inject constructor(
     @ApplicationContext private val context: Context,
     private val store: BackupOperationStore,
     private val clock: Clock,
-) {
-    val state = store.state
+) : BackupGateway {
+    override val state = store.state
 
-    fun suggestedFileName(): String = "MATA_backup_${FILE_TIME_FORMAT.format(LocalDateTime.now(clock))}$BACKUP_EXTENSION"
+    override fun suggestedFileName(): String =
+        "MATA_backup_${FILE_TIME_FORMAT.format(LocalDateTime.now(clock))}$BACKUP_EXTENSION"
 
-    fun startCreate(uri: Uri): Boolean = start(uri, BackupOperationType.CREATE)
+    override fun startCreate(uri: Uri): Boolean = start(uri, BackupOperationType.CREATE)
 
-    fun startRestoreValidation(uri: Uri): Boolean = start(uri, BackupOperationType.RESTORE_VALIDATION)
+    override fun startRestoreValidation(uri: Uri): Boolean =
+        start(uri, BackupOperationType.RESTORE_VALIDATION)
 
-    fun confirmRestore(): Boolean {
+    override fun confirmRestore(): Boolean {
         val current = store.state.value
         if (current.status != BackupOperationStatus.AWAITING_CONFIRMATION || current.summary == null) return false
         store.beginRestore()
@@ -50,7 +57,7 @@ class BackupCoordinator @Inject constructor(
         return true
     }
 
-    fun cancelRestoreConfirmation() {
+    override fun cancelRestoreConfirmation() {
         val current = store.state.value
         if (current.status != BackupOperationStatus.AWAITING_CONFIRMATION) return
         current.operationId?.let { operationFiles(context, it).deleteAll() }
@@ -58,13 +65,13 @@ class BackupCoordinator @Inject constructor(
         store.clear()
     }
 
-    fun acknowledgeResult() {
+    override fun acknowledgeResult() {
         if (store.state.value.status in setOf(BackupOperationStatus.SUCCEEDED, BackupOperationStatus.FAILED)) {
             store.clear()
         }
     }
 
-    suspend fun recoverInterruptedOperation() = withContext(Dispatchers.IO) {
+    override suspend fun recoverInterruptedOperation() = withContext(Dispatchers.IO) {
         val current = store.state.value
         val operationId = current.operationId ?: return@withContext
         val files = operationFiles(context, operationId)

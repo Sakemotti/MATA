@@ -4,13 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.mochisofts.mata.app.MainActivity
 import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
+import com.mochisofts.mata.core.navigation.UNCATEGORIZED_CATEGORY_KEY
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,7 +47,7 @@ class CategoryTodoListViewModel @Inject constructor(
         savedStateHandle.getStateFlow(
             SELECTED_CATEGORY_ID_KEY,
             route.selectedCategoryKey?.takeUnless {
-                it == MainActivity.WIDGET_UNCATEGORIZED_KEY
+                it == UNCATEGORIZED_CATEGORY_KEY
             },
         )
 
