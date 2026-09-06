@@ -33,6 +33,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -116,6 +117,32 @@ class NotificationSchedulerTestSpecCoverageTest {
         assertEquals(2, database.todoNotificationDao().findForTodo(TODO_ID).size)
         assertTrue(database.scheduledNotificationDao().findForTodo(TODO_ID).all { it.triggerAt > now })
         assertTrue(gateway.scheduled.all { it.triggerAt > now })
+    }
+
+    @Test
+    fun at021_restoredTodoRegistersOnlyFutureNotificationCandidates() = runBlocking {
+        insertTodo(rule = RecurrenceRule.daily(), archivedAt = clock.millis() - 1)
+        insertNotification("past-today", NotificationRelation.BEFORE, 13, NotificationUnit.HOUR, 0)
+        insertNotification("future-at", NotificationRelation.AT, 0, NotificationUnit.MINUTE, 1)
+        insertNotification("future-after", NotificationRelation.AFTER, 1, NotificationUnit.HOUR, 2)
+        val archived = requireNotNull(database.todoDao().findById(TODO_ID))
+
+        database.todoDao().upsert(archived.copy(archivedAt = null, updatedAt = clock.millis()))
+        scheduler.reconcileTodo(TODO_ID)
+
+        val records = database.scheduledNotificationDao().findForTodo(TODO_ID)
+        assertEquals(3, records.size)
+        assertTrue(records.all { record -> record.triggerAt > clock.millis() })
+        assertTrue(gateway.scheduled.all { call -> call.triggerAt > clock.millis() })
+        assertEquals(
+            "2026-08-12",
+            records.single { record -> record.notificationSettingId == "past-today" }.logicalDate,
+        )
+        assertEquals(
+            setOf("2026-08-11"),
+            records.filter { record -> record.notificationSettingId != "past-today" }
+                .mapTo(mutableSetOf()) { record -> record.logicalDate },
+        )
     }
 
     @Test
@@ -274,6 +301,21 @@ class NotificationSchedulerTestSpecCoverageTest {
     }
 
     @Test
+    fun cancellationFailure_invalidatesCandidateBeforeGatewayFailure() = runBlocking {
+        insertTodo()
+        insertNotification()
+        scheduler.reconcileTodo(TODO_ID)
+        val candidateKey = database.scheduledNotificationDao().findForTodo(TODO_ID).single().candidateKey
+        gateway.failCancellation = true
+
+        val result = runCatching { scheduler.cancelTodo(TODO_ID) }
+
+        assertTrue(result.isFailure)
+        assertTrue(database.scheduledNotificationDao().findForTodo(TODO_ID).isEmpty())
+        assertNull(database.scheduledNotificationDao().find(candidateKey))
+    }
+
+    @Test
     fun ntf015_repeatedReconciliationIsIdempotentByCandidateKey() = runBlocking {
         insertTodo()
         insertNotification()
@@ -307,6 +349,7 @@ class NotificationSchedulerTestSpecCoverageTest {
         startDate: LocalDate = LocalDate.of(2026, 8, 11),
         rule: RecurrenceRule = RecurrenceRule.once(),
         dueMinutes: Int? = 12 * 60,
+        archivedAt: Long? = null,
     ) {
         val encoded = RecurrenceRuleJson.encode(rule)
         database.todoDao().upsert(
@@ -324,7 +367,7 @@ class NotificationSchedulerTestSpecCoverageTest {
                 definitionRevision = 1,
                 createdAt = 1,
                 updatedAt = 1,
-                archivedAt = null,
+                archivedAt = archivedAt,
             ),
         )
     }
@@ -414,6 +457,7 @@ private data class CancelledAlarmCall(val key: String, val requestCode: Int)
 private class RecordingAlarmGateway : AlarmGateway {
     val scheduled = mutableListOf<ScheduledAlarmCall>()
     val cancelled = mutableListOf<CancelledAlarmCall>()
+    var failCancellation = false
 
     override fun schedule(candidateKey: String, requestCode: Int, triggerAtMillis: Long, exact: Boolean) {
         scheduled += ScheduledAlarmCall(candidateKey, requestCode, triggerAtMillis, exact)
@@ -421,6 +465,7 @@ private class RecordingAlarmGateway : AlarmGateway {
 
     override fun cancel(candidateKey: String, requestCode: Int) {
         cancelled += CancelledAlarmCall(candidateKey, requestCode)
+        if (failCancellation) throw IllegalStateException("injected cancellation failure")
     }
 
     fun clearEvents() {
