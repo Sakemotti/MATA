@@ -11,12 +11,12 @@ import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
-import com.mochisofts.mata.data.backup.BackupCoordinator
-import com.mochisofts.mata.data.backup.BackupErrorCode
-import com.mochisofts.mata.data.backup.BackupOperationState
-import com.mochisofts.mata.data.backup.BackupOperationStatus
-import com.mochisofts.mata.data.backup.BackupOperationType
+import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.backup.BackupErrorCode
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupOperationState
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
 import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DayOfWeek
@@ -69,7 +69,7 @@ sealed interface SettingsEffect {
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
-    private val backupCoordinator: BackupCoordinator? = null,
+    private val backupGateway: BackupGateway? = null,
     private val adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -102,9 +102,9 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
-        backupCoordinator?.let { coordinator ->
+        backupGateway?.let { gateway ->
             viewModelScope.launch {
-                coordinator.state.collect { operation ->
+                gateway.state.collect { operation ->
                     _uiState.update { it.copy(backupOperation = operation) }
                     when (operation.status) {
                         BackupOperationStatus.SUCCEEDED -> {
@@ -113,11 +113,11 @@ class SettingsViewModel @Inject constructor(
                             } else {
                                 effectsChannel.send(SettingsEffect.Message(R.string.backup_create_success))
                             }
-                            coordinator.acknowledgeResult()
+                            gateway.acknowledgeResult()
                         }
                         BackupOperationStatus.FAILED -> {
                             effectsChannel.send(SettingsEffect.Message(operation.errorMessage()))
-                            coordinator.acknowledgeResult()
+                            gateway.acknowledgeResult()
                         }
                         else -> Unit
                     }
@@ -148,10 +148,10 @@ class SettingsViewModel @Inject constructor(
         adsConsentRepository.showPrivacyOptions(activity)
     }
 
-    fun suggestedBackupFileName(): String = backupCoordinator?.suggestedFileName().orEmpty()
+    fun suggestedBackupFileName(): String = backupGateway?.suggestedFileName().orEmpty()
 
     fun createTargetSelected(uri: Uri?) {
-        if (uri != null && backupCoordinator?.startCreate(uri) == false) {
+        if (uri != null && backupGateway?.startCreate(uri) == false) {
             viewModelScope.launch {
                 effectsChannel.send(SettingsEffect.Message(R.string.backup_operation_already_running))
             }
@@ -159,7 +159,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun restoreFileSelected(uri: Uri?) {
-        if (uri != null && backupCoordinator?.startRestoreValidation(uri) == false) {
+        if (uri != null && backupGateway?.startRestoreValidation(uri) == false) {
             viewModelScope.launch {
                 effectsChannel.send(SettingsEffect.Message(R.string.backup_operation_already_running))
             }
@@ -167,7 +167,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun confirmRestore() {
-        if (backupCoordinator?.confirmRestore() == false) {
+        if (backupGateway?.confirmRestore() == false) {
             viewModelScope.launch {
                 effectsChannel.send(SettingsEffect.Message(R.string.backup_restore_start_error))
             }
@@ -175,7 +175,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun cancelRestoreConfirmation() {
-        backupCoordinator?.cancelRestoreConfirmation()
+        backupGateway?.cancelRestoreConfirmation()
     }
 
     fun refreshNotificationStatus(reconcile: Boolean = true) {

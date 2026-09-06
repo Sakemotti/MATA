@@ -11,7 +11,7 @@ import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AdsSdkInitialization
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject

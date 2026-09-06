@@ -2,6 +2,8 @@ package com.mochisofts.mata.core.navigation
 
 import kotlinx.serialization.Serializable
 
+const val UNCATEGORIZED_CATEGORY_KEY = "__uncategorized__"
+
 @Serializable
 data class TodoListRoute(
     val selectedDate: String? = null,

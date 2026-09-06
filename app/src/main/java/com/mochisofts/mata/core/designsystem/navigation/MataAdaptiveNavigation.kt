@@ -1,4 +1,4 @@
-package com.mochisofts.mata.app
+package com.mochisofts.mata.core.designsystem.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints

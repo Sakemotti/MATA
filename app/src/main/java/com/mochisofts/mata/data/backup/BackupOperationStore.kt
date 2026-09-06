@@ -1,6 +1,14 @@
 package com.mochisofts.mata.data.backup
 
 import android.content.Context
+import com.mochisofts.mata.core.backup.BackupCounts
+import com.mochisofts.mata.core.backup.BackupErrorCode
+import com.mochisofts.mata.core.backup.BackupManifest
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationState
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
+import com.mochisofts.mata.core.backup.BackupSummary
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

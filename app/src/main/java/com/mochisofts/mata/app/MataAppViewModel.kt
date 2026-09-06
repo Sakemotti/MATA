@@ -8,7 +8,7 @@ import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HolidayRepository
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import com.mochisofts.mata.core.navigation.TodoListRoute

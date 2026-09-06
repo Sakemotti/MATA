@@ -33,6 +33,8 @@ import com.mochisofts.mata.data.repository.RoomHolidayRepository
 import com.mochisofts.mata.data.holiday.HolidayHttpClient
 import com.mochisofts.mata.data.holiday.UrlConnectionHolidayHttpClient
 import com.mochisofts.mata.core.notification.AlarmGateway
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.data.notification.AndroidAlarmGateway
 import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
 import com.mochisofts.mata.data.notification.AndroidNotificationSystemStateProvider
@@ -46,7 +48,7 @@ import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryRepository
 import com.mochisofts.mata.domain.repository.ArchiveRepository
 import com.mochisofts.mata.domain.repository.HolidayRepository
-import com.mochisofts.mata.domain.repository.AdsConsentRepository
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -110,6 +112,10 @@ abstract class RepositoryModule {
     abstract fun bindAdsConsentRepository(
         repository: GoogleAdsConsentRepository,
     ): AdsConsentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBackupGateway(coordinator: BackupCoordinator): BackupGateway
 }
 
 @Module

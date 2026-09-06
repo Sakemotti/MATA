@@ -77,9 +77,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mochisofts.mata.ui.ads.MataBannerAd
 import com.mochisofts.mata.R
-import com.mochisofts.mata.app.MataAdaptiveNavigation
-import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataNavigationType
+import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveNavigation
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox

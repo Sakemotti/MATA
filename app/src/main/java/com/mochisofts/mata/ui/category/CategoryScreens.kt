@@ -89,10 +89,10 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mochisofts.mata.R
-import com.mochisofts.mata.app.MataAdaptiveNavigation
-import com.mochisofts.mata.app.MataDestination
-import com.mochisofts.mata.app.MataAdaptiveLayoutInfo
-import com.mochisofts.mata.app.MataNavigationType
+import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveNavigation
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveLayoutInfo
+import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.categoryIcon

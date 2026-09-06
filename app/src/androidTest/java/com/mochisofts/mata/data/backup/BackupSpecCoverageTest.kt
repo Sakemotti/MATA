@@ -11,6 +11,11 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.WorkManager
+import com.mochisofts.mata.core.backup.BackupCounts
+import com.mochisofts.mata.core.backup.BackupErrorCode
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
 import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.HolidayEntity

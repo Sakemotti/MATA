@@ -251,6 +251,20 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
+    fun effectiveDueSortMinutes_ordersDeadlinesWithinLogicalDay() {
+        val base = todo(
+            LocalDate.of(2026, 8, 10),
+            null,
+            RecurrenceRule.daily(),
+        )
+
+        assertEquals(4 * 60, base.copy(dueMinutes = 4 * 60).effectiveDueSortMinutes(4))
+        assertEquals(23 * 60, base.copy(dueMinutes = 23 * 60).effectiveDueSortMinutes(4))
+        assertEquals(27 * 60, base.copy(dueMinutes = 3 * 60).effectiveDueSortMinutes(4))
+        assertEquals(28 * 60, base.effectiveDueSortMinutes(4))
+    }
+
+    @Test
     fun logicalBoundary_usesZoneRulesForMissingDstTime() {
         val zone = ZoneId.of("America/New_York")
         val start = logicalDayStart(LocalDate.of(2026, 3, 8), 2, zone)

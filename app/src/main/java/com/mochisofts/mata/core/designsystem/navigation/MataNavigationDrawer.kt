@@ -1,4 +1,4 @@
-package com.mochisofts.mata.app
+package com.mochisofts.mata.core.designsystem.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.automirrored.outlined.ViewList

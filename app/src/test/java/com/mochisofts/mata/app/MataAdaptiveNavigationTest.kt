@@ -1,5 +1,11 @@
 package com.mochisofts.mata.app
 
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.core.designsystem.navigation.MataFoldingFeatureInfo
+import com.mochisofts.mata.core.designsystem.navigation.MataFoldingOrientation
+import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
+import com.mochisofts.mata.core.designsystem.navigation.mataAdaptiveLayoutInfoFor
+import com.mochisofts.mata.core.designsystem.navigation.mataNavigationTypeFor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

@@ -3,12 +3,12 @@ package com.mochisofts.mata.app
 import android.content.Context
 import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.core.common.FailureCategory
+import com.mochisofts.mata.core.backup.BackupGateway
 import com.mochisofts.mata.core.observability.DiagnosticEvent
 import com.mochisofts.mata.core.observability.DiagnosticEventCode
 import com.mochisofts.mata.core.observability.DiagnosticLevel
 import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.core.observability.DiagnosticResult
-import com.mochisofts.mata.data.backup.BackupCoordinator
 import com.mochisofts.mata.data.local.MataDatabase
 import dagger.Binds
 import dagger.Module
@@ -112,14 +112,14 @@ internal class AndroidStartupDiagnostics @Inject constructor(
 @Singleton
 internal class RequiredStartupRecovery @Inject constructor(
     private val database: MataDatabase,
-    private val backupCoordinator: BackupCoordinator,
+    private val backupGateway: BackupGateway,
     private val versionStore: SuccessfulStartupVersionStore,
 ) : StartupRecovery {
     override suspend fun recover(): StartupRecoveryResult {
         database.openHelper.writableDatabase.query("SELECT 1").use { cursor ->
             check(cursor.moveToFirst()) { "Database verification failed" }
         }
-        backupCoordinator.recoverInterruptedOperation()
+        backupGateway.recoverInterruptedOperation()
         return StartupRecoveryResult(
             appVersionChanged = versionStore.recordSuccessfulStartup(BuildConfig.VERSION_CODE.toLong()),
         )
