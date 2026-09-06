@@ -1,7 +1,7 @@
 # 外部送信に関する公表仕様
 
-- 文書状態: 方針確定・公開前原稿・専門家確認推奨
-- 最終更新日: 2026-09-02
+- 文書状態: 公開済み・Release静的整合確認済み・専門家確認推奨
+- 最終更新日: 2026-09-07
 - 公開URL: `https://mochisofts.com/mata/external-transmission`
 - 公開用HTML: `legal-site/mata/external-transmission/index.html`
 

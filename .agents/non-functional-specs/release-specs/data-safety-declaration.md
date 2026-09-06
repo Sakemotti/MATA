@@ -1,13 +1,13 @@
 # Google Play Data safety申告
 
-- 文書状態: Console回答済み・Release実機通信確認前
-- 最終更新日: 2026-09-04
+- 文書状態: Console回答済み・Release静的整合確認済み・実機通信確認前
+- 最終更新日: 2026-09-07
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連仕様: [データ・プライバシー仕様](../security-privacy-specs/data-and-privacy.md)、[外部送信に関する公表](../legal-specs/external-transmission.md)
 
 ## 1. 適用範囲
 
-本書は、2026年9月2日時点のRelease構成をGoogle Play ConsoleのData safetyフォームへ転記するための申告内容である。MATA本体だけでなく、GMA Next-Gen SDK 1.4.0、UMP 4.0.0およびHolidays JPへの通信を含む。GMA Next-Gen SDKの公式開示は2026年8月31日更新版を確認した。2026年9月4日時点でConsoleへの回答と全App contentカードの完了をユーザーが確認済みとする。
+本書は、2026年9月7日時点のRelease構成をGoogle Play ConsoleのData safetyフォームへ転記するための申告内容である。MATA本体だけでなく、GMA Next-Gen SDK 1.4.0、UMP 4.0.0およびHolidays JPへの通信を含む。2026年9月7日に、GMA Next-Gen SDKの2026年9月2日更新版データ開示、同SDK 1.4.0およびUMP 4.0.0が最新であることを公式資料で確認した。2026年9月4日時点でConsoleへの回答と全App contentカードの完了をユーザーが確認済みとする。
 
 Google Playの定義では、アプリまたはSDKが端末外へ送信するデータを「収集」に含める。最終回答はRelease AABのマージ済みManifest、Google Play SDK Index、各SDKの最新開示および実機通信検査を基に確定し、本書との差異があれば公開前に本書、プライバシーポリシーおよび外部送信に関する公表を同時更新する。
 
@@ -64,11 +64,11 @@ Google Playの定義では、アプリまたはSDKが端末外へ送信するデ
 ## 6. 送信前検証
 
 - 公開候補ごとに`generateReleaseArtifactMetadata`でRelease runtimeのCycloneDX SBOMを自動生成し、ハッシュと主要SDKの存在を機械検査する。
-- [ ] 公開候補AABと同じcommitのSBOMを確認し、追加・更新・削除されたcomponentに未申告SDKがない。
-- [ ] マージ済みManifestの権限を確認し、`AD_ID`とネットワーク関連権限を本書と照合した。
-- [ ] Google Play SDK IndexでGMA Next-Gen SDKとUMPの警告と最新開示を確認した。
+- [x] 2026年9月7日のRelease SBOMを確認し、GMA Next-Gen SDK 1.4.0とUMP 4.0.0以外に未申告の外部送信SDKがない。
+- [x] 2026年9月7日のマージ済みManifestを確認し、`AD_ID`とネットワーク関連権限を本書およびConsole申請シートと照合した。
+- [x] 2026年9月7日にGoogle公式資料でGMA Next-Gen SDKとUMPの最新版、データ開示および設定方法を確認した。Play ConsoleのSDK Index警告は公開候補確定時にも再確認する。
 - [ ] 広告同意前、同意後、同意拒否および祝日取得の各状態で通信先と送信項目を検査した。
-- [ ] TODOタイトル、説明、カテゴリ名およびバックアップ本文が広告・祝日・ログへ含まれないことを確認した。
+- [x] 静的検査と祝日リクエスト試験で、TODOタイトル、説明、カテゴリ名およびバックアップ本文が広告・祝日・ログへ接続されていないことを確認した。公開候補の実通信でも再確認する。
 - [ ] Data safety、プライバシーポリシー、外部送信に関する公表、UMPメッセージおよびAdMob構成を同じ日付で照合した。
 - [ ] フォーム送信後のGoogle Playプレビューを保存し、本書へ申請日と証跡を記録した。
 
