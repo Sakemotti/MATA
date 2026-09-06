@@ -88,6 +88,7 @@ function verifyBuildConfiguration() {
     ['minSdk 26', /minSdk\s+26\b/],
     ['targetSdk 36', /targetSdk\s+36\b/],
     ['release optimization', /release\s*\{[\s\S]*?optimization\s*\{\s*enable\s+true\s*\}/],
+    ['native debug symbols', /release\s*\{[\s\S]*?ndk\s*\{\s*debugSymbolLevel\s+['"]SYMBOL_TABLE['"]\s*\}/],
     ['Baseline Profile', /baselineProfile\s+project\(['"]:benchmark['"]\)/],
     ['release AdMob app ID property', /gradleProperty\(['"]MATA_ADMOB_APP_ID['"]\)/],
     ['release AdMob banner ID property', /gradleProperty\(['"]MATA_ADMOB_BANNER_AD_UNIT_ID['"]\)/],
