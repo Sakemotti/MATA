@@ -264,6 +264,55 @@ class NotificationSchedulerTestSpecCoverageTest {
     }
 
     @Test
+    fun te021_platformAndHolidayChangesRebuildOnlyOneFutureNotification() = runBlocking {
+        insertTodo(rule = RecurrenceRule(RecurrenceType.WEEKDAYS))
+        insertNotification()
+
+        scheduler.rebuildAll()
+        assertSingleFutureNotification(expectedDate = "2026-08-11")
+
+        // Device boot performs the same full rebuild with no duplicate candidate.
+        gateway.clearEvents()
+        scheduler.rebuildAll()
+        assertSingleFutureNotification(expectedDate = "2026-08-11")
+        assertEquals(1, gateway.scheduled.size)
+
+        // Move beyond today's deadline: the elapsed candidate must not fire.
+        clock.advance(Duration.ofHours(13))
+        gateway.clearEvents()
+        scheduler.rebuildAll()
+        assertSingleFutureNotification(expectedDate = "2026-08-12")
+
+        clock.zoneId = ZoneId.of("UTC")
+        gateway.clearEvents()
+        scheduler.rebuildAll()
+        assertSingleFutureNotification(expectedDate = "2026-08-11")
+
+        stateProvider.canPostNotifications = false
+        gateway.clearEvents()
+        scheduler.rebuildAll()
+        val permissionSuppressed = assertSingleFutureNotification(expectedDate = "2026-08-11")
+        assertEquals(AndroidNotificationScheduler.STATE_SUPPRESSED, permissionSuppressed.state)
+        assertTrue(gateway.scheduled.isEmpty())
+
+        stateProvider.canPostNotifications = true
+        gateway.clearEvents()
+        scheduler.rebuildAll()
+        assertEquals(
+            AndroidNotificationScheduler.STATE_SCHEDULED,
+            assertSingleFutureNotification(expectedDate = "2026-08-11").state,
+        )
+
+        holidays.snapshot.value = HolidaySnapshot(
+            namesByDate = mapOf(LocalDate.of(2026, 8, 11) to "test holiday"),
+        )
+        gateway.clearEvents()
+        scheduler.rebuildAll()
+        assertSingleFutureNotification(expectedDate = "2026-08-12")
+        assertTrue(gateway.scheduled.all { call -> call.triggerAt > clock.millis() })
+    }
+
+    @Test
     fun ntf013_invalidRelationshipKeepsSettingWithSuppressionReasonAndCount() = runBlocking {
         insertTodo(dueMinutes = 23 * 60 + 30)
         insertNotification("invalid", NotificationRelation.AFTER, 1, NotificationUnit.HOUR, 0)
@@ -343,6 +392,16 @@ class NotificationSchedulerTestSpecCoverageTest {
         systemStateProvider = stateProvider,
         clock = clock,
     )
+
+    private suspend fun assertSingleFutureNotification(expectedDate: String): ScheduledNotificationEntity {
+        val records = database.scheduledNotificationDao().findForTodo(TODO_ID)
+        assertEquals(1, records.size)
+        val record = records.single()
+        assertEquals(expectedDate, record.logicalDate)
+        assertTrue(record.triggerAt > clock.millis())
+        assertEquals(1, records.map { item -> item.candidateKey }.distinct().size)
+        return record
+    }
 
     private suspend fun insertTodo(
         id: String = TODO_ID,
@@ -494,6 +553,7 @@ private class MutableNotificationClock(
     override fun getZone(): ZoneId = zoneId
     override fun withZone(zone: ZoneId): Clock = MutableNotificationClock(currentInstant, zone)
     override fun instant(): Instant = currentInstant
+    fun advance(duration: Duration) { currentInstant = currentInstant.plus(duration) }
 }
 
 private class NotificationTestSettingsRepository : SettingsRepository {
