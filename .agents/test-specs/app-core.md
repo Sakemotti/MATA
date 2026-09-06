@@ -185,7 +185,7 @@
 | REL-018 | P0 | AUTO | `node fastlane/verify-play-store.mjs --release`を実行する | 掲載文4種が正本と一致して文字数上限内であり、マニフェスト所定のアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット8枚が形式・寸法・容量を満たす | 未実施 | 画像完成後に実施 |
 | REL-019 | P0 | AUTO | `node tools/release/verify-readiness.mjs`を実行する | ビルド設定、Git識別、法的サイトおよびPlay掲載文のドラフト検証が成功し、`release-readiness.json`へ結果が記録される | 未実施 | |
 | REL-020 | P0 | AUTO | 通常CIでRelease成果物生成後に`node tools/release/verify-readiness.mjs --artifacts`を実行する | AAB、mapping、ライセンス、CycloneDX SBOM、最終Manifestの存在・容量・SHA-256とcommitが一致し、署名方法`none`、証明書0件、`publishable=false`である | 未実施 | CIで実施 |
-| REL-021 | P0 | AUTO/MANUAL | 正式な法的サイト・ストア画像・Upload Key署名済み成果物を揃え、クリーンな`main`で`node tools/release/verify-readiness.mjs --release`を実行する | 全自動検査が成功し、実機・Console・専門家・人的承認を残したまま公開候補として識別される | 未実施 | 公開候補作成時に実施 |
+| REL-021 | P0 | AUTO/MANUAL | 正式な法的サイト・ストア画像・Upload Key署名済み成果物を揃え、クリーンな`main`で`node tools/release/verify-readiness.mjs --release`を実行する | 全自動検査が成功し、実機・Console・専門家・人的承認を残したまま公開候補として識別される | 未実施 | [1.0.0 (2)候補証跡](release-candidate-1.0.0-2.md) |
 | REL-022 | P0 | MANUAL | 法的サイト変更を本リポジトリの`main`へマージ後、`legal-site`を公開リポジトリへコピーしてGitHub Pagesの完了を待つ | 正本側commitと公開側commitが記録され、変更した公開URLとアプリ設定画面からのプライバシーポリシー・利用規約遷移が同じ最新版を表示する | 未実施 | 法的サイト変更ごとに実施 |
 | REL-023 | P0 | AUTO | Upload Key秘密値の一部だけを設定する、相対・リポジトリ内keystoreを指定する、署名必須フラグを省略する、または署名時にConfiguration Cacheを有効化する | 設定段階で失敗し、秘密値をログ・JSON・成果物へ出力しない | 未実施 | |
 | REL-024 | P0 | AUTO/MANUAL | リポジトリ外の検証用keystore、4秘密値、署名必須フラグおよび期待する証明書SHA-256を設定してRelease成果物を生成する | AABの単一署名者が期待値と一致し、メタデータが`method=uploadKey`、証明書1件、`publishable=true`になる。不一致時は失敗する | 未実施 | 本番では登録済みUpload Keyで再実施 |

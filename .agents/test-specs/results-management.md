@@ -1,6 +1,6 @@
 # リリース別試験結果の管理
 
-- 現在の結果台帳: [MATA 1.0.0 (1)](initial-release-results.tsv)
+- 現在の結果台帳: [MATA 1.0.0 (2)](initial-release-results.tsv)
 - 自動試験証跡: [試験IDとJUnitテストの対応](automated-test-evidence.tsv)
 - 実施記録: [初回Closed testing実施台帳](closed-testing-log.md)
 - 検証ツール: [`verify-results.mjs`](../../tools/test-specs/verify-results.mjs)、[`verify-automated-evidence.mjs`](../../tools/test-specs/verify-automated-evidence.mjs)

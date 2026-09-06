@@ -19,7 +19,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [Google Play Data safety申告](data-safety-declaration.md) | 収集・共有データ、目的、削除、最終検証 |
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 | [Release事前検査仕様](release-preflight.md) | 設定、法的文書、ストア成果物、AABと証跡の統合検査 |
-| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (1)`の成果物、Console、実機確認、保留事項 |
+| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (2)`の公開候補、Console、実機確認、保留事項 |
 
 ## 3. 基本方針
 
