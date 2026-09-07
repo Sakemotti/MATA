@@ -7,6 +7,7 @@
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
 - Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
+- Closed testing引き渡し: [MATA 1.0.0 (2) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-2.md)
 - 公開候補証跡: [MATA 1.0.0 (2) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-2.md)
 
 ## 1. 記録方針

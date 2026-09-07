@@ -5,6 +5,7 @@
 - 実施者: `OWNER` / `AUTO`
 - 判定: 合格
 - 公開承認: 未承認
+- Closed testing引き渡し: [登録・更新確認手順](closed-testing-release-1.0.0-2.md)
 
 ## 1. 候補の識別
 

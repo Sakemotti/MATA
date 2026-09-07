@@ -11,6 +11,7 @@
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
+- 登録・更新手順: [MATA 1.0.0 (2) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-2.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 
 ## 1. 目的と記録ルール
@@ -33,6 +34,9 @@
 | テスター管理方法 | Google グループ／メールリスト／その他: `未記入` |
 | オプトインURL | 本リポジトリには記録せず、テスター向け連絡経路で共有 |
 | 公開日時 | `未記入` |
+| AAB照合 | 容量・SHA-256・照合日時: `未記入` |
+| Play Console上のversionCode | `未記入` |
+| Consoleの警告・判断 | `未記入` |
 | Play Console上の参加要件 | `未記入`人以上・`未記入`日間 |
 | Production access申請可能予定日 | `未記入` |
 
@@ -103,7 +107,7 @@ versionCode `1`はInternal testingで使用済みであり、その後に実装�
 | オフライン・再接続 | 未定 | `APP-005`、祝日、広告 | 未実施 |
 | 端末再起動・プロセス再生成 | 未定 | 通知、ウィジェット、永続化 | 未実施 |
 | 日付・時刻・タイムゾーン変更 | 未定 | `DAY`、`RPT`、`NTF-011` | 未実施 |
-| Google Play経由の上書き更新 | 次回versionCode | 更新後のデータ・通知・ウィジェット | 保留 |
+| Google Play経由の上書き更新 | T12（予定） | [versionCode 1から2への専用手順](closed-testing-release-1.0.0-2.md#6-versioncode-1から2への上書き更新)で更新後のデータ・通知・ウィジェットを確認 | 未実施 |
 | 広告・UMP | Play連携後 | `E2E-009`、`WGT-014`、収益化項目 | 保留 |
 
 実機を用意できない画面幅やAPIは、Android EmulatorまたはPre-launch reportで補完し、実機とエミュレータのどちらかを証跡へ明記する。
@@ -144,10 +148,10 @@ versionCode `1`はInternal testingで使用済みであり、その後に実装�
 
 | 優先度 | 母数 | 合格 | 不合格 | 保留 | 対象外 | 未実施 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| P0 | 233 | 59 | 0 | 0 | 0 | 174 |
-| P1 | 154 | 5 | 0 | 0 | 0 | 149 |
+| P0 | 233 | 111 | 0 | 0 | 0 | 122 |
+| P1 | 154 | 14 | 0 | 0 | 0 | 140 |
 | P2 | 16 | 0 | 0 | 0 | 0 | 16 |
-| 合計 | 403 | 64 | 0 | 0 | 0 | 339 |
+| 合計 | 403 | 125 | 0 | 0 | 0 | 278 |
 
 集計値は[項目別結果TSV](initial-release-results.tsv)を`node tools/test-specs/verify-results.mjs`で検証した出力から転記する。自動テストの既存証跡は[初回リリース試験棚卸し](initial-release-inventory.md)を参照し、試験IDと自動テストが1対1で対応していない項目は、実行結果を推測で加算しない。
 
