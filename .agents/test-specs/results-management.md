@@ -18,7 +18,7 @@
 | `specFile` | 条件・操作・期待結果を記載した仕様ファイル |
 | `result` | `未実施`、`合格`、`不合格`、`保留`、`対象外` |
 | `executedAt` | `YYYY-MM-DD`またはISO 8601日時 |
-| `testerId` | `T01`等の匿名ID。自動検査は`AUTO` |
+| `testerId` | 正式確認は`OWNER`、自動検査は`AUTO`。Closed testingの自由操作記録だけに`T01`等の匿名IDを使用 |
 | `versionCode` | 実際に確認した正の整数 |
 | `environment` | 端末、Android、CI等の必要な条件 |
 | `evidence` | 実施ID、CI URL、画像、ログ、Issue、対象外理由等 |
@@ -29,7 +29,7 @@
 
 1. 対応する`specFile`で条件・操作と期待結果を確認する。
 2. [Closed testing実施台帳](closed-testing-log.md)へ実施IDと詳細を記録する。
-3. TSVの同じ試験IDへ結果、日時、テスターID、versionCode、環境、証跡を記録する。
+3. TSVの同じ試験IDへ結果、日時、正式確認の実施者、versionCode、環境、証跡を記録する。
 4. 不合格は1項目ずつIssueへ関連付ける。修正後の再試験に合格した場合は、証跡へ初回不合格と再試験の両方を残す。
 5. 次のコマンドを実行する。
 

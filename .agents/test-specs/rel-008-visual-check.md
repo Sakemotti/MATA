@@ -35,7 +35,7 @@
 | 項目 | 記録値 |
 | --- | --- |
 | 実施日時 | 未記入 |
-| テスターID | 未記入 |
+| 実施者 | `OWNER` |
 | 端末名 | 未記入 |
 | Android / API | 未記入 |
 | 画面解像度 | 未記入 |
@@ -88,8 +88,8 @@ adb shell dumpsys package com.mochisofts.mata
 証跡は、条件ごとの連続した画面録画を推奨する。ファイル名は次の形式とし、個人情報やGoogleアカウントを映さない。
 
 ```text
-REL-008_<テスターID>_<条件ID>_<端末名>_<YYYYMMDD>.mp4
-REL-008_<テスターID>_<条件ID>_<画面ID>_<YYYYMMDD>.png
+REL-008_OWNER_<条件ID>_<端末名>_<YYYYMMDD>.mp4
+REL-008_OWNER_<条件ID>_<画面ID>_<YYYYMMDD>.png
 ```
 
 画面録画を残さない場合は、各条件で`V01`、`V04`、`V05`、`V08`、`V10`および`V11`のスクリーンショットを最低1枚ずつ残す。証跡はアクセスを制限した場所へ保存し、本リポジトリへ画像や動画をコミットしない。
@@ -136,7 +136,7 @@ REL-008_<テスターID>_<条件ID>_<画面ID>_<YYYYMMDD>.png
 1. 本書の実施前記録、マトリクスおよび端末設定追従の全結果を確定する。
 2. [初回Closed testing実施台帳](closed-testing-log.md)の環境カバレッジ2行を`合格`へ更新する。
 3. 同台帳の試験実施記録へ`REL-008`、端末・4条件、証跡参照を1行で追加する。
-4. [初回リリース試験結果](initial-release-results.tsv)の`REL-008`を、実施日、テスターID、versionCodeおよび証跡参照付きで`合格`へ更新する。
+4. [初回リリース試験結果](initial-release-results.tsv)の`REL-008`を、実施日、実施者`OWNER`、versionCodeおよび証跡参照付きで`合格`へ更新する。
 
 ### 不合格時
 
@@ -148,7 +148,7 @@ REL-008_<テスターID>_<条件ID>_<画面ID>_<YYYYMMDD>.png
 
 ```text
 REL-008 実施結果: 合格 / 不合格
-テスターID:
+実施者: OWNER
 端末 / Android(API):
 MATA versionName(versionCode) / commit:
 VD-1: 合格 / 不合格

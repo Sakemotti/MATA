@@ -88,7 +88,7 @@ Upload Key証明書は、AABをアップロードした開発者をPlayが検証
 
 ## 6. versionCode 1から2への上書き更新
 
-既存Internal testing版を持つ端末を1台以上使う。versionCode `1`をアンインストールしてしまった端末は、この更新確認には使わない。
+これはClosed testing参加者へ割り当てる試験項目ではなく、`OWNER`が行う正式確認である。既存Internal testing版を持つ端末を1台以上使う。versionCode `1`をアンインストールしてしまった端末は、この更新確認には使わない。
 
 ### 6.1 更新前
 
@@ -142,4 +142,3 @@ Upload Key証明書は、AABをアップロードした開発者をPlayが検証
 - [ ] versionCode `1`から`2`へのGoogle Play上書き更新が成功した。
 - [ ] 更新後のデータ、通知およびウィジェットが維持された。
 - [ ] 結果を[初回Closed testing実施台帳](closed-testing-log.md)と[初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)へ反映した。
-
