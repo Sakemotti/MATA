@@ -65,6 +65,8 @@ GitHub Actionsは `main` へのpush、`main` 向けPull Request、手動実行�
 - Benchmark APKビルド
 - 署名ファイル、秘密鍵、アクセストークンの混入検査
 
+変更ファイルが`.agents/**`、Markdownまたは`LICENSE`だけの場合は、秘密情報・法的サイト・ストア情報・試験台帳等の軽量検査と最終集約だけを実行し、Debug、Release、Benchmarkおよびエミュレータ試験をスキップします。ソース、Gradle、リソース、Workflow、スクリプト、ストア画像または法的サイトを1件でも変更すると、通常のAndroid検証をすべて実行します。手動実行は変更内容にかかわらず常に全検証を行います。
+
 Release検証ジョブは、AAB、R8 mapping、依存ライセンス一覧、最終Manifestと、
 各ファイルのSHA-256・`versionName`・`versionCode`・Git commit・ビルド日時を記録した
 メタデータを生成します。`main` 更新時と手動実行時には、リポジトリの成果物保持上限に合わせてこれらを90日間保存します。
@@ -72,7 +74,7 @@ Pull Requestではビルドと検査のみを行い、CI時間と保存容量を
 未署名成果物であり、Google Playへ公開する成果物には使用しません。公開用AABは保護された
 Release環境でUpload Keyにより署名します。
 
-Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
+Debug、Release、Benchmarkおよびリポジトリ検査を独立ジョブで実行し、最後に `Test, lint, and build` へ結果を集約します。Android検証をスキップした場合も集約チェックは成功状態を返すため、将来これを必須チェックに設定してもドキュメントだけのPRが待機状態になりません。同じPull Requestまたはmainブランチで新しいCIが開始された場合は古い実行を自動キャンセルします。
 
 ## 依存関係の更新
 
