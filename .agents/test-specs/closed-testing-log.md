@@ -37,7 +37,7 @@
 | AAB照合 | 12,538,422 bytes、SHA-256 `a6f3a90728f14b1f45bb66dc8be141257aaac73c1d8a099caf7757d2e48137de`、2026-09-07照合 |
 | Play Console上のversionCode | `2`（USER確認） |
 | Consoleの警告・判断 | エラーなし。Native Debug Symbols未登録の警告のみ。依存ライブラリで取得可能なシンボルがないため、記録のうえ継続 |
-| Play Console上の参加要件 | `未記入`人以上・`未記入`日間 |
+| Play Console上の参加要件 | 12人以上・14日間連続（2026-09-07、USER確認） |
 | Production access申請可能予定日 | `未記入` |
 
 versionCode `1`はInternal testingで使用済みであり、その後に実装変更がある。Closed testingには[公開候補生成結果](release-candidate-1.0.0-2.md)のversionCode `2`を登録し、配布日時とPlay Console上の状態を本節へ記録する。
@@ -109,6 +109,8 @@ versionCode `1`はInternal testingで使用済みであり、その後に実装�
 | 日付・時刻・タイムゾーン変更 | 未定 | `DAY`、`RPT`、`NTF-011` | 未実施 |
 | Google Play経由の上書き更新 | OWNER | [versionCode 1から2への専用手順](closed-testing-release-1.0.0-2.md#6-versioncode-1から2への上書き更新)で更新後のデータ・通知・ウィジェットを確認 | 未実施 |
 | 広告・UMP | OWNER | `E2E-009`、`WGT-014`、収益化項目 | AdMob連携・実広告バナー表示は確認済み。UMP同意状態、読込失敗、オフライン、全広告配置は未実施 |
+
+2026年9月7日のPlay Console確認では、ポリシーのステータスは`問題は見つかりませんでした`、versionCode `2`のSDK関連警告はなしだった。Pre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`と表示され、登録済みのversionCode `2`に対するレポートは未生成だった。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 
 実機を用意できない画面幅やAPIは、Android EmulatorまたはPre-launch reportで補完し、実機とエミュレータのどちらかを証跡へ明記する。
 

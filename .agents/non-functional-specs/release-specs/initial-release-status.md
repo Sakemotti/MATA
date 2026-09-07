@@ -73,6 +73,9 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 | アプリ設定から法的ページへの遷移 | 確認済み | DEVICE / USER |
 | AdMobとGoogle Playのアプリ連携 | 確認済み | CONSOLE / USER |
 | 実広告バナー表示 | 確認済み。本番広告のクリックは実施していない | DEVICE / USER |
+| Closed testing参加要件 | 12人以上が14日間連続してオプトイン | CONSOLE / USER |
+| ポリシーのステータス | `問題は見つかりませんでした` | CONSOLE / USER |
+| versionCode `2`のSDK関連警告 | なし | CONSOLE / USER |
 
 2026年9月4日に、次のURLが認証なしでHTTP 200を返すことを確認した。
 
@@ -119,7 +122,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 
 ### 6.3 外部状態待ち
 
-- Pre-launch reportはまだ生成されていない。Closed testing公開後の生成状態と次回AAB登録時に再確認する。
+- 2026年9月7日時点のPre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`と表示され、Closed testingへ登録済みのversionCode `2`に対するレポートは未生成である。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 - AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
 - 本番広告を試験目的でクリックしない。
 
