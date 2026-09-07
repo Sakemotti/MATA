@@ -7,6 +7,7 @@
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
 - 正式試験の実施区分: [初回リリース試験の実施区分](closed-testing-assignments.md)
+- OWNER実機試験計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
 - 項目別結果: [MATA 1.0.0 (2) 試験結果](initial-release-results.tsv)
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
