@@ -104,6 +104,7 @@ UI、Room、繰り返し計算、メモリ、バックグラウンド処理、�
 - 自動生成物、署名鍵、ローカルSDK設定、機密情報をコミットしない。
 - GitHub Actionsで単体テスト、Lint、Debugビルドを実行する。
 - `.agents/**`、Markdownおよび`LICENSE`だけの変更では軽量なリポジトリ検査を実行し、Androidビルドとエミュレータ試験を省略する。これら以外の変更が1件でも含まれる場合と手動実行では全検証を行う。
+- ドキュメントだけの変更でも`Repository security checks`と最終集約は成功状態を返す。必須チェックを待機状態にする可能性がある`[skip ci]`は使用しない。
 - DependabotでGradle依存関係とGitHub Actionsを週次確認する。
 
 バージョン、署名、成果物、Google Playトラック、段階公開および公開後監視は[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)に従う。
