@@ -5,6 +5,7 @@
 - 棚卸し日: 2026-09-07
 - 試験項目書: [MATA 総合動作確認項目書](README.md)
 - 項目別結果: [MATA 1.0.0 (2) 試験結果](initial-release-results.tsv)
+- 実機実施計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
 - Closed testing台帳: [初回Closed testing実施台帳](closed-testing-log.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 
@@ -80,6 +81,8 @@
 `REL-010`は他の全P0/P1が揃った時点で最後に判定する。
 
 ## 6. Closed testing中の確認順
+
+未実施P0/P1の具体的なセッション分割、環境および実施順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)を使用する。
 
 1. Closed testing参加者には試験項目を渡さず、複数日にわたって自由操作してもらう。
 2. テスターごとに端末名、Androidバージョン、アプリversion、参加・最終利用確認日および自由記述のフィードバックを記録する。
