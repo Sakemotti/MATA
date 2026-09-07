@@ -17,21 +17,6 @@ const specFiles = [
   'category-todo-list.md',
 ];
 const header = ['id', 'priority', 'specFile', 'type', 'lane', 'owner', 'testPack'];
-const testerPools = {
-  APP: ['T01', 'T10', 'T11', 'T12'],
-  TL: ['T01', 'T03', 'T08', 'T10'],
-  TE: ['T02', 'T03', 'T08'],
-  CH: ['T04', 'T09', 'T10'],
-  CM: ['T05', 'T07', 'T11'],
-  AT: ['T02', 'T04', 'T06', 'T12'],
-  ST: ['T05', 'T06', 'T07', 'T11'],
-  CTL: ['T01', 'T12'],
-  DAT: ['T07', 'T12'],
-  NTF: ['T08'],
-  WGT: ['T09'],
-  RPT: ['T03'],
-  STA: ['T04'],
-};
 const testPacks = {
   APP: '基本・互換性',
   DAY: '論理日',
@@ -95,36 +80,22 @@ function readCatalog() {
   return rows;
 }
 
-function testerSuitable(row) {
-  return row.prefix !== 'REL' && /(?:^|\/)(?:UI|MANUAL|E2E)(?:\/|$)/.test(row.type);
-}
-
 function expectedLane(row) {
   if (row.prefix === 'REL') {
     return 'RELEASE_OWNER';
   }
-  return testerSuitable(row) ? 'CLOSED_TESTER' : 'DEV_AUTO';
+  return /(?:^|\/)(?:UI|MANUAL|E2E)(?:\/|$)/.test(row.type)
+    ? 'RELEASE_OWNER'
+    : 'DEV_AUTO';
 }
 
 function initialize(path, catalog) {
   if (existsSync(path)) {
     throw new Error(`Refusing to overwrite an existing assignments file: ${relative(repositoryRoot, path)}`);
   }
-  const poolIndexes = {};
   const rows = catalog.map((row) => {
     const lane = expectedLane(row);
-    let owner;
-    if (lane === 'CLOSED_TESTER') {
-      const pool = testerPools[row.prefix];
-      if (pool === undefined) {
-        throw new Error(`No tester pool is configured for ${row.prefix}.`);
-      }
-      const poolIndex = poolIndexes[row.prefix] ?? 0;
-      owner = pool[poolIndex % pool.length];
-      poolIndexes[row.prefix] = poolIndex + 1;
-    } else {
-      owner = lane === 'RELEASE_OWNER' ? 'OWNER' : 'DEV';
-    }
+    const owner = lane === 'RELEASE_OWNER' ? 'OWNER' : 'DEV';
     const testPack = testPacks[row.prefix];
     if (testPack === undefined) {
       throw new Error(`No test pack is configured for ${row.prefix}.`);
