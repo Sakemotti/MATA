@@ -1,7 +1,7 @@
 # MATA 1.0.0 (2) Closed testing登録・更新確認手順
 
 - 対象: `com.mochisofts.mata` / `1.0.0 (2)`
-- 状態: Play Console登録待ち
+- 状態: Play Console登録・Closed testing公開済み／上書き更新確認待ち
 - 作成日: 2026-09-07
 - 公開候補: [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md)
 - 実施結果: [初回Closed testing実施台帳](closed-testing-log.md)
@@ -74,14 +74,14 @@ Native Debug Symbolsの警告が表示された場合は、文面と日時を記
 
 次をすべて確認する。
 
-- [ ] 対象トラックがClosed testingであり、Productionではない。
-- [ ] 対象国・地域が日本である。
-- [ ] versionNameが`1.0.0`、versionCodeが`2`である。
-- [ ] Google PlayがAABを受理し、リリースにversionCode `2`だけが含まれる。
-- [ ] リリースノートが第4節と一致する。
-- [ ] エラーが0件で、警告ごとの進行判断を記録した。
-- [ ] テスター設定とフィードバック先が保存されている。
-- [ ] リリースが公開状態になった後、参加URLを取得できる。
+- [x] 対象トラックがClosed testingであり、Productionではない。
+- [x] 対象国・地域が日本である。
+- [x] versionNameが`1.0.0`、versionCodeが`2`である。
+- [x] Google PlayがAABを受理し、リリースにversionCode `2`だけが含まれる。
+- [x] リリースノートが第4節と一致する。
+- [x] エラーが0件で、警告ごとの進行判断を記録した。
+- [x] テスター設定とフィードバック先が保存されている。
+- [x] リリースが公開状態になった後、参加URLを取得できる。
 - [ ] Play Consoleが示す必要人数と継続日数を台帳へ転記した。
 
 Upload Key証明書は、AABをアップロードした開発者をPlayが検証するための鍵である。端末へ配信されるAPKはPlayのアプリ署名鍵で署名されるため、端末側の証明書が第2節のUpload Keyと異なること自体は不具合ではない。両者を混同せず、`アプリの署名`画面ではUpload Key証明書とアプリ署名鍵証明書を別々に扱う。
@@ -135,9 +135,9 @@ Upload Key証明書は、AABをアップロードした開発者をPlayが検証
 ## 8. 完了条件
 
 - [ ] 公開候補一式を永続保管先へ複製した。
-- [ ] 第2節のAABをClosed testingへ登録した。
-- [ ] Console上のversionCode、トラック、国・地域およびリリースノートが一致した。
-- [ ] エラーがなく、警告を記録した。
+- [x] 第2節のAABをClosed testingへ登録した。
+- [x] Console上のversionCode、トラック、国・地域およびリリースノートが一致した。
+- [x] エラーがなく、警告を記録した。
 - [ ] 参加URLを取得し、アクセス制限された連絡経路でテスターへ共有した。
 - [ ] versionCode `1`から`2`へのGoogle Play上書き更新が成功した。
 - [ ] 更新後のデータ、通知およびウィジェットが維持された。

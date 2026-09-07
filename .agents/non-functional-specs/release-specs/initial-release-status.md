@@ -1,7 +1,7 @@
 # 初回リリース進行記録
 
 - 対象: MATA `1.0.0 (2)`
-- 状態: 署名済み公開候補生成済み・Closed testing配布待ち
+- 状態: versionCode 2をClosed testingへ公開済み・テスト実施中
 - 最終更新日: 2026-09-07
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
@@ -28,7 +28,7 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `2`。Google Play未登録 | AUTO |
+| versionCode | `2`。Google Play Closed testingへ登録・公開済み | AUTO / CONSOLE / USER |
 | ソースcommit | `1222267981f2a7887e8c2073bbd7c2bd1a18a78e` | AUTO |
 | AAB | `app/release/1.0.0-2/mata-1.0.0-2.aab`。Git除外対象 | AUTO |
 | AAB容量 | 12,538,422 bytes | AUTO |
@@ -63,7 +63,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 | App content | 未完了カードなし | CONSOLE / USER |
 | ストア掲載文・画像・連絡先・Webサイト | 登録済み | CONSOLE / USER |
 | Internal testing | `1.0.0 (1)`を公開し、参加URL経由でインストール済み | CONSOLE / DEVICE |
-| `1.0.0 (2)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Play Console未登録 | AUTO |
+| `1.0.0 (2)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -92,8 +92,10 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 
 ## 5. Closed testingと本番アクセス
 
-- 状態はClosed testing準備中とする。
-- versionCode `2`のAABをClosed testingへ登録し、既存versionCode `1`から更新できる状態にする。
+- 2026年9月7日にversionName `1.0.0`、versionCode `2`のAABをClosed testingへ公開した。
+- Console上のエラーは0件で、Native Debug Symbols未登録の警告だけが表示された。依存ライブラリで取得可能なシンボルがないことを確認済みのため、警告を記録して公開を継続した。
+- オプトインURLを取得できることを確認した。URLおよびテスター情報はリポジトリへ記録せず、制限された連絡経路で管理する。
+- 既存versionCode `1`からGoogle Play経由で更新できることは、OWNERの実機で別途確認する。
 - 対象アカウントの要件に従い、12人以上のテスターが14日間連続してオプトインした状態を維持する。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
 - 条件達成後、テスト方法、参加状況、フィードバック、修正内容を整理してProduction accessを申請する。
@@ -102,7 +104,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 
 ### 6.1 Closed testing中に完了する
 
-- Closed testingの公開、テスターのオプトインおよび14日間の継続参加
+- テスターのオプトインおよび14日間の継続参加
 - テスターの端末・OS・利用期間・自由操作のフィードバックの記録
 - API 26、33、36、タブレット、分割画面、最大フォント、ダークテーマおよびTalkBackの不足分確認
 - Google PlayのSDK Index、権限申告およびポリシー警告の最終確認
@@ -111,13 +113,13 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 
 ### 6.2 次の実変更で確認する
 
-- versionCode `2`を同じテスト対象へ配信し、versionCode `1`からGoogle Play経由で上書き更新できることを確認する。
+- versionCode `1`から、Closed testingで配信済みのversionCode `2`へGoogle Play経由で上書き更新できることを確認する。
 - 更新後もTODO、カテゴリ、履歴、設定、通知およびウィジェットが維持されることを確認する。
 - 修正を含む場合は全自動ゲート、署名、成果物ハッシュおよび主要な回帰試験を再実行する。
 
 ### 6.3 外部状態待ち
 
-- Pre-launch reportはまだ生成されていない。Closed testing公開後と次回AAB登録時に再確認する。
+- Pre-launch reportはまだ生成されていない。Closed testing公開後の生成状態と次回AAB登録時に再確認する。
 - AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
 - 本番広告を試験目的でクリックしない。
 
