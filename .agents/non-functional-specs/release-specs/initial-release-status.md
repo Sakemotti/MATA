@@ -71,6 +71,8 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 | 通知・ウィジェット | 現状問題なし | DEVICE / USER |
 | 手動バックアップ・復元 | 現状問題なし | DEVICE / USER |
 | アプリ設定から法的ページへの遷移 | 確認済み | DEVICE / USER |
+| AdMobとGoogle Playのアプリ連携 | 確認済み | CONSOLE / USER |
+| 実広告バナー表示 | 確認済み。本番広告のクリックは実施していない | DEVICE / USER |
 
 2026年9月4日に、次のURLが認証なしでHTTP 200を返すことを確認した。
 
@@ -116,8 +118,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 ### 6.3 外部状態待ち
 
 - Pre-launch reportはまだ生成されていない。Closed testing公開後と次回AAB登録時に再確認する。
-- Internal testing限定のMATAはAdMobのGoogle Play検索とURL検索で見つからず、ストア連携できていない。
-- AdMob側の`app-ads.txt`検証、アプリ準備状況審査および実広告表示は、Google Playからアプリをリンク可能になった後に確認する。
+- AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
 - 本番広告を試験目的でクリックしない。
 
 ## 7. 本番公開前後の残りゲート
@@ -127,5 +128,5 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 3. 上表の`1.0.0 (2)`、ソースcommit、AAB SHA-256および保存済み成果物を再照合する。アプリまたは公開成果物を変更した場合はversionCodeを`3`以上へ上げ、クリーンな`main`から署名済み成果物を再生成して`node tools/release/verify-readiness.mjs --release`を成功させる。
 4. 全P0/P1試験、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 5. 初期配布地域を日本としてProductionへ公開する。
-6. 公開後にGoogle Playからの新規インストール、AdMob連携・広告表示、Android vitalsおよびポリシー状態を確認する。
+6. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
 7. 公開日、最終AAB SHA-256、リリースノート、正本・公開サイトのcommitおよびGitタグを記録する。

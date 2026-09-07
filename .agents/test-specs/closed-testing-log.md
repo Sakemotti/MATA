@@ -108,7 +108,7 @@ versionCode `1`はInternal testingで使用済みであり、その後に実装�
 | 端末再起動・プロセス再生成 | 未定 | 通知、ウィジェット、永続化 | 未実施 |
 | 日付・時刻・タイムゾーン変更 | 未定 | `DAY`、`RPT`、`NTF-011` | 未実施 |
 | Google Play経由の上書き更新 | T12（予定） | [versionCode 1から2への専用手順](closed-testing-release-1.0.0-2.md#6-versioncode-1から2への上書き更新)で更新後のデータ・通知・ウィジェットを確認 | 未実施 |
-| 広告・UMP | Play連携後 | `E2E-009`、`WGT-014`、収益化項目 | 保留 |
+| 広告・UMP | T09（予定） | `E2E-009`、`WGT-014`、収益化項目 | AdMob連携・実広告バナー表示は確認済み。UMP同意状態、読込失敗、オフライン、全広告配置は未実施 |
 
 実機を用意できない画面幅やAPIは、Android EmulatorまたはPre-launch reportで補完し、実機とエミュレータのどちらかを証跡へ明記する。
 
