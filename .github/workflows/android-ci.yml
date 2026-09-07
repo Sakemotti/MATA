@@ -21,10 +21,61 @@ jobs:
     name: Repository security checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      android_required: ${{ steps.changed_files.outputs.android_required }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect documentation-only changes
+        id: changed_files
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "android_required=true" >> "$GITHUB_OUTPUT"
+            echo "Manual runs always execute Android verification." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+          elif [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            changed_files=$(git show --format= --name-only "$HEAD_SHA")
+          else
+            changed_files=$(git diff --name-only "$BEFORE_SHA" "$HEAD_SHA")
+          fi
+
+          android_required=false
+          while IFS= read -r changed_path; do
+            [[ -z "$changed_path" ]] && continue
+            case "$changed_path" in
+              .agents/*|*.md|LICENSE|LICENSE.*)
+                ;;
+              *)
+                android_required=true
+                break
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "android_required=$android_required" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Change classification"
+            echo
+            echo "Android verification required: \`$android_required\`"
+            echo
+            echo '```text'
+            printf '%s\n' "$changed_files"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Reject committed secrets and signing files
         shell: bash
@@ -61,6 +112,8 @@ jobs:
 
   android_verification:
     name: ${{ matrix.name }}
+    needs: repository_security
+    if: needs.repository_security.outputs.android_required == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -194,13 +247,24 @@ jobs:
     steps:
       - name: Confirm all verification jobs passed
         env:
+          ANDROID_REQUIRED: ${{ needs.repository_security.outputs.android_required }}
           REPOSITORY_SECURITY_RESULT: ${{ needs.repository_security.result }}
           ANDROID_VERIFICATION_RESULT: ${{ needs.android_verification.result }}
         shell: bash
         run: |
-          if [[ "$REPOSITORY_SECURITY_RESULT" != "success" || "$ANDROID_VERIFICATION_RESULT" != "success" ]]; then
+          if [[ "$REPOSITORY_SECURITY_RESULT" != "success" ]]; then
             echo "One or more verification jobs did not succeed."
             echo "Repository security: $REPOSITORY_SECURITY_RESULT"
-            echo "Android verification: $ANDROID_VERIFICATION_RESULT"
             exit 1
           fi
+          if [[ "$ANDROID_REQUIRED" == "true" && "$ANDROID_VERIFICATION_RESULT" != "success" ]]; then
+            echo "Android verification was required but did not succeed: $ANDROID_VERIFICATION_RESULT"
+            exit 1
+          fi
+          if [[ "$ANDROID_REQUIRED" == "false" && "$ANDROID_VERIFICATION_RESULT" != "skipped" ]]; then
+            echo "Android verification was not required but had an unexpected result: $ANDROID_VERIFICATION_RESULT"
+            exit 1
+          fi
+          echo "Repository security: $REPOSITORY_SECURITY_RESULT"
+          echo "Android verification required: $ANDROID_REQUIRED"
+          echo "Android verification: $ANDROID_VERIFICATION_RESULT"
