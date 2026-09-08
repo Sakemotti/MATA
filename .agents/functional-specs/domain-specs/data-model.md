@@ -91,16 +91,18 @@ normalizedNameには一意制約を設ける。並べ替え後は1トランザ�
 | categoryId | UUID文字列またはnull | CategoryEntityへの外部キー |
 | startDate | ISO日付 | 実行期間の開始日 |
 | endDate | ISO日付またはnull | nullは無期限、指定時は開始日以降 |
+| dueDate | ISO日付またはnull | 単発TODOだけに設定可能。nullは実行日と同日扱い、指定時はstartDate以降 |
 | repeatType | 文字列コード | 繰り返し方式 |
 | repeatParamsVersion | 整数 | パラメータJSONの形式バージョン |
 | repeatParamsJson | JSON | 方式固有の値 |
 | deadlineMinute | 整数またはnull | 0～1439、nullは論理日の終了時刻 |
+| carryOverEnabled | 真偽値 | 未完了を解決まで表示するか。回数指定方式ではfalse |
 | definitionRevision | 整数 | 初期値1、編集成功ごとに増加 |
 | archivedAt | Epochミリ秒またはnull | nullは通常、値ありはアーカイブ済み |
 | createdAt | Epochミリ秒 | 作成時点 |
 | updatedAt | Epochミリ秒 | 最終更新時点 |
 
-終了日がnullであることを無期限の唯一の表現とし、別の無期限フラグは持たない。
+終了日がnullであることを無期限の唯一の表現とし、別の無期限フラグは持たない。期限日と未完了繰り越しの制約は[実行期間・期限日・未完了繰り越し仕様](execution-window-and-carryover.md)に従う。
 
 repeatTypeには次の安定コードを使用する。
 
@@ -153,7 +155,9 @@ JSONの読み書きにはKotlin Serializationを使用する。
 | id | UUID文字列 | 主キー |
 | operationId | UUID文字列 | 操作の重複防止、一意 |
 | todoId | UUID文字列 | TodoEntityへの外部キー、削除時CASCADE |
-| logicalDate | ISO日付 | 操作または確定時に割り当てた論理日 |
+| logicalDate | ISO日付 | 履歴の表示・集計日。完了・スキップは解決日、未完了は有効期限日 |
+| scheduledLogicalDate | ISO日付 | 元の実行日 |
+| resolvedLogicalDate | ISO日付またはnull | 完了・スキップ操作時の論理日。未完了ではnull |
 | status | 文字列コード | completed、skipped、missed |
 | actedAt | Epochミリ秒またはnull | 完了・スキップ操作時点 |
 | finalizedAt | Epochミリ秒 | 記録が確定した時点 |
@@ -161,7 +165,7 @@ JSONの読み書きにはKotlin Serializationを使用する。
 | snapshotVersion | 整数 | スナップショット形式 |
 | snapshotJson | JSON | 記録時点の完全な表示・計算情報 |
 
-todoIdとlogicalDateの組に一意制約を設ける。同一論理日に完了、スキップ、未完了が重複して存在してはならない。
+todoIdとlogicalDateの組に一意制約を設ける。同一解決日に完了、スキップ、未完了が重複して存在してはならない。繰り越し中の後続予定を抑止し、同じ未解決分から複数の実行記録を作らない。
 
 未操作の現在分はこのテーブルに保存しない。期限超過もstatusとして保存せず、現在時刻から算出する。
 
@@ -197,6 +201,7 @@ todoId、periodStart、periodEndの組に一意制約を設ける。
 | lastFinalizedMonthlyPeriodEnd | ISO日付またはnull | 月X回で処理済みの最終期間末 |
 | appliedDefinitionRevision | 整数 | 最後に整合した定義リビジョン |
 | reconciliationCursorDate | ISO日付またはnull | 分割処理中の再開位置 |
+| pendingScheduledLogicalDate | ISO日付またはnull | 繰り越し中の最古の未解決実行日。再検証可能な実行状態 |
 | updatedAt | Epochミリ秒 | 最終更新時点 |
 
 このテーブルは手動バックアップへ含める。復元後は現在環境で再検証し、必要に応じて安全な位置から整合処理を再開する。
@@ -217,6 +222,7 @@ TodoExecutionEntityとPeriodResultEntityのsnapshotJsonには、少なくとも�
 - TODO IDと定義リビジョン
 - タイトル、説明
 - 開始日、終了日
+- 期限日と未完了繰り越し設定
 - 繰り返し方式と方式固有パラメータ
 - 期限時刻
 - 通知設定の表示用情報
@@ -225,6 +231,7 @@ TodoExecutionEntityとPeriodResultEntityのsnapshotJsonには、少なくとも�
 - 適用された一日の終了時刻
 - 適用された週の開始曜日
 - 論理日または期間境界
+- 元の実行日と解決日
 
 スナップショット形式の旧バージョンは読み込み時に現在の表示モデルへ変換する。確定済みのJSON自体を後から書き換えない。
 
@@ -275,6 +282,7 @@ RepositoryはRoomとDataStoreを統合し、不変の状態をFlowとして公�
 - すべてのマイグレーションに移行テストを用意する。
 - 文字列コード、JSON形式、スナップショット形式にも個別のバージョンを持たせる。
 - 制約違反や変換失敗時は既存データを部分更新せず、処理全体を失敗させる。
+- versionCode 2以前のDBからの移行では、`dueDate=null`、`carryOverEnabled=false`を補完し、既存実行記録の実行日・解決日を従来の`logicalDate`から欠落なく補完する。
 
 ## 12. 受け入れ条件
 
@@ -287,3 +295,4 @@ RepositoryはRoomとDataStoreを統合し、不変の状態をFlowとして公�
 7. 長期未起動後の整合処理位置を保存・復元できる。
 8. バックアップ対象と対象外をデータ層で区別できる。
 9. 将来のスキーマとJSON形式の変更をマイグレーションテストで検証できる。
+10. 期限日、繰り越し設定、元の実行日と解決日を保存し、versionCode 2以前のDBをデータ損失なく移行できる。
