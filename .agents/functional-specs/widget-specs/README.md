@@ -20,6 +20,7 @@
 - [データモデル仕様](../domain-specs/data-model.md)
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
+- [実行期間・期限日・未完了繰り越し仕様](../domain-specs/execution-window-and-carryover.md)
 - [日本の祝日データ仕様](../holiday-specs/README.md)
 - [通知仕様](../notification-specs/README.md)
 - [アプリ起動・初期化・復帰仕様](../../non-functional-specs/startup-specs/README.md)

@@ -1,7 +1,7 @@
 # 初回リリース試験の実施区分
 
-- 対象: MATA `1.0.0 (2)`
-- 対象ソースcommit: `1222267981f2a7887e8c2073bbd7c2bd1a18a78e`
+- 対象: MATA `1.0.0 (3)`予定
+- 対象ソースcommit: 未確定（versionCode 3実装完了時に固定）
 - 項目別区分: [initial-release-assignments.tsv](initial-release-assignments.tsv)
 - 項目別結果: [initial-release-results.tsv](initial-release-results.tsv)
 - 実施台帳: [初回Closed testing実施台帳](closed-testing-log.md)
@@ -10,13 +10,13 @@
 
 Closed testing参加者には試験ID、担当機能またはチェックリストを割り当てない。参加者には、日常利用に近い自由操作を複数日にわたって行ってもらい、気付いた不具合、分かりにくさおよび改善案を自由記述で報告してもらう。
 
-総合動作確認項目403件は削除せず、公開判定に必要な開発者側の正式確認として管理する。Closed testingの自由操作結果だけを根拠に、条件を確認していない試験IDを合格にしてはならない。
+総合動作確認項目420件は削除せず、公開判定に必要な開発者側の正式確認として管理する。Closed testingの自由操作結果だけを根拠に、条件を確認していない試験IDを合格にしてはならない。
 
 | レーン | 担当 | 件数 | 対象 |
 | --- | --- | ---: | --- |
 | `CLOSED_TESTER` | 割り当てなし | 0 | Closed testing参加者は項目表を使わず自由操作する |
-| `DEV_AUTO` | `DEV` | 100 | UNIT、Repository、DB、計算、通知スケジューラ等の技術検査 |
-| `RELEASE_OWNER` | `OWNER` | 303 | UI、MANUAL、E2E、実機環境、Console、法的文書および公開判定 |
+| `DEV_AUTO` | `DEV` | 108 | UNIT、Repository、DB、計算、通知スケジューラ等の技術検査 |
+| `RELEASE_OWNER` | `OWNER` | 312 | UI、MANUAL、E2E、実機環境、Console、法的文書および公開判定 |
 
 各試験IDには正式確認の責任者を1件だけ設定する。外部テスターの自由操作で正確な条件と期待結果まで確認できた場合も、`OWNER`が報告内容を照合し、再現条件、版、端末および証跡を記録した後に項目別結果へ反映する。
 
@@ -58,7 +58,7 @@ node tools/test-specs/verify-results.mjs
 node tools/test-specs/verify-automated-evidence.mjs
 ```
 
-割り当て検証は、403件のID漏れ・重複、仕様書との優先度・種別不一致、および正式確認が`DEV`か`OWNER`のどちらかへ割り当てられていることを確認する。Closed testing参加者への項目割り当てが残っている場合は失敗する。
+割り当て検証は、420件のID漏れ・重複、仕様書との優先度・種別不一致、および正式確認が`DEV`か`OWNER`のどちらかへ割り当てられていることを確認する。Closed testing参加者への項目割り当てが残っている場合は失敗する。
 
 ## 6. 実施方法の変更
 

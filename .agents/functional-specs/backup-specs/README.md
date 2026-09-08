@@ -1,14 +1,16 @@
 # MATA 手動バックアップ仕様
 
 - 文書状態: 初版
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-09-08
 
 このフォルダでは、MATAの手動バックアップ作成、バックアップファイル形式、復元、互換性、安全対策、テストを定義する。
 
 ## 文書一覧
 
+- [バックアップ形式バージョン4](format-v4.md)
+  - 現行形式。期限日、未完了繰り越し、元の実行日と解決日を追加
 - [バックアップ形式バージョン3](format-v3.md)
-  - 現行形式。一日の終了時刻を全TODO共通へ統一
+  - 旧形式。一日の終了時刻を全TODO共通へ統一
 - [バックアップ形式バージョン2](format-v2.md)
   - 旧形式。N週間にX回の期間週数と対象日条件、曜日プリセットを追加
 - [バックアップ形式バージョン1](format-v1.md)
@@ -27,6 +29,7 @@
 - [データモデル仕様](../domain-specs/data-model.md)
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
+- [実行期間・期限日・未完了繰り越し仕様](../domain-specs/execution-window-and-carryover.md)
 - [通知仕様](../notification-specs/README.md)
 - [ウィジェット仕様](../widget-specs/README.md)
 - [設定画面仕様](../../screen-specs/settings/spec.md)
