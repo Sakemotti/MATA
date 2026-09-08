@@ -259,7 +259,7 @@ class BackupArchiveReader @Inject constructor() {
         reader.expectName("executions")
         reader.beginArray()
         while (reader.hasNext()) {
-            val entity = reader.readExecution(validation)
+            val entity = reader.readExecution(validation, expectedFormatVersion)
             sink?.execution(entity)
             validation.progress(onProgress)
         }
@@ -275,7 +275,7 @@ class BackupArchiveReader @Inject constructor() {
         reader.expectName("runtimeStates")
         reader.beginArray()
         while (reader.hasNext()) {
-            val entity = reader.readRuntimeState(validation)
+            val entity = reader.readRuntimeState(validation, expectedFormatVersion)
             sink?.runtimeState(entity)
             validation.progress(onProgress)
         }
@@ -367,9 +367,18 @@ class BackupArchiveReader @Inject constructor() {
         expectName("endDate")
         val endDate = nullableString()?.let(::isoDate)
         if (endDate != null && endDate.isBefore(startDate)) invalid("TODO end date precedes start date")
+        val dueDate = if (formatVersion >= 4) {
+            expectName("dueDate")
+            nullableString()?.let(::isoDate)
+        } else {
+            null
+        }
         expectName("repeatType")
         val typeCode = strictString()
         val type = RecurrenceType.entries.firstOrNull { it.code == typeCode } ?: invalid("Invalid repeat type")
+        if (dueDate != null && (type != RecurrenceType.ONCE || dueDate.isBefore(startDate))) {
+            invalid("Invalid TODO due date")
+        }
         expectName("repeatParamsVersion")
         val paramsVersion = strictInt()
         if (paramsVersion !in 1..CURRENT_REPEAT_PARAMS_VERSION) throw BackupFormatException(
@@ -382,6 +391,13 @@ class BackupArchiveReader @Inject constructor() {
         val encoded = RecurrenceRuleJson.encode(rule)
         expectName("deadlineMinute")
         val due = nullableInt()?.also { if (it !in 0..1439) invalid("Invalid deadline") }
+        val carryOverEnabled = if (formatVersion >= 4) {
+            expectName("carryOverEnabled")
+            strictBoolean()
+        } else {
+            false
+        }
+        if (carryOverEnabled && type.isCountBased) invalid("Invalid carry-over setting")
         expectName("definitionRevision")
         val revision = strictInt().also { if (it < 1) invalid("Invalid TODO revision") }
         expectName("archivedAt")
@@ -420,7 +436,9 @@ class BackupArchiveReader @Inject constructor() {
             createdAt = createdAt,
             updatedAt = updatedAt,
             archivedAt = archivedAt,
-        )
+            dueDate = dueDate?.toString(),
+            carryOverEnabled = carryOverEnabled,
+        ).also { context.todosById[id] = it }
     }
 
     private fun JsonReader.readRepeatParams(
@@ -588,7 +606,10 @@ class BackupArchiveReader @Inject constructor() {
         )
     }
 
-    private fun JsonReader.readExecution(context: ValidationContext): TodoExecutionEntity {
+    private fun JsonReader.readExecution(
+        context: ValidationContext,
+        formatVersion: Int,
+    ): TodoExecutionEntity {
         beginObject()
         expectName("id")
         val id = uuid()
@@ -598,9 +619,29 @@ class BackupArchiveReader @Inject constructor() {
         val todoId = uuid().also { if (it !in context.todoIds) invalid("Unknown execution TODO") }
         expectName("logicalDate")
         val logicalDate = isoDate(strictString()).toString()
+        val scheduledLogicalDate = if (formatVersion >= 4) {
+            expectName("scheduledLogicalDate")
+            isoDate(strictString()).toString()
+        } else {
+            logicalDate
+        }
+        val storedResolvedLogicalDate = if (formatVersion >= 4) {
+            expectName("resolvedLogicalDate")
+            nullableString()?.let { isoDate(it).toString() }
+        } else {
+            null
+        }
         expectName("status")
         val status = strictString()
         if (status !in EXECUTION_STATUSES) invalid("Invalid execution status")
+        val resolvedLogicalDate = if (formatVersion >= 4) {
+            storedResolvedLogicalDate
+        } else {
+            logicalDate.takeUnless { status == "missed" }
+        }
+        if ((status == "missed") != (resolvedLogicalDate == null)) {
+            invalid("Invalid execution resolution date")
+        }
         expectName("actedAt")
         val actedAt = nullableLong()
         if ((status == "missed") != (actedAt == null)) invalid("Invalid execution action time")
@@ -613,13 +654,23 @@ class BackupArchiveReader @Inject constructor() {
         val snapshotVersion = strictInt()
         expectName("snapshot")
         val snapshot = readJsonObject()
-        validateExecutionSnapshot(snapshot, snapshotVersion, todoId, revision, logicalDate)
+        validateExecutionSnapshot(
+            snapshot,
+            snapshotVersion,
+            todoId,
+            revision,
+            logicalDate,
+            scheduledLogicalDate,
+            resolvedLogicalDate,
+            formatVersion,
+        )
         requireObjectEnd()
         if (!context.executionIds.add(id) || !context.operationIds.add(operationId) ||
             !context.executionKeys.add(todoId to logicalDate)
         ) {
             invalid("Duplicate execution")
         }
+        context.executionScheduleKeys += todoId to scheduledLogicalDate
         context.executions++
         return TodoExecutionEntity(
             id,
@@ -632,6 +683,8 @@ class BackupArchiveReader @Inject constructor() {
             revision,
             snapshotVersion,
             snapshot.compact(),
+            scheduledLogicalDate,
+            resolvedLogicalDate.takeUnless { status == "missed" },
         )
     }
 
@@ -691,7 +744,10 @@ class BackupArchiveReader @Inject constructor() {
         )
     }
 
-    private fun JsonReader.readRuntimeState(context: ValidationContext): TodoRuntimeStateEntity {
+    private fun JsonReader.readRuntimeState(
+        context: ValidationContext,
+        formatVersion: Int,
+    ): TodoRuntimeStateEntity {
         beginObject()
         expectName("todoId")
         val todoId = uuid().also { if (it !in context.todoIds) invalid("Unknown runtime TODO") }
@@ -706,12 +762,41 @@ class BackupArchiveReader @Inject constructor() {
         if (revision !in 1..context.todoRevisions.getValue(todoId)) invalid("Invalid runtime revision")
         expectName("reconciliationCursorDate")
         val cursor = nullableString()?.let { isoDate(it).toString() }
+        val pendingScheduledLogicalDate = if (formatVersion >= 4) {
+            expectName("pendingScheduledLogicalDate")
+            nullableString()?.let { isoDate(it).toString() }
+        } else {
+            null
+        }
+        if (pendingScheduledLogicalDate != null) {
+            val todo = context.todosById.getValue(todoId)
+            val pendingDate = LocalDate.parse(pendingScheduledLogicalDate)
+            val startDate = LocalDate.parse(todo.startDate)
+            val endDate = todo.endDate?.let(LocalDate::parse)
+            val recurrenceType = RecurrenceType.fromStoredValue(todo.recurrenceType)
+            if (!todo.carryOverEnabled || recurrenceType.isCountBased ||
+                pendingDate.isBefore(startDate) || endDate?.let(pendingDate::isAfter) == true ||
+                (todoId to pendingScheduledLogicalDate) in context.executionScheduleKeys ||
+                lastDate?.let { pendingDate.isAfter(LocalDate.parse(it)) } != false
+            ) {
+                invalid("Invalid pending carry-over state")
+            }
+        }
         expectName("updatedAt")
         val updatedAt = strictLong()
         requireObjectEnd()
         if (!context.runtimeTodoIds.add(todoId)) invalid("Duplicate runtime state")
         context.runtimeStates++
-        return TodoRuntimeStateEntity(todoId, lastDate, weeklyEnd, monthlyEnd, revision, cursor, updatedAt)
+        return TodoRuntimeStateEntity(
+            todoId,
+            lastDate,
+            weeklyEnd,
+            monthlyEnd,
+            revision,
+            cursor,
+            updatedAt,
+            pendingScheduledLogicalDate,
+        )
     }
 
     private fun validateExecutionSnapshot(
@@ -720,6 +805,9 @@ class BackupArchiveReader @Inject constructor() {
         todoId: String,
         revision: Int,
         logicalDate: String,
+        scheduledLogicalDate: String,
+        resolvedLogicalDate: String?,
+        formatVersion: Int,
     ) {
         val snapshot = HistorySnapshotJson.decode(element.compact()) ?: invalid("Invalid execution snapshot")
         validateCommonSnapshot(snapshot)
@@ -729,6 +817,10 @@ class BackupArchiveReader @Inject constructor() {
         ) {
             invalid("Execution snapshot does not match its record")
         }
+        if (formatVersion >= 4 &&
+            (snapshot.scheduledLogicalDate != scheduledLogicalDate ||
+                snapshot.resolvedLogicalDate != resolvedLogicalDate)
+        ) invalid("Execution snapshot dates do not match its record")
     }
 
     private fun validatePeriodSnapshot(
@@ -761,6 +853,11 @@ class BackupArchiveReader @Inject constructor() {
         val rule = runCatching {
             RecurrenceRuleJson.decode(type.code, snapshot.repeatParamsVersion, snapshot.repeatParamsJson)
         }.getOrNull() ?: invalid("Invalid snapshot repeat parameters")
+        val dueDate = snapshot.dueDate?.let(::isoDate)
+        if (dueDate != null &&
+            (type != RecurrenceType.ONCE || dueDate.isBefore(start))
+        ) invalid("Invalid snapshot due date")
+        if (snapshot.carryOverEnabled && type.isCountBased) invalid("Invalid snapshot carry-over")
         if (!rule.isValid() || snapshot.dueMinutes?.let { it !in 0..1439 } == true ||
             snapshot.definitionRevision < 1 || snapshot.endHour !in 0..23 || snapshot.weekStart !in 1..7
         ) {
@@ -977,12 +1074,14 @@ class BackupArchiveReader @Inject constructor() {
         val categoryNames = mutableSetOf<String>()
         val todoIds = mutableSetOf<String>()
         val todoRevisions = mutableMapOf<String, Int>()
+        val todosById = mutableMapOf<String, TodoEntity>()
         val notificationIds = mutableSetOf<String>()
         val nextNotificationOrder = mutableMapOf<String, Int>()
         val notificationTimings = mutableMapOf<String, MutableSet<Pair<String, Int>>>()
         val executionIds = mutableSetOf<String>()
         val operationIds = mutableSetOf<String>()
         val executionKeys = mutableSetOf<Pair<String, String>>()
+        val executionScheduleKeys = mutableSetOf<Pair<String, String>>()
         val periodIds = mutableSetOf<String>()
         val periodKeys = mutableSetOf<Triple<String, String, String>>()
         val runtimeTodoIds = mutableSetOf<String>()

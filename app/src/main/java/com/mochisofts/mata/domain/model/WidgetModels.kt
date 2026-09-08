@@ -13,7 +13,7 @@ data class WidgetDisplayModel(
     val nextRefreshAt: Long,
 ) {
     companion object {
-        const val CURRENT_VERSION = 1
+        const val CURRENT_VERSION = 2
     }
 }
 
@@ -41,4 +41,8 @@ data class WidgetTodoItem(
     val completedCount: Int? = null,
     val requiredCount: Int? = null,
     val canComplete: Boolean = true,
+    val scheduledLogicalDate: String = logicalDate,
+    val effectiveDueDate: String = scheduledLogicalDate,
+    val isCarryOver: Boolean = false,
+    val scheduleLabel: String? = null,
 )

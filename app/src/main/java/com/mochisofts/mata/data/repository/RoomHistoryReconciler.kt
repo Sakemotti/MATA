@@ -16,6 +16,7 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
+import com.mochisofts.mata.domain.model.effectiveDueDate
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.repository.HistoryReconciler
@@ -103,7 +104,20 @@ class RoomHistoryReconciler @Inject constructor(
     ): ReconcileOutcome = database.withTransaction {
         val runtime = runtimeStateDao.find(todo.id) ?: initialRuntime(todo)
         val domainTodo = todo.toDomain()
-        val targetEnd = minOf(todo.endDate?.let(LocalDate::parse) ?: currentLogicalDate.minusDays(1), currentLogicalDate.minusDays(1))
+        runtime.pendingScheduledLogicalDate?.let {
+            runtimeStateDao.upsert(
+                runtime.copy(
+                    appliedDefinitionRevision = todo.definitionRevision,
+                    reconciliationCursorDate = null,
+                    updatedAt = clock.millis(),
+                ),
+            )
+            return@withTransaction ReconcileOutcome(0, false)
+        }
+        val targetEnd = minOf(
+            todo.endDate?.let(LocalDate::parse) ?: currentLogicalDate.minusDays(1),
+            currentLogicalDate.minusDays(1),
+        )
         var cursor = runtime.lastFinalizedLogicalDate?.let(LocalDate::parse)
             ?: domainTodo.startDate.minusDays(1)
         var generated = 0
@@ -111,44 +125,67 @@ class RoomHistoryReconciler @Inject constructor(
         val notifications = notificationDao.findForTodo(todo.id)
         val category = todo.categoryId?.let { categoryDao.findById(it) }
 
+        var pendingScheduledDate: LocalDate? = null
+        var waitingForDueDate = false
         while (cursor.isBefore(targetEnd) && generated < limit && scanned < MAX_SCANNED_ITEMS) {
             val date = cursor.plusDays(1)
-            if (domainTodo.occursOn(date, holidays) && executionDao.find(todo.id, date.toString()) == null) {
-                val finalizedAt = logicalDayEnd(date, endHour, clock.zone).toInstant().toEpochMilli()
-                executionDao.insert(
-                    TodoExecutionEntity(
-                        id = stableUuid("execution|${todo.id}|$date"),
-                        operationId = stableUuid("reconcile|missed|${todo.id}|$date"),
-                        todoId = todo.id,
-                        logicalDate = date.toString(),
-                        status = TodoState.MISSED.code,
-                        actedAt = null,
-                        finalizedAt = finalizedAt,
-                        definitionRevision = todo.definitionRevision,
-                        snapshotVersion = HistorySnapshotV1.VERSION,
-                        snapshotJson = HistorySnapshotJson.encode(
-                            todo = todo,
-                            category = category,
-                            notifications = notifications,
-                            endHour = endHour,
-                            weekStart = weekStart,
-                            logicalDate = date,
+            if (domainTodo.occursOn(date, holidays)) {
+                val effectiveDueDate = domainTodo.effectiveDueDate(date)
+                if (!effectiveDueDate.isBefore(currentLogicalDate)) {
+                    waitingForDueDate = true
+                    break
+                }
+                val existing = executionDao.findForTodo(todo.id)
+                    .any { it.scheduledLogicalDate == date.toString() }
+                if (!existing && todo.carryOverEnabled) {
+                    pendingScheduledDate = date
+                    cursor = date
+                    break
+                }
+                if (!existing) {
+                    val finalizedAt = logicalDayEnd(effectiveDueDate, endHour, clock.zone)
+                        .toInstant()
+                        .toEpochMilli()
+                    executionDao.insert(
+                        TodoExecutionEntity(
+                            id = stableUuid("execution|${todo.id}|$date"),
+                            operationId = stableUuid("reconcile|missed|${todo.id}|$date"),
+                            todoId = todo.id,
+                            logicalDate = effectiveDueDate.toString(),
+                            status = TodoState.MISSED.code,
+                            actedAt = null,
+                            finalizedAt = finalizedAt,
+                            definitionRevision = todo.definitionRevision,
+                            snapshotVersion = HistorySnapshotV1.VERSION,
+                            snapshotJson = HistorySnapshotJson.encode(
+                                todo = todo,
+                                category = category,
+                                notifications = notifications,
+                                endHour = endHour,
+                                weekStart = weekStart,
+                                logicalDate = effectiveDueDate,
+                                scheduledLogicalDate = date,
+                                resolvedLogicalDate = null,
+                            ),
+                            scheduledLogicalDate = date.toString(),
+                            resolvedLogicalDate = null,
                         ),
-                    ),
-                )
-                generated++
+                    )
+                    generated++
+                }
             }
             cursor = date
             scanned++
         }
 
-        val hasMore = cursor.isBefore(targetEnd)
+        val hasMore = !waitingForDueDate && pendingScheduledDate == null && cursor.isBefore(targetEnd)
         runtimeStateDao.upsert(
             runtime.copy(
                 lastFinalizedLogicalDate = cursor.toString(),
                 appliedDefinitionRevision = todo.definitionRevision,
                 reconciliationCursorDate = cursor.toString().takeIf { hasMore },
                 updatedAt = clock.millis(),
+                pendingScheduledLogicalDate = pendingScheduledDate?.toString(),
             ),
         )
         ReconcileOutcome(generated, hasMore)
@@ -256,6 +293,7 @@ class RoomHistoryReconciler @Inject constructor(
         appliedDefinitionRevision = todo.definitionRevision,
         reconciliationCursorDate = null,
         updatedAt = clock.millis(),
+        pendingScheduledLogicalDate = null,
     )
 
     private data class ReconcileOutcome(val generated: Int, val hasMore: Boolean)

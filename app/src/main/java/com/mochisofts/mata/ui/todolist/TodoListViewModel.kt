@@ -162,7 +162,12 @@ class TodoListViewModel @Inject constructor(
             successEffect = TodoListEffect.Completed,
             fallbackErrorRes = R.string.error_todo_complete_failed,
         ) {
-            todoRepository.setCompleted(occurrence.todo.id, occurrence.logicalDate, true)
+            todoRepository.setCompleted(
+                occurrence.todo.id,
+                occurrence.logicalDate,
+                true,
+                scheduledLogicalDate = occurrence.scheduledLogicalDate,
+            )
         }
     }
 
@@ -172,7 +177,12 @@ class TodoListViewModel @Inject constructor(
             successEffect = TodoListEffect.Skipped,
             fallbackErrorRes = R.string.error_todo_skip_failed,
         ) {
-            todoRepository.setSkipped(occurrence.todo.id, occurrence.logicalDate, true)
+            todoRepository.setSkipped(
+                occurrence.todo.id,
+                occurrence.logicalDate,
+                true,
+                scheduledLogicalDate = occurrence.scheduledLogicalDate,
+            )
         }
     }
 

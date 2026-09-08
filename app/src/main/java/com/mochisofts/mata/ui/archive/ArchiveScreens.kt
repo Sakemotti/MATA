@@ -814,6 +814,17 @@ private fun ArchiveTodoDefinition(item: ArchivedTodoItem) {
                 stringResource(R.string.time_format, minutes / 60, minutes % 60)
             } ?: stringResource(R.string.archive_due_none),
         )
+        if (todo.recurrenceType == RecurrenceType.ONCE) {
+            ArchiveDetailLine(
+                stringResource(R.string.todo_editor_due_date_label),
+                todo.dueDate?.toPlainDate()
+                    ?: stringResource(R.string.todo_editor_due_date_same_as_execution),
+            )
+        }
+        ArchiveDetailLine(
+            stringResource(R.string.todo_editor_carry_over_label),
+            stringResource(if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled),
+        )
         ArchiveDetailLine(
             stringResource(R.string.archive_label_notifications),
             notificationDescription(todo.notifications),
@@ -1061,8 +1072,34 @@ private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
             value = todoNotificationSettingsText(snapshot.notifications),
         ),
     )
+    snapshot.dueDate?.let { dueDate ->
+        fields += TodoDetailField(
+            label = stringResource(R.string.todo_editor_due_date_label),
+            value = dueDate.toPlainDate(),
+        )
+    }
+    fields += TodoDetailField(
+        label = stringResource(R.string.todo_editor_carry_over_label),
+        value = stringResource(
+            if (snapshot.carryOverEnabled) R.string.label_enabled else R.string.label_disabled,
+        ),
+    )
     when (this) {
         is ArchivedHistoryItem.Execution -> {
+            snapshot.scheduledLogicalDate?.let { scheduledDate ->
+                fields += TodoDetailField(
+                    label = stringResource(R.string.todo_editor_execution_date_label),
+                    value = scheduledDate.toPlainDate(),
+                )
+            }
+            snapshot.resolvedLogicalDate
+                ?.takeIf { it != snapshot.scheduledLogicalDate }
+                ?.let { resolvedDate ->
+                    fields += TodoDetailField(
+                        label = stringResource(R.string.todo_resolution_date_label),
+                        value = resolvedDate.toPlainDate(),
+                    )
+                }
             fields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_logical_date),
                 value = entry.logicalDate.toPlainDate(),

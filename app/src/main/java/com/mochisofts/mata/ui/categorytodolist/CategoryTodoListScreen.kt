@@ -211,7 +211,22 @@ private fun CategoryTodos(
                     },
                     supportingContent = {
                         Text(
-                            recurrenceSummary(item.todo),
+                            buildList {
+                                add(recurrenceSummary(item.todo))
+                                item.todo.dueDate
+                                    ?.takeIf { it != item.todo.startDate }
+                                    ?.let { dueDate ->
+                                        add(
+                                            stringResource(
+                                                R.string.todo_due_date_format,
+                                                "${dueDate.monthValue}/${dueDate.dayOfMonth}",
+                                            ),
+                                        )
+                                    }
+                                if (item.todo.carryOverEnabled) {
+                                    add(stringResource(R.string.todo_editor_carry_over_label))
+                                }
+                            }.joinToString(" ・ "),
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )

@@ -214,6 +214,7 @@ class BackupArchiveWriter @Inject constructor(
         name("categoryId").nullable(value.categoryId)
         name("startDate").value(value.startDate)
         name("endDate").nullable(value.endDate)
+        name("dueDate").nullable(value.dueDate)
         name("repeatType").value(value.recurrenceType)
         name("repeatParamsVersion").value(value.repeatParamsVersion.toLong())
         name("repeatParams").beginObject()
@@ -258,6 +259,7 @@ class BackupArchiveWriter @Inject constructor(
         }
         endObject()
         name("deadlineMinute").nullable(value.dueMinutes)
+        name("carryOverEnabled").value(value.carryOverEnabled)
         name("definitionRevision").value(value.definitionRevision.toLong())
         name("archivedAt").nullable(value.archivedAt)
         name("createdAt").value(value.createdAt)
@@ -285,6 +287,8 @@ class BackupArchiveWriter @Inject constructor(
         name("operationId").value(value.operationId)
         name("todoId").value(value.todoId)
         name("logicalDate").value(value.logicalDate)
+        name("scheduledLogicalDate").value(value.scheduledLogicalDate)
+        name("resolvedLogicalDate").nullable(value.resolvedLogicalDate)
         name("status").value(value.status)
         name("actedAt").nullable(value.actedAt)
         name("finalizedAt").value(value.finalizedAt)
@@ -320,6 +324,7 @@ class BackupArchiveWriter @Inject constructor(
         name("lastFinalizedMonthlyPeriodEnd").nullable(value.lastFinalizedMonthlyPeriodEnd)
         name("appliedDefinitionRevision").value(value.appliedDefinitionRevision.toLong())
         name("reconciliationCursorDate").nullable(value.reconciliationCursorDate)
+        name("pendingScheduledLogicalDate").nullable(value.pendingScheduledLogicalDate)
         name("updatedAt").value(value.updatedAt)
         endObject()
     }

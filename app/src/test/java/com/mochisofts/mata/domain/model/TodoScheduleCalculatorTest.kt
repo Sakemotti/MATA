@@ -251,6 +251,27 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
+    fun onceTodo_usesExecutionWindowAndEffectiveDueDate() {
+        val start = LocalDate.of(2026, 9, 9)
+        val due = LocalDate.of(2026, 9, 12)
+        val once = todo(start, null, RecurrenceRule.once()).copy(
+            dueDate = due,
+            dueMinutes = 2 * 60,
+        )
+
+        assertFalse(once.isInExecutionWindow(start.minusDays(1)))
+        assertTrue(once.isInExecutionWindow(start))
+        assertTrue(once.isInExecutionWindow(due.minusDays(1)))
+        assertTrue(once.isInExecutionWindow(due))
+        assertFalse(once.isInExecutionWindow(due.plusDays(1)))
+        assertEquals(due, once.effectiveDueDate(start))
+        assertEquals(
+            ZonedDateTime.of(2026, 9, 13, 2, 0, 0, 0, ZoneId.of("Asia/Tokyo")),
+            once.deadlineAt(start, 4, ZoneId.of("Asia/Tokyo")),
+        )
+    }
+
+    @Test
     fun effectiveDueSortMinutes_ordersDeadlinesWithinLogicalDay() {
         val base = todo(
             LocalDate.of(2026, 8, 10),

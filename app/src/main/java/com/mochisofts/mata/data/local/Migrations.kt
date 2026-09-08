@@ -264,6 +264,63 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE todos ADD COLUMN dueDate TEXT")
+        db.execSQL("ALTER TABLE todos ADD COLUMN carryOverEnabled INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todos_dueDate ON todos(dueDate)")
+
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS todo_executions_new (
+                id TEXT NOT NULL PRIMARY KEY,
+                operationId TEXT NOT NULL,
+                todoId TEXT NOT NULL,
+                logicalDate TEXT NOT NULL,
+                status TEXT NOT NULL,
+                actedAt INTEGER,
+                finalizedAt INTEGER NOT NULL,
+                definitionRevision INTEGER NOT NULL,
+                snapshotVersion INTEGER NOT NULL,
+                snapshotJson TEXT NOT NULL,
+                scheduledLogicalDate TEXT NOT NULL,
+                resolvedLogicalDate TEXT,
+                FOREIGN KEY(todoId) REFERENCES todos(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO todo_executions_new (
+                id, operationId, todoId, logicalDate, status, actedAt, finalizedAt,
+                definitionRevision, snapshotVersion, snapshotJson,
+                scheduledLogicalDate, resolvedLogicalDate
+            )
+            SELECT id, operationId, todoId, logicalDate, status, actedAt, finalizedAt,
+                definitionRevision, snapshotVersion, snapshotJson,
+                logicalDate,
+                CASE WHEN status = 'missed' THEN NULL ELSE logicalDate END
+            FROM todo_executions
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE todo_executions")
+        db.execSQL("ALTER TABLE todo_executions_new RENAME TO todo_executions")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_todo_executions_operationId " +
+                "ON todo_executions(operationId)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todo_executions_todoId ON todo_executions(todoId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todo_executions_logicalDate ON todo_executions(logicalDate)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_todo_executions_status ON todo_executions(status)")
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_todo_executions_todoId_logicalDate " +
+                "ON todo_executions(todoId, logicalDate)",
+        )
+
+        db.execSQL("ALTER TABLE todo_runtime_states ADD COLUMN pendingScheduledLogicalDate TEXT")
+    }
+}
+
 private fun repairLegacyExecutionSnapshots(db: SupportSQLiteDatabase) {
     db.query(
         """

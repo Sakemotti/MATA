@@ -255,6 +255,7 @@ internal enum class WidgetTodoAction {
 internal data class WidgetTodoActionRequest(
     val todoId: String,
     val logicalDate: LocalDate,
+    val scheduledLogicalDate: LocalDate = logicalDate,
     val expectedRevision: Int,
     val appWidgetId: Int,
     val snapshotVersion: Int,
@@ -368,12 +369,14 @@ internal class WidgetTodoActionCoordinator @Inject constructor(
                 logicalDate = request.logicalDate,
                 completed = true,
                 operationId = operationId,
+                scheduledLogicalDate = request.scheduledLogicalDate,
             )
             WidgetTodoAction.SKIP -> todoRepository.setSkipped(
                 todoId = request.todoId,
                 logicalDate = request.logicalDate,
                 skipped = true,
                 operationId = operationId,
+                scheduledLogicalDate = request.scheduledLogicalDate,
             )
         }
         if (result.isFailure) {
@@ -424,6 +427,7 @@ internal fun TodoOccurrence.isAvailableFor(request: WidgetTodoActionRequest): Bo
         todo.archivedAt == null &&
         todo.definitionRevision >= request.expectedRevision &&
         logicalDate == request.logicalDate &&
+        scheduledLogicalDate == request.scheduledLogicalDate &&
         state == TodoState.PENDING &&
         progress?.isAchieved != true
 
@@ -439,12 +443,14 @@ internal fun widgetTodoActionIntent(
         .authority("widget-action")
         .appendPath(request.todoId)
         .appendQueryParameter(EXTRA_LOGICAL_DATE, request.logicalDate.toString())
+        .appendQueryParameter(EXTRA_SCHEDULED_LOGICAL_DATE, request.scheduledLogicalDate.toString())
         .appendQueryParameter(EXTRA_APP_WIDGET_ID, request.appWidgetId.toString())
         .appendQueryParameter(EXTRA_DEFINITION_REVISION, request.expectedRevision.toString())
         .appendQueryParameter(EXTRA_SNAPSHOT_VERSION, request.snapshotVersion.toString())
         .build()
     putExtra(EXTRA_TODO_ID, request.todoId)
     putExtra(EXTRA_LOGICAL_DATE, request.logicalDate.toString())
+    putExtra(EXTRA_SCHEDULED_LOGICAL_DATE, request.scheduledLogicalDate.toString())
     putExtra(EXTRA_DEFINITION_REVISION, request.expectedRevision)
     putExtra(EXTRA_APP_WIDGET_ID, request.appWidgetId)
     putExtra(EXTRA_SNAPSHOT_VERSION, request.snapshotVersion)
@@ -457,6 +463,9 @@ private fun Intent.toWidgetTodoActionRequest(): WidgetTodoActionRequest? {
     val logicalDate = getStringExtra(EXTRA_LOGICAL_DATE)?.let { value ->
         runCatching { LocalDate.parse(value) }.getOrNull()
     } ?: return null
+    val scheduledLogicalDate = getStringExtra(EXTRA_SCHEDULED_LOGICAL_DATE)?.let { value ->
+        runCatching { LocalDate.parse(value) }.getOrNull()
+    } ?: logicalDate
     if (!hasExtra(EXTRA_DEFINITION_REVISION) ||
         !hasExtra(EXTRA_APP_WIDGET_ID) ||
         !hasExtra(EXTRA_SNAPSHOT_VERSION)
@@ -464,6 +473,7 @@ private fun Intent.toWidgetTodoActionRequest(): WidgetTodoActionRequest? {
     return WidgetTodoActionRequest(
         todoId = todoId,
         logicalDate = logicalDate,
+        scheduledLogicalDate = scheduledLogicalDate,
         expectedRevision = getIntExtra(EXTRA_DEFINITION_REVISION, -1),
         appWidgetId = getIntExtra(EXTRA_APP_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID),
         snapshotVersion = getIntExtra(EXTRA_SNAPSHOT_VERSION, -1),
@@ -488,6 +498,7 @@ private fun emptyWidgetActionState(appWidgetId: Int, now: Long) = WidgetInstance
 private const val ACTION_WIDGET_TODO = "com.mochisofts.mata.action.WIDGET_TODO"
 private const val EXTRA_TODO_ID = "widget_action_todo_id"
 private const val EXTRA_LOGICAL_DATE = "widget_action_logical_date"
+private const val EXTRA_SCHEDULED_LOGICAL_DATE = "widget_action_scheduled_logical_date"
 private const val EXTRA_DEFINITION_REVISION = "widget_action_definition_revision"
 private const val EXTRA_APP_WIDGET_ID = "widget_action_app_widget_id"
 private const val EXTRA_SNAPSHOT_VERSION = "widget_action_snapshot_version"

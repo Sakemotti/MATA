@@ -42,6 +42,8 @@ data class TodoDetailModalData(
 fun TodoDetailModal(
     data: TodoDetailModalData,
     onDismiss: () -> Unit,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
     AlertDialog(
@@ -80,6 +82,22 @@ fun TodoDetailModal(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.action_close))
+            }
+        },
+        dismissButton = {
+            if (onEdit != null || onDelete != null) {
+                androidx.compose.foundation.layout.Row {
+                    onEdit?.let { action ->
+                        TextButton(onClick = action) {
+                            Text(stringResource(R.string.action_edit))
+                        }
+                    }
+                    onDelete?.let { action ->
+                        TextButton(onClick = action) {
+                            Text(stringResource(R.string.action_delete_permanently))
+                        }
+                    }
+                }
             }
         },
     )

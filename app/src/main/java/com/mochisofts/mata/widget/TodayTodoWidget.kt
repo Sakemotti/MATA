@@ -320,6 +320,7 @@ private fun WidgetTodoRow(
         request = WidgetTodoActionRequest(
             todoId = item.todoId,
             logicalDate = LocalDate.parse(item.logicalDate),
+            scheduledLogicalDate = LocalDate.parse(item.scheduledLogicalDate),
             expectedRevision = item.definitionRevision,
             appWidgetId = appWidgetId,
             snapshotVersion = snapshotVersion,
@@ -343,6 +344,13 @@ private fun WidgetTodoRow(
                 style = TextStyle(color = WidgetColors.onSurface, fontSize = if (compact) 13.sp else 14.sp),
                 maxLines = 1,
             )
+            item.scheduleLabel?.let { label ->
+                Text(
+                    text = label,
+                    style = TextStyle(color = WidgetColors.onSurfaceVariant, fontSize = 11.sp),
+                    maxLines = 1,
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = item.deadlineLabel,

@@ -173,7 +173,16 @@ class RoomArchiveRepository @Inject constructor(
     )
 
     private fun ArchiveHistoryRow.toDomain(dayEndHour: Int): ArchivedHistoryItem? {
-        val snapshot = HistorySnapshotJson.decodeDomain(snapshotJson) ?: currentDefinitionSnapshot(dayEndHour)
+        val decodedSnapshot = HistorySnapshotJson.decodeDomain(snapshotJson)
+            ?: currentDefinitionSnapshot(dayEndHour)
+        val snapshot = if (rowType == ROW_EXECUTION) {
+            decodedSnapshot.copy(
+                scheduledLogicalDate = scheduledLogicalDate?.let(LocalDate::parse),
+                resolvedLogicalDate = resolvedLogicalDate?.let(LocalDate::parse),
+            )
+        } else {
+            decodedSnapshot
+        }
         return if (rowType == ROW_EXECUTION) {
             ArchivedHistoryItem.Execution(
                 HistoryEntry(
@@ -236,6 +245,8 @@ class RoomArchiveRepository @Inject constructor(
             endHour = dayEndHour,
             weekStart = DayOfWeek.MONDAY,
             createdAt = currentCreatedAt,
+            dueDate = currentDueDate?.let(LocalDate::parse),
+            carryOverEnabled = currentCarryOverEnabled,
         )
     }
 

@@ -24,6 +24,9 @@ fun AppFailure.toUserMessageRes(@StringRes fallback: Int): Int =
         ValidationError.TODO_CATEGORY_NOT_FOUND -> R.string.error_todo_category_not_found
         ValidationError.TODO_DATE_IN_PAST -> R.string.error_todo_date_in_past
         ValidationError.TODO_END_DATE_BEFORE_START -> R.string.error_todo_end_date_before_start
+        ValidationError.TODO_DUE_DATE_BEFORE_START -> R.string.error_todo_due_date_before_start
+        ValidationError.TODO_DUE_DATE_REQUIRES_ONCE -> R.string.error_todo_due_date_requires_once
+        ValidationError.TODO_CARRY_OVER_NOT_ALLOWED -> R.string.error_todo_carry_over_not_allowed
         ValidationError.TODO_RECURRENCE_RULE_INVALID -> R.string.error_todo_recurrence_rule_invalid
         ValidationError.TODO_NOTIFICATION_TOO_MANY -> R.string.error_todo_notification_too_many
         ValidationError.TODO_NOTIFICATION_AMOUNT_INVALID -> R.string.error_todo_notification_amount_invalid

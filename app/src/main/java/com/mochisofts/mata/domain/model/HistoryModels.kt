@@ -27,6 +27,10 @@ data class HistoryTodoSnapshot(
     val endHour: Int,
     val weekStart: DayOfWeek,
     val createdAt: Long,
+    val dueDate: LocalDate? = null,
+    val carryOverEnabled: Boolean = false,
+    val scheduledLogicalDate: LocalDate? = null,
+    val resolvedLogicalDate: LocalDate? = null,
 )
 
 data class HistoryEntry(
@@ -85,6 +89,8 @@ data class HistoryActionUndoToken(
     val definitionRevision: Int,
     val snapshotVersion: Int,
     val snapshotJson: String,
+    val scheduledLogicalDate: LocalDate = logicalDate,
+    val resolvedLogicalDate: LocalDate? = logicalDate,
 )
 
 fun summarizeHistoryDay(

@@ -34,6 +34,6 @@ abstract class MataDatabase : RoomDatabase() {
     abstract fun widgetInstanceStateDao(): WidgetInstanceStateDao
 
     companion object {
-        const val SCHEMA_VERSION = 7
+        const val SCHEMA_VERSION = 8
     }
 }

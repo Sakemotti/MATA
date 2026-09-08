@@ -84,9 +84,16 @@ class AndroidNotificationScheduler @Inject constructor(
         val weekStart = settingsRepository.weekStart.first()
         val executions = executionDao.findForTodo(todoId)
         val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }
-            .mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
-        val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) }
-        presenter.dismissReminders(todoId, actedDates)
+            .mapTo(mutableSetOf()) { LocalDate.parse(it.scheduledLogicalDate) }
+        val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.scheduledLogicalDate) }
+        val latestCarryOverResolutionDate = executions.asSequence()
+            .filter { it.resolvedLogicalDate != null && it.resolvedLogicalDate != it.scheduledLogicalDate }
+            .mapNotNull { it.resolvedLogicalDate?.let(LocalDate::parse) }
+            .maxOrNull()
+        presenter.dismissReminders(
+            todoId,
+            executions.mapTo(mutableSetOf()) { LocalDate.parse(it.logicalDate) },
+        )
         val now = ZonedDateTime.now(clock)
         val invalidDate = maxOf(todo.startDate, logicalDate(now, endHour))
         val plans = notificationEntities.mapNotNull { setting ->
@@ -108,6 +115,7 @@ class AndroidNotificationScheduler @Inject constructor(
                     completedDates = completedDates,
                     actedDates = actedDates,
                     holidays = holidays,
+                    afterResolvedCarryOverDate = latestCarryOverResolutionDate,
                 )?.let(NotificationPlan::Candidate)
             }
         }
@@ -288,6 +296,8 @@ class AndroidNotificationScheduler @Inject constructor(
         definitionRevision = definitionRevision,
         archivedAt = archivedAt,
         createdAt = createdAt,
+        dueDate = dueDate?.let(LocalDate::parse),
+        carryOverEnabled = carryOverEnabled,
     )
 
     private fun TodoNotificationEntity.toDomain() = TodoNotification(

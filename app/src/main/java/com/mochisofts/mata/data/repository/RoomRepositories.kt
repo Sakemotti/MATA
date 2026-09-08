@@ -27,7 +27,10 @@ import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.NotificationValidationError
 import com.mochisofts.mata.domain.model.deadlineAt
+import com.mochisofts.mata.domain.model.effectiveDueDate
+import com.mochisofts.mata.domain.model.isInExecutionWindow
 import com.mochisofts.mata.domain.model.logicalDate
+import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.model.validateNotifications
@@ -147,7 +150,7 @@ class RoomTodoRepository @Inject constructor(
     private val clock: Clock,
 ) : TodoRepository {
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> {
-        val inputs = combine(
+        val persistedInputs = combine(
             todoDao.observeActive(),
             categoryDao.observeAll(),
             executionDao.observeAll(),
@@ -162,27 +165,82 @@ class RoomTodoRepository @Inject constructor(
                 weekStart = weekStart,
             )
         }
+        val inputs = combine(persistedInputs, runtimeStateDao.observeAll()) { input, runtimeStates ->
+            input.copy(runtimeStates = runtimeStates)
+        }
         return combine(inputs, holidayRepository.snapshot) { input, holidaySnapshot ->
             val categories = input.categories.associateBy(CategoryEntity::id)
             val executions = input.executions.associateBy { it.todoId to it.logicalDate }
             val executionsByTodo = input.executions.groupBy(TodoExecutionEntity::todoId)
+            val runtimeByTodo = input.runtimeStates.associateBy(TodoRuntimeStateEntity::todoId)
             val now = ZonedDateTime.now(clock)
             val today = now.toLocalDate()
+            val currentLogicalDate = logicalDate(now, input.dayEndHour)
 
             input.todos.mapNotNull { entity ->
-                val todo = entity.toDomain()
-                val categoryEntity = entity.categoryId?.let(categories::get)
+                val currentTodo = entity.toDomain()
                 val targetDate = if (selectedDate == today) {
-                    logicalDate(now, input.dayEndHour)
+                    currentLogicalDate
                 } else {
                     selectedDate
                 }
-                val execution = executions[todo.id to targetDate.toString()]
-                if (!todo.occursOn(targetDate, holidaySnapshot.dates) && execution == null) {
-                    return@mapNotNull null
+                val execution = executions[currentTodo.id to targetDate.toString()]
+                val historicalSnapshot = execution?.snapshotJson?.let(HistorySnapshotJson::decodeDomain)
+                val todo = historicalSnapshot?.let { snapshot ->
+                    Todo(
+                        id = currentTodo.id,
+                        title = snapshot.title,
+                        description = snapshot.description,
+                        categoryId = snapshot.categoryId,
+                        startDate = snapshot.startDate,
+                        endDate = snapshot.endDate,
+                        recurrenceRule = snapshot.recurrenceRule,
+                        dueMinutes = snapshot.dueMinutes,
+                        definitionRevision = snapshot.definitionRevision,
+                        archivedAt = null,
+                        createdAt = snapshot.createdAt,
+                        notifications = snapshot.notifications,
+                        dueDate = snapshot.dueDate,
+                        carryOverEnabled = snapshot.carryOverEnabled,
+                    )
+                } ?: currentTodo
+                val category = if (historicalSnapshot != null) {
+                    historicalSnapshot.categoryId?.let { categoryId ->
+                        historicalSnapshot.categoryName?.let { name ->
+                            Category(
+                                id = categoryId,
+                                name = name,
+                                colorIndex = historicalSnapshot.categoryColorIndex ?: 15,
+                                iconName = historicalSnapshot.categoryIconName ?: "Category",
+                                sortOrder = historicalSnapshot.categorySortOrder ?: -1,
+                            )
+                        }
+                    }
+                } else {
+                    entity.categoryId?.let(categories::get)?.toDomain()
                 }
+                val todoExecutions = executionsByTodo[currentTodo.id].orEmpty()
+                val pendingDate = runtimeByTodo[currentTodo.id]?.pendingScheduledLogicalDate
+                    ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
+                val scheduledDate = when {
+                    execution != null -> LocalDate.parse(execution.scheduledLogicalDate)
+                    targetDate == currentLogicalDate && pendingDate != null -> pendingDate
+                    todo.recurrenceType == RecurrenceType.ONCE &&
+                        todo.isInExecutionWindow(targetDate) -> todo.startDate
+                    todo.occursOn(targetDate, holidaySnapshot.dates) -> targetDate
+                    else -> return@mapNotNull null
+                }
+                if (execution == null && todoExecutions.any { item ->
+                        item.scheduledLogicalDate == scheduledDate.toString()
+                    }
+                ) return@mapNotNull null
+                if (execution == null && todoExecutions.any { item ->
+                        item.resolvedLogicalDate == targetDate.toString() &&
+                            item.scheduledLogicalDate != targetDate.toString()
+                    }
+                ) return@mapNotNull null
                 val progress = todo.recurrencePeriod(targetDate, input.weekStart)?.let { period ->
-                    val completedCount = executionsByTodo[todo.id].orEmpty().count { item ->
+                    val completedCount = todoExecutions.count { item ->
                         TodoState.fromStoredValue(item.status) == TodoState.COMPLETED &&
                             LocalDate.parse(item.logicalDate) in period.startDate..period.endDate
                     }
@@ -191,18 +249,29 @@ class RoomTodoRepository @Inject constructor(
                 if (execution == null && progress?.isAchieved == true) return@mapNotNull null
                 TodoOccurrence(
                     todo = todo,
-                    category = categoryEntity?.toDomain(),
+                    category = category,
                     logicalDate = targetDate,
                     state = execution?.let { TodoState.fromStoredValue(it.status) } ?: TodoState.PENDING,
                     progress = progress,
                     isOverdue = execution == null && !now.isBefore(
-                        deadlineAt(targetDate, input.dayEndHour, todo.dueMinutes, now.zone),
+                        deadlineAt(
+                            todo.effectiveDueDate(scheduledDate),
+                            input.dayEndHour,
+                            todo.dueMinutes,
+                            now.zone,
+                        ),
                     ),
+                    scheduledLogicalDate = scheduledDate,
+                    effectiveDueDate = todo.effectiveDueDate(scheduledDate),
+                    isCarryOver = execution == null && pendingDate == scheduledDate &&
+                        targetDate.isAfter(todo.effectiveDueDate(scheduledDate)),
                 )
             }.sortedWith(
-                compareBy<TodoOccurrence> { occurrence -> occurrence.effectiveDueMinutes(input.dayEndHour) }
+                compareBy<TodoOccurrence> { occurrence -> occurrence.effectiveDueDate }
+                    .thenBy { occurrence -> occurrence.effectiveDueMinutes(input.dayEndHour) }
                     .thenBy { it.category?.sortOrder ?: -1 }
-                    .thenBy { it.todo.createdAt },
+                    .thenBy { it.todo.createdAt }
+                    .thenBy { it.todo.id },
             )
         }
     }
@@ -213,6 +282,7 @@ class RoomTodoRepository @Inject constructor(
         val executions: List<TodoExecutionEntity>,
         val dayEndHour: Int,
         val weekStart: java.time.DayOfWeek,
+        val runtimeStates: List<TodoRuntimeStateEntity> = emptyList(),
     )
 
     override fun observeTodos(): Flow<List<Todo>> =
@@ -234,6 +304,8 @@ class RoomTodoRepository @Inject constructor(
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
         notifications: List<TodoNotification>,
+        dueDate: LocalDate?,
+        carryOverEnabled: Boolean,
     ): Result<String> = runCatching {
         val trimmedTitle = title.trim()
         validate(trimmedTitle.isNotEmpty(), ValidationError.TODO_TITLE_REQUIRED)
@@ -242,6 +314,18 @@ class RoomTodoRepository @Inject constructor(
         validate(dueMinutes == null || dueMinutes in 0..1439, ValidationError.TODO_DUE_TIME_INVALID)
         validate(recurrenceRule.isValid(), ValidationError.TODO_RECURRENCE_RULE_INVALID)
         validate(endDate == null || !endDate.isBefore(startDate), ValidationError.TODO_END_DATE_BEFORE_START)
+        validate(
+            recurrenceRule.type == RecurrenceType.ONCE || dueDate == null,
+            ValidationError.TODO_DUE_DATE_REQUIRES_ONCE,
+        )
+        validate(
+            dueDate == null || !dueDate.isBefore(startDate),
+            ValidationError.TODO_DUE_DATE_BEFORE_START,
+        )
+        validate(
+            !recurrenceRule.type.isCountBased || !carryOverEnabled,
+            ValidationError.TODO_CARRY_OVER_NOT_ALLOWED,
+        )
         val category = categoryId?.let { categoryDao.findById(it) }
         if (categoryId != null && category == null) {
             throw ValidationException(ValidationError.TODO_CATEGORY_NOT_FOUND)
@@ -290,6 +374,8 @@ class RoomTodoRepository @Inject constructor(
                     createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                     archivedAt = existing?.archivedAt,
+                    dueDate = dueDate.takeIf { recurrenceRule.type == RecurrenceType.ONCE }?.toString(),
+                    carryOverEnabled = carryOverEnabled && !recurrenceRule.type.isCountBased,
                 )
             todoDao.upsert(updatedTodo)
             val existingNotifications = notificationDao.findForTodo(todoId).associateBy { it.id }
@@ -310,6 +396,29 @@ class RoomTodoRepository @Inject constructor(
                 },
             )
             val existingRuntime = runtimeStateDao.find(todoId)
+            var pendingScheduledDate = existingRuntime?.pendingScheduledLogicalDate
+            if (pendingScheduledDate != null && !updatedTodo.carryOverEnabled) {
+                val scheduledDate = LocalDate.parse(pendingScheduledDate)
+                val effectiveDueDate = updatedTodo.toDomain().effectiveDueDate(scheduledDate)
+                if (executionDao.findForTodo(todoId).none { it.scheduledLogicalDate == pendingScheduledDate }) {
+                    executionDao.insert(
+                        createMissedExecution(
+                            todo = updatedTodo,
+                            category = category,
+                            scheduledLogicalDate = scheduledDate,
+                            logicalDate = effectiveDueDate,
+                            finalizedAt = logicalDayEnd(
+                                effectiveDueDate,
+                                dayEndHour,
+                                clock.zone,
+                            ).toInstant().toEpochMilli(),
+                            endHour = dayEndHour,
+                            weekStart = settingsRepository.weekStart.first(),
+                        ),
+                    )
+                }
+                pendingScheduledDate = null
+            }
             runtimeStateDao.upsert(
                 TodoRuntimeStateEntity(
                     todoId = todoId,
@@ -320,6 +429,7 @@ class RoomTodoRepository @Inject constructor(
                     appliedDefinitionRevision = updatedTodo.definitionRevision,
                     reconciliationCursorDate = existingRuntime?.reconciliationCursorDate,
                     updatedAt = now,
+                    pendingScheduledLogicalDate = pendingScheduledDate,
                 ),
             )
         }
@@ -333,6 +443,7 @@ class RoomTodoRepository @Inject constructor(
         logicalDate: LocalDate,
         completed: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
         val dayEndHour = settingsRepository.dayEndHour.first()
@@ -342,7 +453,15 @@ class RoomTodoRepository @Inject constructor(
             val todoEntity = todoDao.findById(todoId)
                 ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
-            validateActionTarget(todoEntity, logicalDate, dayEndHour, now, holidays)
+            validateActionTarget(
+                todoEntity,
+                logicalDate,
+                scheduledLogicalDate,
+                dayEndHour,
+                now,
+                holidays,
+                allowExisting = !completed,
+            )
             if (completed) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existingExecution = executionDao.find(todoId, logicalDate.toString())
@@ -364,6 +483,7 @@ class RoomTodoRepository @Inject constructor(
                         todo = todoEntity,
                         category = category,
                         logicalDate = logicalDate,
+                        scheduledLogicalDate = scheduledLogicalDate,
                         status = TodoState.COMPLETED,
                         operationId = operationId,
                         endHour = dayEndHour,
@@ -379,7 +499,17 @@ class RoomTodoRepository @Inject constructor(
                 }
                 executionDao.delete(todoId, logicalDate.toString())
             }
-            updateAppliedRevision(todoEntity)
+            updateAppliedRevision(
+                todoEntity,
+                clearPending = completed,
+                pendingScheduledLogicalDate = scheduledLogicalDate
+                    .takeIf { !completed && todoEntity.carryOverEnabled && it != logicalDate },
+                resolvedCarryOverThroughDate = logicalDate
+                    .takeIf {
+                        completed && todoEntity.carryOverEnabled &&
+                            logicalDate.isAfter(todoEntity.toDomain().effectiveDueDate(scheduledLogicalDate))
+                    },
+            )
         }
         requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(todoId) }
@@ -390,6 +520,7 @@ class RoomTodoRepository @Inject constructor(
         logicalDate: LocalDate,
         skipped: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> = runCatching {
         val weekStart = settingsRepository.weekStart.first()
         val dayEndHour = settingsRepository.dayEndHour.first()
@@ -399,7 +530,15 @@ class RoomTodoRepository @Inject constructor(
             val todoEntity = todoDao.findById(todoId)
                 ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             val category = todoEntity.categoryId?.let { categoryDao.findById(it) }
-            validateActionTarget(todoEntity, logicalDate, dayEndHour, now, holidays)
+            validateActionTarget(
+                todoEntity,
+                logicalDate,
+                scheduledLogicalDate,
+                dayEndHour,
+                now,
+                holidays,
+                allowExisting = !skipped,
+            )
             if (skipped) {
                 if (executionDao.findByOperationId(operationId) != null) return@withTransaction
                 val existing = executionDao.find(todoId, logicalDate.toString())
@@ -412,6 +551,7 @@ class RoomTodoRepository @Inject constructor(
                         todo = todoEntity,
                         category = category,
                         logicalDate = logicalDate,
+                        scheduledLogicalDate = scheduledLogicalDate,
                         status = TodoState.SKIPPED,
                         operationId = operationId,
                         endHour = dayEndHour,
@@ -425,7 +565,17 @@ class RoomTodoRepository @Inject constructor(
                 }
                 executionDao.delete(todoId, logicalDate.toString())
             }
-            updateAppliedRevision(todoEntity)
+            updateAppliedRevision(
+                todoEntity,
+                clearPending = skipped,
+                pendingScheduledLogicalDate = scheduledLogicalDate
+                    .takeIf { !skipped && todoEntity.carryOverEnabled && it != logicalDate },
+                resolvedCarryOverThroughDate = logicalDate
+                    .takeIf {
+                        skipped && todoEntity.carryOverEnabled &&
+                            logicalDate.isAfter(todoEntity.toDomain().effectiveDueDate(scheduledLogicalDate))
+                    },
+            )
         }
         requestImmediateWidgetUpdate()
         runCatching { notificationScheduler.reconcileTodo(todoId) }
@@ -476,6 +626,7 @@ class RoomTodoRepository @Inject constructor(
                     appliedDefinitionRevision = restored.definitionRevision,
                     reconciliationCursorDate = null,
                     updatedAt = clock.millis(),
+                    pendingScheduledLogicalDate = null,
                 ),
             )
         }
@@ -497,6 +648,7 @@ class RoomTodoRepository @Inject constructor(
         todo: TodoEntity,
         category: CategoryEntity?,
         logicalDate: LocalDate,
+        scheduledLogicalDate: LocalDate,
         status: TodoState,
         operationId: String,
         endHour: Int,
@@ -520,35 +672,108 @@ class RoomTodoRepository @Inject constructor(
                 endHour = endHour,
                 weekStart = weekStart,
                 logicalDate = logicalDate,
+                scheduledLogicalDate = scheduledLogicalDate,
+                resolvedLogicalDate = logicalDate,
             ),
+            scheduledLogicalDate = scheduledLogicalDate.toString(),
+            resolvedLogicalDate = logicalDate.toString(),
         )
     }
 
-    private fun validateActionTarget(
+    private suspend fun createMissedExecution(
+        todo: TodoEntity,
+        category: CategoryEntity?,
+        scheduledLogicalDate: LocalDate,
+        logicalDate: LocalDate,
+        finalizedAt: Long,
+        endHour: Int,
+        weekStart: java.time.DayOfWeek,
+    ): TodoExecutionEntity = TodoExecutionEntity(
+        id = UUID.nameUUIDFromBytes(
+            "execution|${todo.id}|$scheduledLogicalDate".toByteArray(Charsets.UTF_8),
+        ).toString(),
+        operationId = UUID.nameUUIDFromBytes(
+            "missed|${todo.id}|$scheduledLogicalDate".toByteArray(Charsets.UTF_8),
+        ).toString(),
+        todoId = todo.id,
+        logicalDate = logicalDate.toString(),
+        status = TodoState.MISSED.code,
+        actedAt = null,
+        finalizedAt = finalizedAt,
+        definitionRevision = todo.definitionRevision,
+        snapshotVersion = HistorySnapshotV1.VERSION,
+        snapshotJson = HistorySnapshotJson.encode(
+            todo = todo,
+            category = category,
+            notifications = notificationDao.findForTodo(todo.id),
+            endHour = endHour,
+            weekStart = weekStart,
+            logicalDate = logicalDate,
+            scheduledLogicalDate = scheduledLogicalDate,
+            resolvedLogicalDate = null,
+        ),
+        scheduledLogicalDate = scheduledLogicalDate.toString(),
+        resolvedLogicalDate = null,
+    )
+
+    private suspend fun validateActionTarget(
         entity: TodoEntity,
         date: LocalDate,
+        scheduledLogicalDate: LocalDate,
         endHour: Int,
         now: ZonedDateTime,
         holidays: Set<LocalDate>,
+        allowExisting: Boolean,
     ) {
         if (entity.archivedAt != null) throw ValidationException(ValidationError.TODO_NOT_ACTIVE)
         val todo = entity.toDomain()
-        if (date != logicalDate(now, endHour) || !todo.occursOn(date, holidays)) {
+        val currentLogicalDate = logicalDate(now, endHour)
+        val pendingDate = runtimeStateDao.find(entity.id)?.pendingScheduledLogicalDate
+            ?.let(LocalDate::parse)
+        val existingResolvedToday = executionDao.findForTodo(entity.id).any {
+            it.scheduledLogicalDate == scheduledLogicalDate.toString() &&
+                it.resolvedLogicalDate == currentLogicalDate.toString()
+        }
+        val validScheduledDate = when {
+            allowExisting && existingResolvedToday -> true
+            pendingDate == scheduledLogicalDate -> true
+            todo.recurrenceType == RecurrenceType.ONCE ->
+                scheduledLogicalDate == todo.startDate && todo.isInExecutionWindow(currentLogicalDate)
+            else -> scheduledLogicalDate == currentLogicalDate && todo.occursOn(currentLogicalDate, holidays)
+        }
+        if (date != currentLogicalDate || !validScheduledDate) {
             throw ValidationException(ValidationError.TODO_ACTION_DATE_INVALID)
         }
+        if (!allowExisting && executionDao.findForTodo(entity.id).any {
+                it.scheduledLogicalDate == scheduledLogicalDate.toString()
+            }
+        ) throw ValidationException(ValidationError.TODO_ALREADY_ACTED)
     }
 
-    private suspend fun updateAppliedRevision(todo: TodoEntity) {
+    private suspend fun updateAppliedRevision(
+        todo: TodoEntity,
+        clearPending: Boolean = false,
+        pendingScheduledLogicalDate: LocalDate? = null,
+        resolvedCarryOverThroughDate: LocalDate? = null,
+    ) {
         val existing = runtimeStateDao.find(todo.id)
         runtimeStateDao.upsert(
             TodoRuntimeStateEntity(
                 todoId = todo.id,
-                lastFinalizedLogicalDate = existing?.lastFinalizedLogicalDate,
+                lastFinalizedLogicalDate = listOfNotNull(
+                    existing?.lastFinalizedLogicalDate?.let(LocalDate::parse),
+                    resolvedCarryOverThroughDate,
+                ).maxOrNull()?.toString(),
                 lastFinalizedWeeklyPeriodEnd = existing?.lastFinalizedWeeklyPeriodEnd,
                 lastFinalizedMonthlyPeriodEnd = existing?.lastFinalizedMonthlyPeriodEnd,
                 appliedDefinitionRevision = todo.definitionRevision,
                 reconciliationCursorDate = existing?.reconciliationCursorDate,
                 updatedAt = clock.millis(),
+                pendingScheduledLogicalDate = when {
+                    pendingScheduledLogicalDate != null -> pendingScheduledLogicalDate.toString()
+                    clearPending -> null
+                    else -> existing?.pendingScheduledLogicalDate
+                },
             ),
         )
     }
@@ -592,6 +817,8 @@ internal fun TodoEntity.toDomain(
     archivedAt = archivedAt,
     createdAt = createdAt,
     notifications = notifications,
+    dueDate = dueDate?.let(LocalDate::parse),
+    carryOverEnabled = carryOverEnabled,
 )
 
 private fun TodoNotificationEntity.toDomain() = TodoNotification(

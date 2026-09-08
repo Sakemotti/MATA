@@ -11,6 +11,8 @@ import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.local.TodoRuntimeStateDao
+import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.repository.toDomain
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceProgress
@@ -19,6 +21,8 @@ import com.mochisofts.mata.domain.model.WidgetCategoryGroup
 import com.mochisofts.mata.domain.model.WidgetDisplayModel
 import com.mochisofts.mata.domain.model.WidgetTodoItem
 import com.mochisofts.mata.domain.model.deadlineAt
+import com.mochisofts.mata.domain.model.effectiveDueDate
+import com.mochisofts.mata.domain.model.isInExecutionWindow
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
@@ -41,6 +45,7 @@ class RoomWidgetDisplayRepository @Inject constructor(
     private val todoDao: TodoDao,
     private val categoryDao: CategoryDao,
     private val executionDao: TodoExecutionDao,
+    private val runtimeStateDao: TodoRuntimeStateDao,
     private val holidayDao: HolidayDao,
     private val settingsRepository: SettingsRepository,
     private val holidayRepository: HolidayRepository,
@@ -59,11 +64,12 @@ class RoomWidgetDisplayRepository @Inject constructor(
             WidgetSourceData(
                 todos = todos,
                 categories = categories,
-                executions = executionDao.findBetween(
+                executions = executionDao.findForWidget(
                     currentLogicalDate.withDayOfMonth(1).minusDays(7).toString(),
                     currentLogicalDate.toString(),
                 ),
                 holidays = holidayDao.findAll().mapTo(mutableSetOf()) { LocalDate.parse(it.date) },
+                runtimeStates = runtimeStateDao.findAll(),
             )
         }
         return buildWidgetDisplayModel(
@@ -84,6 +90,12 @@ class RoomWidgetDisplayRepository @Inject constructor(
                     minute,
                 )
             },
+            dueDateLabel = { date ->
+                context.getString(R.string.widget_due_date_format, date.monthValue, date.dayOfMonth)
+            },
+            carryOverLabel = { date ->
+                context.getString(R.string.widget_carry_over_format, date.monthValue, date.dayOfMonth)
+            },
         )
     }
 }
@@ -93,6 +105,7 @@ internal data class WidgetSourceData(
     val categories: List<CategoryEntity>,
     val executions: List<TodoExecutionEntity>,
     val holidays: Set<LocalDate>,
+    val runtimeStates: List<TodoRuntimeStateEntity> = emptyList(),
 )
 
 internal fun buildWidgetDisplayModel(
@@ -104,10 +117,12 @@ internal fun buildWidgetDisplayModel(
     uncategorizedName: String,
     logicalDateLabel: (LocalDate) -> String,
     deadlineLabel: (Boolean, Int, Int) -> String,
+    dueDateLabel: (LocalDate) -> String = LocalDate::toString,
+    carryOverLabel: (LocalDate) -> String = LocalDate::toString,
 ): WidgetDisplayModel {
     val categories = source.categories.associateBy(CategoryEntity::id)
-    val executions = source.executions.associateBy { it.todoId to it.logicalDate }
     val executionsByTodo = source.executions.groupBy(TodoExecutionEntity::todoId)
+    val runtimeByTodo = source.runtimeStates.associateBy(TodoRuntimeStateEntity::todoId)
     val createdAtByTodo = source.todos.associate { it.id to it.createdAt }
     val groupedItems = linkedMapOf<String?, MutableList<WidgetTodoItem>>()
     var provisional = false
@@ -116,11 +131,25 @@ internal fun buildWidgetDisplayModel(
         val todo = entity.toDomain()
         val category = entity.categoryId?.let(categories::get)
         val targetDate = logicalDate(now, dayEndHour)
-        if (!todo.occursOn(targetDate, source.holidays)) return@forEach
-        if (executions[todo.id to targetDate.toString()] != null) return@forEach
+        val todoExecutions = executionsByTodo[todo.id].orEmpty()
+        val pendingDate = runtimeByTodo[todo.id]?.pendingScheduledLogicalDate
+            ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
+        val scheduledDate = when {
+            pendingDate != null -> pendingDate
+            todo.recurrenceType == com.mochisofts.mata.domain.model.RecurrenceType.ONCE &&
+                todo.isInExecutionWindow(targetDate) -> todo.startDate
+            todo.occursOn(targetDate, source.holidays) -> targetDate
+            else -> return@forEach
+        }
+        if (todoExecutions.any { it.scheduledLogicalDate == scheduledDate.toString() }) return@forEach
+        if (todoExecutions.any {
+                it.resolvedLogicalDate == targetDate.toString() &&
+                    it.scheduledLogicalDate != targetDate.toString()
+            }
+        ) return@forEach
 
         val progress = todo.recurrencePeriod(targetDate, weekStart)?.let { period ->
-            val completed = executionsByTodo[todo.id].orEmpty().count { execution ->
+            val completed = todoExecutions.count { execution ->
                 TodoState.fromStoredValue(execution.status) == TodoState.COMPLETED &&
                     LocalDate.parse(execution.logicalDate) in period.startDate..period.endDate
             }
@@ -128,7 +157,9 @@ internal fun buildWidgetDisplayModel(
         }
         if (progress?.isAchieved == true) return@forEach
 
-        val deadline = deadlineAt(targetDate, dayEndHour, todo.dueMinutes, now.zone)
+        val effectiveDueDate = todo.effectiveDueDate(scheduledDate)
+        val deadline = deadlineAt(effectiveDueDate, dayEndHour, todo.dueMinutes, now.zone)
+        val isCarryOver = pendingDate == scheduledDate && targetDate.isAfter(effectiveDueDate)
         groupedItems.getOrPut(entity.categoryId) { mutableListOf() } += WidgetTodoItem(
             todoId = todo.id,
             definitionRevision = todo.definitionRevision,
@@ -136,13 +167,21 @@ internal fun buildWidgetDisplayModel(
             logicalDate = targetDate.toString(),
             deadlineAt = deadline.toInstant().toEpochMilli(),
             deadlineLabel = deadlineLabel(
-                deadline.toLocalDate().isAfter(targetDate),
+                deadline.toLocalDate().isAfter(effectiveDueDate),
                 deadline.hour,
                 deadline.minute,
             ),
             overdue = !now.isBefore(deadline),
             completedCount = progress?.completedCount,
             requiredCount = progress?.period?.requiredCount,
+            scheduledLogicalDate = scheduledDate.toString(),
+            effectiveDueDate = effectiveDueDate.toString(),
+            isCarryOver = isCarryOver,
+            scheduleLabel = when {
+                isCarryOver -> carryOverLabel(scheduledDate)
+                effectiveDueDate != scheduledDate -> dueDateLabel(effectiveDueDate)
+                else -> null
+            },
         )
         if (todo.recurrenceRule.usesHolidayData() &&
             !holidayState.isDefinitive(targetDate.year)

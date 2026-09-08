@@ -167,18 +167,22 @@ private class CategoryTodoListTestTodoRepository : TodoRepository {
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
         notifications: List<TodoNotification>,
+        dueDate: LocalDate?,
+        carryOverEnabled: Boolean,
     ): Result<String> = Result.success(id ?: "todo")
     override suspend fun setCompleted(
         todoId: String,
         logicalDate: LocalDate,
         completed: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> = Result.success(Unit)
     override suspend fun setSkipped(
         todoId: String,
         logicalDate: LocalDate,
         skipped: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> = Result.success(Unit)
     override suspend fun archiveTodo(id: String): Result<Unit> = Result.success(Unit)
     override suspend fun restoreTodo(id: String): Result<Unit> = Result.success(Unit)

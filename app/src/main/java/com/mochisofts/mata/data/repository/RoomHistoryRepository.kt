@@ -14,6 +14,7 @@ import com.mochisofts.mata.data.local.TodoDao
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.local.TodoRuntimeStateDao
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
@@ -28,6 +29,7 @@ import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.deadlineAt
+import com.mochisofts.mata.domain.model.effectiveDueDate
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
@@ -55,6 +57,7 @@ class RoomHistoryRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val executionDao: TodoExecutionDao,
     private val periodResultDao: PeriodResultDao,
+    private val runtimeStateDao: TodoRuntimeStateDao,
     private val todoRepository: TodoRepository,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
@@ -100,6 +103,16 @@ class RoomHistoryRepository @Inject constructor(
                         ?: throw ValidationException(ValidationError.HISTORY_RECORD_NOT_FOUND)
                     val todo = validateUndoEligibility(execution)
                     executionDao.deleteById(execution.id)
+                    if (todo.carryOverEnabled && execution.scheduledLogicalDate != execution.logicalDate) {
+                        runtimeStateDao.find(todo.id)?.let { runtime ->
+                            runtimeStateDao.upsert(
+                                runtime.copy(
+                                    pendingScheduledLogicalDate = execution.scheduledLogicalDate,
+                                    updatedAt = clock.millis(),
+                                ),
+                            )
+                        }
+                    }
                     if (todo.archivedAt == null) todoIdToReconcile = todo.id
                     execution.toUndoToken()
                 }
@@ -120,6 +133,16 @@ class RoomHistoryRepository @Inject constructor(
                 val entity = token.toEntity()
                 val todo = validateUndoEligibility(entity)
                 executionDao.insert(entity)
+                runtimeStateDao.find(todo.id)?.let { runtime ->
+                    if (runtime.pendingScheduledLogicalDate == entity.scheduledLogicalDate) {
+                        runtimeStateDao.upsert(
+                            runtime.copy(
+                                pendingScheduledLogicalDate = null,
+                                updatedAt = clock.millis(),
+                            ),
+                        )
+                    }
+                }
                 if (todo.archivedAt == null) todoIdToReconcile = todo.id
             }
             todoIdToReconcile?.let { runCatching { notificationScheduler.reconcileTodo(it) } }
@@ -267,13 +290,18 @@ class RoomHistoryRepository @Inject constructor(
         val currentLogicalDate = logicalDate(now, dayEndHour)
         val executionDate = runCatching { LocalDate.parse(execution.logicalDate) }.getOrNull()
             ?: return false
+        val scheduledDate = runCatching { LocalDate.parse(execution.scheduledLogicalDate) }.getOrNull()
+            ?: return false
         val domainTodo = todo.toDomain().copy(archivedAt = null)
         return if (domainTodo.recurrenceType.isCountBased) {
             domainTodo.recurrencePeriod(currentLogicalDate, weekStart)?.let { period ->
                 executionDate in period.startDate..period.endDate
             } == true
         } else {
-            executionDate == currentLogicalDate && domainTodo.occursOn(executionDate)
+            executionDate == currentLogicalDate && domainTodo.occursOn(scheduledDate) &&
+                (scheduledDate == currentLogicalDate ||
+                    !currentLogicalDate.isAfter(domainTodo.effectiveDueDate(scheduledDate)) ||
+                    domainTodo.carryOverEnabled)
         }
     }
 
@@ -281,8 +309,13 @@ class RoomHistoryRepository @Inject constructor(
         todo: TodoEntity?,
         category: CategoryEntity?,
         dayEndHour: Int,
-    ): HistoryTodoSnapshot? = snapshotFromJson(snapshotJson)
-        ?: todo?.toHistorySnapshot(category, dayEndHour)
+    ): HistoryTodoSnapshot? = (snapshotFromJson(snapshotJson)
+        ?: todo?.toHistorySnapshot(category, dayEndHour))?.copy(
+        scheduledLogicalDate = runCatching { LocalDate.parse(scheduledLogicalDate) }.getOrNull(),
+        resolvedLogicalDate = resolvedLogicalDate?.let {
+            runCatching { LocalDate.parse(it) }.getOrNull()
+        },
+    )
 
     private fun PeriodResultEntity.toSnapshot(
         todo: TodoEntity?,
@@ -325,6 +358,12 @@ class RoomHistoryRepository @Inject constructor(
             endHour = snapshot.endHour,
             weekStart = DayOfWeek.of(snapshot.weekStart),
             createdAt = snapshot.createdAt,
+            dueDate = snapshot.dueDate?.let(LocalDate::parse),
+            carryOverEnabled = snapshot.carryOverEnabled,
+            scheduledLogicalDate = (snapshot.scheduledLogicalDate ?: snapshot.logicalDate)
+                ?.let(LocalDate::parse),
+            resolvedLogicalDate = snapshot.resolvedLogicalDate?.let(LocalDate::parse)
+                ?: snapshot.logicalDate?.let(LocalDate::parse),
         )
     }
 
@@ -351,6 +390,8 @@ class RoomHistoryRepository @Inject constructor(
             endHour = dayEndHour,
             weekStart = DayOfWeek.MONDAY,
             createdAt = createdAt,
+            dueDate = domain.dueDate,
+            carryOverEnabled = domain.carryOverEnabled,
         )
     }
 
@@ -382,6 +423,10 @@ class RoomHistoryRepository @Inject constructor(
             endHour = dayEndHour,
             weekStart = weekStart,
             createdAt = todo.createdAt,
+            dueDate = todo.dueDate,
+            carryOverEnabled = todo.carryOverEnabled,
+            scheduledLogicalDate = scheduledLogicalDate,
+            resolvedLogicalDate = null,
         ),
         canUndoAction = false,
     )
@@ -390,7 +435,7 @@ class RoomHistoryRepository @Inject constructor(
         compareBy<HistoryEntry> { it.state.historySectionOrder }
             .thenBy { entry ->
                 deadlineAt(
-                    entry.logicalDate,
+                    entry.snapshot.dueDate ?: entry.snapshot.scheduledLogicalDate ?: entry.logicalDate,
                     entry.snapshot.endHour,
                     entry.snapshot.dueMinutes,
                     clock.zone,
@@ -411,6 +456,8 @@ class RoomHistoryRepository @Inject constructor(
         definitionRevision = definitionRevision,
         snapshotVersion = snapshotVersion,
         snapshotJson = snapshotJson,
+        scheduledLogicalDate = LocalDate.parse(scheduledLogicalDate),
+        resolvedLogicalDate = resolvedLogicalDate?.let(LocalDate::parse),
     )
 
     private fun HistoryActionUndoToken.toEntity() = TodoExecutionEntity(
@@ -424,6 +471,8 @@ class RoomHistoryRepository @Inject constructor(
         definitionRevision = definitionRevision,
         snapshotVersion = snapshotVersion,
         snapshotJson = snapshotJson,
+        scheduledLogicalDate = scheduledLogicalDate.toString(),
+        resolvedLogicalDate = resolvedLogicalDate?.toString(),
     )
 
     private data class CurrentHistoryData(

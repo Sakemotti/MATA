@@ -205,11 +205,13 @@ fun TodoListScreen(
             },
             snackbarHost = { MataSnackbarHost(snackbarHostState) },
             floatingActionButton = {
-                ExtendedFloatingActionButton(
-                    onClick = onAddTodo,
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                    text = { Text(stringResource(R.string.action_add_todo)) },
-                )
+                if (!state.selectedDate.isBefore(LocalDate.now())) {
+                    ExtendedFloatingActionButton(
+                        onClick = onAddTodo,
+                        icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                        text = { Text(stringResource(R.string.action_add_todo)) },
+                    )
+                }
             },
             bottomBar = {
                 MataBannerAd(
@@ -283,6 +285,14 @@ fun TodoListScreen(
         TodoDetailModal(
             data = occurrence.detailModalData(),
             onDismiss = { readOnlyOccurrence = null },
+            onEdit = {
+                readOnlyOccurrence = null
+                onEditTodo(occurrence.todo.id)
+            },
+            onDelete = {
+                readOnlyOccurrence = null
+                deleteTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+            },
         )
     }
 
@@ -557,6 +567,16 @@ private fun TodoOccurrenceRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    if (occurrence.effectiveDueDate != occurrence.scheduledLogicalDate) {
+                        Text(
+                            stringResource(
+                                R.string.todo_due_date_format,
+                                occurrence.effectiveDueDate.toJapaneseDate(
+                                    stringResource(R.string.date_pattern_short),
+                                ),
+                            ),
+                        )
+                    }
                     occurrence.todo.dueMinutes?.let { minutes ->
                         Text(
                             stringResource(
@@ -566,6 +586,18 @@ private fun TodoOccurrenceRow(
                             ),
                         )
                     } ?: Text(stringResource(R.string.todo_due_none))
+                    if (occurrence.isCarryOver) {
+                        MataStatusLabel(
+                            text = stringResource(
+                                R.string.todo_carry_over_format,
+                                occurrence.scheduledLogicalDate.toJapaneseDate(
+                                    stringResource(R.string.date_pattern_short),
+                                ),
+                            ),
+                            icon = Icons.Outlined.ErrorOutline,
+                            type = MataStatusType.NEUTRAL,
+                        )
+                    }
                     if (occurrence.isOverdue && occurrence.state == TodoState.PENDING) {
                         MataStatusLabel(
                             text = stringResource(R.string.todo_overdue),
@@ -683,6 +715,16 @@ private fun TodoOccurrence.detailModalData(): TodoDetailModalData = TodoDetailMo
             value = logicalDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
         ),
         TodoDetailField(
+            label = stringResource(R.string.todo_editor_execution_date_label),
+            value = scheduledLogicalDate.toJapaneseDate(
+                stringResource(R.string.date_pattern_plain),
+            ),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.todo_editor_due_date_label),
+            value = effectiveDueDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
+        ),
+        TodoDetailField(
             label = stringResource(R.string.calendar_history_due),
             value = todo.dueMinutes?.let { minutes ->
                 stringResource(R.string.time_format, minutes / 60, minutes % 60)
@@ -699,6 +741,12 @@ private fun TodoOccurrence.detailModalData(): TodoDetailModalData = TodoDetailMo
         TodoDetailField(
             label = stringResource(R.string.calendar_history_state),
             value = stringResource(state.labelRes()),
+        ),
+        TodoDetailField(
+            label = stringResource(R.string.todo_editor_carry_over_label),
+            value = stringResource(
+                if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled,
+            ),
         ),
     ),
 )
