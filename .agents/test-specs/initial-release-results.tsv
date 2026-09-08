@@ -71,12 +71,12 @@ STA-011	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Roo
 STA-012	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta012・CI run 33927632450成功
 NTF-001	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions Ubuntu	NotificationTestSpecCoverageTest#ntf001・CI run 33859640271成功
 NTF-002	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf002・CI run 33859640271成功
-NTF-003	P0	app-core.md	未実施	-	-	-	-	-
-NTF-004	P0	app-core.md	未実施	-	-	-	-	-
-NTF-005	P1	app-core.md	未実施	-	-	-	-	-
+NTF-003	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-002・期限前、期限時刻、期限超過の通知が設定時刻どおり正しい対象へ表示された
+NTF-004	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-002・通知、アプリ本体、ウィジェットからの完了とアプリ本体からのスキップで対象通知だけが消えることを確認
+NTF-005	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-002・通知からの完了後に取消導線や完了確認通知がなく、カレンダー履歴へ反映されることを確認
 NTF-006	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf006・CI run 33859640271成功
 NTF-007	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf007・CI run 33859640271成功
-NTF-008	P1	app-core.md	未実施	-	-	-	-	-
+NTF-008	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-002・正確なアラーム不許可時も保存でき、通常通知へのフォールバック案内を確認
 NTF-009	P1	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf009・CI run 33859640271成功
 NTF-010	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf010・CI run 33859640271成功
 NTF-011	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf011・CI run 33859640271成功
@@ -84,20 +84,20 @@ NTF-012	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Not
 NTF-013	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf013・CI run 33859640271成功
 NTF-014	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf014・CI run 33859640271成功
 NTF-015	P1	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf015・CI run 33859640271成功
-WGT-001	P0	app-core.md	未実施	-	-	-	-	-
-WGT-002	P1	app-core.md	未実施	-	-	-	-	-
-WGT-003	P0	app-core.md	未実施	-	-	-	-	-
-WGT-004	P0	app-core.md	未実施	-	-	-	-	-
-WGT-005	P0	app-core.md	未実施	-	-	-	-	-
-WGT-006	P1	app-core.md	未実施	-	-	-	-	-
-WGT-007	P1	app-core.md	未実施	-	-	-	-	-
-WGT-008	P0	app-core.md	未実施	-	-	-	-	-
-WGT-009	P0	app-core.md	未実施	-	-	-	-	-
-WGT-010	P0	app-core.md	未実施	-	-	-	-	-
-WGT-011	P0	app-core.md	未実施	-	-	-	-	-
-WGT-012	P0	app-core.md	未実施	-	-	-	-	-
-WGT-013	P0	app-core.md	未実施	-	-	-	-	-
-WGT-014	P1	app-core.md	未実施	-	-	-	-	-
+WGT-001	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・複数カテゴリの今日の未完了TODOが全件表示されることを確認
+WGT-002	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・カテゴリ名、色、アイコンを識別できるグループ表示を確認
+WGT-003	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・共通終了時刻の境界前後で全カテゴリが同じ論理日へ更新されることを確認
+WGT-004	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・未完了だけが表示され、完了済みとスキップ済みが非表示であることを確認
+WGT-005	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・異なる複数TODOの連続完了後に全ウィジェットが最新状態となり古い行が復活しないことを確認
+WGT-006	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・ウィジェットからMATAのTODO一覧を開けることを確認
+WGT-007	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・対象0件の空状態に古いTODO行が残らないことを確認
+WGT-008	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・登録、編集、状態変更、アーカイブ、復元、削除、取消、カテゴリ変更、日付境界、バックアップ復元後の更新を確認
+WGT-009	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・TODO行の各位置から同じ操作ダイアログが開くことを確認
+WGT-010	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・ライト／ダークで背景減光、対象TODO、完了、スキップ、キャンセル表示を確認
+WGT-011	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・ウィジェットからのスキップが通知、全ウィジェット、一覧、履歴へ反映されることを確認
+WGT-012	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・キャンセル、戻る、外側タップで状態を変えず専用画面が残らないことを確認
+WGT-013	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・操作ダイアログ表示後に別経路で状態変更しても重複・無効な履歴を作らないことを確認
+WGT-014	P1	app-core.md	保留	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-003・実広告が操作領域と重ならず画面下部へ表示されることは確認済み。広告読込失敗を再現できないためDEV-FAULT確認待ち
 DAT-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat001・CI run 33929968497成功
 DAT-002	P0	app-core.md	未実施	-	-	-	-	-
 DAT-003	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	HolidayHttpRequestPrivacyTest#dat003・CI run 33929968497成功
