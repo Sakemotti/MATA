@@ -40,6 +40,22 @@ fun deadlineAt(
     return dueDate.atTime(dueTime).atZone(zoneId)
 }
 
+fun Todo.effectiveDueDate(scheduledLogicalDate: LocalDate): LocalDate =
+    if (recurrenceType == RecurrenceType.ONCE) dueDate ?: scheduledLogicalDate else scheduledLogicalDate
+
+fun Todo.deadlineAt(
+    scheduledLogicalDate: LocalDate,
+    endHour: Int,
+    zoneId: ZoneId,
+): ZonedDateTime = deadlineAt(effectiveDueDate(scheduledLogicalDate), endHour, dueMinutes, zoneId)
+
+fun Todo.isInExecutionWindow(
+    date: LocalDate,
+    scheduledLogicalDate: LocalDate = startDate,
+): Boolean = recurrenceType == RecurrenceType.ONCE &&
+    !date.isBefore(scheduledLogicalDate) &&
+    !date.isAfter(effectiveDueDate(scheduledLogicalDate))
+
 /**
  * Produces a monotonic key within a logical day so presentation layers can order TODOs without
  * duplicating the boundary calculation. A missing deadline is placed at the logical-day end.

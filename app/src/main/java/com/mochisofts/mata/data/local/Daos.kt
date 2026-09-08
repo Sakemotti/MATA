@@ -55,6 +55,8 @@ data class ArchiveHistoryRow(
     val definitionRevision: Int,
     val snapshotVersion: Int,
     val snapshotJson: String,
+    val scheduledLogicalDate: String?,
+    val resolvedLogicalDate: String?,
     val currentTitle: String,
     val currentDescription: String,
     val currentCategoryId: String?,
@@ -64,6 +66,8 @@ data class ArchiveHistoryRow(
     val currentRepeatParamsVersion: Int,
     val currentRepeatParamsJson: String,
     val currentDueMinutes: Int?,
+    val currentDueDate: String?,
+    val currentCarryOverEnabled: Boolean,
     val currentDefinitionRevision: Int,
     val currentCreatedAt: Long,
     val currentCategoryName: String?,
@@ -250,6 +254,17 @@ interface TodoExecutionDao {
     suspend fun findBetween(startDate: String, endDate: String): List<TodoExecutionEntity>
 
     @Query(
+        """
+        SELECT todo_executions.*
+        FROM todo_executions
+        INNER JOIN todos ON todos.id = todo_executions.todoId
+        WHERE todos.archivedAt IS NULL
+          AND (todo_executions.logicalDate BETWEEN :startDate AND :endDate OR todos.recurrenceType = 'once')
+        """,
+    )
+    suspend fun findForWidget(startDate: String, endDate: String): List<TodoExecutionEntity>
+
+    @Query(
         "SELECT logicalDate, status FROM todo_executions " +
             "WHERE logicalDate BETWEEN :startDate AND :endDate ORDER BY logicalDate ASC",
     )
@@ -288,7 +303,8 @@ interface TodoExecutionDao {
                 logicalDate, status, actedAt, finalizedAt,
                 NULL AS periodType, NULL AS periodStart, NULL AS periodEnd,
                 NULL AS requiredCount, NULL AS completedCount, NULL AS achieved,
-                NULL AS displayDate, definitionRevision, snapshotVersion, snapshotJson
+                NULL AS displayDate, definitionRevision, snapshotVersion, snapshotJson,
+                scheduledLogicalDate, resolvedLogicalDate
             FROM todo_executions
             WHERE todoId = :todoId
             UNION ALL
@@ -298,7 +314,8 @@ interface TodoExecutionDao {
                 NULL AS logicalDate, NULL AS status, NULL AS actedAt, finalizedAt,
                 periodType, periodStart, periodEnd,
                 requiredCount, completedCount, achieved,
-                displayDate, definitionRevision, snapshotVersion, snapshotJson
+                displayDate, definitionRevision, snapshotVersion, snapshotJson,
+                NULL AS scheduledLogicalDate, NULL AS resolvedLogicalDate
             FROM period_results
             WHERE todoId = :todoId
         )
@@ -312,6 +329,8 @@ interface TodoExecutionDao {
             todos.repeatParamsVersion AS currentRepeatParamsVersion,
             todos.repeatParamsJson AS currentRepeatParamsJson,
             todos.dueMinutes AS currentDueMinutes,
+            todos.dueDate AS currentDueDate,
+            todos.carryOverEnabled AS currentCarryOverEnabled,
             todos.definitionRevision AS currentDefinitionRevision,
             todos.createdAt AS currentCreatedAt,
             categories.name AS currentCategoryName,
@@ -392,6 +411,12 @@ interface PeriodResultDao {
 
 @Dao
 interface TodoRuntimeStateDao {
+    @Query("SELECT * FROM todo_runtime_states ORDER BY todoId ASC")
+    fun observeAll(): Flow<List<TodoRuntimeStateEntity>>
+
+    @Query("SELECT * FROM todo_runtime_states ORDER BY todoId ASC")
+    suspend fun findAll(): List<TodoRuntimeStateEntity>
+
     @Query("SELECT COUNT(*) FROM todo_runtime_states")
     suspend fun backupCount(): Int
 

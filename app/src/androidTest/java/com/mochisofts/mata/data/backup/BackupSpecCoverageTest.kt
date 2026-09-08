@@ -369,6 +369,10 @@ class BackupSpecCoverageTest {
             "runtime state" to (
                 "\"appliedDefinitionRevision\":1" to "\"appliedDefinitionRevision\":2"
                 ),
+            "pending carry-over" to (
+                "\"pendingScheduledLogicalDate\":null" to
+                    "\"pendingScheduledLogicalDate\":\"2026-08-08\""
+                ),
         )
         val scheduler = BackupTestNotificationScheduler()
         val restorer = backupRestorer(scheduler)

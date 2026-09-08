@@ -166,6 +166,8 @@ private class TodoListTestRepository : TodoRepository {
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
         notifications: List<TodoNotification>,
+        dueDate: LocalDate?,
+        carryOverEnabled: Boolean,
     ): Result<String> = Result.success(id ?: "todo")
 
     override suspend fun setCompleted(
@@ -173,6 +175,7 @@ private class TodoListTestRepository : TodoRepository {
         logicalDate: LocalDate,
         completed: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> {
         completeCalls += 1
         completeGate?.await()
@@ -184,6 +187,7 @@ private class TodoListTestRepository : TodoRepository {
         logicalDate: LocalDate,
         skipped: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> {
         skipCalls += 1
         return Result.success(Unit)

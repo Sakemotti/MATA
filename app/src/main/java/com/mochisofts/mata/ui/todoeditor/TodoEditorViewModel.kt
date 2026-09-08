@@ -23,6 +23,7 @@ import com.mochisofts.mata.domain.model.nextNotificationCandidate
 import com.mochisofts.mata.domain.model.nextOccurrenceOnOrAfter
 import com.mochisofts.mata.domain.model.notificationTriggerAt
 import com.mochisofts.mata.domain.model.deadlineAt
+import com.mochisofts.mata.domain.model.effectiveDueDate
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
@@ -68,6 +69,8 @@ data class TodoEditorUiState(
     val monthlyCount: Int = 1,
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val dueMinutes: Int? = null,
+    val dueDate: LocalDate? = null,
+    val carryOverEnabled: Boolean = false,
     val dayEndHour: Int = 0,
     val notifications: List<TodoNotification> = emptyList(),
     val holidaySnapshot: HolidaySnapshot = HolidaySnapshot(),
@@ -123,7 +126,8 @@ data class TodoEditorUiState(
             description.length <= 1000 && recurrenceRule.isValid() &&
             notificationErrors.isEmpty() &&
             (!isNew || !startDate.isBefore(today)) &&
-            (recurrenceType == RecurrenceType.ONCE || endDate == null || !endDate.isBefore(startDate))
+            (recurrenceType == RecurrenceType.ONCE || endDate == null || !endDate.isBefore(startDate)) &&
+            (recurrenceType != RecurrenceType.ONCE || dueDate == null || !dueDate.isBefore(startDate))
 }
 
 sealed interface TodoEditorEffect {
@@ -220,6 +224,8 @@ class TodoEditorViewModel @Inject constructor(
                         dayFilter = todo.recurrenceRule.dayFilter,
                         monthlyCount = todo.recurrenceRule.requiredCount ?: 1,
                         dueMinutes = todo.dueMinutes,
+                        dueDate = todo.dueDate,
+                        carryOverEnabled = todo.carryOverEnabled,
                         notifications = todo.notifications,
                     )
                 }
@@ -233,6 +239,8 @@ class TodoEditorViewModel @Inject constructor(
     fun setCategory(value: String?) = edit { copy(categoryId = value) }
     fun setStartDate(value: LocalDate) = edit { copy(startDate = value) }
     fun setEndDate(value: LocalDate?) = edit { copy(endDate = value) }
+    fun setDueDate(value: LocalDate?) = edit { copy(dueDate = value) }
+    fun setCarryOverEnabled(value: Boolean) = edit { copy(carryOverEnabled = value) }
     fun setRecurrence(value: RecurrenceType) = edit {
         copy(
             recurrenceType = value,
@@ -267,6 +275,7 @@ class TodoEditorViewModel @Inject constructor(
             } else {
                 monthlyDay
             },
+            carryOverEnabled = carryOverEnabled && !value.isCountBased,
         )
     }
     fun toggleWeekday(value: DayOfWeek) = edit {
@@ -359,6 +368,8 @@ class TodoEditorViewModel @Inject constructor(
                 recurrenceRule = state.recurrenceRule,
                 dueMinutes = state.dueMinutes,
                 notifications = state.notifications,
+                dueDate = state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
+                carryOverEnabled = state.carryOverEnabled && !state.recurrenceType.isCountBased,
             ).onSuccess { todoId ->
                 val systemState = notificationScheduler.systemState()
                 val shouldRequestPermission = state.notifications.isNotEmpty() &&
@@ -455,6 +466,8 @@ class TodoEditorViewModel @Inject constructor(
             archivedAt = null,
             createdAt = 0,
             notifications = state.notifications,
+            dueDate = state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
+            carryOverEnabled = state.carryOverEnabled && !state.recurrenceType.isCountBased,
         )
         val now = ZonedDateTime.now(clock)
         val previews = state.notifications.associate { notification ->
@@ -467,13 +480,18 @@ class TodoEditorViewModel @Inject constructor(
                 holidays = state.holidaySnapshot.dates,
             )?.triggerAt
         }
-        val firstOccurrence = todo.nextOccurrenceOnOrAfter(
-            logicalDate(now, state.effectiveEndHour),
-            state.holidaySnapshot.dates,
-        )
+        val currentLogicalDate = logicalDate(now, state.effectiveEndHour)
+        val firstOccurrence = if (
+            todo.recurrenceType == RecurrenceType.ONCE &&
+            !currentLogicalDate.isAfter(todo.effectiveDueDate(todo.startDate))
+        ) {
+            todo.startDate
+        } else {
+            todo.nextOccurrenceOnOrAfter(currentLogicalDate, state.holidaySnapshot.dates)
+        }
         val hasPastCandidate = firstOccurrence != null && state.notifications.any { notification ->
             val deadline = deadlineAt(
-                firstOccurrence,
+                todo.effectiveDueDate(firstOccurrence),
                 state.effectiveEndHour,
                 state.dueMinutes,
                 now.zone,

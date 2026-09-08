@@ -152,6 +152,24 @@ class NotificationModelsTest {
         assertNull(candidate)
     }
 
+    @Test
+    fun onceTodoNotification_usesDueDateAfterExecutionDate() {
+        val start = LocalDate.of(2026, 9, 9)
+        val due = LocalDate.of(2026, 9, 12)
+        val todo = todo(start, RecurrenceRule.once(), 12 * 60).copy(dueDate = due)
+
+        val candidate = nextNotificationCandidate(
+            todo = todo,
+            notification = notification(NotificationRelation.AT, 0),
+            endHour = 0,
+            now = ZonedDateTime.of(2026, 9, 10, 9, 0, 0, 0, zone),
+            weekStart = DayOfWeek.MONDAY,
+        )
+
+        assertEquals(start, candidate?.logicalDate)
+        assertEquals(due, candidate?.deadlineAt?.toLocalDate())
+    }
+
     private fun notification(
         relation: NotificationRelation,
         amount: Int,

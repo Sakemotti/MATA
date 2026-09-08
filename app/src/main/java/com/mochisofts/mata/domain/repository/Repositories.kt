@@ -51,18 +51,22 @@ interface TodoRepository {
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
         notifications: List<TodoNotification> = emptyList(),
+        dueDate: LocalDate? = null,
+        carryOverEnabled: Boolean = false,
     ): Result<String>
     suspend fun setCompleted(
         todoId: String,
         logicalDate: LocalDate,
         completed: Boolean,
         operationId: String = UUID.randomUUID().toString(),
+        scheduledLogicalDate: LocalDate = logicalDate,
     ): Result<Unit>
     suspend fun setSkipped(
         todoId: String,
         logicalDate: LocalDate,
         skipped: Boolean,
         operationId: String = UUID.randomUUID().toString(),
+        scheduledLogicalDate: LocalDate = logicalDate,
     ): Result<Unit>
     suspend fun archiveTodo(id: String): Result<Unit>
     suspend fun restoreTodo(id: String): Result<Unit>

@@ -13,6 +13,7 @@ import com.mochisofts.mata.data.local.MIGRATION_3_4
 import com.mochisofts.mata.data.local.MIGRATION_4_5
 import com.mochisofts.mata.data.local.MIGRATION_5_6
 import com.mochisofts.mata.data.local.MIGRATION_6_7
+import com.mochisofts.mata.data.local.MIGRATION_7_8
 import com.mochisofts.mata.data.local.HolidayDao
 import com.mochisofts.mata.data.local.HolidayFetchStateDao
 import com.mochisofts.mata.data.local.HolidayUpdateStateDao
@@ -132,6 +133,7 @@ object DatabaseModule {
                 MIGRATION_4_5,
                 MIGRATION_5_6,
                 MIGRATION_6_7,
+                MIGRATION_7_8,
             )
             .build()
 

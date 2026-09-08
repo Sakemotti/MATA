@@ -111,6 +111,8 @@ data class Todo(
     val archivedAt: Long?,
     val createdAt: Long,
     val notifications: List<TodoNotification> = emptyList(),
+    val dueDate: LocalDate? = null,
+    val carryOverEnabled: Boolean = false,
 ) {
     val recurrenceType: RecurrenceType
         get() = recurrenceRule.type
@@ -140,4 +142,7 @@ data class TodoOccurrence(
     val state: TodoState,
     val progress: RecurrenceProgress? = null,
     val isOverdue: Boolean = false,
+    val scheduledLogicalDate: LocalDate = logicalDate,
+    val effectiveDueDate: LocalDate = scheduledLogicalDate,
+    val isCarryOver: Boolean = false,
 )

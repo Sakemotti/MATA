@@ -168,6 +168,7 @@ class RoomDataProtectionSpecCoverageTest {
             categoryDao = database.categoryDao(),
             executionDao = database.todoExecutionDao(),
             periodResultDao = database.periodResultDao(),
+            runtimeStateDao = database.todoRuntimeStateDao(),
             todoRepository = todoRepository,
             settingsRepository = settings,
             notificationScheduler = notificationScheduler,

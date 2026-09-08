@@ -139,7 +139,55 @@ class RoomHistoryReconcilerTest {
         )
     }
 
-    private fun todo(id: String, rule: RecurrenceRule, startDate: String): TodoEntity {
+    @Test
+    fun onceTodo_isFinalizedOnItsEffectiveDueDate() = runBlocking {
+        database.todoDao().upsert(
+            todo(
+                id = "once-with-due-date",
+                rule = RecurrenceRule.once(),
+                startDate = "2026-08-08",
+                dueDate = "2026-08-10",
+            ),
+        )
+
+        reconciler.reconcile()
+
+        val execution = database.todoExecutionDao()
+            .findForTodo("once-with-due-date")
+            .single()
+        assertEquals("2026-08-08", execution.scheduledLogicalDate)
+        assertEquals("2026-08-10", execution.logicalDate)
+        assertEquals(null, execution.resolvedLogicalDate)
+    }
+
+    @Test
+    fun carryOverTodo_keepsOnlyOldestUnresolvedOccurrencePending() = runBlocking {
+        database.todoDao().upsert(
+            todo(
+                id = "carry-over",
+                rule = RecurrenceRule.daily(),
+                startDate = "2026-08-08",
+                carryOverEnabled = true,
+            ),
+        )
+
+        val result = reconciler.reconcile()
+
+        assertEquals(0, result.generatedRecords)
+        assertEquals(emptyList<TodoExecutionEntity>(), database.todoExecutionDao().findForTodo("carry-over"))
+        assertEquals(
+            "2026-08-08",
+            database.todoRuntimeStateDao().find("carry-over")?.pendingScheduledLogicalDate,
+        )
+    }
+
+    private fun todo(
+        id: String,
+        rule: RecurrenceRule,
+        startDate: String,
+        dueDate: String? = null,
+        carryOverEnabled: Boolean = false,
+    ): TodoEntity {
         val encoded = RecurrenceRuleJson.encode(rule)
         return TodoEntity(
             id = id,
@@ -156,6 +204,8 @@ class RoomHistoryReconcilerTest {
             createdAt = 1,
             updatedAt = 1,
             archivedAt = null,
+            dueDate = dueDate,
+            carryOverEnabled = carryOverEnabled,
         )
     }
 }

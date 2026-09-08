@@ -38,6 +38,7 @@ data class CategoryEntity(
         Index("categoryId"),
         Index("startDate"),
         Index("endDate"),
+        Index("dueDate"),
         Index("archivedAt"),
     ],
 )
@@ -56,6 +57,8 @@ data class TodoEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val archivedAt: Long?,
+    val dueDate: String? = null,
+    val carryOverEnabled: Boolean = false,
 )
 
 @Entity(
@@ -87,6 +90,8 @@ data class TodoExecutionEntity(
     val definitionRevision: Int,
     val snapshotVersion: Int,
     val snapshotJson: String,
+    val scheduledLogicalDate: String = logicalDate,
+    val resolvedLogicalDate: String? = if (status == "missed") null else logicalDate,
 )
 
 @Entity(
@@ -142,6 +147,7 @@ data class TodoRuntimeStateEntity(
     val appliedDefinitionRevision: Int,
     val reconciliationCursorDate: String?,
     val updatedAt: Long,
+    val pendingScheduledLogicalDate: String? = null,
 )
 
 @Entity(

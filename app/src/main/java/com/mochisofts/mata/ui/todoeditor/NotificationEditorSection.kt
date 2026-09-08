@@ -218,6 +218,7 @@ fun NotificationEditorSection(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         isError = NotificationValidationError.INVALID_AMOUNT in errors,
+                        colors = state.categoryInputColors(),
                     )
                     FlowRow(
                         modifier = Modifier.focusGroup(),

@@ -72,6 +72,7 @@ class RoomHistoryRepositoryTest {
             categoryDao = database.categoryDao(),
             executionDao = database.todoExecutionDao(),
             periodResultDao = database.periodResultDao(),
+            runtimeStateDao = database.todoRuntimeStateDao(),
             todoRepository = EmptyTodoRepository(),
             settingsRepository = CalendarSettingsRepository(),
             notificationScheduler = NoOpNotificationScheduler(),
@@ -346,18 +347,22 @@ private class EmptyTodoRepository : TodoRepository {
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
         notifications: List<TodoNotification>,
+        dueDate: LocalDate?,
+        carryOverEnabled: Boolean,
     ) = Result.success(id ?: "todo")
     override suspend fun setCompleted(
         todoId: String,
         logicalDate: LocalDate,
         completed: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ) = Result.success(Unit)
     override suspend fun setSkipped(
         todoId: String,
         logicalDate: LocalDate,
         skipped: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ) = Result.success(Unit)
     override suspend fun archiveTodo(id: String) = Result.success(Unit)
     override suspend fun restoreTodo(id: String) = Result.success(Unit)

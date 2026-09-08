@@ -449,6 +449,9 @@
     <string name="error_todo_category_not_found">選択したカテゴリが見つかりません</string>
     <string name="error_todo_date_in_past">過去の日付にはTODOを登録できません</string>
     <string name="error_todo_end_date_before_start">終了日は開始日以降を指定してください</string>
+    <string name="error_todo_due_date_before_start">期限日は実行日以降を指定してください</string>
+    <string name="error_todo_due_date_requires_once">期限日は繰り返しなしのTODOだけに設定できます</string>
+    <string name="error_todo_carry_over_not_allowed">回数指定のTODOでは未完了の繰り越しを設定できません</string>
     <string name="error_todo_recurrence_rule_invalid">繰り返し設定を確認してください</string>
     <string name="error_todo_notification_too_many">通知は10件まで設定できます</string>
     <string name="error_todo_notification_amount_invalid">差分は1から999までで入力してください</string>
@@ -520,4 +523,18 @@
     <string name="widget_preview_todo_two">デイリークエスト</string>
     <string name="widget_preview_deadline_one">8:00</string>
     <string name="widget_preview_deadline_two">翌日 0:00</string>
+    <string name="todo_editor_due_date_label">期限日</string>
+    <string name="todo_editor_due_date_same_as_execution">実行日と同日</string>
+    <string name="todo_editor_carry_over_label">未完了の場合、完了するまで表示</string>
+    <string name="todo_editor_carry_over_description">期限を過ぎても最古の未完了分を表示します</string>
+    <string name="action_set">設定</string>
+    <string name="action_clear">クリア</string>
+    <string name="action_edit">編集</string>
+    <string name="label_enabled">有効</string>
+    <string name="label_disabled">無効</string>
+    <string name="todo_due_date_format">期限 %1$s</string>
+    <string name="todo_carry_over_format">繰り越し（%1$s分）</string>
+    <string name="widget_due_date_format">期限 %1$d/%2$d</string>
+    <string name="widget_carry_over_format">繰り越し %1$d/%2$d分</string>
+    <string name="todo_resolution_date_label">解決日</string>
 </resources>

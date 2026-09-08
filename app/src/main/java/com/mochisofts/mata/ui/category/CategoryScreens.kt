@@ -51,6 +51,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -800,6 +801,10 @@ fun CategoryEditorScreen(
                     isError = state.name.length > 30,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = categoryColors[state.colorIndex],
+                        unfocusedBorderColor = categoryColors[state.colorIndex],
+                    ),
                 )
                 Text(stringResource(R.string.category_color_label), style = MaterialTheme.typography.titleMedium)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -975,6 +980,10 @@ private fun CategoryEditorScaffold(
                     isError = state.name.length > 30,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = categoryColors[state.colorIndex],
+                        unfocusedBorderColor = categoryColors[state.colorIndex],
+                    ),
                 )
                 Text(
                     stringResource(R.string.category_color_label),

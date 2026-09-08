@@ -39,6 +39,10 @@ internal data class HistorySnapshotV1(
     val logicalDate: String?,
     val periodStart: String?,
     val periodEnd: String?,
+    val dueDate: String? = null,
+    val carryOverEnabled: Boolean = false,
+    val scheduledLogicalDate: String? = null,
+    val resolvedLogicalDate: String? = null,
 ) {
     companion object {
         const val VERSION = 1
@@ -67,6 +71,8 @@ internal object HistorySnapshotJson {
         logicalDate: LocalDate? = null,
         periodStart: LocalDate? = null,
         periodEnd: LocalDate? = null,
+        scheduledLogicalDate: LocalDate? = logicalDate,
+        resolvedLogicalDate: LocalDate? = logicalDate,
     ): String = json.encodeToString(
         HistorySnapshotV1(
             todoId = todo.id,
@@ -97,6 +103,10 @@ internal object HistorySnapshotJson {
             logicalDate = logicalDate?.toString(),
             periodStart = periodStart?.toString(),
             periodEnd = periodEnd?.toString(),
+            dueDate = todo.dueDate,
+            carryOverEnabled = todo.carryOverEnabled,
+            scheduledLogicalDate = scheduledLogicalDate?.toString(),
+            resolvedLogicalDate = resolvedLogicalDate?.toString(),
         ),
     )
 
@@ -139,6 +149,11 @@ internal object HistorySnapshotJson {
                 endHour = snapshot.endHour,
                 weekStart = DayOfWeek.of(snapshot.weekStart),
                 createdAt = snapshot.createdAt,
+                dueDate = snapshot.dueDate?.let(LocalDate::parse),
+                carryOverEnabled = snapshot.carryOverEnabled,
+                scheduledLogicalDate = (snapshot.scheduledLogicalDate ?: snapshot.logicalDate)
+                    ?.let(LocalDate::parse),
+                resolvedLogicalDate = snapshot.resolvedLogicalDate?.let(LocalDate::parse),
             )
         }.getOrNull()
     }

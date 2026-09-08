@@ -145,6 +145,30 @@ class TodoEditorViewModelTest {
     }
 
     @Test
+    fun dueDateAndCarryOver_areValidatedAndSavedForSupportedTypes() = runTest {
+        val repository = FakeTodoRepository()
+        val viewModel = createViewModel(todoRepository = repository)
+        runCurrent()
+        viewModel.setTitle("期限付き")
+        val startDate = viewModel.uiState.value.startDate
+
+        viewModel.setDueDate(startDate.minusDays(1))
+        assertFalse(viewModel.uiState.value.canSave)
+
+        val dueDate = startDate.plusDays(3)
+        viewModel.setDueDate(dueDate)
+        viewModel.setCarryOverEnabled(true)
+        viewModel.save()
+        runCurrent()
+
+        assertEquals(dueDate, repository.lastSave?.dueDate)
+        assertTrue(repository.lastSave?.carryOverEnabled == true)
+
+        viewModel.setRecurrence(RecurrenceType.WEEKLY_COUNT)
+        assertFalse(viewModel.uiState.value.carryOverEnabled)
+    }
+
+    @Test
     fun inputLimitsAndRecurrenceValuesControlSaveAvailability() = runTest {
         val viewModel = createViewModel()
         runCurrent()
@@ -265,6 +289,8 @@ private data class SaveTodoCall(
     val recurrenceRule: RecurrenceRule,
     val dueMinutes: Int?,
     val notifications: List<TodoNotification>,
+    val dueDate: LocalDate?,
+    val carryOverEnabled: Boolean,
 )
 
 private class FakeTodoRepository(
@@ -291,6 +317,8 @@ private class FakeTodoRepository(
         recurrenceRule: RecurrenceRule,
         dueMinutes: Int?,
         notifications: List<TodoNotification>,
+        dueDate: LocalDate?,
+        carryOverEnabled: Boolean,
     ): Result<String> {
         saveCount += 1
         lastSave = SaveTodoCall(
@@ -303,6 +331,8 @@ private class FakeTodoRepository(
             recurrenceRule = recurrenceRule,
             dueMinutes = dueMinutes,
             notifications = notifications,
+            dueDate = dueDate,
+            carryOverEnabled = carryOverEnabled,
         )
         return saveResult
     }
@@ -312,6 +342,7 @@ private class FakeTodoRepository(
         logicalDate: LocalDate,
         completed: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> = Result.success(Unit)
 
     override suspend fun setSkipped(
@@ -319,6 +350,7 @@ private class FakeTodoRepository(
         logicalDate: LocalDate,
         skipped: Boolean,
         operationId: String,
+        scheduledLogicalDate: LocalDate,
     ): Result<Unit> = Result.success(Unit)
 
     override suspend fun archiveTodo(id: String): Result<Unit> = Result.success(Unit)

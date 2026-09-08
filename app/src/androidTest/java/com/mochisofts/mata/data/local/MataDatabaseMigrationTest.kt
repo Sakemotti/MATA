@@ -241,4 +241,57 @@ class MataDatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate7To8_addsDueCarryOverAndOccurrenceDates() {
+        helper.createDatabase(databaseName, 7).apply {
+            execSQL(
+                """
+                INSERT INTO todos (
+                    id, title, description, categoryId, startDate, endDate, recurrenceType,
+                    repeatParamsVersion, repeatParamsJson, dueMinutes, definitionRevision,
+                    createdAt, updatedAt, archivedAt
+                ) VALUES (
+                    'todo-id', 'TODO', '', NULL, '2026-09-09', NULL, 'once',
+                    1, '{}', NULL, 1, 100, 100, NULL
+                )
+                """.trimIndent(),
+            )
+            execSQL(
+                """
+                INSERT INTO todo_executions (
+                    id, operationId, todoId, logicalDate, status, actedAt, finalizedAt,
+                    definitionRevision, snapshotVersion, snapshotJson
+                ) VALUES (
+                    'execution-id', 'operation-id', 'todo-id', '2026-09-09', 'completed',
+                    200, 200, 1, 1, '{}'
+                )
+                """.trimIndent(),
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(
+            databaseName,
+            8,
+            true,
+            MIGRATION_7_8,
+        ).use { database ->
+            database.query(
+                "SELECT dueDate, carryOverEnabled FROM todos WHERE id = 'todo-id'",
+            ).use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(true, cursor.isNull(0))
+                assertEquals(0, cursor.getInt(1))
+            }
+            database.query(
+                "SELECT scheduledLogicalDate, resolvedLogicalDate FROM todo_executions " +
+                    "WHERE id = 'execution-id'",
+            ).use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("2026-09-09", cursor.getString(0))
+                assertEquals("2026-09-09", cursor.getString(1))
+            }
+        }
+    }
 }

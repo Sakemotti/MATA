@@ -5,7 +5,7 @@ import com.mochisofts.mata.domain.model.AppTheme
 import java.time.DayOfWeek
 
 internal const val BACKUP_FORMAT_ID = "com.mochisofts.mata.backup"
-internal const val BACKUP_FORMAT_VERSION = 3
+internal const val BACKUP_FORMAT_VERSION = 4
 internal const val MIN_SUPPORTED_BACKUP_FORMAT_VERSION = 1
 internal const val BACKUP_EXTENSION = ".mata-backup"
 

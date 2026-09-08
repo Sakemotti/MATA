@@ -49,11 +49,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -79,6 +81,7 @@ import androidx.lifecycle.Lifecycle
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
@@ -96,6 +99,7 @@ import java.util.Locale
 private enum class DatePickerTarget {
     START,
     END,
+    DUE,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -230,6 +234,7 @@ fun TodoEditorScreen(
                         Text(stringResource(R.string.character_counter_format, state.title.length, 100))
                     },
                     isError = state.title.trim().isEmpty() || state.title.length > 100,
+                    colors = state.categoryInputColors(),
                 )
                 OutlinedTextField(
                     value = state.description,
@@ -241,6 +246,7 @@ fun TodoEditorScreen(
                         Text(stringResource(R.string.character_counter_format, state.description.length, 1000))
                     },
                     isError = state.description.length > 1000,
+                    colors = state.categoryInputColors(),
                 )
                 CategorySelector(state, viewModel::setCategory)
 
@@ -249,6 +255,7 @@ fun TodoEditorScreen(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 DateField(
+                    state = state,
                     value = state.startDate,
                     labelRes = if (state.recurrenceType == RecurrenceType.ONCE) {
                         R.string.todo_editor_execution_date_label
@@ -257,7 +264,7 @@ fun TodoEditorScreen(
                     },
                     onClick = { dateField = DatePickerTarget.START },
                 )
-                RecurrenceSelector(state.recurrenceType) { showRecurrenceSheet = true }
+                RecurrenceSelector(state) { showRecurrenceSheet = true }
                 RecurrenceParameters(state, viewModel)
 
                 if (state.recurrenceType != RecurrenceType.ONCE) {
@@ -286,6 +293,7 @@ fun TodoEditorScreen(
                     }
                     selectedEndDate?.let { endDate ->
                         DateField(
+                            state = state,
                             value = endDate,
                             labelRes = R.string.todo_editor_end_date_label,
                             isError = endDate.isBefore(state.startDate),
@@ -301,8 +309,60 @@ fun TodoEditorScreen(
                     }
                 }
 
-                SchedulePreview(state)
+                if (state.recurrenceType == RecurrenceType.ONCE) {
+                    val dueDate = state.dueDate
+                    DateField(
+                        state = state,
+                        value = dueDate ?: state.startDate,
+                        displayValueOverride = if (dueDate == null) {
+                            stringResource(R.string.todo_editor_due_date_same_as_execution)
+                        } else {
+                            null
+                        },
+                        labelRes = R.string.todo_editor_due_date_label,
+                        isError = dueDate?.isBefore(state.startDate) == true,
+                        onClick = { dateField = DatePickerTarget.DUE },
+                    )
+                    if (dueDate != null) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                        ) {
+                            TextButton(onClick = { viewModel.setDueDate(null) }) {
+                                Text(stringResource(R.string.action_clear))
+                            }
+                        }
+                        if (dueDate.isBefore(state.startDate)) {
+                            Text(
+                                stringResource(R.string.error_todo_due_date_before_start),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+
                 DueTimeSelector(state.dueMinutes, viewModel::setDueMinutes)
+                if (!state.recurrenceType.isCountBased) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(stringResource(R.string.todo_editor_carry_over_label))
+                            Text(
+                                stringResource(R.string.todo_editor_carry_over_description),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        Switch(
+                            checked = state.carryOverEnabled,
+                            onCheckedChange = viewModel::setCarryOverEnabled,
+                        )
+                    }
+                }
+                SchedulePreview(state)
 
                 NotificationEditorSection(
                     state = state,
@@ -334,15 +394,21 @@ fun TodoEditorScreen(
     }
 
     dateField?.let { target ->
-        val selectedDate = if (target == DatePickerTarget.START) state.startDate else state.endDate ?: state.startDate
-        val selectableDates = remember(target, state.isNew, state.today) {
+        val selectedDate = when (target) {
+            DatePickerTarget.START -> state.startDate
+            DatePickerTarget.END -> state.endDate ?: state.startDate
+            DatePickerTarget.DUE -> state.dueDate ?: state.startDate
+        }
+        val selectableDates = remember(target, state.isNew, state.today, state.startDate) {
             object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    if (target != DatePickerTarget.START || !state.isNew) return true
                     val date = Instant.ofEpochMilli(utcTimeMillis)
                         .atZone(ZoneOffset.UTC)
                         .toLocalDate()
-                    return !date.isBefore(state.today)
+                    return when (target) {
+                        DatePickerTarget.START -> !state.isNew || !date.isBefore(state.today)
+                        DatePickerTarget.END, DatePickerTarget.DUE -> !date.isBefore(state.startDate)
+                    }
                 }
             }
         }
@@ -356,8 +422,11 @@ fun TodoEditorScreen(
                 TextButton(onClick = {
                     pickerState.selectedDateMillis?.let { millis ->
                         val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
-                        if (target == DatePickerTarget.START) viewModel.setStartDate(date)
-                        else viewModel.setEndDate(date)
+                        when (target) {
+                            DatePickerTarget.START -> viewModel.setStartDate(date)
+                            DatePickerTarget.END -> viewModel.setEndDate(date)
+                            DatePickerTarget.DUE -> viewModel.setDueDate(date)
+                        }
                     }
                     dateField = null
                 }) { Text(stringResource(R.string.action_confirm)) }
@@ -484,13 +553,15 @@ fun TodoEditorScreen(
 
 @Composable
 private fun DateField(
+    state: TodoEditorUiState,
     value: LocalDate,
     @StringRes labelRes: Int,
     onClick: () -> Unit,
     isError: Boolean = false,
+    displayValueOverride: String? = null,
 ) {
     val label = stringResource(labelRes)
-    val displayValue = value.toJapaneseDate()
+    val displayValue = displayValueOverride ?: value.toJapaneseDate()
     val fieldContentDescription = stringResource(
         R.string.content_description_field_value,
         label,
@@ -504,6 +575,7 @@ private fun DateField(
             label = { Text(label) },
             readOnly = true,
             isError = isError,
+            colors = state.categoryInputColors(),
         )
         Box(
             Modifier
@@ -534,6 +606,7 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
                 .fillMaxWidth()
                 .mataClickablePointer()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            colors = state.categoryInputColors(),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
@@ -551,7 +624,8 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
 }
 
 @Composable
-private fun RecurrenceSelector(value: RecurrenceType, onClick: () -> Unit) {
+private fun RecurrenceSelector(state: TodoEditorUiState, onClick: () -> Unit) {
+    val value = state.recurrenceType
     val label = stringResource(R.string.todo_editor_recurrence_label)
     val displayValue = recurrenceLabel(value)
     val fieldContentDescription = stringResource(
@@ -566,6 +640,7 @@ private fun RecurrenceSelector(value: RecurrenceType, onClick: () -> Unit) {
             readOnly = true,
             label = { Text(label) },
             modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
+            colors = state.categoryInputColors(),
         )
         Box(
             Modifier
@@ -624,6 +699,7 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
         }
         RecurrenceType.WEEKLY_COUNT -> {
             NumberSelector(
+                state = state,
                 value = state.periodWeeks,
                 range = 1..52,
                 label = stringResource(R.string.todo_editor_period_weeks_label),
@@ -631,6 +707,7 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
                 onSelect = viewModel::setPeriodWeeks,
             )
             NumberSelector(
+                state = state,
                 value = state.weeklyCount,
                 range = 1..(state.periodWeeks * 7),
                 label = stringResource(R.string.todo_editor_weekly_count_label),
@@ -641,6 +718,7 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
             DayFilterSelector(state, viewModel, allowAll = true)
         }
         RecurrenceType.MONTHLY_DAY -> NumberSelector(
+            state = state,
             value = state.monthlyDay,
             range = 1..31,
             label = stringResource(R.string.todo_editor_monthly_day_label),
@@ -690,8 +768,10 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
             isError = state.intervalDaysInput.toIntOrNull() !in 1..999,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
+            colors = state.categoryInputColors(),
         )
         RecurrenceType.MONTHLY_COUNT -> NumberSelector(
+            state = state,
             value = state.monthlyCount,
             range = 1..31,
             label = stringResource(R.string.todo_editor_monthly_count_label),
@@ -763,6 +843,7 @@ private fun DayFilterSelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NumberSelector(
+    state: TodoEditorUiState,
     value: Int,
     range: IntRange,
     label: String,
@@ -781,6 +862,7 @@ private fun NumberSelector(
                 .fillMaxWidth()
                 .mataClickablePointer()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            colors = state.categoryInputColors(),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             range.forEach { option ->
@@ -791,6 +873,17 @@ private fun NumberSelector(
             }
         }
     }
+}
+
+@Composable
+internal fun TodoEditorUiState.categoryInputColors(): TextFieldColors {
+    val colorIndex = categories.firstOrNull { it.id == categoryId }?.colorIndex
+        ?: return OutlinedTextFieldDefaults.colors()
+    val categoryColor = mataCategoryColor(colorIndex)
+    return OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = categoryColor,
+        unfocusedBorderColor = categoryColor,
+    )
 }
 
 @Composable

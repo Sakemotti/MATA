@@ -31,6 +31,8 @@ import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.deadlineAt
+import com.mochisofts.mata.domain.model.effectiveDueDate
+import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
@@ -83,6 +85,8 @@ class NotificationActionReceiver : BroadcastReceiver() {
     @Inject lateinit var notificationScheduler: NotificationScheduler
     @Inject lateinit var presenter: NotificationPresenter
     @Inject lateinit var widgetUpdater: WidgetUpdater
+    @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var clock: Clock
 
     override fun onReceive(context: Context, intent: Intent) {
         val todoId = intent.getStringExtra(EXTRA_TODO_ID) ?: return
@@ -106,7 +110,16 @@ class NotificationActionReceiver : BroadcastReceiver() {
     }
 
     private suspend fun complete(todoId: String, date: LocalDate, notificationId: Int) {
-        todoRepository.setCompleted(todoId, date, true)
+        val resolvedLogicalDate = logicalDate(
+            ZonedDateTime.now(clock),
+            settingsRepository.dayEndHour.first(),
+        )
+        todoRepository.setCompleted(
+            todoId,
+            resolvedLogicalDate,
+            true,
+            scheduledLogicalDate = date,
+        )
             .onSuccess {
                 widgetUpdater.requestUpdate()
                 presenter.cancel(todoId, date, notificationId)
@@ -175,8 +188,11 @@ class NotificationDeliveryService @Inject constructor(
             definitionRevision = entity.definitionRevision,
             archivedAt = entity.archivedAt,
             createdAt = entity.createdAt,
+            dueDate = entity.dueDate?.let(LocalDate::parse),
+            carryOverEnabled = entity.carryOverEnabled,
         )
-        val execution = executionDao.find(todo.id, date.toString())
+        val execution = executionDao.findForTodo(todo.id)
+            .firstOrNull { it.scheduledLogicalDate == date.toString() }
         val holidays = holidayRepository.currentSnapshot().dates
         if (!todo.occursOn(date, holidays) || execution != null ||
             !scheduler.systemState().canPostNotifications
@@ -189,8 +205,9 @@ class NotificationDeliveryService @Inject constructor(
         val endHour = settingsRepository.dayEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
         val now = ZonedDateTime.now(clock)
-        val deadline = deadlineAt(date, endHour, todo.dueMinutes, now.zone)
-        val dayEnd = logicalDayEnd(date, endHour, now.zone)
+        val effectiveDueDate = todo.effectiveDueDate(date)
+        val deadline = deadlineAt(effectiveDueDate, endHour, todo.dueMinutes, now.zone)
+        val dayEnd = logicalDayEnd(effectiveDueDate, endHour, now.zone)
         val isBoundary = todo.dueMinutes == null &&
             NotificationRelation.fromStoredValue(setting.relation) == NotificationRelation.AT
         if (now.isAfter(dayEnd) && !(isBoundary && Duration.between(dayEnd, now).toMinutes() < 5)) {

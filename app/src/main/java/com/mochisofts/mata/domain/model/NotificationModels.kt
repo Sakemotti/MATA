@@ -133,12 +133,21 @@ fun nextNotificationCandidate(
     completedDates: Set<LocalDate> = emptySet(),
     actedDates: Set<LocalDate> = completedDates,
     holidays: Set<LocalDate> = emptySet(),
+    afterResolvedCarryOverDate: LocalDate? = null,
 ): NotificationCandidate? {
     if (todo.archivedAt != null || validateNotifications(listOf(notification), todo.dueMinutes, endHour).isNotEmpty()) {
         return null
     }
 
-    var searchDate = maxOf(todo.startDate, logicalDate(now, endHour))
+    var searchDate = if (todo.recurrenceType == RecurrenceType.ONCE) {
+        todo.startDate
+    } else {
+        maxOf(
+            todo.startDate,
+            logicalDate(now, endHour),
+            afterResolvedCarryOverDate?.plusDays(1) ?: LocalDate.MIN,
+        )
+    }
     repeat(MAX_CANDIDATE_SEARCH_STEPS) {
         val occurrenceDate = todo.nextOccurrenceOnOrAfter(searchDate, holidays) ?: return null
         if (todo.endDate?.let(occurrenceDate::isAfter) == true) return null
@@ -154,9 +163,10 @@ fun nextNotificationCandidate(
             }
         }
 
-        val deadline = deadlineAt(occurrenceDate, endHour, todo.dueMinutes, now.zone)
+        val effectiveDueDate = todo.effectiveDueDate(occurrenceDate)
+        val deadline = deadlineAt(effectiveDueDate, endHour, todo.dueMinutes, now.zone)
         val trigger = notificationTriggerAt(deadline, notification)
-        val dayEnd = logicalDayEnd(occurrenceDate, endHour, now.zone)
+        val dayEnd = logicalDayEnd(effectiveDueDate, endHour, now.zone)
         val isBoundary = todo.dueMinutes == null && notification.relation == NotificationRelation.AT
         if (trigger.isAfter(now) && (trigger.isBefore(dayEnd) || isBoundary)) {
             return NotificationCandidate(
