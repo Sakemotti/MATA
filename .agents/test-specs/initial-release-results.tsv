@@ -1,5 +1,5 @@
 id	priority	specFile	result	executedAt	testerId	versionCode	environment	evidence
-APP-001	P0	app-core.md	未実施	-	-	-	-	-
+APP-001	P0	app-core.md	合格	2026-09-09	OWNER	3	Android Emulator API 26 / Release相当版	CT-ENV-26・新規インストール、起動、主要画面と基本操作を確認
 APP-002	P0	app-core.md	未実施	-	-	-	-	-
 APP-003	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・主要画面、ダイアログ、通知、ウィジェットの日本語表示を確認
 APP-004	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・ライト／ダークテーマで主要画面の表示一貫性を確認
@@ -115,7 +115,7 @@ REL-004	P0	app-core.md	合格	2026-09-06	OWNER	1	Room schema 1〜7・API 30 CI r
 REL-005	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	lintDebug成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-006	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	assembleDebug成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-007	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	対象commit e57ababdのmain CI成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
-REL-008	P1	app-core.md	未実施	-	-	-	-	-
+REL-008	P1	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37)	CT-ENV-VISUAL・ライト、ダーク、端末追従、最大フォント、最大表示サイズで主要11画面を確認
 REL-009	P1	app-core.md	合格	2026-09-07	OWNER	1	Release SBOM・Manifest・実装・Google公式資料・公開法的ページ	外部SDK、権限、収集共有、UMP、ストア掲載および有料機能の差異0件
 REL-010	P0	app-core.md	未実施	-	-	-	-	-
 REL-011	P1	app-core.md	合格	2026-09-07	OWNER	1	AGP 9.3.2・主要ソース・PR CI	内蔵Kotlin・Compose・Material 3・単一画面Activity・Coroutines・java.timeを静的確認
@@ -159,7 +159,7 @@ TL-021	P1	todo-list.md	未実施	-	-	-	-	-
 TL-022	P1	todo-list.md	未実施	-	-	-	-	-
 TL-023	P1	todo-list.md	未実施	-	-	-	-	-
 TL-024	P1	todo-list.md	未実施	-	-	-	-	-
-TL-025	P1	todo-list.md	未実施	-	-	-	-	-
+TL-025	P1	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・TODO一覧の情報、状態、操作を読み上げ順に操作できることを確認
 TL-026	P0	todo-list.md	未実施	-	-	-	-	-
 TL-027	P0	todo-list.md	未実施	-	-	-	-	-
 TL-028	P1	todo-list.md	未実施	-	-	-	-	-
@@ -203,7 +203,7 @@ TE-026	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-027	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-028	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-029	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-030	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-030	P1	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・全入力、選択、エラー、保存、戻るを色だけに依存せず操作できることを確認
 TE-031	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-032	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-033	P1	todo-editor.md	未実施	-	-	-	-	-
@@ -246,7 +246,7 @@ CH-030	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-031	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-033	P2	calendar-history.md	未実施	-	-	-	-	-
-CH-034	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-034	P1	calendar-history.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・日付、履歴状態、期間結果、操作可否を識別して操作できることを確認
 CH-035	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-D01	P2	calendar-history.md	未実施	-	-	-	-	-
 CH-D02	P1	calendar-history.md	未実施	-	-	-	-	-
@@ -284,7 +284,7 @@ CM-026	P1	category-management.md	未実施	-	-	-	-	-
 CM-027	P1	category-management.md	未実施	-	-	-	-	-
 CM-028	P1	category-management.md	未実施	-	-	-	-	-
 CM-029	P1	category-management.md	未実施	-	-	-	-	-
-CM-030	P1	category-management.md	未実施	-	-	-	-	-
+CM-030	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・カテゴリ名、色、アイコン、選択、順序、エラーを識別して操作できることを確認
 CM-031	P2	category-management.md	未実施	-	-	-	-	-
 CM-D01	P1	category-management.md	未実施	-	-	-	-	-
 CM-D02	P2	category-management.md	未実施	-	-	-	-	-
@@ -330,7 +330,7 @@ AT-035	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-036	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-037	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-038	P2	archived-todos.md	未実施	-	-	-	-	-
-AT-039	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-039	P1	archived-todos.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・検索、TODO行、詳細、履歴、復元、削除確認を識別して操作できることを確認
 AT-040	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-D01	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-D02	P1	archived-todos.md	未実施	-	-	-	-	-
@@ -366,7 +366,7 @@ ST-024	P0	settings.md	未実施	-	-	-	-	-
 ST-025	P0	settings.md	未実施	-	-	-	-	-
 ST-026	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st026・CI run 33871324075成功
 ST-027	P0	settings.md	未実施	-	-	-	-	-
-ST-028	P0	settings.md	未実施	-	-	-	-	-
+ST-028	P0	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・バックグラウンド移行とプロセス再生成後も処理状態へ復帰し二重実行しないことを確認
 ST-029	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st029・CI run 33871324075成功
 ST-030	P0	settings.md	未実施	-	-	-	-	-
 ST-031	P0	settings.md	未実施	-	-	-	-	-
@@ -381,8 +381,8 @@ ST-039	P1	settings.md	未実施	-	-	-	-	-
 ST-040	P1	settings.md	未実施	-	-	-	-	-
 ST-041	P0	settings.md	未実施	-	-	-	-	-
 ST-042	P1	settings.md	未実施	-	-	-	-	-
-ST-043	P1	settings.md	未実施	-	-	-	-	-
-ST-044	P1	settings.md	未実施	-	-	-	-	-
+ST-043	P1	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・回転とプロセス再生成後に対象状態を復元し二重実行しないことを確認
+ST-044	P1	settings.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・設定名、値、状態、進捗、エラー、破壊的影響を識別して操作できることを確認
 ST-045	P1	settings.md	未実施	-	-	-	-	-
 ST-D01	P2	settings.md	未実施	-	-	-	-	-
 ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std02・CI run 33867709111成功
@@ -400,7 +400,7 @@ CTL-006	P0	category-todo-list.md	未実施	-	-	-	-	-
 CTL-007	P0	category-todo-list.md	未実施	-	-	-	-	-
 CTL-008	P1	category-todo-list.md	未実施	-	-	-	-	-
 CTL-009	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-010	P1	category-todo-list.md	未実施	-	-	-	-	-
+CTL-010	P1	category-todo-list.md	合格	2026-09-09	OWNER	3	Android Emulator 600dp以上 / Pixel 9a TalkBack	CT-ENV-LARGE・CT-ENV-TALKBACK・回転、幅変更、キーボード、TalkBack後も選択を保持して操作できることを確認
 CTL-011	P1	category-todo-list.md	未実施	-	-	-	-	-
 DAY-015	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomTodoStateSpecCoverageTest#day015・connectedDebugAndroidTest成功
 DAY-016	P0	app-core.md	合格	2026-09-09	AUTO	3	Local JDK 21 / JVM	ScheduleTestSpecCoverageTest#day016・testDebugUnitTest成功

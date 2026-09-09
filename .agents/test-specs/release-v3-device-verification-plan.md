@@ -9,7 +9,7 @@
 
 ## 1. 目的と現在位置
 
-versionCode `2`から`3`へのGoogle Play上書き更新は、Pixel 9a（Android 17 / API 37）で問題がないことを2026年9月9日にUSERが確認した。アプリ起動、既存データ、設定、通知、ウィジェットおよびバックアップ機能は維持された。同日、versionCode 3固有の実機確認9項目もすべて合格した。
+versionCode `2`から`3`へのGoogle Play上書き更新は、Pixel 9a（Android 17 / API 37）で問題がないことを2026年9月9日にUSERが確認した。アプリ起動、既存データ、設定、通知、ウィジェットおよびバックアップ機能は維持された。同日、versionCode 3固有の実機確認9項目と、本書で定めた環境別7セッションもすべて合格した。
 
 本書では、上書き更新の成功だけでは判定できないversionCode 3固有の変更と、初回リリースに不足しているOS・画面形態・アクセシビリティ条件だけを抽出する。全420項目を再掲せず、各試験IDの完全な合格条件はリンク先の項目書を正とする。
 
@@ -205,21 +205,16 @@ Pixel 9aでTalkBackを有効にし、次を確認する。
 | `CT-V3-02` | 2026-09-09 | 3 | Pixel 9a / Android 17 (API 37) | `V3-02` | 合格 | 単発TODOの実行日・期限日をUSER確認。不具合なし |
 | `CT-V3-03` | 2026-09-09 | 3 | Pixel 9a / Android 17 (API 37) | `V3-03` | 合格 | 未完了繰り越しとウィジェット同期をUSER確認。不具合なし |
 | `CT-V3-04` | 2026-09-09 | 3 | Pixel 9a / Android 17 (API 37) | `V3-04` | 合格 | 過去詳細からの編集・完全削除をUSER確認。不具合なし |
-| `CT-ENV-26` | 未記入 | 3 | API 26 | `ENV-26` | 未実施 | |
-| `CT-ENV-33` | 未記入 | 3 | API 33 | `ENV-33` | 未実施 | |
-| `CT-ENV-36` | 未記入 | 3 | API 36 | `ENV-36` | 未実施 | |
-| `CT-ENV-LARGE` | 未記入 | 3 | 600dp以上 | `ENV-LARGE` | 未実施 | |
-| `CT-ENV-VISUAL` | 未記入 | 3 | Pixel 9a / 広画面 | `ENV-VISUAL` | 未実施 | |
-| `CT-ENV-TALKBACK` | 未記入 | 3 | Pixel 9a | `ENV-TALKBACK` | 未実施 | |
-| `CT-ENV-RECOVERY` | 未記入 | 3 | 実機 / エミュレータ | `ENV-RECOVERY` | 未実施 | |
+| `CT-ENV-26` | 2026-09-09 | 3 | API 26スマートフォンAVD | `ENV-26` | 合格 | 新規インストール、起動、基本操作、履歴、設定保持をUSER確認。不具合なし |
+| `CT-ENV-33` | 2026-09-09 | 3 | API 33スマートフォンAVD | `ENV-33` | 合格 | 通知権限、将来通知、正確なアラーム不可時の動作をUSER確認。不具合なし |
+| `CT-ENV-36` | 2026-09-09 | 3 | API 36スマートフォンAVD | `ENV-36` | 合格 | 主要CRUD、通知、ウィジェット、縦横切替をUSER確認。不具合なし |
+| `CT-ENV-LARGE` | 2026-09-09 | 3 | 600dp以上のタブレット相当AVD | `ENV-LARGE` | 合格 | 広画面、回転、分割画面、キーボード、選択保持をUSER確認。不具合なし |
+| `CT-ENV-VISUAL` | 2026-09-09 | 3 | Pixel 9a / Android 17 (API 37) | `ENV-VISUAL` | 合格 | 4表示条件と端末テーマ追従をUSER確認。不具合なし |
+| `CT-ENV-TALKBACK` | 2026-09-09 | 3 | Pixel 9a / Android 17 (API 37) | `ENV-TALKBACK` | 合格 | 主要画面の読み上げ順、状態、操作名、破壊的確認をUSER確認。不具合なし |
+| `CT-ENV-RECOVERY` | 2026-09-09 | 3 | 専用Android Emulator | `ENV-RECOVERY` | 合格 | オフライン、再接続、プロセス再生成、再起動、タイムゾーン変更をUSER確認。不具合なし |
 
 各セッション完了後、確認した個別IDだけを[試験結果TSV](initial-release-results.tsv)へ記録し、[Closed testing台帳](closed-testing-log.md)へ実施行と環境カバレッジを反映する。不合格は端末、OS/API、操作、期待値、実際値および再現率を添えてIssue化する。
 
 ## 5. 推奨実施順
 
-versionCode 3固有の`V3-01`〜`V3-04`は完了した。残る環境試験は次の順で実施する。
-
-1. 待ち時間がある`ENV-33`を設定する。
-2. `ENV-26`、`ENV-36`、`ENV-LARGE`をエミュレータで実施する。
-3. `ENV-VISUAL`と`ENV-TALKBACK`を実機で実施する。
-4. 最後に端末設定を変更する`ENV-RECOVERY`を実施し、終了後に時計、タイムゾーン、ネットワーク、テーマ、フォントおよび権限を元へ戻す。
+versionCode 3固有の`V3-01`〜`V3-04`と環境別`ENV-26`〜`ENV-RECOVERY`は、2026年9月9日にすべて完了した。今後はClosed testingの継続参加、自由操作フィードバックおよびPlay Console上のリリース条件を追跡する。
