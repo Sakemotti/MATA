@@ -97,7 +97,7 @@ WGT-010	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (
 WGT-011	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・ウィジェットからのスキップが通知、全ウィジェット、一覧、履歴へ反映されることを確認
 WGT-012	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・キャンセル、戻る、外側タップで状態を変えず専用画面が残らないことを確認
 WGT-013	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・操作ダイアログ表示後に別経路で状態変更しても重複・無効な履歴を作らないことを確認
-WGT-014	P1	app-core.md	保留	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-003・実広告が操作領域と重ならず画面下部へ表示されることは確認済み。広告読込失敗を再現できないためDEV-FAULT確認待ち
+WGT-014	P1	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing / 機内モード	CT-003・CT-006・実広告の配置と、機内モードで広告が表示されず強制終了せず操作を継続できることを確認
 DAT-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat001・CI run 33929968497成功
 DAT-002	P0	app-core.md	未実施	-	-	-	-	-
 DAT-003	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	HolidayHttpRequestPrivacyTest#dat003・CI run 33929968497成功
