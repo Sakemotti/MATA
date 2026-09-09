@@ -13,6 +13,8 @@ DAY-011	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCover
 DAY-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day012_boundaryChangeMovesLiveScheduleButKeepsFinalizedSnapshots	:app:connectedDebugAndroidTest
 DAY-013	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day013_monthYearAndLeapDayBoundariesRemainContinuous	:app:testDebugUnitTest
 DAY-014	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	day014_timePassageWaitsForRefreshOrDateSelectionEvent	:app:connectedDebugAndroidTest
+DAY-015	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	day015_onceTodoAppearsOnceThroughoutItsExecutionWindowWithoutDuplicatingHistory	:app:connectedDebugAndroidTest
+DAY-016	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day016_onceTodoDeadlineUsesDueDateAcrossTheWholeExecutionWindow	:app:testDebugUnitTest
 RPT-001	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt001_onceOccursOnlyOnItsExecutionDate	:app:testDebugUnitTest
 RPT-002	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt002_dailyOccursOnEveryActiveDate	:app:testDebugUnitTest
 RPT-003	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	rpt003_weekdaysExcludeSaturdayAndSunday	:app:testDebugUnitTest
@@ -54,6 +56,7 @@ NTF-012	app/src/androidTest/java/com/mochisofts/mata/data/notification/Notificat
 NTF-013	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	ntf013_invalidRelationshipKeepsSettingWithSuppressionReasonAndCount	:app:connectedDebugAndroidTest
 NTF-014	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	ntf014_archiveAndDeleteCancelEveryRemainingAlarm	:app:connectedDebugAndroidTest
 NTF-015	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	ntf015_repeatedReconciliationIsIdempotentByCandidateKey	:app:connectedDebugAndroidTest
+NTF-016	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	ntf016_onceTodoNotificationsUseDueDateOnceAcrossWindowAndCarryOver	:app:connectedDebugAndroidTest
 STA-001	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	sta001_completionCreatesOneSharedListHistoryAndWidgetState	:app:connectedDebugAndroidTest
 STA-003	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	sta003_currentActionsCanBeUndoneButPastActionsCannot	:app:connectedDebugAndroidTest
 STA-004	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	sta004_skipHidesTodayCreatesHistoryAndLeavesNextOccurrenceUnchanged	:app:connectedDebugAndroidTest
@@ -64,6 +67,9 @@ STA-009	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoSta
 STA-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	sta010_restoreReconcilesCurrentAndFutureFromOriginalDefinition	:app:connectedDebugAndroidTest
 STA-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	sta011_todoRepositoryDeleteRemovesDefinitionHistoryStateAndNotifications	:app:connectedDebugAndroidTest
 STA-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	sta012_archiveRestoreAndDeleteFailuresRollbackEveryDatabaseMutation	:app:connectedDebugAndroidTest
+STA-013	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	sta013_carryOverKeepsOldestExpiredOccurrenceWhileDisabledFinalizesMissed	:app:connectedDebugAndroidTest
+STA-014	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	sta014_resolvingDailyCarryOverSkipsElapsedSchedulesAndHonorsEndDate	:app:connectedDebugAndroidTest
+STA-015	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoStateSpecCoverageTest.kt	sta015_disablingOrChangingCarryOverFinalizesOnlyPendingOccurrenceOnce	:app:connectedDebugAndroidTest
 AT-016	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at016_restoreKeepsEveryNDaysAnchoredToOriginalStartDate	:app:connectedDebugAndroidTest
 AT-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at017_restoreDoesNotBackfillArchivedExecutionsOrPeriodResults	:app:connectedDebugAndroidTest
 AT-028	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at028_archivePermanentDeleteRemovesAllRelatedRowsAndScheduledNotifications	:app:connectedDebugAndroidTest
@@ -84,6 +90,8 @@ DAT-005	app/src/androidTest/java/com/mochisofts/mata/security/DataProtectionConf
 DAT-006	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	dat006_failedCategoryReferenceUpdateRollsBackDefinitionAndHistory	:app:connectedDebugAndroidTest
 DAT-007	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	dat007_largeJoinedSearchAndAggregationLoadStableBoundedPages	:app:connectedDebugAndroidTest
 DAT-008	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	dat008_replayingTheSameRestoreNeverDuplicatesProtectedRecords	:app:connectedDebugAndroidTest
+DAT-011	app/src/androidTest/java/com/mochisofts/mata/data/local/MataDatabaseMigrationTest.kt	dat011_versionCodeTwoDatabaseMigratesWithoutLosingRelationsOrHistoryMeaning	:app:connectedDebugAndroidTest
+DAT-012	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	dat012_formatFourRoundTripsOldFormatsDefaultAndInvalidNewStateIsRejectedBeforeMutation	:app:connectedDebugAndroidTest
 AT-018	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at018_restoreKeepsCurrentCompletedAndSkippedOccurrencesWithoutDuplicates	:app:connectedDebugAndroidTest
 AT-019	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at019_restoreRecalculatesWeeklyAndMonthlyCountProgressFromPreservedHistory	:app:connectedDebugAndroidTest
 AT-021	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	at021_restoredTodoRegistersOnlyFutureNotificationCandidates	:app:connectedDebugAndroidTest

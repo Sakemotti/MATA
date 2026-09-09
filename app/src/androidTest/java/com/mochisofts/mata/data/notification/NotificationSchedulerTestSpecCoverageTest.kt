@@ -28,6 +28,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -379,6 +380,49 @@ class NotificationSchedulerTestSpecCoverageTest {
         assertTrue(gateway.cancelled.isEmpty())
     }
 
+    @Test
+    fun ntf016_onceTodoNotificationsUseDueDateOnceAcrossWindowAndCarryOver() = runBlocking {
+        val executionDate = LocalDate.of(2026, 8, 11)
+        val dueDate = executionDate.plusDays(2)
+        insertTodo(
+            startDate = executionDate,
+            rule = RecurrenceRule.once(),
+            dueMinutes = 12 * 60,
+            dueDate = dueDate,
+            carryOverEnabled = true,
+        )
+        insertNotification("before", NotificationRelation.BEFORE, 1, NotificationUnit.HOUR, 0)
+        insertNotification("at", NotificationRelation.AT, 0, NotificationUnit.MINUTE, 1)
+        insertNotification("after", NotificationRelation.AFTER, 1, NotificationUnit.HOUR, 2)
+
+        scheduler.reconcileTodo(TODO_ID)
+
+        val deadline = ZonedDateTime.of(2026, 8, 13, 12, 0, 0, 0, clock.zoneId)
+        val initial = database.scheduledNotificationDao().findForTodo(TODO_ID).sortedBy { it.triggerAt }
+        assertEquals(listOf("before", "at", "after"), initial.map { it.notificationSettingId })
+        assertEquals(setOf(executionDate.toString()), initial.mapTo(mutableSetOf()) { it.logicalDate })
+        assertEquals(
+            listOf(deadline.minusHours(1), deadline, deadline.plusHours(1)).map {
+                it.toInstant().toEpochMilli()
+            },
+            initial.map { it.triggerAt },
+        )
+        assertEquals(3, initial.map { it.candidateKey }.distinct().size)
+
+        gateway.clearEvents()
+        clock.advance(Duration.ofDays(1))
+        repeat(3) { scheduler.reconcileTodo(TODO_ID) }
+        assertEquals(initial, database.scheduledNotificationDao().findForTodo(TODO_ID).sortedBy { it.triggerAt })
+        assertTrue(gateway.scheduled.isEmpty())
+        assertTrue(gateway.cancelled.isEmpty())
+
+        clock.advance(Duration.ofHours(50))
+        scheduler.reconcileTodo(TODO_ID)
+        assertTrue(database.scheduledNotificationDao().findForTodo(TODO_ID).isEmpty())
+        assertEquals(3, gateway.cancelled.map { it.key }.distinct().size)
+        assertTrue(gateway.scheduled.isEmpty())
+    }
+
     private fun newScheduler() = AndroidNotificationScheduler(
         context = context,
         todoDao = database.todoDao(),
@@ -409,6 +453,8 @@ class NotificationSchedulerTestSpecCoverageTest {
         rule: RecurrenceRule = RecurrenceRule.once(),
         dueMinutes: Int? = 12 * 60,
         archivedAt: Long? = null,
+        dueDate: LocalDate? = null,
+        carryOverEnabled: Boolean = false,
     ) {
         val encoded = RecurrenceRuleJson.encode(rule)
         database.todoDao().upsert(
@@ -427,6 +473,8 @@ class NotificationSchedulerTestSpecCoverageTest {
                 createdAt = 1,
                 updatedAt = 1,
                 archivedAt = archivedAt,
+                dueDate = dueDate?.toString(),
+                carryOverEnabled = carryOverEnabled,
             ),
         )
     }

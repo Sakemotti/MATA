@@ -243,8 +243,16 @@ class MataDatabaseMigrationTest {
     }
 
     @Test
-    fun migrate7To8_addsDueCarryOverAndOccurrenceDates() {
+    fun dat011_versionCodeTwoDatabaseMigratesWithoutLosingRelationsOrHistoryMeaning() {
         helper.createDatabase(databaseName, 7).apply {
+            execSQL(
+                """
+                INSERT INTO categories (
+                    id, name, normalizedName, colorIndex, iconName, endHour, sortOrder,
+                    createdAt, updatedAt
+                ) VALUES ('category-id', '生活', '生活', 2, 'Home', 0, 0, 50, 60)
+                """.trimIndent(),
+            )
             execSQL(
                 """
                 INSERT INTO todos (
@@ -252,9 +260,16 @@ class MataDatabaseMigrationTest {
                     repeatParamsVersion, repeatParamsJson, dueMinutes, definitionRevision,
                     createdAt, updatedAt, archivedAt
                 ) VALUES (
-                    'todo-id', 'TODO', '', NULL, '2026-09-09', NULL, 'once',
+                    'todo-id', 'TODO', '', 'category-id', '2026-09-09', NULL, 'daily',
                     1, '{}', NULL, 1, 100, 100, NULL
                 )
+                """.trimIndent(),
+            )
+            execSQL(
+                """
+                INSERT INTO todo_notifications (
+                    id, todoId, relation, amount, unit, sortOrder, createdAt, updatedAt
+                ) VALUES ('notification-id', 'todo-id', 'before', 30, 'minute', 0, 110, 110)
                 """.trimIndent(),
             )
             execSQL(
@@ -268,6 +283,17 @@ class MataDatabaseMigrationTest {
                 )
                 """.trimIndent(),
             )
+            execSQL(
+                """
+                INSERT INTO todo_executions (
+                    id, operationId, todoId, logicalDate, status, actedAt, finalizedAt,
+                    definitionRevision, snapshotVersion, snapshotJson
+                ) VALUES (
+                    'missed-id', 'missed-operation-id', 'todo-id', '2026-09-10', 'missed',
+                    NULL, 300, 1, 1, '{}'
+                )
+                """.trimIndent(),
+            )
             close()
         }
 
@@ -278,19 +304,34 @@ class MataDatabaseMigrationTest {
             MIGRATION_7_8,
         ).use { database ->
             database.query(
-                "SELECT dueDate, carryOverEnabled FROM todos WHERE id = 'todo-id'",
+                "SELECT categoryId, dueDate, carryOverEnabled FROM todos WHERE id = 'todo-id'",
             ).use { cursor ->
                 cursor.moveToFirst()
-                assertEquals(true, cursor.isNull(0))
-                assertEquals(0, cursor.getInt(1))
+                assertEquals("category-id", cursor.getString(0))
+                assertEquals(true, cursor.isNull(1))
+                assertEquals(0, cursor.getInt(2))
             }
             database.query(
-                "SELECT scheduledLogicalDate, resolvedLogicalDate FROM todo_executions " +
-                    "WHERE id = 'execution-id'",
+                "SELECT logicalDate, status, scheduledLogicalDate, resolvedLogicalDate " +
+                    "FROM todo_executions WHERE todoId = 'todo-id' ORDER BY logicalDate",
             ).use { cursor ->
                 cursor.moveToFirst()
                 assertEquals("2026-09-09", cursor.getString(0))
-                assertEquals("2026-09-09", cursor.getString(1))
+                assertEquals("completed", cursor.getString(1))
+                assertEquals("2026-09-09", cursor.getString(2))
+                assertEquals("2026-09-09", cursor.getString(3))
+                cursor.moveToNext()
+                assertEquals("2026-09-10", cursor.getString(0))
+                assertEquals("missed", cursor.getString(1))
+                assertEquals("2026-09-10", cursor.getString(2))
+                assertEquals(true, cursor.isNull(3))
+            }
+            database.query(
+                "SELECT COUNT(*) FROM todo_notifications " +
+                    "WHERE id = 'notification-id' AND todoId = 'todo-id'",
+            ).use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(1, cursor.getInt(0))
             }
         }
     }

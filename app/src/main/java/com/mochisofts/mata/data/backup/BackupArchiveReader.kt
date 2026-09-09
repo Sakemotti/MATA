@@ -682,7 +682,14 @@ class BackupArchiveReader @Inject constructor() {
             finalizedAt,
             revision,
             snapshotVersion,
-            snapshot.compact(),
+            if (formatVersion >= 4) {
+                snapshot.compact()
+            } else {
+                snapshot.normalizedLegacyExecutionDates(
+                    scheduledLogicalDate = scheduledLogicalDate,
+                    resolvedLogicalDate = resolvedLogicalDate,
+                )
+            },
             scheduledLogicalDate,
             resolvedLogicalDate.takeUnless { status == "missed" },
         )
@@ -821,6 +828,18 @@ class BackupArchiveReader @Inject constructor() {
             (snapshot.scheduledLogicalDate != scheduledLogicalDate ||
                 snapshot.resolvedLogicalDate != resolvedLogicalDate)
         ) invalid("Execution snapshot dates do not match its record")
+    }
+
+    private fun JsonObject.normalizedLegacyExecutionDates(
+        scheduledLogicalDate: String,
+        resolvedLogicalDate: String?,
+    ): String {
+        val normalized = toMutableMap()
+        normalized["dueDate"] = JsonNull
+        normalized["carryOverEnabled"] = JsonPrimitive(false)
+        normalized["scheduledLogicalDate"] = JsonPrimitive(scheduledLogicalDate)
+        normalized["resolvedLogicalDate"] = resolvedLogicalDate?.let(::JsonPrimitive) ?: JsonNull
+        return JsonObject(normalized).compact()
     }
 
     private fun validatePeriodSnapshot(
