@@ -29,7 +29,7 @@ benchmark = "1.5.0-rc02"
 profileinstaller = "1.4.1"
 uiautomator = "2.4.0"
 testRunner = "1.7.0"
-aboutLibraries = "15.1.1"
+aboutLibraries = "15.2.0"
 windowManager = "1.5.1"
 cyclonedx = "3.4.1"
 
