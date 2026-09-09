@@ -125,7 +125,7 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 - [ ] アカウント条件に該当する場合、12人・14日間のClosed testとProduction access申請を完了した。
 - [ ] Release AAB、Pre-launch report、全P0/P1試験、SDK Indexおよびポリシー状態が合格した。
 
-現在の外部設定と実機確認の詳細は[初回リリース進行記録](initial-release-status.md)を参照する。AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。UMP同意状態、広告読込失敗、オフラインおよび各広告配置の条件別試験は、Closed testingで引き続き実施する。
+現在の外部設定と実機確認の詳細は[初回リリース進行記録](initial-release-status.md)を参照する。AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みであり、2026年9月9日に機内モードで広告読込失敗時も強制終了せず操作を継続できることを確認した。UMP同意状態、オフライン時の広告以外の外部通信、および各広告配置の条件別試験はClosed testingで引き続き実施する。
 
 ## 9. 公式資料
 

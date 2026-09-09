@@ -112,7 +112,7 @@ versionCode `1`はInternal testingで使用済みである。versionCode `2`はC
 | 日付・時刻・タイムゾーン変更 | 未定 | `DAY`、`RPT`、`NTF-011` | 未実施 |
 | Google Play経由の上書き更新 | OWNER | [versionCode 1から2への専用手順](closed-testing-release-1.0.0-2.md#6-versioncode-1から2への上書き更新)で更新後のデータ・通知・ウィジェットを確認 | 2026年9月8日、Pixel 9a・Android 17 / API 37で合格。基準バックアップ`B0`作成済み |
 | Google Play経由のversionCode 2→3更新 | OWNER | [versionCode 3専用手順](closed-testing-release-1.0.0-3.md#4-versioncode-2から3への上書き更新)でデータ保持を確認 | 2026年9月9日、Pixel 9a・Android 17 / API 37で上書き更新とversionCode 3固有の実機確認9件に合格 |
-| 広告・UMP | OWNER | `E2E-009`、`WGT-014`、収益化項目 | AdMob連携、実広告バナーおよびウィジェット操作画面の配置は確認済み。UMP同意状態、広告読込失敗、オフラインは未実施 |
+| 広告・UMP | OWNER | `E2E-009`、`WGT-014`、収益化項目 | AdMob連携、実広告バナー、ウィジェット操作画面の配置、および機内モード時に広告を表示せず強制終了しないことを確認済み。UMP同意状態は未実施 |
 
 2026年9月9日にversionCode `3`公開後もPlay Consoleの状況が変わっていないことをUSERが確認した。ポリシーのステータスは`問題は見つかりませんでした`、SDK関連警告はなく、Pre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`のままである。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 
@@ -129,6 +129,7 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | CT-003 | 2026-09-08 | OWNER | 2 | `WGT-014` | PH-R2・Pixel 9a・Android 17 / API 37・Androidホーム画面・実広告 | 保留 | 実広告が操作領域と重ならず画面下部へ表示されることは合格。広告読込失敗状態を再現できず、DEV-FAULT確認待ち |
 | CT-004 | 2026-09-09 | OWNER | 3 | versionCode 2→3上書き更新 | Pixel 9a・Android 17 / API 37・Google Play Closed testing | 合格 | 起動、既存データ、設定、通知、ウィジェット、バックアップおよびデータ保全に問題なし |
 | CT-005 | 2026-09-09 | OWNER | 3 | `WGT-015`、`TL-033`〜`TL-035`、`TE-034`〜`TE-037`、`CM-032` | Pixel 9a・Android 17 / API 37・Google Play Closed testing | 合格 | `CT-V3-01`〜`CT-V3-04`をUSER確認。不具合なし |
+| CT-006 | 2026-09-09 | OWNER | 3 | `WGT-014`広告読込失敗 | Pixel 9a・Android 17 / API 37・Google Play Closed testing・機内モード | 合格 | 広告が表示されず、強制終了等が発生せず操作を継続できることをUSER確認。CT-003の実広告配置確認と合わせて項目合格 |
 
 行が不足したら実施IDを連番で追加する。結果は`合格`、`不合格`、`保留`、`対象外`のいずれかとする。
 
@@ -158,9 +159,9 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | 優先度 | 母数 | 合格 | 不合格 | 保留 | 対象外 | 未実施 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | P0 | 248 | 139 | 0 | 0 | 0 | 109 |
-| P1 | 156 | 28 | 0 | 1 | 0 | 127 |
+| P1 | 156 | 29 | 0 | 0 | 0 | 127 |
 | P2 | 16 | 0 | 0 | 0 | 0 | 16 |
-| 合計 | 420 | 167 | 0 | 1 | 0 | 252 |
+| 合計 | 420 | 168 | 0 | 0 | 0 | 252 |
 
 集計値は[項目別結果TSV](initial-release-results.tsv)を`node tools/test-specs/verify-results.mjs`で検証した出力から転記する。自動テストの既存証跡は[初回リリース試験棚卸し](initial-release-inventory.md)を参照し、試験IDと自動テストが1対1で対応していない項目は、実行結果を推測で加算しない。
 
