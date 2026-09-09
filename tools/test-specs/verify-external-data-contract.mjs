@@ -87,6 +87,7 @@ const expectedRuntimeLibraries = [
   "google.mobile.ads.next.gen",
   "google.user.messaging.platform",
   "hilt.android",
+  "kotlinx.coroutines.core",
   "kotlinx.serialization.core",
   "kotlinx.serialization.json",
   "material",
