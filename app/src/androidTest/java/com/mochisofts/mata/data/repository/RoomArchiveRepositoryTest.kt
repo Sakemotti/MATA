@@ -34,10 +34,13 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -332,6 +335,70 @@ class RoomArchiveRepositoryTest {
     }
 
     @Test
+    fun at023_restoreFailuresKeepArchivedStateAndNotificationsStopped() = runBlocking {
+        val sqlite = database.openHelper.writableDatabase
+
+        val databaseFailure = insertArchivedTodo(todoId = "restore-database-failure")
+        database.scheduledNotificationDao().deleteForTodo(databaseFailure.todo.id)
+        sqlite.execSQL(
+            "CREATE TRIGGER at023_fail_restore BEFORE UPDATE OF archivedAt ON todos " +
+                "WHEN OLD.id = '${databaseFailure.todo.id}' " +
+                "BEGIN SELECT RAISE(ABORT, 'injected restore database failure'); END",
+        )
+        assertTrue(repository.restore(databaseFailure.todo.id).isFailure)
+        assertEquals(
+            databaseFailure.todo.archivedAt,
+            database.todoDao().findById(databaseFailure.todo.id)?.archivedAt,
+        )
+        assertTrue(database.scheduledNotificationDao().findForTodo(databaseFailure.todo.id).isEmpty())
+        sqlite.execSQL("DROP TRIGGER at023_fail_restore")
+
+        val calculationFailure = insertArchivedTodo(todoId = "restore-calculation-failure")
+        database.scheduledNotificationDao().deleteForTodo(calculationFailure.todo.id)
+        settings.failDayEndHourRead = true
+        assertTrue(repository.restore(calculationFailure.todo.id).isFailure)
+        settings.failDayEndHourRead = false
+        assertEquals(
+            calculationFailure.todo.archivedAt,
+            database.todoDao().findById(calculationFailure.todo.id)?.archivedAt,
+        )
+        assertTrue(database.scheduledNotificationDao().findForTodo(calculationFailure.todo.id).isEmpty())
+
+        val notificationFailure = insertArchivedTodo(todoId = "restore-notification-failure")
+        database.scheduledNotificationDao().deleteForTodo(notificationFailure.todo.id)
+        val originalRuntime = database.todoRuntimeStateDao().find(notificationFailure.todo.id)
+        scheduler.failReconciliation = true
+        assertTrue(repository.restore(notificationFailure.todo.id).isFailure)
+        scheduler.failReconciliation = false
+
+        assertEquals(notificationFailure.todo, database.todoDao().findById(notificationFailure.todo.id))
+        assertEquals(originalRuntime, database.todoRuntimeStateDao().find(notificationFailure.todo.id))
+        assertTrue(database.scheduledNotificationDao().findForTodo(notificationFailure.todo.id).isEmpty())
+        assertTrue(scheduler.cancelledTodoIds.contains(notificationFailure.todo.id))
+    }
+
+    @Test
+    fun at029_permanentDeleteFailureRollsBackAllArchivedTodoRows() = runBlocking {
+        val values = insertArchivedTodo(todoId = "delete-rollback")
+        val sqlite = database.openHelper.writableDatabase
+        sqlite.execSQL(
+            "CREATE TRIGGER at029_fail_delete BEFORE DELETE ON todo_executions " +
+                "WHEN OLD.todoId = '${values.todo.id}' " +
+                "BEGIN SELECT RAISE(ABORT, 'injected permanent delete failure'); END",
+        )
+
+        assertTrue(repository.deletePermanently(values.todo.id).isFailure)
+
+        assertEquals(values.todo, database.todoDao().findById(values.todo.id))
+        assertEquals(1, database.todoExecutionDao().findForTodo(values.todo.id).size)
+        assertEquals(1, database.periodResultDao().findForTodo(values.todo.id).size)
+        assertEquals(1, database.todoNotificationDao().findForTodo(values.todo.id).size)
+        assertNotNull(database.todoRuntimeStateDao().find(values.todo.id))
+        assertEquals(1, database.scheduledNotificationDao().findForTodo(values.todo.id).size)
+        sqlite.execSQL("DROP TRIGGER at029_fail_delete")
+    }
+
+    @Test
     fun migratedHistoryWithoutFullSnapshot_fallsBackToCurrentDefinition() = runBlocking {
         val values = insertArchivedTodo()
         database.todoExecutionDao().deleteById("execution")
@@ -539,14 +606,17 @@ class RoomArchiveRepositoryTest {
 private class ArchiveTestSettingsRepository : SettingsRepository {
     override val showCompleted = MutableStateFlow(false)
     override val todoListMode = MutableStateFlow("DATE")
-    override val dayEndHour = MutableStateFlow(0)
+    private val dayEndHourState = MutableStateFlow(0)
+    var failDayEndHourRead = false
+    override val dayEndHour: Flow<Int>
+        get() = if (failDayEndHourRead) flow { error("injected schedule calculation failure") } else dayEndHourState
     override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
     override val theme = MutableStateFlow(AppTheme.SYSTEM)
     override val notificationPermissionRequested = MutableStateFlow(false)
     override val archiveSortOrder = MutableStateFlow(ArchiveSortOrder.NEWEST)
     override suspend fun setShowCompleted(value: Boolean) { showCompleted.value = value }
     override suspend fun setTodoListMode(value: String) { todoListMode.value = value }
-    override suspend fun setDayEndHour(value: Int) { dayEndHour.value = value }
+    override suspend fun setDayEndHour(value: Int) { dayEndHourState.value = value }
     override suspend fun setWeekStart(value: DayOfWeek) { weekStart.value = value }
     override suspend fun setTheme(value: AppTheme) { theme.value = value }
     override suspend fun setNotificationPermissionRequested(value: Boolean) {
@@ -562,6 +632,7 @@ private class ArchiveTestNotificationScheduler(
     val reconciledTodoIds = mutableListOf<String>()
     val cancelledTodoIds = mutableListOf<String>()
     var failCancellation = false
+    var failReconciliation = false
     var todoWasAbsentWhenCancellationAttempted = false
     override fun systemState() = NotificationSystemState(
         canPostNotifications = true,
@@ -570,7 +641,28 @@ private class ArchiveTestNotificationScheduler(
         exactAlarmRelevant = false,
         canScheduleExactAlarms = true,
     )
-    override suspend fun reconcileTodo(todoId: String) { reconciledTodoIds += todoId }
+    override suspend fun reconcileTodo(todoId: String) {
+        reconciledTodoIds += todoId
+        if (failReconciliation) {
+            database.scheduledNotificationDao().upsert(
+                ScheduledNotificationEntity(
+                    candidateKey = "partial-$todoId",
+                    todoId = todoId,
+                    notificationSettingId = "notification-$todoId",
+                    logicalDate = "2026-08-11",
+                    definitionRevision = 1,
+                    triggerAt = 1_000,
+                    requestCode = 20_000,
+                    schedulingMode = "exact",
+                    state = "scheduled",
+                    failureCode = null,
+                    createdAt = 10,
+                    updatedAt = 10,
+                ),
+            )
+            error("injected notification registration failure")
+        }
+    }
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) {
         cancelledTodoIds += todoId

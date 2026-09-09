@@ -269,15 +269,23 @@ class TodoEditorViewModelTest {
     }
 
     @Test
-    fun saveFailureKeepsDraftAndAllowsRetry() = runTest {
+    fun te025_rapidSaveFailureKeepsDraftAndAllowsSingleRetry() = runTest {
         val repository = FakeTodoRepository().apply {
             saveResult = Result.failure(IllegalStateException("save failed"))
+            saveGate = CompletableDeferred()
         }
         val viewModel = createViewModel(todoRepository = repository)
         runCurrent()
 
         viewModel.setTitle("保存に失敗するTODO")
         viewModel.save()
+        runCurrent()
+        viewModel.save()
+
+        assertEquals(1, repository.saveCount)
+        assertTrue(viewModel.uiState.value.isSaving)
+
+        repository.saveGate?.complete(Unit)
         runCurrent()
 
         assertEquals("保存に失敗するTODO", viewModel.uiState.value.title)
@@ -292,6 +300,62 @@ class TodoEditorViewModelTest {
 
         assertEquals(2, repository.saveCount)
         assertEquals(TodoEditorEffect.Saved(isNew = true), viewModel.effects.first())
+    }
+
+    @Test
+    fun te028_archiveAndDeleteOnlyLeaveEditorAfterSuccessfulOperation() = runTest {
+        val target = Todo(
+            id = "target",
+            title = "保存済みTODO",
+            description = "保存済みの説明",
+            categoryId = null,
+            startDate = LocalDate.of(2026, 9, 3),
+            endDate = null,
+            recurrenceRule = RecurrenceRule.daily(),
+            dueMinutes = null,
+            definitionRevision = 1,
+            archivedAt = null,
+            createdAt = 1,
+        )
+        val repository = FakeTodoRepository(mapOf(target.id to target)).apply {
+            archiveResult = Result.failure(IllegalStateException("archive failed"))
+            deleteResult = Result.failure(IllegalStateException("delete failed"))
+        }
+        val viewModel = createViewModel(todoRepository = repository, todoId = target.id)
+        runCurrent()
+        viewModel.setTitle("編集中のTODO")
+
+        viewModel.archive()
+        runCurrent()
+        assertEquals(1, repository.archiveCount)
+        assertEquals("編集中のTODO", viewModel.uiState.value.title)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertNotNull(viewModel.uiState.value.errorMessageRes)
+
+        viewModel.delete()
+        runCurrent()
+        assertEquals(1, repository.deleteCount)
+        assertEquals("編集中のTODO", viewModel.uiState.value.title)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertNotNull(viewModel.uiState.value.errorMessageRes)
+
+        val successfulArchive = createViewModel(
+            todoRepository = FakeTodoRepository(mapOf(target.id to target)),
+            todoId = target.id,
+        )
+        runCurrent()
+        successfulArchive.archive()
+        runCurrent()
+        assertEquals(TodoEditorEffect.Archived, successfulArchive.effects.first())
+
+        val successfulDelete = createViewModel(
+            todoRepository = FakeTodoRepository(mapOf(target.id to target)),
+            todoId = target.id,
+        )
+        runCurrent()
+        successfulDelete.delete()
+        runCurrent()
+        assertEquals(TodoEditorEffect.Deleted, successfulDelete.effects.first())
     }
 
     private fun createViewModel(
@@ -335,9 +399,14 @@ private class FakeTodoRepository(
 ) : TodoRepository {
     private val todos = initialTodos.toMutableMap()
     var getGate: CompletableDeferred<Unit>? = null
+    var saveGate: CompletableDeferred<Unit>? = null
     var saveResult: Result<String> = Result.success("saved-todo")
     var saveCount: Int = 0
     var lastSave: SaveTodoCall? = null
+    var archiveResult: Result<Unit> = Result.success(Unit)
+    var deleteResult: Result<Unit> = Result.success(Unit)
+    var archiveCount: Int = 0
+    var deleteCount: Int = 0
 
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> =
         flowOf(emptyList())
@@ -367,6 +436,7 @@ private class FakeTodoRepository(
         carryOverEnabled: Boolean,
     ): Result<String> {
         saveCount += 1
+        saveGate?.await()
         lastSave = SaveTodoCall(
             id = id,
             title = title,
@@ -399,9 +469,15 @@ private class FakeTodoRepository(
         scheduledLogicalDate: LocalDate,
     ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun archiveTodo(id: String): Result<Unit> = Result.success(Unit)
+    override suspend fun archiveTodo(id: String): Result<Unit> {
+        archiveCount += 1
+        return archiveResult
+    }
     override suspend fun restoreTodo(id: String): Result<Unit> = Result.success(Unit)
-    override suspend fun deleteTodo(id: String): Result<Unit> = Result.success(Unit)
+    override suspend fun deleteTodo(id: String): Result<Unit> {
+        deleteCount += 1
+        return deleteResult
+    }
 }
 
 private class FakeCategoryRepository : CategoryRepository {

@@ -408,6 +408,7 @@ class TodoEditorViewModel @Inject constructor(
 
     fun delete() {
         val todoId = route.todoId ?: return
+        if (_uiState.value.isSaving) return
         _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             todoRepository.deleteTodo(todoId)
@@ -425,6 +426,7 @@ class TodoEditorViewModel @Inject constructor(
 
     fun archive() {
         val todoId = route.todoId ?: return
+        if (_uiState.value.isSaving) return
         _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             todoRepository.archiveTodo(todoId)

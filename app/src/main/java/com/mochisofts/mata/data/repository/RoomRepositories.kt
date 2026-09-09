@@ -47,10 +47,12 @@ import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 @Singleton
 class RoomCategoryRepository @Inject constructor(
@@ -597,31 +599,41 @@ class RoomTodoRepository @Inject constructor(
         val weekStart = settingsRepository.weekStart.first()
         val dayEndHour = settingsRepository.dayEndHour.first()
         val now = ZonedDateTime.now(clock)
+        lateinit var archivedEntity: TodoEntity
+        var archivedRuntimeState: TodoRuntimeStateEntity? = null
+        var restorationApplied = false
         database.withTransaction {
             val entity = todoDao.findById(id) ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
             if (entity.archivedAt == null) return@withTransaction
+            archivedEntity = entity
+            archivedRuntimeState = runtimeStateDao.find(id)
             val currentLogicalDate = logicalDate(now, dayEndHour)
             val todo = entity.toDomain()
             val currentPeriod = todo.recurrencePeriod(currentLogicalDate, weekStart)
-            val existing = runtimeStateDao.find(id)
             val restored = entity.copy(archivedAt = null, updatedAt = clock.millis())
             todoDao.upsert(restored)
             runtimeStateDao.upsert(
                 TodoRuntimeStateEntity(
                     todoId = id,
                     lastFinalizedLogicalDate = maxDateString(
-                        existing?.lastFinalizedLogicalDate,
+                        archivedRuntimeState?.lastFinalizedLogicalDate,
                         currentLogicalDate.minusDays(1),
                     ),
                     lastFinalizedWeeklyPeriodEnd = if (todo.recurrenceType == RecurrenceType.WEEKLY_COUNT) {
-                        maxDateString(existing?.lastFinalizedWeeklyPeriodEnd, currentPeriod?.startDate?.minusDays(1))
+                        maxDateString(
+                            archivedRuntimeState?.lastFinalizedWeeklyPeriodEnd,
+                            currentPeriod?.startDate?.minusDays(1),
+                        )
                     } else {
-                        existing?.lastFinalizedWeeklyPeriodEnd
+                        archivedRuntimeState?.lastFinalizedWeeklyPeriodEnd
                     },
                     lastFinalizedMonthlyPeriodEnd = if (todo.recurrenceType == RecurrenceType.MONTHLY_COUNT) {
-                        maxDateString(existing?.lastFinalizedMonthlyPeriodEnd, currentPeriod?.startDate?.minusDays(1))
+                        maxDateString(
+                            archivedRuntimeState?.lastFinalizedMonthlyPeriodEnd,
+                            currentPeriod?.startDate?.minusDays(1),
+                        )
                     } else {
-                        existing?.lastFinalizedMonthlyPeriodEnd
+                        archivedRuntimeState?.lastFinalizedMonthlyPeriodEnd
                     },
                     appliedDefinitionRevision = restored.definitionRevision,
                     reconciliationCursorDate = null,
@@ -629,9 +641,23 @@ class RoomTodoRepository @Inject constructor(
                     pendingScheduledLogicalDate = null,
                 ),
             )
+            restorationApplied = true
         }
+        if (!restorationApplied) return@runCatching
         requestImmediateWidgetUpdate()
-        runCatching { notificationScheduler.reconcileTodo(id) }
+        try {
+            notificationScheduler.reconcileTodo(id)
+        } catch (schedulingFailure: Throwable) {
+            withContext(NonCancellable) {
+                database.withTransaction {
+                    todoDao.upsert(archivedEntity)
+                    archivedRuntimeState?.let { runtimeStateDao.upsert(it) } ?: runtimeStateDao.delete(id)
+                }
+                requestImmediateWidgetUpdate()
+                runCatching { notificationScheduler.cancelTodo(id) }
+            }
+            throw schedulingFailure
+        }
     }
 
     override suspend fun deleteTodo(id: String): Result<Unit> = runCatching {

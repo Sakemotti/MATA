@@ -429,6 +429,9 @@ interface TodoRuntimeStateDao {
     @Upsert
     suspend fun upsert(state: TodoRuntimeStateEntity)
 
+    @Query("DELETE FROM todo_runtime_states WHERE todoId = :todoId")
+    suspend fun delete(todoId: String)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertBackup(state: TodoRuntimeStateEntity)
 

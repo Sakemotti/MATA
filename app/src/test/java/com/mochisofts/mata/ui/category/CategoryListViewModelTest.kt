@@ -166,7 +166,7 @@ class CategoryEditorViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun failedSaveKeepsDraftThenRetrySucceedsWithoutDuplicateWrite() = runTest {
+    fun cm018_onlyChangedValidDraftSavesOnceAndFailureKeepsInput() = runTest {
         val repository = FakeCategoryRepository(emptyList()).apply {
             saveResult = Result.failure(IllegalStateException("write failed"))
             saveGate = CompletableDeferred()
@@ -175,6 +175,12 @@ class CategoryEditorViewModelTest {
         runCurrent()
         assertFalse(viewModel.uiState.value.isLoading)
         assertEquals("", viewModel.uiState.value.name)
+
+        viewModel.save()
+        assertEquals(0, repository.saveCount)
+        viewModel.setName("   ")
+        viewModel.save()
+        assertEquals(0, repository.saveCount)
         viewModel.setName("日常")
 
         viewModel.save()

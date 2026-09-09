@@ -8,6 +8,8 @@ import androidx.navigation.toRoute
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.common.ValidationError
+import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.core.navigation.ArchivedTodoDetailRoute
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
@@ -167,6 +169,7 @@ class ArchiveListViewModel @Inject constructor(
                         detail.loadErrorRes == null &&
                         operationState.value.runningTodoId != detail.todoId
                     ) {
+                        if (operationState.value.preview?.todoId == detail.todoId) clearAction()
                         closeDetail()
                         effectsChannel.send(ArchiveListEffect.Message(R.string.error_todo_not_found))
                         return@collect
@@ -257,7 +260,12 @@ class ArchiveListViewModel @Inject constructor(
                     ),
                 )
             }.onFailure { throwable ->
-                operationState.update { it.copy(runningTodoId = null) }
+                if (throwable.isTodoNotFound()) {
+                    if (selectedTodoId.value == preview.todoId) closeDetail()
+                    clearAction()
+                } else {
+                    operationState.update { it.copy(runningTodoId = null) }
+                }
                 effectsChannel.send(
                     ArchiveListEffect.Message(
                         throwable.toUserMessageRes(
@@ -306,6 +314,9 @@ class ArchiveListViewModel @Inject constructor(
         const val SEARCH_DEBOUNCE_MILLIS = 300L
     }
 }
+
+private fun Throwable.isTodoNotFound(): Boolean =
+    this is ValidationException && error == ValidationError.TODO_NOT_FOUND
 
 private fun ArchivedTodoItem.matchesSearch(rawQuery: String): Boolean {
     val query = rawQuery.trim()

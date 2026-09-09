@@ -91,8 +91,8 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun failedSaveKeepsPreviousValueAndEmitsMessage() = runTest {
-        val repository = FakeSettingsRepository().apply { failNextSave = true }
+    fun st041_autoSaveIsSilentOnSuccessAndRevertsOnlyFailedSetting() = runTest {
+        val repository = FakeSettingsRepository()
         val viewModel = SettingsViewModel(
             repository,
             FakeNotificationScheduler(),
@@ -100,8 +100,16 @@ class SettingsViewModelTest {
         )
 
         viewModel.setEndHour(4)
+        runCurrent()
+        assertEquals(4, viewModel.uiState.value.endHour)
+        assertNull(viewModel.uiState.value.savingSetting)
 
-        assertEquals(0, viewModel.uiState.value.endHour)
+        repository.failNextSave = true
+        viewModel.setEndHour(8)
+        runCurrent()
+
+        assertEquals(4, viewModel.uiState.value.endHour)
+        assertNull(viewModel.uiState.value.savingSetting)
         assertEquals(
             R.string.settings_save_error,
             (viewModel.effects.first() as SettingsEffect.Message).messageRes,

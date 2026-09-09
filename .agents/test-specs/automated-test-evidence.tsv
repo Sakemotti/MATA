@@ -116,3 +116,11 @@ CTL-008	app/src/test/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoLi
 AT-005	app/src/test/java/com/mochisofts/mata/ui/archive/ArchiveListViewModelTest.kt	at005_debounceCancelsOldSearchBeforeLatestResult	:app:testDebugUnitTest
 ST-039	app/src/test/java/com/mochisofts/mata/ui/settings/OpenSourceLicensesTest.kt	st039_listSearchEmptyBodyAndLoadFailureStatesAreDistinct	:app:testDebugUnitTest
 ST-042	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st042_fullPartialAndOperationFailuresRemainRetryable	:app:testDebugUnitTest
+TE-025	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te025_rapidSaveFailureKeepsDraftAndAllowsSingleRetry	:app:testDebugUnitTest
+TE-028	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te028_archiveAndDeleteOnlyLeaveEditorAfterSuccessfulOperation	:app:testDebugUnitTest
+CH-028	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch028_undoAndRestoreFailuresReloadConfirmedHistoryState	:app:testDebugUnitTest
+CM-018	app/src/test/java/com/mochisofts/mata/ui/category/CategoryListViewModelTest.kt	cm018_onlyChangedValidDraftSavesOnceAndFailureKeepsInput	:app:testDebugUnitTest
+AT-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at023_restoreFailuresKeepArchivedStateAndNotificationsStopped	:app:connectedDebugAndroidTest
+AT-029	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at029_permanentDeleteFailureRollsBackAllArchivedTodoRows	:app:connectedDebugAndroidTest
+AT-037	app/src/test/java/com/mochisofts/mata/ui/archive/ArchiveListViewModelTest.kt	at037_externalRestoreOrDeleteClosesDetailAndConfirmationSafely	:app:testDebugUnitTest
+ST-041	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st041_autoSaveIsSilentOnSuccessAndRevertsOnlyFailedSetting	:app:testDebugUnitTest

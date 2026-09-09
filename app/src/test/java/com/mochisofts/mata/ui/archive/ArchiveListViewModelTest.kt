@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.paging.PagingData
 import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.common.ValidationError
+import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
@@ -141,9 +143,9 @@ class ArchiveListViewModelTest {
         assertNull(viewModel.uiState.value.selectedTodoId)
     }
 
-    @Test
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun selectedTodoRemovedExternally_clearsSelectionAndReportsNotFound() = runTest {
+    @Test
+    fun at037_externalRestoreOrDeleteClosesDetailAndConfirmationSafely() = runTest {
         val item = archivedTodo("todo", "外部削除対象")
         val repository = SelectionArchiveRepository(item)
         val viewModel = ArchiveListViewModel(
@@ -156,13 +158,82 @@ class ArchiveListViewModelTest {
         }
         viewModel.openDetail(item.todo.id)
         runCurrent()
+        viewModel.requestAction(item.todo.id, ArchiveAction.DELETE)
+        runCurrent()
+        assertEquals(item.todo.id, viewModel.uiState.value.preview?.todoId)
 
         repository.removeExternally()
         runCurrent()
 
         assertNull(viewModel.uiState.value.selectedTodoId)
+        assertNull(viewModel.uiState.value.preview)
         assertEquals(
             ArchiveListEffect.Message(R.string.error_todo_not_found),
+            viewModel.effects.first(),
+        )
+
+        val listRepository = SelectionArchiveRepository(item)
+        val listViewModel = ArchiveListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            repository = listRepository,
+            settingsRepository = ArchiveViewModelSettingsRepository(),
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            listViewModel.uiState.collect()
+        }
+        listViewModel.requestAction(item.todo.id, ArchiveAction.RESTORE)
+        runCurrent()
+        listRepository.removeExternally()
+        listViewModel.confirmAction()
+        runCurrent()
+
+        assertNull(listViewModel.uiState.value.preview)
+        assertNull(listViewModel.uiState.value.runningTodoId)
+        assertEquals(
+            ArchiveListEffect.Message(R.string.error_todo_not_found),
+            listViewModel.effects.first(),
+        )
+    }
+
+    @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun archiveOperationFailuresKeepTargetAndReportActionSpecificError() = runTest {
+        val item = archivedTodo("todo", "失敗後も残るTODO")
+        val repository = SelectionArchiveRepository(item).apply {
+            restoreResult = Result.failure(IllegalStateException("restore failed"))
+            deleteResult = Result.failure(IllegalStateException("delete failed"))
+        }
+        val viewModel = ArchiveListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            repository = repository,
+            settingsRepository = ArchiveViewModelSettingsRepository(),
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        viewModel.openDetail(item.todo.id)
+        runCurrent()
+
+        viewModel.requestAction(item.todo.id, ArchiveAction.RESTORE)
+        runCurrent()
+        viewModel.confirmAction()
+        runCurrent()
+        assertEquals(item, viewModel.uiState.value.selectedItem)
+        assertNull(viewModel.uiState.value.runningTodoId)
+        assertEquals(
+            ArchiveListEffect.Message(R.string.archive_restore_error),
+            viewModel.effects.first(),
+        )
+
+        viewModel.dismissAction()
+        viewModel.requestAction(item.todo.id, ArchiveAction.DELETE)
+        runCurrent()
+        viewModel.confirmAction()
+        runCurrent()
+        assertEquals(item, viewModel.uiState.value.selectedItem)
+        assertNull(viewModel.uiState.value.runningTodoId)
+        assertEquals(
+            ArchiveListEffect.Message(R.string.archive_delete_error),
             viewModel.effects.first(),
         )
     }
@@ -188,6 +259,8 @@ class ArchiveListViewModelTest {
 private class SelectionArchiveRepository(item: ArchivedTodoItem) : ArchiveRepository {
     private val selectedItem = MutableStateFlow<ArchivedTodoItem?>(item)
     var restoredTodoId: String? = null
+    var restoreResult: Result<Unit> = Result.success(Unit)
+    var deleteResult: Result<Unit> = Result.success(Unit)
 
     fun removeExternally() {
         selectedItem.value = null
@@ -222,11 +295,19 @@ private class SelectionArchiveRepository(item: ArchivedTodoItem) : ArchiveReposi
     }
 
     override suspend fun restore(todoId: String): Result<Unit> {
+        if (selectedItem.value == null) {
+            return Result.failure(ValidationException(ValidationError.TODO_NOT_FOUND))
+        }
         restoredTodoId = todoId
-        return Result.success(Unit)
+        return restoreResult
     }
 
-    override suspend fun deletePermanently(todoId: String): Result<Unit> = Result.success(Unit)
+    override suspend fun deletePermanently(todoId: String): Result<Unit> =
+        if (selectedItem.value == null) {
+            Result.failure(ValidationException(ValidationError.TODO_NOT_FOUND))
+        } else {
+            deleteResult
+        }
 }
 
 private class EmptyArchiveRepository : ArchiveRepository {

@@ -198,10 +198,10 @@ TE-021	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	N
 TE-022	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te022・CI run 34029287328成功
 TE-023	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te023・CI run 34029287328成功
 TE-024	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-025	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-025	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te025・testDebugUnitTest成功
 TE-026	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-027	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-028	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-028	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te028・testDebugUnitTest成功
 TE-029	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-030	P1	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・全入力、選択、エラー、保存、戻るを色だけに依存せず操作できることを確認
 TE-031	P0	todo-editor.md	未実施	-	-	-	-	-
@@ -240,7 +240,7 @@ CH-024	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-025	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-026	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-027	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch027・testDebugUnitTest成功
-CH-028	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-028	P0	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch028・testDebugUnitTest成功
 CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功
 CH-030	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch030・testDebugUnitTest成功
 CH-031	P0	calendar-history.md	未実施	-	-	-	-	-
@@ -272,7 +272,7 @@ CM-014	P1	category-management.md	未実施	-	-	-	-	-
 CM-015	P1	category-management.md	未実施	-	-	-	-	-
 CM-016	P1	category-management.md	未実施	-	-	-	-	-
 CM-017	P2	category-management.md	未実施	-	-	-	-	-
-CM-018	P0	category-management.md	未実施	-	-	-	-	-
+CM-018	P0	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryEditorViewModelTest#cm018・testDebugUnitTest成功
 CM-019	P1	category-management.md	未実施	-	-	-	-	-
 CM-020	P0	category-management.md	未実施	-	-	-	-	-
 CM-021	P0	category-management.md	未実施	-	-	-	-	-
@@ -314,13 +314,13 @@ AT-019	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_6
 AT-020	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-021	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#at021・CI run 34027426978成功
 AT-022	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-023	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-023	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at023・connectedDebugAndroidTest成功
 AT-024	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-025	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-026	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-027	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-028	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at028・connectedDebugAndroidTest成功
-AT-029	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-029	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at029・connectedDebugAndroidTest成功
 AT-030	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-031	P1	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at031・CI run 34027426978成功
 AT-032	P0	archived-todos.md	未実施	-	-	-	-	-
@@ -328,7 +328,7 @@ AT-033	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-034	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-035	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-036	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-037	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-037	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	ArchiveListViewModelTest#at037・testDebugUnitTest成功
 AT-038	P2	archived-todos.md	未実施	-	-	-	-	-
 AT-039	P1	archived-todos.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・検索、TODO行、詳細、履歴、復元、削除確認を識別して操作できることを確認
 AT-040	P1	archived-todos.md	未実施	-	-	-	-	-
@@ -379,7 +379,7 @@ ST-037	P1	settings.md	未実施	-	-	-	-	-
 ST-038	P1	settings.md	未実施	-	-	-	-	-
 ST-039	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	OpenSourceLicensesTest#st039・testDebugUnitTest成功
 ST-040	P1	settings.md	未実施	-	-	-	-	-
-ST-041	P0	settings.md	未実施	-	-	-	-	-
+ST-041	P0	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st041・testDebugUnitTest成功
 ST-042	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st042・testDebugUnitTest成功
 ST-043	P1	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・回転とプロセス再生成後に対象状態を復元し二重実行しないことを確認
 ST-044	P1	settings.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・設定名、値、状態、進捗、エラー、破壊的影響を識別して操作できることを確認
