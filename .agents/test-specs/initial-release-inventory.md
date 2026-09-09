@@ -1,8 +1,8 @@
 # 初回リリース試験棚卸し
 
-- 対象アプリ: MATA `1.0.0 (3)`予定
-- 対象ソースcommit: 未確定（versionCode 3実装完了時に固定）
-- 棚卸し日: 2026-09-08
+- 対象アプリ: MATA `1.0.0 (3)`
+- 対象ソースcommit: `307949e2068b1c56ff597c3730b05755b1f37e06`
+- 最終更新日: 2026-09-09
 - 試験項目書: [MATA 総合動作確認項目書](README.md)
 - 項目別結果: [初回リリース試験結果](initial-release-results.tsv)
 - 実機実施計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
@@ -11,7 +11,7 @@
 
 ## 1. 判定
 
-現時点では、versionCode `2`のGoogle Play配布、上書き更新、主要実機試験、AdMob連携と実広告バナー表示を確認できている。一方、Closed testingフィードバック#162・#164～#166をversionCode `3`へ実装して再試験する必要があり、全P0/P1、必須環境マトリクス、Pre-launch reportおよびClosed testing期間の証跡も未完了のため、本番公開判定は`保留`とする。
+現時点では、versionCode `2`のGoogle Play配布、上書き更新、主要実機試験、AdMob連携と実広告バナー表示を確認し、Closed testingフィードバック#162・#164～#166を反映したversionCode `3`もClosed testingへ公開している。一方、versionCode `2`から`3`への更新と修正内容の再試験、全P0/P1、必須環境マトリクス、Pre-launch reportおよびClosed testing期間の証跡が未完了のため、本番公開判定は`保留`とする。
 
 これは不具合による不合格ではなく、項目単位の証跡が不足している状態である。
 
@@ -29,7 +29,7 @@
 | カテゴリ別TODO一覧 | 7 | 4 | 0 | 11 |
 | 合計 | 248 | 156 | 16 | 420 |
 
-リリース必須のP0/P1は404件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月8日時点では、項目単位の証跡が揃ったP0を124件、P1を26件`合格`、P1を1件`保留`、P0/P1の残り253件を`未実施`として登録した。P2を含む全420件では150件が合格、1件が保留、269件が未実施である。追加したversionCode 3向け17件は実装後に確認する。
+リリース必須のP0/P1は404件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月8日時点では、項目単位の証跡が揃ったP0を124件、P1を26件`合格`、P1を1件`保留`、P0/P1の残り253件を`未実施`として登録した。P2を含む全420件では150件が合格、1件が保留、269件が未実施である。追加したversionCode 3向け17件はClosed testing版で再確認する。
 
 ## 3. 自動検査の証跡
 
@@ -45,6 +45,7 @@
 | Upload Key設定ガード | 秘密値の一部設定、相対パス、リポジトリ内ファイル、署名必須フラグなし、Configuration Cache有効化の5異常系を拒否し、例外へ架空の秘密値を含めないことを確認 | 2026-09-04に`:app:verifyUploadSigningGuards`を実行 | `REL-023` |
 | 署名済みAAB | Upload KeyのSHA-256が成果物とPlay Consoleで一致 | [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md) | `REL-024` |
 | versionCode 2公開候補 | クリーンなmainからUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md) | `REL-021` |
+| versionCode 3公開候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
 | Release成果物改変検出 | 正常系1件とSBOMの内容・パス・欠損・容量・SHA-256・必須component・依存グラフの異常系6件が成功 | 2026-09-04に`node --test tools/release/release-artifact-verifier.test.mjs`を実行 | `REL-026` |
 | 論理日・繰り返し計算 | 試験IDを接頭辞に持つ専用JUnitテスト26件が成功し、ID・テストメソッド・実行タスクの1対1対応を機械検証 | 2026-09-04に`:app:testDebugUnitTest --tests com.mochisofts.mata.domain.model.ScheduleTestSpecCoverageTest`と`verify-automated-evidence.mjs`を実行 | `DAY-001`〜`DAY-003`、`DAY-006`〜`DAY-008`、`DAY-013`、`RPT-001`〜`RPT-004`、`RPT-007`〜`RPT-018`、`RPT-027`〜`RPT-029` |
 | 履歴・復元・完全削除 | 終了済み論理日の履歴確定、回数期間の達成・未達成、履歴取り消し範囲、復元時の基準と埋め戻し防止、関連データ完全削除をRoom上の専用instrumented test 8件で検証 | `:app:connectedDebugAndroidTest`と`verify-automated-evidence.mjs`を実行 | `DAY-010`、`RPT-024`、`STA-003`、`STA-010`、`STA-011`、`AT-016`、`AT-017`、`AT-028` |
