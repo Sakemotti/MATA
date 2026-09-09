@@ -10,7 +10,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 画面仕様の受け入れ条件235件を1件ずつテストIDへ対応付ける。加えて、画面仕様本文の詳細確認40件と、画面単体の受け入れ条件だけでは確認しにくい論理日、繰り返し、祝日、通知、ウィジェット、端末内保存、プライバシー、ビルド品質の横断確認145件を定義する。実行結果を記録する項目は合計420件とする。
 
-初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、420件の項目別結果は[リリース別試験結果の管理](results-management.md)、自動試験との1対1対応は[自動試験証跡TSV](automated-test-evidence.tsv)、正式確認の実施区分は[初回リリース試験の実施区分](closed-testing-assignments.md)、未実施P0/P1を実機セッションへ分割した手順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)、Closed testingの参加・自由操作・フィードバックは[初回Closed testing実施台帳](closed-testing-log.md)へ記録する。現在のversionCode `3`の登録とversionCode `2`からの上書き更新には[Closed testing登録・更新確認手順](closed-testing-release-1.0.0-3.md)、versionCode `1`から`2`までの履歴には[旧手順](closed-testing-release-1.0.0-2.md)、テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。Closed testing参加者へ個別の試験項目は割り当てない。
+初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、420件の項目別結果は[リリース別試験結果の管理](results-management.md)、自動試験との1対1対応は[自動試験証跡TSV](automated-test-evidence.tsv)、正式確認の実施区分は[初回リリース試験の実施区分](closed-testing-assignments.md)、未実施P0/P1を実機セッションへ分割した手順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)、versionCode 3固有機能と不足環境の優先確認には[残実機・環境試験計画](release-v3-device-verification-plan.md)、Closed testingの参加・自由操作・フィードバックは[初回Closed testing実施台帳](closed-testing-log.md)を使用する。現在のversionCode `3`の登録とversionCode `2`からの上書き更新には[Closed testing登録・更新確認手順](closed-testing-release-1.0.0-3.md)、versionCode `1`から`2`までの履歴には[旧手順](closed-testing-release-1.0.0-2.md)、テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。Closed testing参加者へ個別の試験項目は割り当てない。
 
 ## 2. 正とする文書
 

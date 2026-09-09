@@ -1,7 +1,7 @@
 # 初回リリース進行記録
 
 - 対象: MATA `1.0.0 (3)`
-- 状態: versionCode 3をClosed testingへ公開済み・更新／再試験待ち
+- 状態: versionCode 3をClosed testingへ公開・上書き更新済み／変更内容と不足環境の再試験中
 - 最終更新日: 2026-09-09
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
@@ -65,6 +65,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 | Internal testing | `1.0.0 (1)`を公開し、参加URL経由でインストール済み | CONSOLE / DEVICE |
 | `1.0.0 (2)`公開候補 | Closed testingへ公開し、versionCode 1からの上書き更新と主要実機試験に使用済み | AUTO / CONSOLE / DEVICE / USER |
 | `1.0.0 (3)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
+| versionCode `2`→`3`上書き更新 | Pixel 9a（Android 17 / API 37）で成功。既存データ、設定、通知、ウィジェットおよびバックアップに問題なし | DEVICE / USER |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -101,9 +102,10 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 - オプトインURLを取得できることを確認した。URLおよびテスター情報はリポジトリへ記録せず、制限された連絡経路で管理する。
 - 2026年9月8日にPixel 9a（Android 17 / API 37）で、既存versionCode `1`からGoogle Play経由でversionCode `2`へアンインストールせず更新できることを確認した。TODO、カテゴリ、履歴、設定、通知およびウィジェットは維持され、基準バックアップ`B0`を作成した。
 - 2026年9月8日に同端末で`RO-17`を実施し、実通知4件とウィジェット13件を合格とした。`WGT-014`は実広告の配置を確認したが、広告読込失敗状態を再現できないため`DEV-FAULT`確認待ちとして保留した。
-- 2026年9月9日にClosed testingフィードバックを反映したversionName `1.0.0`、versionCode `3`のAABを同じClosed testingトラックへ公開したことをUSERが確認した。
-- versionCode `3`のConsole上の正確な公開状態文言、処理日時、警告、Pre-launch reportおよびSDK関連状態は確認後に追記する。
-- versionCode `2`から`3`へのGoogle Play上書き更新、データ保持および変更内容の再試験は[専用手順](../../test-specs/closed-testing-release-1.0.0-3.md)に従って実施する。
+- 2026年9月9日にClosed testingフィードバックを反映したversionName `1.0.0`、versionCode `3`のAABを同じClosed testingトラックへ公開し、状態が`クローズドテスト公開開始`であることをUSERが確認した。新規警告はなかった。
+- 同日にPixel 9a（Android 17 / API 37）でversionCode `2`から`3`へアンインストールせず更新し、既存データ、設定、通知、ウィジェット、バックアップおよび起動に問題がないことを確認した。
+- versionCode 3変更内容の個別再試験と不足環境の確認は[残実機・環境試験計画](../../test-specs/release-v3-device-verification-plan.md)に従って実施する。
+- versionCode `3`公開後もPre-launch report、SDK Indexおよびポリシー状態はversionCode `2`確認時から変わっていない。
 - 対象アカウントの要件に従い、12人以上のテスターが14日間連続してオプトインした状態を維持する。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
 - 条件達成後、テスト方法、参加状況、フィードバック、修正内容を整理してProduction accessを申請する。
@@ -120,14 +122,16 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 - 利用規約と外部送信に関する公表について必要な専門家確認
 - Data safety、UMP、SDK、実通信および公開法的文書の最終突合
 
+必要人数は2026年9月9日時点で充足しており、14日間の継続参加を依頼中である。開始日と達成予定日はPlay Consoleの表示を確認して台帳へ記録する。
+
 ### 6.2 次の実変更で確認する
 
-- versionCode `3`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格済みである。Google Play経由の更新と主要な回帰試験を実施する。
+- versionCode `3`では全自動ゲート、Upload Key署名、成果物ハッシュ検査およびGoogle Play経由の上書き更新に合格済みである。変更内容固有の実機確認と不足環境の回帰試験を実施する。
 - versionCode `3`公開後にアプリ、ビルド設定、法的本文またはPlay掲載成果物を変更する場合は、versionCodeを`4`以上へ上げて公開候補を再生成する。
 
 ### 6.3 外部状態待ち
 
-- versionCode `3`公開後のPre-launch report生成状態は未確認である。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
+- versionCode `3`公開後もPre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`の表示から変わっていない。SDK関連警告はなく、ポリシー状態は`問題は見つかりませんでした`である。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 - AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
 - 本番広告を試験目的でクリックしない。
 

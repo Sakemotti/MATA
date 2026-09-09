@@ -11,7 +11,7 @@
 
 ## 1. 判定
 
-現時点では、versionCode `2`のGoogle Play配布、上書き更新、主要実機試験、AdMob連携と実広告バナー表示を確認し、Closed testingフィードバック#162・#164～#166を反映したversionCode `3`もClosed testingへ公開している。一方、versionCode `2`から`3`への更新と修正内容の再試験、全P0/P1、必須環境マトリクス、Pre-launch reportおよびClosed testing期間の証跡が未完了のため、本番公開判定は`保留`とする。
+現時点では、versionCode `2`のGoogle Play配布、主要実機試験、AdMob連携と実広告バナー表示を確認し、Closed testingフィードバック#162・#164～#166を反映したversionCode `3`もClosed testingへ公開して上書き更新に成功している。一方、修正内容固有の再試験、全P0/P1、必須環境マトリクス、Pre-launch reportおよびClosed testing期間の証跡が未完了のため、本番公開判定は`保留`とする。
 
 これは不具合による不合格ではなく、項目単位の証跡が不足している状態である。
 
@@ -83,7 +83,7 @@
 
 ## 6. Closed testing中の確認順
 
-未実施P0/P1の具体的なセッション分割、環境および実施順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)を使用する。
+未実施P0/P1の全体的なセッション分割、環境および実施順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)、versionCode 3変更内容と不足環境の優先確認には[残実機・環境試験計画](release-v3-device-verification-plan.md)を使用する。
 
 1. Closed testing参加者には試験項目を渡さず、複数日にわたって自由操作してもらう。
 2. テスターごとに端末名、Androidバージョン、アプリversion、参加・最終利用確認日および自由記述のフィードバックを記録する。
