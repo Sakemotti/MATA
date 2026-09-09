@@ -408,14 +408,14 @@ STA-013	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x8
 STA-014	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomTodoStateSpecCoverageTest#sta014・connectedDebugAndroidTest成功
 STA-015	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomTodoStateSpecCoverageTest#sta015・connectedDebugAndroidTest成功
 NTF-016	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	NotificationSchedulerTestSpecCoverageTest#ntf016・connectedDebugAndroidTest成功
-WGT-015	P0	app-core.md	未実施	-	-	-	-	-
+WGT-015	P0	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-03・繰り越しTODOがウィジェットへ1件だけ表示され、完了・スキップ後に一覧と同期することを確認
 DAT-011	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	MataDatabaseMigrationTest#dat011・connectedDebugAndroidTest成功
 DAT-012	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	BackupSpecCoverageTest#dat012・connectedDebugAndroidTest成功
-TL-033	P0	todo-list.md	未実施	-	-	-	-	-
-TL-034	P0	todo-list.md	未実施	-	-	-	-	-
-TL-035	P0	todo-list.md	未実施	-	-	-	-	-
-TE-034	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-035	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-036	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-037	P0	todo-editor.md	未実施	-	-	-	-	-
-CM-032	P1	category-management.md	未実施	-	-	-	-	-
+TL-033	P0	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-04・過去詳細から現在有効なTODOを編集し、過去履歴が変わらないことを確認
+TL-034	P0	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-04・過去詳細からの完全削除で関連データだけが確認後に削除されることを確認
+TL-035	P0	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-02・CT-V3-03・単発TODOの実行期間表示、期限順、繰り越し表示を確認
+TE-034	P1	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-01・カテゴリ色が入力枠へ反映され、エラー表示が優先されることを確認
+TE-035	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-02・単発TODOの実行日と期限日を保存・再編集でき、無効な期限日を拒否することを確認
+TE-036	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-03・日付固定型だけで未完了繰り越しを設定できることを確認
+TE-037	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-04・過去履歴を保持した編集と確認付き完全削除を確認
+CM-032	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-01・16色の選択反映、ライト・ダーク、エラー表示の優先を確認
