@@ -71,7 +71,8 @@ Release AABには4 ABI合計8件のネイティブライブラリがある。`SY
 本書の合格は、Upload Key署名済み成果物が機械検証済みのClosed testing候補として一意に識別できたことを示す。本番公開の承認ではない。
 
 - 2026年9月9日にversionCode `3`をClosed testingへ公開したことをUSERが確認した。
-- Play Console上の正確な公開状態文言、処理日時、警告およびPre-launch reportはConsole確認後に台帳へ追記する。
-- versionCode `2`から`3`へのGoogle Play経由の上書き更新と、データ・設定・通知・ウィジェット保持を確認する。
+- Play Console上の状態は「クローズドテスト公開開始」で、新規警告がないことを2026年9月9日にUSERが確認した。正確な時刻はConsoleの非公開記録を正とする。
+- versionCode `2`から`3`へのGoogle Play経由の上書き更新に成功し、データ・設定・通知・ウィジェット保持に問題がないことをUSERが確認した。
+- Pre-launch report、SDK Indexおよびポリシー状態はversionCode 2確認時から変わっていない。
 - versionCode 3で修正したClosed testingフィードバックを再試験する。
 - 12人以上・14日間の継続参加、Production access申請および残りの公開ゲートを完了する。

@@ -2,7 +2,7 @@
 
 - 対象アプリ: MATA `1.0.0 (3)`
 - 対象ソースcommit: `307949e2068b1c56ff597c3730b05755b1f37e06`
-- 状態: versionCode 3配布済み・更新／再試験待ち
+- 状態: versionCode 3配布・上書き更新済み／変更内容と不足環境の再試験中
 - テスト開始日: 未定
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
@@ -13,6 +13,7 @@
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - 登録・更新手順: [MATA 1.0.0 (3) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-3.md)
+- versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
 - 旧版登録・更新実績: [MATA 1.0.0 (2) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-2.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 
@@ -31,15 +32,15 @@
 | 項目 | 記録 |
 | --- | --- |
 | トラック名 | Closed testing |
-| リリース状態 | versionCode `3`を公開済み（2026-09-09、USER確認。Console上の正確な状態文言は確認待ち） |
+| リリース状態 | `クローズドテスト公開開始`（versionCode `3`、2026-09-09、USER確認） |
 | 対象国・地域 | 日本 |
 | テスター管理方法 | 設定済み。管理方法と対象者情報はリポジトリ外で管理 |
 | オプトインURL | 取得可能であることを確認済み。URL自体はリポジトリに記録せず、テスター向け連絡経路で共有 |
 | 公開日時 | 2026-09-09（時刻はリポジトリ外のConsole記録を正とする） |
 | AAB照合 | 12,600,782 bytes、SHA-256 `75a79da8534841cda3312594a086369d1e7ff53029920b56904f856b16fbe019`、2026-09-09照合 |
-| Play Console上のversionCode | `3`（公開をUSER確認。Console画面での再照合待ち） |
-| Consoleの警告・判断 | versionCode `3`の警告文面は確認待ち。Native Debug Symbols未登録だけの場合は既知事項として記録し、その他の警告またはエラーは公開判断を再評価する |
-| Play Console上の参加要件 | 12人以上・14日間連続（2026-09-07、USER確認） |
+| Play Console上のversionCode | `3`（USER確認） |
+| Consoleの警告・判断 | 新規警告なし。versionCode `2`で記録したNative Debug Symbols未登録の扱いは継続 |
+| Play Console上の参加要件 | 必要人数を充足。12人以上・14日間連続のうち、14日間の継続参加を依頼中（2026-09-09、USER確認） |
 | Production access申請可能予定日 | `未記入` |
 
 versionCode `1`はInternal testingで使用済みである。versionCode `2`はClosed testingでversionCode `1`からの上書き更新と主要実機試験に使用した。Closed testingフィードバックを反映した現在候補は[versionCode 3公開候補生成結果](release-candidate-1.0.0-3.md)であり、versionCode `2`からの更新結果とPlay Console上の状態を本節へ記録する。
@@ -110,10 +111,10 @@ versionCode `1`はInternal testingで使用済みである。versionCode `2`はC
 | 端末再起動・プロセス再生成 | 未定 | 通知、ウィジェット、永続化 | 未実施 |
 | 日付・時刻・タイムゾーン変更 | 未定 | `DAY`、`RPT`、`NTF-011` | 未実施 |
 | Google Play経由の上書き更新 | OWNER | [versionCode 1から2への専用手順](closed-testing-release-1.0.0-2.md#6-versioncode-1から2への上書き更新)で更新後のデータ・通知・ウィジェットを確認 | 2026年9月8日、Pixel 9a・Android 17 / API 37で合格。基準バックアップ`B0`作成済み |
-| Google Play経由のversionCode 2→3更新 | OWNER | [versionCode 3専用手順](closed-testing-release-1.0.0-3.md#4-versioncode-2から3への上書き更新)でデータ保持と変更内容を確認 | versionCode 3公開済み・更新確認待ち |
+| Google Play経由のversionCode 2→3更新 | OWNER | [versionCode 3専用手順](closed-testing-release-1.0.0-3.md#4-versioncode-2から3への上書き更新)でデータ保持を確認 | 2026年9月9日、Pixel 9a・Android 17 / API 37で合格。変更内容の個別再試験は[残試験計画](release-v3-device-verification-plan.md)で実施 |
 | 広告・UMP | OWNER | `E2E-009`、`WGT-014`、収益化項目 | AdMob連携、実広告バナーおよびウィジェット操作画面の配置は確認済み。UMP同意状態、広告読込失敗、オフラインは未実施 |
 
-2026年9月7日のPlay Console確認では、ポリシーのステータスは`問題は見つかりませんでした`、versionCode `2`のSDK関連警告はなしだった。Pre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`と表示され、登録済みのversionCode `2`に対するレポートは未生成だった。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
+2026年9月9日にversionCode `3`公開後もPlay Consoleの状況が変わっていないことをUSERが確認した。ポリシーのステータスは`問題は見つかりませんでした`、SDK関連警告はなく、Pre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`のままである。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 
 実機を用意できない画面幅やAPIは、Android EmulatorまたはPre-launch reportで補完し、実機とエミュレータのどちらかを証跡へ明記する。
 
@@ -126,8 +127,8 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | CT-001 | 2026-09-08 | OWNER | 2 | versionCode 1→2上書き更新、`APP-003`、`APP-004`、`APP-006`、`APP-008`〜`APP-012` | PH-R2・Pixel 9a・Android 17 / API 37・Google Play Closed testing | 合格 | データ・設定・通知・ウィジェット保持、`B0`作成、基本E2E・主要UI・ナビゲーションをUSER確認。`APP-001`はAPI 26新規インストール待ち |
 | CT-002 | 2026-09-08 | OWNER | 2 | `NTF-003`〜`NTF-005`、`NTF-008`、`WGT-001`〜`WGT-013` | PH-R2・Pixel 9a・Android 17 / API 37・Androidホーム画面・Google Play Closed testing | 合格 | 実通知は予定時刻どおり。通知操作、正確なアラーム不許可、ウィジェット表示・操作・更新・境界・競合をUSER確認。不具合なし |
 | CT-003 | 2026-09-08 | OWNER | 2 | `WGT-014` | PH-R2・Pixel 9a・Android 17 / API 37・Androidホーム画面・実広告 | 保留 | 実広告が操作領域と重ならず画面下部へ表示されることは合格。広告読込失敗状態を再現できず、DEV-FAULT確認待ち |
-| CT-004 | 未記入 | OWNER | 3 | versionCode 2→3上書き更新、Closed testingフィードバック再試験 | Pixel 9a・Android 17 / API 37・Google Play Closed testing | 未実施 | [versionCode 3専用手順](closed-testing-release-1.0.0-3.md) |
-| CT-005 | 未記入 | 未記入 | 3 | 自由操作または追加再試験 | 未記入 | 未実施 | 未記入 |
+| CT-004 | 2026-09-09 | OWNER | 3 | versionCode 2→3上書き更新 | Pixel 9a・Android 17 / API 37・Google Play Closed testing | 合格 | 起動、既存データ、設定、通知、ウィジェット、バックアップおよびデータ保全に問題なし |
+| CT-005 | 未記入 | OWNER | 3 | Closed testingフィードバック再試験 | Pixel 9a・Android 17 / API 37 | 未実施 | [versionCode 3残試験計画](release-v3-device-verification-plan.md) |
 
 行が不足したら実施IDを連番で追加する。結果は`合格`、`不合格`、`保留`、`対象外`のいずれかとする。
 
@@ -137,7 +138,10 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 
 | ID | 日時 | テスター | 対象画面・機能 | 内容 | 重要度 | 対応判断 | Issue |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| FB-001 | 未記入 | 未記入 | 未記入 | 未記入 | 未判定 | 未判定 | なし |
+| FB-001 | 2026-09-08 | OWNER | TODO・カテゴリ編集 | 選択中のカテゴリを設定色から直感的に識別しやすくする。versionCode 3へ実装済み・再試験待ち | 未判定 | 修正する | [#162](https://github.com/Sakemotti/MATA/issues/162) |
+| FB-002 | 2026-09-08 | OWNER | 過去日のTODO詳細 | 現在も有効なTODOを過去日の詳細から編集・完全削除できるようにする。versionCode 3へ実装済み・再試験待ち | 未判定 | 修正する | [#164](https://github.com/Sakemotti/MATA/issues/164) |
+| FB-003 | 2026-09-08 | OWNER | 未完了TODO | 完了またはスキップするまで翌日以降へ繰り越せるようにする。versionCode 3へ実装済み・再試験待ち | 未判定 | 修正する | [#165](https://github.com/Sakemotti/MATA/issues/165) |
+| FB-004 | 2026-09-08 | OWNER | 単発TODO | 実行日とは別に期限日を設定できるようにする。versionCode 3へ実装済み・再試験待ち | 未判定 | 修正する | [#166](https://github.com/Sakemotti/MATA/issues/166) |
 
 重要度は`重大`、`高`、`中`、`低`、対応判断は`修正する`、`仕様どおり`、`将来対応`、`追加確認`のいずれかを使用する。
 
