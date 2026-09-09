@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -155,6 +156,182 @@ class RoomTodoStateSpecCoverageTest {
         assertEquals("before edit", historical.snapshot.title)
         assertEquals(9 * 60, historical.snapshot.dueMinutes)
         assertEquals(TodoState.COMPLETED, historical.state)
+    }
+
+    @Test
+    fun day015_onceTodoAppearsOnceThroughoutItsExecutionWindowWithoutDuplicatingHistory() = runBlocking {
+        val executionDate = clock.date
+        val dueDate = executionDate.plusDays(2)
+        val todo = todoEntity(
+            id = "once-execution-window",
+            startDate = executionDate,
+            endDate = executionDate,
+            rule = RecurrenceRule.once(),
+            dueDate = dueDate,
+        )
+        database.todoDao().upsert(todo)
+
+        val dates = (-1L..3L).map(executionDate::plusDays)
+        val occurrencesByDate = dates.associateWith { date ->
+            todoRepository.observeOccurrences(date).first()
+        }
+
+        assertTrue(occurrencesByDate.getValue(executionDate.minusDays(1)).isEmpty())
+        assertTrue(occurrencesByDate.getValue(executionDate.plusDays(3)).isEmpty())
+        (0L..2L).forEach { offset ->
+            val occurrence = occurrencesByDate.getValue(executionDate.plusDays(offset)).single()
+            assertEquals(todo.id, occurrence.todo.id)
+            assertEquals(executionDate, occurrence.scheduledLogicalDate)
+            assertEquals(dueDate, occurrence.effectiveDueDate)
+            assertEquals(TodoState.PENDING, occurrence.state)
+        }
+        assertTrue(database.todoExecutionDao().findForTodo(todo.id).isEmpty())
+    }
+
+    @Test
+    fun sta013_carryOverKeepsOldestExpiredOccurrenceWhileDisabledFinalizesMissed() = runBlocking {
+        val executionDate = clock.date
+        val disabled = todoEntity(
+            id = "carry-disabled",
+            startDate = executionDate,
+            endDate = executionDate,
+            rule = RecurrenceRule.once(),
+        )
+        val enabled = disabled.copy(id = "carry-enabled", title = "carry-enabled", carryOverEnabled = true)
+        database.todoDao().upsert(disabled)
+        database.todoDao().upsert(enabled)
+        clock.setDate(executionDate.plusDays(1))
+
+        historyReconciler().reconcile()
+
+        val missed = database.todoExecutionDao().findForTodo(disabled.id).single()
+        assertEquals(TodoState.MISSED.code, missed.status)
+        assertEquals(executionDate.toString(), missed.scheduledLogicalDate)
+        assertEquals(executionDate.toString(), missed.logicalDate)
+        assertNull(missed.resolvedLogicalDate)
+        assertTrue(database.todoExecutionDao().findForTodo(enabled.id).isEmpty())
+        assertEquals(
+            executionDate.toString(),
+            database.todoRuntimeStateDao().find(enabled.id)?.pendingScheduledLogicalDate,
+        )
+        val visible = todoRepository.observeOccurrences(clock.date).first().single()
+        assertEquals(enabled.id, visible.todo.id)
+        assertEquals(executionDate, visible.scheduledLogicalDate)
+        assertTrue(visible.isCarryOver)
+    }
+
+    @Test
+    fun sta014_resolvingDailyCarryOverSkipsElapsedSchedulesAndHonorsEndDate() = runBlocking {
+        val executionDate = clock.date
+        val resolutionDate = executionDate.plusDays(3)
+        val continuing = todoEntity(
+            id = "carry-completed",
+            startDate = executionDate,
+            rule = RecurrenceRule.daily(),
+            carryOverEnabled = true,
+        )
+        val ending = todoEntity(
+            id = "carry-skipped-at-end",
+            startDate = executionDate,
+            endDate = executionDate.plusDays(2),
+            rule = RecurrenceRule.daily(),
+            carryOverEnabled = true,
+        )
+        database.todoDao().upsert(continuing)
+        database.todoDao().upsert(ending)
+        clock.setDate(resolutionDate)
+        historyReconciler().reconcile()
+
+        val pending = todoRepository.observeOccurrences(resolutionDate).first().associateBy { it.todo.id }
+        assertEquals(setOf(continuing.id, ending.id), pending.keys)
+        pending.values.forEach { occurrence ->
+            assertEquals(executionDate, occurrence.scheduledLogicalDate)
+            assertTrue(occurrence.isCarryOver)
+        }
+
+        todoRepository.setCompleted(
+            continuing.id,
+            resolutionDate,
+            completed = true,
+            operationId = "resolve-completed",
+            scheduledLogicalDate = executionDate,
+        ).getOrThrow()
+        todoRepository.setSkipped(
+            ending.id,
+            resolutionDate,
+            skipped = true,
+            operationId = "resolve-skipped",
+            scheduledLogicalDate = executionDate,
+        ).getOrThrow()
+
+        listOf(continuing.id to TodoState.COMPLETED, ending.id to TodoState.SKIPPED)
+            .forEach { (todoId, expectedState) ->
+                val execution = database.todoExecutionDao().findForTodo(todoId).single()
+                assertEquals(expectedState.code, execution.status)
+                assertEquals(executionDate.toString(), execution.scheduledLogicalDate)
+                assertEquals(resolutionDate.toString(), execution.logicalDate)
+                assertEquals(resolutionDate.toString(), execution.resolvedLogicalDate)
+                assertNull(database.todoRuntimeStateDao().find(todoId)?.pendingScheduledLogicalDate)
+            }
+
+        historyReconciler().reconcile()
+        clock.setDate(resolutionDate.plusDays(1))
+        historyReconciler().reconcile()
+        val nextDay = todoRepository.observeOccurrences(clock.date).first()
+        assertEquals(listOf(continuing.id), nextDay.map { it.todo.id })
+        assertEquals(clock.date, nextDay.single().scheduledLogicalDate)
+        assertFalse(nextDay.single().isCarryOver)
+        assertEquals(1, database.todoExecutionDao().findForTodo(continuing.id).size)
+        assertEquals(1, database.todoExecutionDao().findForTodo(ending.id).size)
+    }
+
+    @Test
+    fun sta015_disablingOrChangingCarryOverFinalizesOnlyPendingOccurrenceOnce() = runBlocking {
+        val executionDate = clock.date
+        val disabled = todoEntity(
+            id = "carry-edited-off",
+            startDate = executionDate,
+            rule = RecurrenceRule.daily(),
+            carryOverEnabled = true,
+        )
+        val changedToCount = disabled.copy(id = "carry-edited-to-count", title = "carry-edited-to-count")
+        database.todoDao().upsert(disabled)
+        database.todoDao().upsert(changedToCount)
+        clock.setDate(executionDate.plusDays(2))
+        historyReconciler().reconcile()
+
+        saveDefinition(disabled.id, RecurrenceRule.daily(), carryOverEnabled = false)
+        saveDefinition(
+            changedToCount.id,
+            RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 1),
+            carryOverEnabled = false,
+        )
+
+        val disabledMissed = database.todoExecutionDao().findForTodo(disabled.id).single()
+        val countMissed = database.todoExecutionDao().findForTodo(changedToCount.id).single()
+        listOf(disabledMissed, countMissed).forEach { missed ->
+            assertEquals(TodoState.MISSED.code, missed.status)
+            assertEquals(executionDate.toString(), missed.scheduledLogicalDate)
+            assertEquals(executionDate.toString(), missed.logicalDate)
+            assertNull(missed.resolvedLogicalDate)
+        }
+
+        saveDefinition(disabled.id, RecurrenceRule.daily(), carryOverEnabled = false)
+        saveDefinition(
+            changedToCount.id,
+            RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 1),
+            carryOverEnabled = false,
+        )
+        assertEquals(1, database.todoExecutionDao().findForTodo(disabled.id).size)
+        assertEquals(1, database.todoExecutionDao().findForTodo(changedToCount.id).size)
+
+        saveDefinition(disabled.id, RecurrenceRule.daily(), carryOverEnabled = true)
+        historyReconciler().reconcile()
+        assertEquals(disabledMissed, database.todoExecutionDao().findForTodo(disabled.id).single())
+        assertEquals(
+            executionDate.plusDays(1).toString(),
+            database.todoRuntimeStateDao().find(disabled.id)?.pendingScheduledLogicalDate,
+        )
     }
 
     @Test
@@ -535,6 +712,27 @@ class RoomTodoStateSpecCoverageTest {
         ).getOrThrow()
     }
 
+    private suspend fun saveDefinition(
+        todoId: String,
+        rule: RecurrenceRule,
+        carryOverEnabled: Boolean,
+    ) {
+        val current = requireNotNull(todoRepository.getTodo(todoId))
+        todoRepository.saveTodo(
+            id = current.id,
+            title = current.title,
+            description = current.description,
+            categoryId = current.categoryId,
+            startDate = current.startDate,
+            endDate = current.endDate,
+            recurrenceRule = rule,
+            dueMinutes = current.dueMinutes,
+            notifications = current.notifications,
+            dueDate = current.dueDate.takeIf { rule.type == RecurrenceType.ONCE },
+            carryOverEnabled = carryOverEnabled,
+        ).getOrThrow()
+    }
+
     private fun categoryEntity(
         id: String,
         name: String,
@@ -577,6 +775,8 @@ class RoomTodoStateSpecCoverageTest {
         endDate: LocalDate? = null,
         dueMinutes: Int? = null,
         rule: RecurrenceRule = RecurrenceRule.daily(),
+        dueDate: LocalDate? = null,
+        carryOverEnabled: Boolean = false,
     ): TodoEntity {
         val encoded = RecurrenceRuleJson.encode(rule)
         return TodoEntity(
@@ -594,6 +794,8 @@ class RoomTodoStateSpecCoverageTest {
             createdAt = 1,
             updatedAt = 1,
             archivedAt = null,
+            dueDate = dueDate?.toString(),
+            carryOverEnabled = carryOverEnabled,
         )
     }
 

@@ -72,6 +72,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -440,6 +441,74 @@ class BackupSpecCoverageTest {
     }
 
     @Test
+    fun dat012_formatFourRoundTripsOldFormatsDefaultAndInvalidNewStateIsRejectedBeforeMutation() = runBlocking {
+        seedAllUserData()
+        seedVersionFourData()
+        val formatFourArchive = writeArchive()
+        val expectedFormatFour = backedUpState()
+        val original = requireNotNull(database.todoDao().findById(V4_ONCE_TODO_ID))
+        database.todoDao().upsert(original.copy(title = "restore must replace this"))
+
+        restoreArchive(formatFourArchive)
+
+        assertEquals(expectedFormatFour, backedUpState())
+        assertEquals("2026-08-10", database.todoDao().findById(V4_ONCE_TODO_ID)?.dueDate)
+        assertEquals(true, database.todoDao().findById(V4_ONCE_TODO_ID)?.carryOverEnabled)
+        val formatFourExecution = database.todoExecutionDao().findById(V4_EXECUTION_ID)
+        assertEquals("2026-08-08", formatFourExecution?.scheduledLogicalDate)
+        assertEquals("2026-08-09", formatFourExecution?.resolvedLogicalDate)
+        assertEquals(
+            "2026-08-08",
+            database.todoRuntimeStateDao().find(V4_PENDING_TODO_ID)?.pendingScheduledLogicalDate,
+        )
+
+        (1..3).forEach { formatVersion ->
+            restoreArchive(downgradeArchive(formatFourArchive, formatVersion))
+
+            val legacyTodo = requireNotNull(database.todoDao().findById(V4_ONCE_TODO_ID))
+            assertNull("format $formatVersion", legacyTodo.dueDate)
+            assertFalse("format $formatVersion", legacyTodo.carryOverEnabled)
+            val legacyExecution = requireNotNull(database.todoExecutionDao().findById(V4_EXECUTION_ID))
+            assertEquals("format $formatVersion", legacyExecution.logicalDate, legacyExecution.scheduledLogicalDate)
+            assertEquals("format $formatVersion", legacyExecution.logicalDate, legacyExecution.resolvedLogicalDate)
+            assertNull(
+                "format $formatVersion",
+                database.todoRuntimeStateDao().find(V4_PENDING_TODO_ID)?.pendingScheduledLogicalDate,
+            )
+        }
+
+        val stateBeforeInvalidFiles = backedUpState()
+        val validData = zipEntries(formatFourArchive).getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+        val invalidMutations = listOf(
+            "due date" to (
+                "\"dueDate\":\"2026-08-10\"" to "\"dueDate\":\"2026-08-07\""
+                ),
+            "history date" to (
+                "\"scheduledLogicalDate\":\"2026-08-08\"" to
+                    "\"scheduledLogicalDate\":\"2026-02-30\""
+                ),
+            "pending carry-over" to (
+                "\"pendingScheduledLogicalDate\":\"2026-08-08\"" to
+                    "\"pendingScheduledLogicalDate\":\"2026-08-07\""
+                ),
+        )
+        invalidMutations.forEach { (caseName, replacement) ->
+            val corrupted = validData.replaceFirst(replacement.first, replacement.second)
+            assertFalse("Missing mutation marker for $caseName", corrupted == validData)
+            val archive = replaceData(formatFourArchive, corrupted)
+            val extracted = temporaryDataFile()
+
+            val error = runCatching {
+                reader.extractAndValidate(ByteArrayInputStream(archive), extracted)
+            }.exceptionOrNull()
+
+            assertTrue(caseName, error is BackupFormatException)
+            assertFalse(caseName, extracted.exists())
+            assertEquals(caseName, stateBeforeInvalidFiles, backedUpState())
+        }
+    }
+
+    @Test
     fun st029_nextLaunchRecoversInterruptedBackupAndRestoreToConsistentState() = runBlocking {
         seedAllUserData()
         val expected = backedUpState()
@@ -659,9 +728,142 @@ class BackupSpecCoverageTest {
         )
     }
 
+    private suspend fun seedVersionFourData() {
+        val onceRule = RecurrenceRuleJson.encode(RecurrenceRule.once())
+        val onceTodo = TodoEntity(
+            id = V4_ONCE_TODO_ID,
+            title = "期限日つき単発TODO",
+            description = "format 4",
+            categoryId = CATEGORY_ID,
+            startDate = "2026-08-08",
+            endDate = "2026-08-08",
+            recurrenceType = onceRule.typeCode,
+            repeatParamsVersion = onceRule.paramsVersion,
+            repeatParamsJson = onceRule.paramsJson,
+            dueMinutes = 720,
+            definitionRevision = 1,
+            createdAt = 80,
+            updatedAt = 80,
+            archivedAt = null,
+            dueDate = "2026-08-10",
+            carryOverEnabled = true,
+        )
+        database.todoDao().upsert(onceTodo)
+        val category = requireNotNull(database.categoryDao().findById(CATEGORY_ID))
+        database.todoExecutionDao().insert(
+            TodoExecutionEntity(
+                id = V4_EXECUTION_ID,
+                operationId = V4_OPERATION_ID,
+                todoId = onceTodo.id,
+                logicalDate = "2026-08-09",
+                status = "completed",
+                actedAt = 90,
+                finalizedAt = 90,
+                definitionRevision = 1,
+                snapshotVersion = 1,
+                snapshotJson = HistorySnapshotJson.encode(
+                    todo = onceTodo,
+                    category = category,
+                    notifications = emptyList(),
+                    endHour = 4,
+                    weekStart = DayOfWeek.SUNDAY,
+                    logicalDate = LocalDate.of(2026, 8, 9),
+                    scheduledLogicalDate = LocalDate.of(2026, 8, 8),
+                    resolvedLogicalDate = LocalDate.of(2026, 8, 9),
+                ),
+                scheduledLogicalDate = "2026-08-08",
+                resolvedLogicalDate = "2026-08-09",
+            ),
+        )
+
+        val dailyRule = RecurrenceRuleJson.encode(RecurrenceRule.daily())
+        database.todoDao().upsert(
+            TodoEntity(
+                id = V4_PENDING_TODO_ID,
+                title = "繰り越し中TODO",
+                description = "format 4 pending",
+                categoryId = null,
+                startDate = "2026-08-08",
+                endDate = null,
+                recurrenceType = dailyRule.typeCode,
+                repeatParamsVersion = dailyRule.paramsVersion,
+                repeatParamsJson = dailyRule.paramsJson,
+                dueMinutes = null,
+                definitionRevision = 1,
+                createdAt = 100,
+                updatedAt = 100,
+                archivedAt = null,
+                dueDate = null,
+                carryOverEnabled = true,
+            ),
+        )
+        database.todoRuntimeStateDao().upsert(
+            TodoRuntimeStateEntity(
+                todoId = V4_PENDING_TODO_ID,
+                lastFinalizedLogicalDate = "2026-08-08",
+                lastFinalizedWeeklyPeriodEnd = null,
+                lastFinalizedMonthlyPeriodEnd = null,
+                appliedDefinitionRevision = 1,
+                reconciliationCursorDate = null,
+                updatedAt = 110,
+                pendingScheduledLogicalDate = "2026-08-08",
+            ),
+        )
+    }
+
     private suspend fun writeArchive(): ByteArray = ByteArrayOutputStream().also { output ->
         writer.write(output)
     }.toByteArray()
+
+    private suspend fun restoreArchive(archive: ByteArray) {
+        val stagedData = temporaryDataFile()
+        val summary = reader.extractAndValidate(ByteArrayInputStream(archive), stagedData)
+        val rollbackArchive = absentTemporaryFile(BACKUP_EXTENSION)
+        val rollbackData = absentTemporaryFile(".json")
+        backupRestorer(BackupTestNotificationScheduler()).restore(
+            dataFile = stagedData,
+            summary = summary,
+            rollbackArchive = rollbackArchive,
+            rollbackData = rollbackData,
+            onProgress = { _, _ -> },
+        )
+        assertFalse(rollbackArchive.exists())
+        assertFalse(rollbackData.exists())
+        assertTrue(stagedData.delete())
+    }
+
+    private fun downgradeArchive(archive: ByteArray, formatVersion: Int): ByteArray {
+        require(formatVersion in 1..3)
+        val entries = zipEntries(archive)
+        var data = entries.getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+            .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":$formatVersion")
+            .replace(Regex(",\"dueDate\":(?:null|\"[^\"]+\")"), "")
+            .replace(Regex(",\"carryOverEnabled\":(?:true|false)"), "")
+            .replace(Regex(",\"scheduledLogicalDate\":(?:null|\"[^\"]+\")"), "")
+            .replace(Regex(",\"resolvedLogicalDate\":(?:null|\"[^\"]+\")"), "")
+            .replace(Regex(",\"pendingScheduledLogicalDate\":(?:null|\"[^\"]+\")"), "")
+        if (formatVersion < 3) {
+            data = data.replaceFirst("\"dayEndHour\":4", "\"uncategorizedEndHour\":4")
+                .replace(Regex("(\"iconKey\":\"[^\"]+\",\"sortOrder\":-?\\d+),(\"createdAt\")")) {
+                    "${it.groupValues[1]},\"endHour\":0,${it.groupValues[2]}"
+                }
+        }
+        if (formatVersion == 1) {
+            data = data.replace(
+                "\"repeatParams\":{\"periodWeeks\":1,\"requiredCount\":1," +
+                    "\"dayFilter\":\"all\",\"weekdays\":[]}",
+                "\"repeatParams\":{\"requiredCount\":1}",
+            )
+        }
+        val withUpdatedData = replaceData(archive, data)
+        val manifest = zipEntries(withUpdatedData).getValue(MANIFEST_ENTRY).toString(Charsets.UTF_8)
+            .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":$formatVersion")
+            .replaceFirst(
+                "\"minimumReaderVersion\":$BACKUP_FORMAT_VERSION",
+                "\"minimumReaderVersion\":$formatVersion",
+            )
+        return replaceManifest(withUpdatedData, manifest)
+    }
 
     private fun backupRestorer(scheduler: BackupTestNotificationScheduler) = BackupArchiveRestorer(
         database = database,
@@ -828,5 +1030,9 @@ class BackupSpecCoverageTest {
         const val EXECUTION_ID = "00000000-0000-0000-0000-000000000005"
         const val OPERATION_ID = "00000000-0000-0000-0000-000000000006"
         const val PERIOD_ID = "00000000-0000-0000-0000-000000000007"
+        const val V4_ONCE_TODO_ID = "00000000-0000-0000-0000-000000000008"
+        const val V4_EXECUTION_ID = "00000000-0000-0000-0000-000000000009"
+        const val V4_OPERATION_ID = "00000000-0000-0000-0000-000000000010"
+        const val V4_PENDING_TODO_ID = "00000000-0000-0000-0000-000000000011"
     }
 }

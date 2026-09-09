@@ -129,6 +129,35 @@ class ScheduleTestSpecCoverageTest {
     }
 
     @Test
+    fun day016_onceTodoDeadlineUsesDueDateAcrossTheWholeExecutionWindow() {
+        val executionDate = LocalDate.of(2026, 9, 9)
+        val dueDate = executionDate.plusDays(2)
+        val timed = todo(executionDate, executionDate, RecurrenceRule.once()).copy(
+            dueDate = dueDate,
+            dueMinutes = 3 * 60,
+        )
+        val withoutTime = timed.copy(dueMinutes = null)
+        val timedDeadline = ZonedDateTime.of(2026, 9, 12, 3, 0, 0, 0, tokyo)
+        val dayEndDeadline = ZonedDateTime.of(2026, 9, 12, 4, 0, 0, 0, tokyo)
+        fun isOverdue(todo: Todo, now: ZonedDateTime): Boolean =
+            !now.isBefore(todo.deadlineAt(executionDate, endHour = 4, zoneId = tokyo))
+
+        assertEquals(timedDeadline, timed.deadlineAt(executionDate, endHour = 4, zoneId = tokyo))
+        assertEquals(dayEndDeadline, withoutTime.deadlineAt(executionDate, endHour = 4, zoneId = tokyo))
+
+        (0L..2L).forEach { offset ->
+            val logicalDate = executionDate.plusDays(offset)
+            assertTrue(timed.isInExecutionWindow(logicalDate))
+            assertTrue(logicalDayStart(logicalDate, 4, tokyo).isBefore(timedDeadline))
+            assertTrue(logicalDayStart(logicalDate, 4, tokyo).isBefore(dayEndDeadline))
+        }
+        assertFalse(isOverdue(timed, timedDeadline.minusNanos(1)))
+        assertTrue(isOverdue(timed, timedDeadline))
+        assertFalse(isOverdue(withoutTime, dayEndDeadline.minusNanos(1)))
+        assertTrue(isOverdue(withoutTime, dayEndDeadline))
+    }
+
+    @Test
     fun rpt001_onceOccursOnlyOnItsExecutionDate() {
         val date = LocalDate.of(2026, 8, 11)
         val scheduled = todo(date, null, RecurrenceRule.once())
