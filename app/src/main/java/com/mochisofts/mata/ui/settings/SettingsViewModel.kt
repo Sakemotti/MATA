@@ -48,6 +48,8 @@ data class SettingsUiState(
     val showCompleted: Boolean = false,
     val theme: AppTheme = AppTheme.SYSTEM,
     val notificationCount: Int = 0,
+    val hasNotificationCountError: Boolean = false,
+    val hasNotificationStatusError: Boolean = false,
     val notificationSystemState: NotificationSystemState = NotificationSystemState(
         canPostNotifications = false,
         runtimePermissionRelevant = false,
@@ -79,14 +81,11 @@ class SettingsViewModel @Inject constructor(
     val effects: Flow<SettingsEffect> = effectsChannel.receiveAsFlow()
 
     private var loadJob: Job? = null
+    private var notificationCountJob: Job? = null
 
     init {
         load()
-        viewModelScope.launch {
-            notificationScheduler.notificationCount.collect { count ->
-                _uiState.update { state -> state.copy(notificationCount = count) }
-            }
-        }
+        loadNotificationCount()
         refreshNotificationStatus(reconcile = false)
         viewModelScope.launch {
             adsConsentRepository.state.collect { adsRuntime ->
@@ -179,11 +178,40 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun refreshNotificationStatus(reconcile: Boolean = true) {
+        val status = runCatching { notificationScheduler.systemState() }
         _uiState.update { state ->
-            state.copy(notificationSystemState = notificationScheduler.systemState())
+            status.fold(
+                onSuccess = {
+                    state.copy(
+                        notificationSystemState = it,
+                        hasNotificationStatusError = false,
+                    )
+                },
+                onFailure = { state.copy(hasNotificationStatusError = true) },
+            )
         }
         if (reconcile) {
             viewModelScope.launch { runCatching { notificationScheduler.reconcileAll() } }
+        }
+    }
+
+    fun retryNotificationStatus() {
+        loadNotificationCount()
+        refreshNotificationStatus()
+    }
+
+    private fun loadNotificationCount() {
+        notificationCountJob?.cancel()
+        notificationCountJob = viewModelScope.launch {
+            notificationScheduler.notificationCount
+                .catch {
+                    _uiState.update { state -> state.copy(hasNotificationCountError = true) }
+                }
+                .collect { count ->
+                    _uiState.update { state ->
+                        state.copy(notificationCount = count, hasNotificationCountError = false)
+                    }
+                }
         }
     }
 

@@ -4,7 +4,6 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
@@ -135,6 +134,7 @@ sealed interface TodoEditorEffect {
     data object Deleted : TodoEditorEffect
     data object Archived : TodoEditorEffect
     data object ExplainNotificationPermission : TodoEditorEffect
+    data object NotFound : TodoEditorEffect
 }
 
 @HiltViewModel
@@ -147,7 +147,7 @@ class TodoEditorViewModel @Inject constructor(
     holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val route = savedStateHandle.toRoute<TodoEditorRoute>()
+    private val route = TodoEditorRoute(savedStateHandle["todoId"])
     private val today = LocalDate.now(clock)
     private val _uiState = MutableStateFlow(
         TodoEditorUiState(isNew = route.todoId == null, today = today, startDate = today),
@@ -201,10 +201,12 @@ class TodoEditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             val todo = route.todoId?.let { todoRepository.getTodo(it) }
+            if (route.todoId != null && todo == null) {
+                effectsChannel.send(TodoEditorEffect.NotFound)
+                return@launch
+            }
             _uiState.update { state -> refreshDerived(
-                if (route.todoId != null && todo == null) {
-                    state.copy(isLoading = false, errorMessageRes = R.string.error_todo_not_found)
-                } else if (todo == null) {
+                if (todo == null) {
                     state.copy(isLoading = false)
                 } else {
                     state.copy(

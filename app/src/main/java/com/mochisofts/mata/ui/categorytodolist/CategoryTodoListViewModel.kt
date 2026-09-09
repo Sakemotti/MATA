@@ -19,8 +19,14 @@ import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 
 data class CategoryTodoListItem(
     val todo: Todo,
@@ -29,11 +35,19 @@ data class CategoryTodoListItem(
 
 data class CategoryTodoListUiState(
     val isLoading: Boolean = true,
+    val hasLoadError: Boolean = false,
     val categories: List<Category> = emptyList(),
     val selectedCategoryId: String? = null,
     val items: List<CategoryTodoListItem> = emptyList(),
 )
 
+private sealed interface CategoryTodoLoadState {
+    data object Loading : CategoryTodoLoadState
+    data class Data(val value: CategoryTodoListUiState) : CategoryTodoLoadState
+    data object Error : CategoryTodoLoadState
+}
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CategoryTodoListViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -52,14 +66,28 @@ class CategoryTodoListViewModel @Inject constructor(
         )
 
     val adsRuntimeState = adsConsentRepository.state
+    private val loadGeneration = MutableStateFlow(0)
 
-    val uiState: StateFlow<CategoryTodoListUiState> = combine(
-        categoryRepository.observeCategories(),
-        todoRepository.observeTodos(),
-        todoRepository.observeOccurrences(LocalDate.now(clock)),
-        selectedCategoryId,
-        ::buildCategoryTodoListUiState,
-    ).stateIn(
+    val uiState: StateFlow<CategoryTodoListUiState> = loadGeneration.flatMapLatest {
+        combine(
+            categoryRepository.observeCategories(),
+            todoRepository.observeTodos(),
+            todoRepository.observeOccurrences(LocalDate.now(clock)),
+            selectedCategoryId,
+            ::buildCategoryTodoListUiState,
+        ).map<CategoryTodoListUiState, CategoryTodoLoadState>(CategoryTodoLoadState::Data)
+            .onStart { emit(CategoryTodoLoadState.Loading) }
+            .catch { emit(CategoryTodoLoadState.Error) }
+    }.map { state ->
+        when (state) {
+            CategoryTodoLoadState.Loading -> CategoryTodoListUiState(isLoading = true)
+            CategoryTodoLoadState.Error -> CategoryTodoListUiState(
+                isLoading = false,
+                hasLoadError = true,
+            )
+            is CategoryTodoLoadState.Data -> state.value
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = CategoryTodoListUiState(),
@@ -67,6 +95,10 @@ class CategoryTodoListViewModel @Inject constructor(
 
     fun selectCategory(categoryId: String?) {
         savedStateHandle[SELECTED_CATEGORY_ID_KEY] = categoryId
+    }
+
+    fun retryLoad() {
+        loadGeneration.update(Int::inc)
     }
 
     private companion object {

@@ -36,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -136,6 +137,7 @@ fun CategoryTodoListScreen(
                 CategoryTodos(
                     state = state,
                     onEditTodo = onEditTodo,
+                    onRetry = viewModel::retryLoad,
                 )
             }
         }
@@ -178,10 +180,20 @@ private fun CategoryTabs(
 private fun CategoryTodos(
     state: CategoryTodoListUiState,
     onEditTodo: (String) -> Unit,
+    onRetry: () -> Unit,
 ) {
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             androidx.compose.material3.CircularProgressIndicator()
+        }
+    } else if (state.hasLoadError) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(stringResource(R.string.category_todo_list_load_error))
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
         }
     } else if (state.items.isEmpty()) {
         Box(

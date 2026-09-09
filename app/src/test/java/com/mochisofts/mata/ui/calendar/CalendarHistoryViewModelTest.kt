@@ -16,6 +16,7 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.YearMonth
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -41,7 +42,7 @@ class CalendarHistoryViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun loadErrorsRemainIndependentAndRefreshRetriesBothRegions() = runTest {
+    fun ch027_regionLoadingEmptyErrorsAndRetriesRemainIndependent() = runTest {
         val repository = CalendarTestHistoryRepository().apply {
             failMonth = true
             failDay = true
@@ -71,6 +72,29 @@ class CalendarHistoryViewModelTest {
         assertTrue(requireNotNull(viewModel.uiState.value.day).entries.isEmpty())
         assertEquals(2, repository.monthLoads)
         assertEquals(2, repository.dayLoads)
+    }
+
+    @Test
+    fun ch030_staleMonthResponseCannotOverwriteLatestSelection() = runTest {
+        val repository = CalendarTestHistoryRepository().apply { blockFirstMonth = true }
+        val viewModel = createViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isMonthLoading)
+
+        viewModel.selectMonth(YearMonth.of(2026, 8))
+        runCurrent()
+
+        assertTrue(repository.firstMonthCancelled)
+        assertTrue(repository.monthLoads >= 2)
+        assertEquals(YearMonth.of(2026, 8), viewModel.uiState.value.displayedMonth)
+        assertFalse(viewModel.uiState.value.isMonthLoading)
+
+        repository.firstMonthGate.complete(Unit)
+        runCurrent()
+        assertEquals(YearMonth.of(2026, 8), viewModel.uiState.value.displayedMonth)
     }
 
     @Test
@@ -123,9 +147,19 @@ private class CalendarTestHistoryRepository : HistoryRepository {
     var undoCalls = 0
     var undoGate: CompletableDeferred<Unit>? = null
     var undoResult: Result<HistoryActionUndoToken> = Result.failure(IllegalStateException())
+    var blockFirstMonth = false
+    val firstMonthGate = CompletableDeferred<Unit>()
+    var firstMonthCancelled = false
 
     override fun observeMonth(startDate: LocalDate, endDate: LocalDate): Flow<HistoryMonth> = flow {
         monthLoads += 1
+        if (blockFirstMonth && monthLoads == 1) {
+            try {
+                firstMonthGate.await()
+            } finally {
+                firstMonthCancelled = true
+            }
+        }
         if (failMonth) error("month load failed")
         emit(HistoryMonth(emptyMap()))
     }

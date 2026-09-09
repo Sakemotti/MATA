@@ -261,6 +261,10 @@
     <string name="settings_loading_error">設定を読み込めませんでした</string>
     <string name="settings_save_error">設定を保存できませんでした</string>
     <string name="action_retry">再試行</string>
+    <string name="todo_list_load_error">TODOを読み込めませんでした</string>
+    <string name="category_list_load_error">カテゴリを読み込めませんでした</string>
+    <string name="category_todo_list_load_error">カテゴリ別TODOを読み込めませんでした</string>
+    <string name="settings_notification_status_load_error">通知の端末状態を取得できませんでした</string>
     <string name="weekday_monday_full">月曜日</string>
     <string name="weekday_tuesday_full">火曜日</string>
     <string name="weekday_wednesday_full">水曜日</string>

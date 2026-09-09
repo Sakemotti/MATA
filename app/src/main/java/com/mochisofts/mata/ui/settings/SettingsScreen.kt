@@ -245,6 +245,22 @@ fun SettingsScreen(
                         )
 
                         SettingsSectionHeader(R.string.settings_section_notifications)
+                        if (state.hasNotificationStatusError || state.hasNotificationCountError) {
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        stringResource(R.string.settings_notification_status_load_error),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                trailingContent = {
+                                    TextButton(onClick = viewModel::retryNotificationStatus) {
+                                        Text(stringResource(R.string.action_retry))
+                                    }
+                                },
+                            )
+                            HorizontalDivider()
+                        }
                         SettingsValueRow(
                             title = stringResource(R.string.settings_notification_permission_title),
                             value = stringResource(

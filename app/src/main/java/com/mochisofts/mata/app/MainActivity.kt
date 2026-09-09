@@ -299,6 +299,12 @@ private fun MataApp(
                 TodoEditorScreen(
                     onBack = navController::popBackStack,
                     onSaved = { navController.popBackStack() },
+                    onNotFound = {
+                        navController.navigate(TodoListRoute(showTodoNotFound = true)) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
         }

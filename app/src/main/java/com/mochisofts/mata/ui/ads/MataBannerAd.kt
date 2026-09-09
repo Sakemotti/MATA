@@ -144,7 +144,7 @@ private fun BannerAdHost(
     }
     AndroidView(
         factory = { adView },
-        modifier = if (loadState == BannerLoadState.FAILED) {
+        modifier = if (!loadState.reservesSpace) {
             Modifier.size(0.dp)
         } else {
             loadedModifier.width(adSize.width.dp).height(adSize.height.dp)
@@ -152,11 +152,14 @@ private fun BannerAdHost(
     )
 }
 
-private enum class BannerLoadState {
+internal enum class BannerLoadState {
     LOADING,
     LOADED,
     FAILED,
 }
+
+internal val BannerLoadState.reservesSpace: Boolean
+    get() = this != BannerLoadState.FAILED
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this

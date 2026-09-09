@@ -12,16 +12,20 @@ import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class CategoryListUiState(
+    val isLoading: Boolean = true,
+    val hasLoadError: Boolean = false,
     val categories: List<Category> = emptyList(),
     val isReordering: Boolean = false,
     val isOrderSaving: Boolean = false,
@@ -48,20 +52,39 @@ class CategoryListViewModel @Inject constructor(
 
     private var persistedCategories: List<Category> = emptyList()
     private var editorLoadRequest = 0
+    private var categoriesLoadJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            repository.observeCategories().collect { categories ->
-                persistedCategories = categories
-                _uiState.update { state ->
-                    if (state.isReordering || state.isOrderSaving) state
-                    else state.copy(categories = categories)
-                }
-            }
-        }
+        loadCategories()
         when (savedStateHandle.get<String>(EDITOR_MODE_KEY)) {
             EDITOR_MODE_NEW -> openNewEditor()
             EDITOR_MODE_EDIT -> savedStateHandle.get<String>(EDITOR_CATEGORY_ID_KEY)?.let(::openEditor)
+        }
+    }
+
+    fun retryLoad() = loadCategories()
+
+    private fun loadCategories() {
+        categoriesLoadJob?.cancel()
+        _uiState.update { it.copy(isLoading = true, hasLoadError = false) }
+        categoriesLoadJob = viewModelScope.launch {
+            repository.observeCategories()
+                .catch {
+                    _uiState.update { state ->
+                        state.copy(isLoading = false, hasLoadError = true)
+                    }
+                }
+                .collect { categories ->
+                    persistedCategories = categories
+                    _uiState.update { state ->
+                        if (state.isReordering || state.isOrderSaving) state
+                        else state.copy(
+                            isLoading = false,
+                            hasLoadError = false,
+                            categories = categories,
+                        )
+                    }
+                }
         }
     }
 
@@ -135,14 +158,19 @@ class CategoryListViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            val category = repository.getCategory(categoryId)
+            val categoryResult = runCatching { repository.getCategory(categoryId) }
             if (request != editorLoadRequest) return@launch
+            val category = categoryResult.getOrNull()
             _uiState.update { state ->
                 state.copy(
                     editor = if (category == null) {
                         state.editor?.copy(
                             isLoading = false,
-                            errorMessageRes = R.string.error_category_not_found,
+                            errorMessageRes = if (categoryResult.isFailure) {
+                                R.string.category_list_load_error
+                            } else {
+                                R.string.error_category_not_found
+                            },
                         )
                     } else {
                         CategoryEditorUiState(

@@ -381,6 +381,7 @@ fun CategoryListScreen(
                         draggedOffset = 0f
                         viewModel.cancelReordering()
                     },
+                    onRetry = viewModel::retryLoad,
                 )
             }
         }
@@ -496,6 +497,7 @@ private fun CategoryTwoPaneContent(
                 onDrag = onDrag,
                 onDragEnd = onDragEnd,
                 onDragCancel = onDragCancel,
+                onRetry = viewModel::retryLoad,
             )
             ExtendedFloatingActionButton(
                 onClick = onAdd,
@@ -547,12 +549,30 @@ private fun CategoryListContent(
     onDrag: (Category, Float) -> Unit,
     onDragEnd: (Category) -> Unit,
     onDragCancel: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     LazyColumn(
         modifier = modifier.mataPageKeyScroll(listState),
         state = listState,
     ) {
-        if (state.categories.isEmpty()) {
+        if (state.isLoading) {
+            item(key = "loading") {
+                Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else if (state.hasLoadError) {
+            item(key = "load_error") {
+                Column(
+                    Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.category_list_load_error))
+                    TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
+                }
+            }
+        } else if (state.categories.isEmpty()) {
             item(key = "empty") {
                 Column(
                     Modifier.fillMaxWidth().padding(32.dp),

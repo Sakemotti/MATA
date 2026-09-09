@@ -29,9 +29,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -51,6 +53,7 @@ internal data class TodoListContent(
 
 data class TodoListUiState(
     val isLoading: Boolean = true,
+    val hasLoadError: Boolean = false,
     val selectedDate: LocalDate = LocalDate.MIN,
     val isToday: Boolean = true,
     val showCompleted: Boolean = false,
@@ -59,6 +62,12 @@ data class TodoListUiState(
     val holidayStatus: HolidayYearStatus? = null,
     val holidayDataAvailable: Boolean = false,
 )
+
+private sealed interface TodoListLoadState {
+    data object Loading : TodoListLoadState
+    data class Data(val content: TodoListContent) : TodoListLoadState
+    data object Error : TodoListLoadState
+}
 
 sealed interface TodoListEffect {
     data class Message(@StringRes val messageRes: Int) : TodoListEffect
@@ -87,6 +96,7 @@ class TodoListViewModel @Inject constructor(
     )
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
     private val activeTodoOperations = mutableSetOf<String>()
+    private val loadGeneration = MutableStateFlow(0)
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
     val adsRuntimeState = adsConsentRepository.state
 
@@ -96,35 +106,49 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    private val content = observeTodoListContent(
-        selectedDate = dateSelection.requests,
-        occurrencesForDate = todoRepository::observeOccurrences,
-        todos = todoRepository.observeTodos(),
-        holidaySnapshot = holidayRepository.snapshot,
-    )
+    private val content = loadGeneration.flatMapLatest {
+        observeTodoListContent(
+            selectedDate = dateSelection.requests,
+            occurrencesForDate = todoRepository::observeOccurrences,
+            todos = todoRepository.observeTodos(),
+            holidaySnapshot = holidayRepository.snapshot,
+        ).map<TodoListContent, TodoListLoadState>(TodoListLoadState::Data)
+            .onStart { emit(TodoListLoadState.Loading) }
+            .catch { emit(TodoListLoadState.Error) }
+    }
 
     val uiState: StateFlow<TodoListUiState> = combine(
         content,
         settingsRepository.showCompleted,
         settingsRepository.dayEndHour,
-    ) { content, showCompleted, dayEndHour ->
+    ) { loadState, showCompleted, dayEndHour ->
+        val loaded = (loadState as? TodoListLoadState.Data)?.content
+        if (loaded == null) {
+            return@combine TodoListUiState(
+                isLoading = loadState is TodoListLoadState.Loading,
+                hasLoadError = loadState is TodoListLoadState.Error,
+                selectedDate = dateSelection.value,
+                isToday = dateSelection.value == LocalDate.now(clock),
+                showCompleted = showCompleted,
+            )
+        }
         val today = LocalDate.now(clock)
-        val visibleOccurrences = content.occurrences.filter { occurrence ->
+        val visibleOccurrences = loaded.occurrences.filter { occurrence ->
             occurrence.state != TodoState.SKIPPED &&
-                (content.date != today || showCompleted || occurrence.state != TodoState.COMPLETED)
+                (loaded.date != today || showCompleted || occurrence.state != TodoState.COMPLETED)
         }
         TodoListUiState(
             isLoading = false,
-            selectedDate = content.date,
-            isToday = content.date == today,
+            selectedDate = loaded.date,
+            isToday = loaded.date == today,
             showCompleted = showCompleted,
             groups = buildTodoOccurrenceGroups(visibleOccurrences, dayEndHour),
-            holidayName = content.holidaySnapshot.holidayName(content.date),
-            holidayStatus = content.holidaySnapshot.statusFor(content.date.year)
+            holidayName = loaded.holidaySnapshot.holidayName(loaded.date),
+            holidayStatus = loaded.holidaySnapshot.statusFor(loaded.date.year)
                 .takeIf {
-                    content.todos.any { todo -> todo.recurrenceRule.usesHolidayData() }
+                    loaded.todos.any { todo -> todo.recurrenceRule.usesHolidayData() }
                 },
-            holidayDataAvailable = content.holidaySnapshot.isDefinitive(content.date.year),
+            holidayDataAvailable = loaded.holidaySnapshot.isDefinitive(loaded.date.year),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -150,6 +174,10 @@ class TodoListViewModel @Inject constructor(
 
     fun refresh() {
         dateSelection.refresh(LocalDate.now(clock))
+    }
+
+    fun retryLoad() {
+        loadGeneration.update(Int::inc)
     }
 
     fun setShowCompleted(value: Boolean) {

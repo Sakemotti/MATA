@@ -18,15 +18,55 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun st042_fullPartialAndOperationFailuresRemainRetryable() = runTest {
+        val repository = RetrySettingsRepository()
+        val scheduler = FaultNotificationScheduler(failState = true)
+        val ads = FakeAdsConsentRepository()
+        val viewModel = SettingsViewModel(repository, scheduler, adsConsentRepository = ads)
+        runCurrent()
+
+        assertTrue(viewModel.uiState.value.hasLoadError)
+        assertTrue(viewModel.uiState.value.hasNotificationStatusError)
+
+        repository.failLoad = false
+        scheduler.failState = false
+        viewModel.retry()
+        viewModel.refreshNotificationStatus()
+        runCurrent()
+        assertFalse(viewModel.uiState.value.hasLoadError)
+        assertFalse(viewModel.uiState.value.hasNotificationStatusError)
+        assertEquals(4, viewModel.uiState.value.endHour)
+
+        repository.failSave = true
+        viewModel.setEndHour(8)
+        runCurrent()
+        assertEquals(4, viewModel.uiState.value.endHour)
+        assertEquals(
+            R.string.settings_save_error,
+            (viewModel.effects.first() as SettingsEffect.Message).messageRes,
+        )
+
+        ads.eventFlow.emit(AdsConsentEvent.PRIVACY_OPTIONS_ERROR)
+        runCurrent()
+        assertEquals(
+            R.string.settings_ads_privacy_options_error,
+            (viewModel.effects.first() as SettingsEffect.Message).messageRes,
+        )
+    }
 
     @Test
     fun valuesLoadAndSuccessfulChangesAreReflected() = runTest {
@@ -165,7 +205,8 @@ class SettingsViewModelTest {
 
     private class FakeAdsConsentRepository : AdsConsentRepository {
         override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
-        override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+        val eventFlow = MutableSharedFlow<AdsConsentEvent>()
+        override val events: Flow<AdsConsentEvent> = eventFlow
 
         override fun gatherConsent(activity: Activity) = Unit
         override fun showPrivacyOptions(activity: Activity) = Unit
@@ -173,6 +214,7 @@ class SettingsViewModelTest {
 
     private class RetrySettingsRepository : SettingsRepository {
         var failLoad = true
+        var failSave = false
         override val showCompleted: Flow<Boolean>
             get() = loadFlow(true)
         override val todoListMode: Flow<String>
@@ -191,11 +233,32 @@ class SettingsViewModelTest {
             emit(value)
         }
 
-        override suspend fun setShowCompleted(value: Boolean) = Unit
-        override suspend fun setTodoListMode(value: String) = Unit
-        override suspend fun setDayEndHour(value: Int) = Unit
-        override suspend fun setWeekStart(value: DayOfWeek) = Unit
-        override suspend fun setTheme(value: AppTheme) = Unit
-        override suspend fun setNotificationPermissionRequested(value: Boolean) = Unit
+        override suspend fun setShowCompleted(value: Boolean) = beforeSave()
+        override suspend fun setTodoListMode(value: String) = beforeSave()
+        override suspend fun setDayEndHour(value: Int) = beforeSave()
+        override suspend fun setWeekStart(value: DayOfWeek) = beforeSave()
+        override suspend fun setTheme(value: AppTheme) = beforeSave()
+        override suspend fun setNotificationPermissionRequested(value: Boolean) = beforeSave()
+
+        private fun beforeSave() {
+            if (failSave) error("save failed")
+        }
+    }
+
+    private class FaultNotificationScheduler(var failState: Boolean) : NotificationScheduler {
+        override val notificationCount: Flow<Int> = MutableStateFlow(0)
+        override fun systemState(): NotificationSystemState {
+            if (failState) error("system state failed")
+            return NotificationSystemState(
+                canPostNotifications = true,
+                runtimePermissionRelevant = false,
+                runtimePermissionGranted = true,
+                exactAlarmRelevant = false,
+                canScheduleExactAlarms = true,
+            )
+        }
+        override suspend fun reconcileTodo(todoId: String) = Unit
+        override suspend fun reconcileAll() = Unit
+        override suspend fun cancelTodo(todoId: String) = Unit
     }
 }

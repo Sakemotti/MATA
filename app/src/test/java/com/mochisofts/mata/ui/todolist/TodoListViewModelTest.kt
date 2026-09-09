@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
@@ -46,6 +47,34 @@ import org.junit.Test
 class TodoListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun tl024_loadingEmptyRetryAndFailedActionRemainDistinct() = runTest {
+        val repository = TodoListTestRepository().apply { failLoad = true }
+        val viewModel = createViewModel(repository)
+        assertTrue(viewModel.uiState.value.isLoading)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.hasLoadError)
+        assertTrue(viewModel.uiState.value.groups.isEmpty())
+
+        repository.failLoad = false
+        viewModel.retryLoad()
+        runCurrent()
+        assertFalse(viewModel.uiState.value.hasLoadError)
+        assertTrue(viewModel.uiState.value.groups.isEmpty())
+
+        repository.completeResult = Result.failure(IllegalStateException("write failed"))
+        val effect = async { viewModel.effects.first() }
+        viewModel.complete(occurrence("todo"))
+        runCurrent()
+        assertEquals(TodoListEffect.Message(R.string.error_todo_complete_failed), effect.await())
+        assertTrue(viewModel.uiState.value.groups.isEmpty())
+    }
 
     @Test
     fun loadingTransitionsToEmptyThenRepositoryContent() = runTest {
@@ -152,8 +181,13 @@ private class TodoListTestRepository : TodoRepository {
     var completeCalls = 0
     var skipCalls = 0
     var deleteCalls = 0
+    var failLoad = false
 
-    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = occurrences
+    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = if (failLoad) {
+        flow { error("load failed") }
+    } else {
+        occurrences
+    }
     override fun observeTodos(): Flow<List<Todo>> = todos
     override suspend fun getTodo(id: String): Todo? = todos.value.firstOrNull { it.id == id }
     override suspend fun saveTodo(
