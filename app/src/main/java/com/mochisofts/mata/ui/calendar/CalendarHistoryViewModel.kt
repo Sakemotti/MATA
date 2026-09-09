@@ -190,6 +190,7 @@ class CalendarHistoryViewModel @Inject constructor(
                     effectsChannel.send(CalendarHistoryEffect.ActionUndone(token))
                 }
                 .onFailure { throwable ->
+                    refreshGeneration.update(Int::inc)
                     effectsChannel.send(
                         CalendarHistoryEffect.Message(
                             throwable.toUserMessageRes(R.string.calendar_history_undo_error),
@@ -206,6 +207,7 @@ class CalendarHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             historyRepository.restoreAction(token)
                 .onFailure { throwable ->
+                    refreshGeneration.update(Int::inc)
                     effectsChannel.send(
                         CalendarHistoryEffect.Message(
                             throwable.toUserMessageRes(R.string.calendar_history_restore_error),

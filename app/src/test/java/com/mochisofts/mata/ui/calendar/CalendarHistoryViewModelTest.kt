@@ -98,10 +98,11 @@ class CalendarHistoryViewModelTest {
     }
 
     @Test
-    fun undoFailureReportsErrorAndBlocksConcurrentHistoryMutation() = runTest {
+    fun ch028_undoAndRestoreFailuresReloadConfirmedHistoryState() = runTest {
         val repository = CalendarTestHistoryRepository().apply {
             undoGate = CompletableDeferred()
             undoResult = Result.failure(IllegalStateException("write failed"))
+            restoreResult = Result.failure(IllegalStateException("restore failed"))
         }
         val viewModel = createViewModel(repository)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -126,6 +127,36 @@ class CalendarHistoryViewModelTest {
             effect.await(),
         )
         assertNull(viewModel.uiState.value.busyExecutionId)
+        assertEquals(2, repository.monthLoads)
+        assertEquals(2, repository.dayLoads)
+        assertTrue(viewModel.uiState.value.month.summaries.isEmpty())
+        assertTrue(requireNotNull(viewModel.uiState.value.day).entries.isEmpty())
+
+        val token = HistoryActionUndoToken(
+            id = "first",
+            operationId = "operation",
+            todoId = "todo",
+            logicalDate = LocalDate.of(2026, 9, 6),
+            state = TodoState.COMPLETED,
+            actedAt = 1,
+            finalizedAt = 1,
+            definitionRevision = 1,
+            snapshotVersion = 1,
+            snapshotJson = "{}",
+        )
+        viewModel.restoreAction(token)
+        runCurrent()
+
+        assertEquals(1, repository.restoreCalls)
+        assertEquals(
+            CalendarHistoryEffect.Message(R.string.calendar_history_restore_error),
+            viewModel.effects.first(),
+        )
+        assertNull(viewModel.uiState.value.busyExecutionId)
+        assertEquals(3, repository.monthLoads)
+        assertEquals(3, repository.dayLoads)
+        assertTrue(viewModel.uiState.value.month.summaries.isEmpty())
+        assertTrue(requireNotNull(viewModel.uiState.value.day).entries.isEmpty())
     }
 
     private fun createViewModel(repository: CalendarTestHistoryRepository) = CalendarHistoryViewModel(
@@ -145,8 +176,10 @@ private class CalendarTestHistoryRepository : HistoryRepository {
     var monthLoads = 0
     var dayLoads = 0
     var undoCalls = 0
+    var restoreCalls = 0
     var undoGate: CompletableDeferred<Unit>? = null
     var undoResult: Result<HistoryActionUndoToken> = Result.failure(IllegalStateException())
+    var restoreResult: Result<Unit> = Result.success(Unit)
     var blockFirstMonth = false
     val firstMonthGate = CompletableDeferred<Unit>()
     var firstMonthCancelled = false
@@ -183,7 +216,10 @@ private class CalendarTestHistoryRepository : HistoryRepository {
         return undoResult
     }
 
-    override suspend fun restoreAction(token: HistoryActionUndoToken): Result<Unit> = Result.success(Unit)
+    override suspend fun restoreAction(token: HistoryActionUndoToken): Result<Unit> {
+        restoreCalls += 1
+        return restoreResult
+    }
 }
 
 private class CalendarTestSettingsRepository : SettingsRepository {
