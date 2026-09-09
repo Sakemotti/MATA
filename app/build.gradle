@@ -228,6 +228,7 @@ dependencies {
     implementation libs.hilt.android
     implementation libs.kotlinx.serialization.core
     implementation libs.kotlinx.serialization.json
+    implementation libs.kotlinx.coroutines.core
     implementation libs.aboutlibraries.core
     implementation libs.androidx.window
     ksp libs.androidx.room.compiler
@@ -241,7 +242,7 @@ dependencies {
     testImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.espresso.core
     androidTestImplementation libs.androidx.junit
-    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0"
+    androidTestImplementation libs.kotlinx.coroutines.test
     androidTestImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.paging.testing
     androidTestImplementation libs.androidx.compose.ui.test.junit4
