@@ -107,3 +107,12 @@ CH-014	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsSche
 CH-029	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch029_monthAndDayQueriesStayBoundedWithLargeHistory	:app:connectedDebugAndroidTest
 CM-024	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	cm024_categoryMutationsNeverChangeTheCommonLogicalDayBoundary	:app:connectedDebugAndroidTest
 APP-005	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomDataProtectionSpecCoverageTest.kt	app005_networkFailureDoesNotBlockLocalCoreWorkflowOrRequireAuthentication	:app:connectedDebugAndroidTest
+TL-024	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl024_loadingEmptyRetryAndFailedActionRemainDistinct	:app:testDebugUnitTest
+TE-D06	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	ted06_missingTargetNeverShowsEmptyFormAndReturnsNotFound	:app:testDebugUnitTest
+CH-027	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch027_regionLoadingEmptyErrorsAndRetriesRemainIndependent	:app:testDebugUnitTest
+CH-030	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch030_staleMonthResponseCannotOverwriteLatestSelection	:app:testDebugUnitTest
+CM-029	app/src/test/java/com/mochisofts/mata/ui/category/CategoryListViewModelTest.kt	cm029_emptyLoadingFetchFailuresAndOperationFailureStayDistinct	:app:testDebugUnitTest
+CTL-008	app/src/test/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListViewModelTest.kt	ctl008_loadingEmptyConsentPendingAndAdFailureLeaveNoBlankAdArea	:app:testDebugUnitTest
+AT-005	app/src/test/java/com/mochisofts/mata/ui/archive/ArchiveListViewModelTest.kt	at005_debounceCancelsOldSearchBeforeLatestResult	:app:testDebugUnitTest
+ST-039	app/src/test/java/com/mochisofts/mata/ui/settings/OpenSourceLicensesTest.kt	st039_listSearchEmptyBodyAndLoadFailureStatesAreDistinct	:app:testDebugUnitTest
+ST-042	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st042_fullPartialAndOperationFailuresRemainRetryable	:app:testDebugUnitTest

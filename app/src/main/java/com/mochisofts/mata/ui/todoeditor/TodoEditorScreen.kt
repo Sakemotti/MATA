@@ -107,6 +107,7 @@ private enum class DatePickerTarget {
 fun TodoEditorScreen(
     onBack: () -> Unit,
     onSaved: (Boolean) -> Unit,
+    onNotFound: () -> Unit,
     viewModel: TodoEditorViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -147,6 +148,7 @@ fun TodoEditorScreen(
                 TodoEditorEffect.ExplainNotificationPermission -> {
                     showNotificationPermissionRationale = true
                 }
+                TodoEditorEffect.NotFound -> onNotFound()
             }
         }
     }

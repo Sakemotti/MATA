@@ -251,6 +251,7 @@ fun TodoListScreen(
                             onEditTodo(occurrence.todo.id)
                         }
                     },
+                    onRetry = viewModel::retryLoad,
                 )
             }
         }
@@ -418,6 +419,7 @@ private fun DateMode(
     onArchive: (TodoOccurrence) -> Unit,
     onDelete: (TodoOccurrence) -> Unit,
     onOpen: (TodoOccurrence) -> Unit,
+    onRetry: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
@@ -451,6 +453,13 @@ private fun DateMode(
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.message_loading))
+        }
+    } else if (state.hasLoadError) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(stringResource(R.string.todo_list_load_error))
+                TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
+            }
         }
     } else if (state.groups.isEmpty()) {
         EmptyTodos(

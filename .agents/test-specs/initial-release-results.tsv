@@ -158,7 +158,7 @@ TL-020	P0	todo-list.md	未実施	-	-	-	-	-
 TL-021	P1	todo-list.md	未実施	-	-	-	-	-
 TL-022	P1	todo-list.md	未実施	-	-	-	-	-
 TL-023	P1	todo-list.md	未実施	-	-	-	-	-
-TL-024	P1	todo-list.md	未実施	-	-	-	-	-
+TL-024	P1	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListViewModelTest#tl024・testDebugUnitTest成功
 TL-025	P1	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・TODO一覧の情報、状態、操作を読み上げ順に操作できることを確認
 TL-026	P0	todo-list.md	未実施	-	-	-	-	-
 TL-027	P0	todo-list.md	未実施	-	-	-	-	-
@@ -212,7 +212,7 @@ TE-D02	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-D03	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-D04	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-D05	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#ted05・CI run 34029287328成功
-TE-D06	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-D06	P1	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#ted06・testDebugUnitTest成功
 CH-001	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-002	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-003	P1	calendar-history.md	未実施	-	-	-	-	-
@@ -239,10 +239,10 @@ CH-023	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-024	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-025	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-026	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-027	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-027	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch027・testDebugUnitTest成功
 CH-028	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功
-CH-030	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-030	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch030・testDebugUnitTest成功
 CH-031	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-033	P2	calendar-history.md	未実施	-	-	-	-	-
@@ -283,7 +283,7 @@ CM-025	P1	category-management.md	未実施	-	-	-	-	-
 CM-026	P1	category-management.md	未実施	-	-	-	-	-
 CM-027	P1	category-management.md	未実施	-	-	-	-	-
 CM-028	P1	category-management.md	未実施	-	-	-	-	-
-CM-029	P1	category-management.md	未実施	-	-	-	-	-
+CM-029	P1	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryListViewModelTest#cm029・testDebugUnitTest成功
 CM-030	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・カテゴリ名、色、アイコン、選択、順序、エラーを識別して操作できることを確認
 CM-031	P2	category-management.md	未実施	-	-	-	-	-
 CM-D01	P1	category-management.md	未実施	-	-	-	-	-
@@ -296,7 +296,7 @@ AT-001	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-002	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-003	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-004	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-005	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-005	P1	archived-todos.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	ArchiveListViewModelTest#at005・testDebugUnitTest成功
 AT-006	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-007	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-008	P1	archived-todos.md	未実施	-	-	-	-	-
@@ -377,10 +377,10 @@ ST-035	P0	settings.md	未実施	-	-	-	-	-
 ST-036	P1	settings.md	未実施	-	-	-	-	-
 ST-037	P1	settings.md	未実施	-	-	-	-	-
 ST-038	P1	settings.md	未実施	-	-	-	-	-
-ST-039	P1	settings.md	未実施	-	-	-	-	-
+ST-039	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	OpenSourceLicensesTest#st039・testDebugUnitTest成功
 ST-040	P1	settings.md	未実施	-	-	-	-	-
 ST-041	P0	settings.md	未実施	-	-	-	-	-
-ST-042	P1	settings.md	未実施	-	-	-	-	-
+ST-042	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st042・testDebugUnitTest成功
 ST-043	P1	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・回転とプロセス再生成後に対象状態を復元し二重実行しないことを確認
 ST-044	P1	settings.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・設定名、値、状態、進捗、エラー、破壊的影響を識別して操作できることを確認
 ST-045	P1	settings.md	未実施	-	-	-	-	-
@@ -398,7 +398,7 @@ CTL-004	P0	category-todo-list.md	未実施	-	-	-	-	-
 CTL-005	P1	category-todo-list.md	未実施	-	-	-	-	-
 CTL-006	P0	category-todo-list.md	未実施	-	-	-	-	-
 CTL-007	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-008	P1	category-todo-list.md	未実施	-	-	-	-	-
+CTL-008	P1	category-todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryTodoListViewModelTest#ctl008・testDebugUnitTest成功
 CTL-009	P0	category-todo-list.md	未実施	-	-	-	-	-
 CTL-010	P1	category-todo-list.md	合格	2026-09-09	OWNER	3	Android Emulator 600dp以上 / Pixel 9a TalkBack	CT-ENV-LARGE・CT-ENV-TALKBACK・回転、幅変更、キーボード、TalkBack後も選択を保持して操作できることを確認
 CTL-011	P1	category-todo-list.md	未実施	-	-	-	-	-

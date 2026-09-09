@@ -12,6 +12,8 @@ import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.ui.ads.BannerLoadState
+import com.mochisofts.mata.ui.ads.reservesSpace
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
 import java.time.Clock
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
@@ -38,6 +41,38 @@ import org.junit.Test
 class CategoryTodoListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun ctl008_loadingEmptyConsentPendingAndAdFailureLeaveNoBlankAdArea() = runTest {
+        val categoryRepository = CategoryTodoListTestCategoryRepository()
+        val todoRepository = CategoryTodoListTestTodoRepository().apply { failLoad = true }
+        val adsRepository = CategoryTodoListTestAdsRepository()
+        val viewModel = CategoryTodoListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            todoRepository = todoRepository,
+            categoryRepository = categoryRepository,
+            clock = Clock.fixed(
+                LocalDate.of(2026, 9, 6).atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
+                ZoneId.of("Asia/Tokyo"),
+            ),
+            adsConsentRepository = adsRepository,
+        )
+        assertTrue(viewModel.uiState.value.isLoading)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+        assertTrue(viewModel.uiState.value.hasLoadError)
+
+        todoRepository.failLoad = false
+        viewModel.retryLoad()
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertFalse(viewModel.uiState.value.hasLoadError)
+        assertTrue(viewModel.uiState.value.items.isEmpty())
+        assertFalse(adsRepository.state.value.canLoadBanner)
+        assertFalse(BannerLoadState.FAILED.reservesSpace)
+    }
 
     @Test
     fun viewModelTransitionsFromLoadingToEmptyThenSelectedContent() = runTest {
@@ -154,7 +189,12 @@ class CategoryTodoListViewModelTest {
 private class CategoryTodoListTestTodoRepository : TodoRepository {
     val todos = MutableStateFlow<List<Todo>>(emptyList())
     val occurrences = MutableStateFlow<List<TodoOccurrence>>(emptyList())
-    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = occurrences
+    var failLoad = false
+    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = if (failLoad) {
+        flow { error("load failed") }
+    } else {
+        occurrences
+    }
     override fun observeTodos(): Flow<List<Todo>> = todos
     override suspend fun getTodo(id: String): Todo? = todos.value.firstOrNull { it.id == id }
     override suspend fun saveTodo(

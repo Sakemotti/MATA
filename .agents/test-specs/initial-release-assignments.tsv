@@ -158,7 +158,7 @@ TL-020	P0	todo-list.md	UI	RELEASE_OWNER	OWNER	TODO一覧
 TL-021	P1	todo-list.md	INT/UI	RELEASE_OWNER	OWNER	TODO一覧
 TL-022	P1	todo-list.md	UI	RELEASE_OWNER	OWNER	TODO一覧
 TL-023	P1	todo-list.md	UI/INT	RELEASE_OWNER	OWNER	TODO一覧
-TL-024	P1	todo-list.md	UI	RELEASE_OWNER	OWNER	TODO一覧
+TL-024	P1	todo-list.md	UNIT	DEV_AUTO	DEV	TODO一覧
 TL-025	P1	todo-list.md	MANUAL	RELEASE_OWNER	OWNER	TODO一覧
 TL-026	P0	todo-list.md	INT/UI	RELEASE_OWNER	OWNER	TODO一覧
 TL-027	P0	todo-list.md	INT/UI	RELEASE_OWNER	OWNER	TODO一覧
@@ -212,7 +212,7 @@ TE-D02	P1	todo-editor.md	UI	RELEASE_OWNER	OWNER	TODO登録・編集
 TE-D03	P0	todo-editor.md	UI/UNIT	RELEASE_OWNER	OWNER	TODO登録・編集
 TE-D04	P0	todo-editor.md	UNIT/UI	RELEASE_OWNER	OWNER	TODO登録・編集
 TE-D05	P0	todo-editor.md	INT	DEV_AUTO	DEV	TODO登録・編集
-TE-D06	P1	todo-editor.md	UI	RELEASE_OWNER	OWNER	TODO登録・編集
+TE-D06	P1	todo-editor.md	UNIT	DEV_AUTO	DEV	TODO登録・編集
 CH-001	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-002	P0	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-003	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
@@ -239,10 +239,10 @@ CH-023	P0	calendar-history.md	INT/UI	RELEASE_OWNER	OWNER	カレンダー・履�
 CH-024	P1	calendar-history.md	UI/INT	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-025	P0	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-026	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
-CH-027	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
+CH-027	P1	calendar-history.md	UNIT	DEV_AUTO	DEV	カレンダー・履歴
 CH-028	P0	calendar-history.md	INT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-029	P1	calendar-history.md	INT	DEV_AUTO	DEV	カレンダー・履歴
-CH-030	P1	calendar-history.md	UI/INT	RELEASE_OWNER	OWNER	カレンダー・履歴
+CH-030	P1	calendar-history.md	UNIT/INT	DEV_AUTO	DEV	カレンダー・履歴
 CH-031	P0	calendar-history.md	INT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-032	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-033	P2	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
@@ -283,7 +283,7 @@ CM-025	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-026	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-027	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-028	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-029	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-029	P1	category-management.md	UNIT	DEV_AUTO	DEV	カテゴリ管理
 CM-030	P1	category-management.md	MANUAL	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-031	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-D01	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
@@ -296,7 +296,7 @@ AT-001	P1	archived-todos.md	UI	RELEASE_OWNER	OWNER	アーカイブ
 AT-002	P0	archived-todos.md	UI/INT	RELEASE_OWNER	OWNER	アーカイブ
 AT-003	P1	archived-todos.md	UI/INT	RELEASE_OWNER	OWNER	アーカイブ
 AT-004	P1	archived-todos.md	UI/INT	RELEASE_OWNER	OWNER	アーカイブ
-AT-005	P1	archived-todos.md	INT/UI	RELEASE_OWNER	OWNER	アーカイブ
+AT-005	P1	archived-todos.md	UNIT/INT	DEV_AUTO	DEV	アーカイブ
 AT-006	P1	archived-todos.md	UI	RELEASE_OWNER	OWNER	アーカイブ
 AT-007	P1	archived-todos.md	UI	RELEASE_OWNER	OWNER	アーカイブ
 AT-008	P1	archived-todos.md	UI	RELEASE_OWNER	OWNER	アーカイブ
@@ -377,10 +377,10 @@ ST-035	P0	settings.md	INT/UI	RELEASE_OWNER	OWNER	設定
 ST-036	P1	settings.md	UI/INT	RELEASE_OWNER	OWNER	設定
 ST-037	P1	settings.md	UI	RELEASE_OWNER	OWNER	設定
 ST-038	P1	settings.md	UI	RELEASE_OWNER	OWNER	設定
-ST-039	P1	settings.md	UI	RELEASE_OWNER	OWNER	設定
+ST-039	P1	settings.md	UNIT	DEV_AUTO	DEV	設定
 ST-040	P1	settings.md	UI/MANUAL	RELEASE_OWNER	OWNER	設定
 ST-041	P0	settings.md	INT/UI	RELEASE_OWNER	OWNER	設定
-ST-042	P1	settings.md	UI	RELEASE_OWNER	OWNER	設定
+ST-042	P1	settings.md	UNIT	DEV_AUTO	DEV	設定
 ST-043	P1	settings.md	UI	RELEASE_OWNER	OWNER	設定
 ST-044	P1	settings.md	MANUAL	RELEASE_OWNER	OWNER	設定
 ST-045	P1	settings.md	MANUAL	RELEASE_OWNER	OWNER	設定
@@ -398,7 +398,7 @@ CTL-004	P0	category-todo-list.md	INT/UI	RELEASE_OWNER	OWNER	カテゴリ別TODO
 CTL-005	P1	category-todo-list.md	UI	RELEASE_OWNER	OWNER	カテゴリ別TODO
 CTL-006	P0	category-todo-list.md	UI	RELEASE_OWNER	OWNER	カテゴリ別TODO
 CTL-007	P0	category-todo-list.md	INT/UI	RELEASE_OWNER	OWNER	カテゴリ別TODO
-CTL-008	P1	category-todo-list.md	UI	RELEASE_OWNER	OWNER	カテゴリ別TODO
+CTL-008	P1	category-todo-list.md	UNIT	DEV_AUTO	DEV	カテゴリ別TODO
 CTL-009	P0	category-todo-list.md	INT/UI	RELEASE_OWNER	OWNER	カテゴリ別TODO
 CTL-010	P1	category-todo-list.md	UI/MANUAL	RELEASE_OWNER	OWNER	カテゴリ別TODO
 CTL-011	P1	category-todo-list.md	UI	RELEASE_OWNER	OWNER	カテゴリ別TODO

@@ -8,6 +8,9 @@ import com.mochisofts.mata.domain.repository.CategoryRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -22,6 +25,36 @@ import org.junit.Test
 class CategoryListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun cm029_emptyLoadingFetchFailuresAndOperationFailureStayDistinct() = runTest {
+        val repository = FakeCategoryRepository(emptyList()).apply { failObserve = true }
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value.hasLoadError)
+
+        repository.failObserve = false
+        viewModel.retryLoad()
+        runCurrent()
+        assertFalse(viewModel.uiState.value.hasLoadError)
+        assertTrue(viewModel.uiState.value.categories.isEmpty())
+
+        repository.failGet = true
+        viewModel.openEditor("missing")
+        runCurrent()
+        assertEquals(R.string.category_list_load_error, viewModel.uiState.value.editor?.errorMessageRes)
+
+        repository.failGet = false
+        repository.saveResult = Result.failure(IllegalStateException("save failed"))
+        viewModel.openNewEditor()
+        viewModel.setEditorName("draft")
+        viewModel.saveEditor()
+        runCurrent()
+        assertEquals("draft", viewModel.uiState.value.editor?.name)
+        assertEquals(R.string.error_category_save_failed, viewModel.uiState.value.editor?.errorMessageRes)
+        assertTrue(requireNotNull(viewModel.uiState.value.editor).isDirty)
+    }
 
     @Test
     fun dragOrder_isSavedAndReportsNewPosition() = runTest {
@@ -174,10 +207,18 @@ private class FakeCategoryRepository(initialCategories: List<Category>) : Catego
     var reorderGate: CompletableDeferred<Unit>? = null
     var saveGate: CompletableDeferred<Unit>? = null
     var saveCount = 0
+    var failObserve = false
+    var failGet = false
 
-    override fun observeCategories() = categories
+    override fun observeCategories(): Flow<List<Category>> = flow {
+        if (failObserve) error("list load failed")
+        emitAll(categories)
+    }
 
-    override suspend fun getCategory(id: String): Category? = categories.value.firstOrNull { it.id == id }
+    override suspend fun getCategory(id: String): Category? {
+        if (failGet) error("form load failed")
+        return categories.value.firstOrNull { it.id == id }
+    }
 
     override suspend fun saveCategory(
         id: String?,

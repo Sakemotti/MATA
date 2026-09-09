@@ -27,6 +27,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -44,6 +46,40 @@ import org.junit.Test
 class TodoEditorViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun ted06_missingTargetNeverShowsEmptyFormAndReturnsNotFound() = runTest {
+        val existing = Todo(
+            id = "target",
+            title = "target",
+            description = "",
+            categoryId = null,
+            startDate = LocalDate.of(2026, 9, 3),
+            endDate = null,
+            recurrenceRule = RecurrenceRule.daily(),
+            dueMinutes = null,
+            definitionRevision = 1,
+            archivedAt = null,
+            createdAt = 1,
+        )
+        val gate = CompletableDeferred<Unit>()
+        val repository = FakeTodoRepository(mapOf(existing.id to existing)).apply {
+            getGate = gate
+        }
+        val viewModel = createViewModel(todoRepository = repository, todoId = existing.id)
+        val effect = async { viewModel.effects.first() }
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertEquals("", viewModel.uiState.value.title)
+
+        repository.remove(existing.id)
+        gate.complete(Unit)
+        runCurrent()
+
+        assertEquals(TodoEditorEffect.NotFound, effect.await())
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertEquals("", viewModel.uiState.value.title)
+    }
 
     @Test
     fun newTodoUsesCurrentLogicalDateAndRejectsEarlierDate() = runTest {
@@ -263,8 +299,9 @@ class TodoEditorViewModelTest {
         settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
         notificationScheduler: FakeNotificationScheduler = FakeNotificationScheduler(),
         clock: Clock = fixedClock("2026-09-03T12:00:00+09:00"),
+        todoId: String? = null,
     ) = TodoEditorViewModel(
-        savedStateHandle = SavedStateHandle(),
+        savedStateHandle = SavedStateHandle(mapOf("todoId" to todoId)),
         todoRepository = todoRepository,
         categoryRepository = FakeCategoryRepository(),
         settingsRepository = settingsRepository,
@@ -294,8 +331,10 @@ private data class SaveTodoCall(
 )
 
 private class FakeTodoRepository(
-    private val todos: Map<String, Todo> = emptyMap(),
+    initialTodos: Map<String, Todo> = emptyMap(),
 ) : TodoRepository {
+    private val todos = initialTodos.toMutableMap()
+    var getGate: CompletableDeferred<Unit>? = null
     var saveResult: Result<String> = Result.success("saved-todo")
     var saveCount: Int = 0
     var lastSave: SaveTodoCall? = null
@@ -305,7 +344,14 @@ private class FakeTodoRepository(
 
     override fun observeTodos(): Flow<List<Todo>> = flowOf(todos.values.toList())
 
-    override suspend fun getTodo(id: String): Todo? = todos[id]
+    override suspend fun getTodo(id: String): Todo? {
+        getGate?.await()
+        return todos[id]
+    }
+
+    fun remove(id: String) {
+        todos.remove(id)
+    }
 
     override suspend fun saveTodo(
         id: String?,

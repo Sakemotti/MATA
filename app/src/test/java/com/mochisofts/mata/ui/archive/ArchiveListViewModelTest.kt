@@ -17,12 +17,14 @@ import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -37,6 +39,33 @@ import org.junit.Test
 class ArchiveListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun at005_debounceCancelsOldSearchBeforeLatestResult() = runTest {
+        val repository = EmptyArchiveRepository()
+        val viewModel = ArchiveListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            repository = repository,
+            settingsRepository = ArchiveViewModelSettingsRepository(),
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.todos.collect()
+        }
+        runCurrent()
+
+        viewModel.updateSearchQuery("old")
+        advanceTimeBy(301)
+        runCurrent()
+        assertEquals("old", repository.queries.last())
+
+        viewModel.updateSearchQuery("latest")
+        advanceTimeBy(301)
+        runCurrent()
+
+        assertEquals("latest", repository.queries.last())
+        assertEquals(listOf("old"), repository.cancelledQueries)
+    }
 
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -201,10 +230,23 @@ private class SelectionArchiveRepository(item: ArchivedTodoItem) : ArchiveReposi
 }
 
 private class EmptyArchiveRepository : ArchiveRepository {
+    val queries = mutableListOf<String>()
+    val cancelledQueries = mutableListOf<String>()
+
     override fun pagedTodos(
         query: String,
         sortOrder: ArchiveSortOrder,
-    ): Flow<PagingData<ArchivedTodoItem>> = flowOf(PagingData.empty())
+    ): Flow<PagingData<ArchivedTodoItem>> = flow {
+        queries += query
+        emit(PagingData.empty())
+        if (query == "old") {
+            try {
+                awaitCancellation()
+            } finally {
+                cancelledQueries += query
+            }
+        }
+    }
 
     override fun observeTodo(todoId: String): Flow<ArchivedTodoItem?> = flowOf(null)
     override fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary> = emptyFlow()

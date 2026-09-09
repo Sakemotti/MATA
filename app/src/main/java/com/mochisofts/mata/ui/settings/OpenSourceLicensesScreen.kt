@@ -53,7 +53,7 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private sealed interface LibrariesLoadState {
+internal sealed interface LibrariesLoadState {
     data object Loading : LibrariesLoadState
     data class Loaded(val libraries: List<Library>) : LibrariesLoadState
     data object Error : LibrariesLoadState
@@ -74,7 +74,7 @@ fun OpenSourceLicensesScreen(onBack: () -> Unit) {
     LaunchedEffect(resources, retryKey) {
         loadState = LibrariesLoadState.Loading
         loadState = withContext(Dispatchers.Default) {
-            runCatching {
+            loadLibraries {
                 val json = resources.openRawResource(R.raw.aboutlibraries)
                     .bufferedReader()
                     .use { it.readText() }
@@ -83,10 +83,7 @@ fun OpenSourceLicensesScreen(onBack: () -> Unit) {
                     .build()
                     .libraries
                     .sortedBy { it.name.lowercase(Locale.ROOT) }
-            }.fold(
-                onSuccess = LibrariesLoadState::Loaded,
-                onFailure = { LibrariesLoadState.Error },
-            )
+            }
         }
     }
 
@@ -258,6 +255,11 @@ internal fun matchesLibraryName(name: String, query: String): Boolean {
     val normalizedQuery = query.trim()
     return normalizedQuery.isEmpty() || name.contains(normalizedQuery, ignoreCase = true)
 }
+
+internal fun loadLibraries(loader: () -> List<Library>): LibrariesLoadState = runCatching(loader).fold(
+    onSuccess = LibrariesLoadState::Loaded,
+    onFailure = { LibrariesLoadState.Error },
+)
 
 internal fun licenseBodyOrNull(contents: Iterable<String?>): String? = contents
     .mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
