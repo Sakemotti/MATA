@@ -134,3 +134,7 @@ CH-007	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarGridDatesTest.k
 CH-009	app/src/test/java/com/mochisofts/mata/domain/model/HistoryModelsTest.kt	ch009_dailyCountsIncludeEveryPlanAndOnlyCompletedInCompletedCount	:app:testDebugUnitTest
 CH-012	app/src/test/java/com/mochisofts/mata/domain/model/HistoryModelsTest.kt	ch012_dayStateUsesUnachievedThenInProgressThenCompletedPriority	:app:testDebugUnitTest
 CH-D04	app/src/test/java/com/mochisofts/mata/domain/model/HistoryModelsTest.kt	chd04_dailyStateAndPeriodResultMarkersRemainIndependent	:app:testDebugUnitTest
+CH-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch010_countBasedActionsAppearOnlyOnCompletedAndSkippedLogicalDates	:app:connectedDebugAndroidTest
+CH-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch011_historyBelongsToTargetLogicalDateRegardlessOfActionTimeOrLegacyCategoryBoundary	:app:connectedDebugAndroidTest
+CH-013	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch013_finalizedCountPeriodsExposeMarkerCountsAndAchievementOnPeriodEnd	:app:connectedDebugAndroidTest
+CH-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch017_historySectionsSortByDeadlineHistoricalCategoryAndCreationTime	:app:connectedDebugAndroidTest
