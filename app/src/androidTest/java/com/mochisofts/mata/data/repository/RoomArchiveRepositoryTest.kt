@@ -115,6 +115,195 @@ class RoomArchiveRepositoryTest {
     }
 
     @Test
+    fun at002_archivedDefinitionsAppearOnceWithoutCategoryGroupingOrOccurrenceExpansion() = runBlocking {
+        val dailyCategory = categoryEntity("daily-category", "日常", 0)
+        val countCategory = categoryEntity("count-category", "ゲーム", 1)
+        insertArchivedDefinition(
+            id = "daily",
+            title = "毎日のTODO",
+            category = dailyCategory,
+            rule = RecurrenceRule.daily(),
+            archivedAt = 300,
+        )
+        insertArchivedDefinition(
+            id = "weekly-count",
+            title = "週3回のTODO",
+            category = countCategory,
+            rule = RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 3),
+            archivedAt = 200,
+        )
+        insertArchivedDefinition(
+            id = "monthly",
+            title = "毎月のTODO",
+            category = null,
+            rule = RecurrenceRule(RecurrenceType.MONTHLY_DAY, monthlyDay = 11),
+            archivedAt = 100,
+        )
+
+        val items = repository.pagedTodos("", ArchiveSortOrder.NEWEST).asSnapshot()
+
+        assertEquals(listOf("daily", "weekly-count", "monthly"), items.map { it.todo.id })
+        assertEquals(3, items.map { it.todo.id }.distinct().size)
+        assertEquals(
+            setOf(RecurrenceType.DAILY, RecurrenceType.WEEKLY_COUNT, RecurrenceType.MONTHLY_DAY),
+            items.map { it.todo.recurrenceType }.toSet(),
+        )
+        assertEquals(listOf("日常", "ゲーム", null), items.map { it.category?.name })
+    }
+
+    @Test
+    fun at004_searchMatchesCurrentTitleDescriptionAndCategoryIgnoringAsciiCase() = runBlocking {
+        val ordinary = categoryEntity("ordinary", "通常カテゴリ", 0)
+        val matching = categoryEntity("matching", "MixedCategory", 1)
+        insertArchivedDefinition(
+            id = "title-match",
+            title = "MixedTitle",
+            description = "通常説明",
+            category = ordinary,
+            archivedAt = 300,
+        )
+        insertArchivedDefinition(
+            id = "description-match",
+            title = "通常タイトル1",
+            description = "MixedDescription",
+            category = ordinary,
+            archivedAt = 200,
+        )
+        insertArchivedDefinition(
+            id = "category-match",
+            title = "通常タイトル2",
+            description = "別の説明",
+            category = matching,
+            archivedAt = 100,
+        )
+
+        assertEquals(listOf("title-match"), archivedTodoIds("mixedtitle"))
+        assertEquals(listOf("description-match"), archivedTodoIds("MIXEDDESCRIPTION"))
+        assertEquals(listOf("category-match"), archivedTodoIds("mixedcategory"))
+        assertEquals(emptyList<String>(), archivedTodoIds("一致しない語"))
+    }
+
+    @Test
+    fun at011_historySummaryCountsCompletedMissedSkippedAndPeriodRows() = runBlocking {
+        val todo = insertArchivedDefinition(id = "summary", title = "集計対象")
+        insertHistoryExecution(
+            todo,
+            "completed",
+            TodoState.COMPLETED,
+            logicalDate = date.minusDays(2),
+            actedAt = 100,
+        )
+        insertHistoryExecution(
+            todo,
+            "missed",
+            TodoState.MISSED,
+            logicalDate = date.minusDays(1),
+            actedAt = 200,
+        )
+        insertHistoryExecution(todo, "skipped", TodoState.SKIPPED, actedAt = 300)
+        insertPeriodResult(todo, "period", finalizedAt = 400)
+
+        val summary = repository.observeHistorySummary(todo.id).first()
+
+        assertEquals(1, summary.completedCount)
+        assertEquals(1, summary.missedCount)
+        assertEquals(1, summary.skippedCount)
+        assertEquals(1, summary.periodResultCount)
+        assertEquals(3, summary.executionCount)
+        assertEquals(4, summary.totalCount)
+    }
+
+    @Test
+    fun atd01_archiveSortModesUseDocumentedStableTieBreakers() = runBlocking {
+        insertArchivedDefinition("same-b", "Same", archivedAt = 300)
+        insertArchivedDefinition("same-a", "Same", archivedAt = 300)
+        insertArchivedDefinition("alpha", "Alpha", archivedAt = 200)
+        insertArchivedDefinition("zulu", "Zulu", archivedAt = 200)
+        insertArchivedDefinition("same-old", "Same", archivedAt = 100)
+
+        assertEquals(
+            listOf("same-a", "same-b", "alpha", "zulu", "same-old"),
+            archivedTodoIds("", ArchiveSortOrder.NEWEST),
+        )
+        assertEquals(
+            listOf("same-old", "alpha", "zulu", "same-a", "same-b"),
+            archivedTodoIds("", ArchiveSortOrder.OLDEST),
+        )
+        assertEquals(
+            listOf("alpha", "same-a", "same-b", "same-old", "zulu"),
+            archivedTodoIds("", ArchiveSortOrder.TITLE),
+        )
+    }
+
+    @Test
+    fun atd02_searchTrimsWhitespaceResetsOnBlankAndIgnoresHistorySnapshots() = runBlocking {
+        val todo = insertArchivedDefinition(
+            id = "current",
+            title = "Current Needle",
+            archivedAt = 100,
+        )
+        val oldDefinition = todo.copy(title = "History Needle")
+        val snapshot = HistorySnapshotJson.encode(
+            todo = oldDefinition,
+            category = null,
+            notifications = emptyList(),
+            endHour = 0,
+            weekStart = DayOfWeek.MONDAY,
+            logicalDate = date.minusDays(1),
+        )
+        database.todoExecutionDao().insert(
+            TodoExecutionEntity(
+                id = "historical-title",
+                operationId = "historical-title-operation",
+                todoId = todo.id,
+                logicalDate = date.minusDays(1).toString(),
+                status = TodoState.COMPLETED.code,
+                actedAt = 100,
+                finalizedAt = 100,
+                definitionRevision = todo.definitionRevision,
+                snapshotVersion = 1,
+                snapshotJson = snapshot,
+            ),
+        )
+
+        assertEquals(listOf(todo.id), archivedTodoIds("  current needle  "))
+        assertEquals(listOf(todo.id), archivedTodoIds("   "))
+        assertEquals(emptyList<String>(), archivedTodoIds("history needle"))
+    }
+
+    @Test
+    fun atd04_historyUsesTimeTypeAndStableIdTieBreakersWithinTheSameDate() = runBlocking {
+        val todo = insertArchivedDefinition(id = "history-order", title = "履歴順序")
+        insertHistoryExecution(todo, "execution", TodoState.COMPLETED, actedAt = 500)
+        insertHistoryExecution(
+            todo,
+            "previous-day",
+            TodoState.SKIPPED,
+            logicalDate = date.minusDays(1),
+            actedAt = 900,
+        )
+        insertPeriodResult(todo, "period-b", finalizedAt = 500)
+        insertPeriodResult(
+            todo,
+            "period-a",
+            finalizedAt = 500,
+            periodStart = date.minusDays(13),
+        )
+
+        val history = repository.pagedHistory(todo.id).asSnapshot()
+
+        assertEquals(
+            listOf(
+                "execution:execution",
+                "period:period-a",
+                "period:period-b",
+                "execution:previous-day",
+            ),
+            history.map { it.stableId },
+        )
+    }
+
+    @Test
     fun sta010_restoreReconcilesCurrentAndFutureFromOriginalDefinition() = runBlocking {
         val values = insertArchivedTodo()
 
@@ -543,6 +732,98 @@ class RoomArchiveRepositoryTest {
             ),
         )
         return TestValues(todo, category)
+    }
+
+    private suspend fun insertArchivedDefinition(
+        id: String,
+        title: String,
+        description: String = "",
+        category: CategoryEntity? = null,
+        rule: RecurrenceRule = RecurrenceRule.daily(),
+        archivedAt: Long = 20,
+    ): TodoEntity {
+        category?.let { database.categoryDao().upsert(it) }
+        val encoded = RecurrenceRuleJson.encode(rule)
+        return TodoEntity(
+            id = id,
+            title = title,
+            description = description,
+            categoryId = category?.id,
+            startDate = date.minusDays(20).toString(),
+            endDate = null,
+            recurrenceType = encoded.typeCode,
+            repeatParamsVersion = encoded.paramsVersion,
+            repeatParamsJson = encoded.paramsJson,
+            dueMinutes = null,
+            definitionRevision = 1,
+            createdAt = 10,
+            updatedAt = 10,
+            archivedAt = archivedAt,
+        ).also { database.todoDao().upsert(it) }
+    }
+
+    private fun categoryEntity(id: String, name: String, sortOrder: Int) = CategoryEntity(
+        id = id,
+        name = name,
+        normalizedName = name.lowercase(),
+        colorIndex = sortOrder,
+        iconName = "Category",
+        legacyEndHour = 0,
+        sortOrder = sortOrder,
+        createdAt = sortOrder.toLong(),
+    )
+
+    private suspend fun archivedTodoIds(
+        query: String,
+        sortOrder: ArchiveSortOrder = ArchiveSortOrder.NEWEST,
+    ): List<String> = repository.pagedTodos(query, sortOrder).asSnapshot().map { it.todo.id }
+
+    private suspend fun insertHistoryExecution(
+        todo: TodoEntity,
+        id: String,
+        state: TodoState,
+        logicalDate: LocalDate = date,
+        actedAt: Long,
+    ) {
+        database.todoExecutionDao().insert(
+            TodoExecutionEntity(
+                id = id,
+                operationId = "operation-$id",
+                todoId = todo.id,
+                logicalDate = logicalDate.toString(),
+                status = state.code,
+                actedAt = actedAt,
+                finalizedAt = actedAt,
+                definitionRevision = todo.definitionRevision,
+                snapshotVersion = 1,
+                snapshotJson = "{}",
+            ),
+        )
+    }
+
+    private suspend fun insertPeriodResult(
+        todo: TodoEntity,
+        id: String,
+        finalizedAt: Long,
+        periodStart: LocalDate = date.minusDays(6),
+    ) {
+        database.periodResultDao().insert(
+            PeriodResultEntity(
+                id = id,
+                todoId = todo.id,
+                periodType = RecurrenceType.WEEKLY_COUNT.code,
+                periodStart = periodStart.toString(),
+                periodEnd = date.toString(),
+                requiredCount = 1,
+                completedCount = 1,
+                achieved = true,
+                displayDate = date.toString(),
+                finalizedAt = finalizedAt,
+                definitionRevision = todo.definitionRevision,
+                snapshotVersion = 1,
+                snapshotJson = "{}",
+            ),
+        )
     }
 
     private suspend fun insertExecution(
