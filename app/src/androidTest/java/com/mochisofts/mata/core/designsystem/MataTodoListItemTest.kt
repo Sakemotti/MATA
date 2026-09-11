@@ -58,7 +58,7 @@ class MataTodoListItemTest {
     }
 
     @Test
-    fun reservedStatusSlotKeepsBodyBoundsAlignedWithVisibleStatus() {
+    fun ctl011_reservedStatusSlotKeepsBodyBoundsAlignedWithVisibleStatus() {
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 Column(Modifier.width(360.dp)) {

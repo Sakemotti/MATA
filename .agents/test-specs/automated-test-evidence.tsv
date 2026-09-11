@@ -113,6 +113,14 @@ CH-027	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewMode
 CH-030	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch030_staleMonthResponseCannotOverwriteLatestSelection	:app:testDebugUnitTest
 CM-029	app/src/test/java/com/mochisofts/mata/ui/category/CategoryListViewModelTest.kt	cm029_emptyLoadingFetchFailuresAndOperationFailureStayDistinct	:app:testDebugUnitTest
 CTL-008	app/src/test/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListViewModelTest.kt	ctl008_loadingEmptyConsentPendingAndAdFailureLeaveNoBlankAdArea	:app:testDebugUnitTest
+CTL-002	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl002_tabsFollowCategoryOrderAndSelectionSwitchesContent	:app:connectedDebugAndroidTest
+CTL-003	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl003_activeDefinitionsAppearOnceWithoutOccurrenceExpansion	:app:connectedDebugAndroidTest
+CTL-004	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl004_pendingCompletedAndSkippedRowsShowEveryStateLabel	:app:connectedDebugAndroidTest
+CTL-005	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl005_nonScheduledAndNotStartedRowsOmitTodayStateLabel	:app:connectedDebugAndroidTest
+CTL-006	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl006_rowHasNoCompletionOrActionControlsAndOpensEditor	:app:connectedDebugAndroidTest
+CTL-007	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl007_rowClickOnlyRequestsNavigationAndDoesNotMutateTodoState	:app:connectedDebugAndroidTest
+CTL-009	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl009_deletedSelectedCategoryFallsBackToUncategorizedContent	:app:connectedDebugAndroidTest
+CTL-011	app/src/androidTest/java/com/mochisofts/mata/core/designsystem/MataTodoListItemTest.kt	ctl011_reservedStatusSlotKeepsBodyBoundsAlignedWithVisibleStatus	:app:connectedDebugAndroidTest
 AT-005	app/src/test/java/com/mochisofts/mata/ui/archive/ArchiveListViewModelTest.kt	at005_debounceCancelsOldSearchBeforeLatestResult	:app:testDebugUnitTest
 ST-039	app/src/test/java/com/mochisofts/mata/ui/settings/OpenSourceLicensesTest.kt	st039_listSearchEmptyBodyAndLoadFailureStatesAreDistinct	:app:testDebugUnitTest
 ST-042	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st042_fullPartialAndOperationFailuresRemainRetryable	:app:testDebugUnitTest
