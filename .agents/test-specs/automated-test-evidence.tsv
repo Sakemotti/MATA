@@ -129,3 +129,8 @@ TL-009	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListGroupingTest.kt
 TL-011	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListTopBarActionsTest.kt	tl011_missingDueTimeUsesLogicalDayEndAndDisplaysNoDeadline	:app:connectedDebugAndroidTest
 TL-031	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListContentFlowTest.kt	tl031_rapidDateChangeNeverPublishesContentForThePreviousDate	:app:testDebugUnitTest
 TL-032	app/src/androidTest/java/com/mochisofts/mata/core/designsystem/MataTodoListItemTest.kt	tl032_completionControlCentersAlignAcrossInteractiveAndReadOnlyRows	:app:connectedDebugAndroidTest
+CH-006	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarGridDatesTest.kt	ch006_allWeekStartChoicesReorderHeadersAndDateColumnsTogether	:app:testDebugUnitTest
+CH-007	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarGridDatesTest.kt	ch007_calendarGridAlwaysHasSixWeeksAndIncludesAdjacentMonthDates	:app:testDebugUnitTest
+CH-009	app/src/test/java/com/mochisofts/mata/domain/model/HistoryModelsTest.kt	ch009_dailyCountsIncludeEveryPlanAndOnlyCompletedInCompletedCount	:app:testDebugUnitTest
+CH-012	app/src/test/java/com/mochisofts/mata/domain/model/HistoryModelsTest.kt	ch012_dayStateUsesUnachievedThenInProgressThenCompletedPriority	:app:testDebugUnitTest
+CH-D04	app/src/test/java/com/mochisofts/mata/domain/model/HistoryModelsTest.kt	chd04_dailyStateAndPeriodResultMarkersRemainIndependent	:app:testDebugUnitTest

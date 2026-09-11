@@ -218,13 +218,13 @@ CH-002	P0	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-003	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-004	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-005	P0	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
-CH-006	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
-CH-007	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
+CH-006	P1	calendar-history.md	UNIT	DEV_AUTO	DEV	カレンダー・履歴
+CH-007	P1	calendar-history.md	UNIT	DEV_AUTO	DEV	カレンダー・履歴
 CH-008	P1	calendar-history.md	UI/MANUAL	RELEASE_OWNER	OWNER	カレンダー・履歴
-CH-009	P0	calendar-history.md	UNIT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
+CH-009	P0	calendar-history.md	UNIT	DEV_AUTO	DEV	カレンダー・履歴
 CH-010	P0	calendar-history.md	UNIT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-011	P0	calendar-history.md	UNIT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
-CH-012	P0	calendar-history.md	UI/UNIT	RELEASE_OWNER	OWNER	カレンダー・履歴
+CH-012	P0	calendar-history.md	UNIT	DEV_AUTO	DEV	カレンダー・履歴
 CH-013	P0	calendar-history.md	UNIT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-014	P0	calendar-history.md	INT	DEV_AUTO	DEV	カレンダー・履歴
 CH-015	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
@@ -251,7 +251,7 @@ CH-035	P1	calendar-history.md	MANUAL	RELEASE_OWNER	OWNER	カレンダー・履�
 CH-D01	P2	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-D02	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-D03	P1	calendar-history.md	UI/MANUAL	RELEASE_OWNER	OWNER	カレンダー・履歴
-CH-D04	P0	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
+CH-D04	P0	calendar-history.md	UNIT	DEV_AUTO	DEV	カレンダー・履歴
 CH-D05	P0	calendar-history.md	INT/UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-D06	P1	calendar-history.md	UI	RELEASE_OWNER	OWNER	カレンダー・履歴
 CH-D07	P1	calendar-history.md	UI/MANUAL	RELEASE_OWNER	OWNER	カレンダー・履歴

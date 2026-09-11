@@ -11,7 +11,7 @@ class HistoryModelsTest {
     private val date = LocalDate.of(2026, 8, 10)
 
     @Test
-    fun unfinishedOrSkipped_hasPriorityOverPendingAndCompleted() {
+    fun ch009_dailyCountsIncludeEveryPlanAndOnlyCompletedInCompletedCount() {
         val summary = summarizeHistoryDay(
             date,
             listOf(TodoState.COMPLETED, TodoState.PENDING, TodoState.SKIPPED),
@@ -24,27 +24,47 @@ class HistoryModelsTest {
     }
 
     @Test
-    fun pendingWithoutFailure_isInProgress() {
-        val summary = summarizeHistoryDay(
-            date,
-            listOf(TodoState.COMPLETED, TodoState.PENDING),
-            emptyList(),
+    fun ch012_dayStateUsesUnachievedThenInProgressThenCompletedPriority() {
+        val unachieved = summarizeHistoryDay(
+            date = date,
+            states = listOf(TodoState.COMPLETED, TodoState.PENDING, TodoState.SKIPPED),
+            periodAchievements = emptyList(),
+        )
+        val inProgress = summarizeHistoryDay(
+            date = date,
+            states = listOf(TodoState.COMPLETED, TodoState.PENDING),
+            periodAchievements = emptyList(),
+        )
+        val completed = summarizeHistoryDay(
+            date = date,
+            states = listOf(TodoState.COMPLETED, TodoState.COMPLETED),
+            periodAchievements = emptyList(),
         )
 
-        assertEquals(HistoryDayState.IN_PROGRESS, summary.state)
+        assertEquals(HistoryDayState.UNACHIEVED, unachieved.state)
+        assertEquals(HistoryDayState.IN_PROGRESS, inProgress.state)
+        assertEquals(HistoryDayState.COMPLETED, completed.state)
     }
 
     @Test
-    fun allCompleted_isCompletedAndPeriodMarkersStayIndependent() {
-        val summary = summarizeHistoryDay(
-            date,
-            listOf(TodoState.COMPLETED, TodoState.COMPLETED),
-            listOf(true, false),
+    fun chd04_dailyStateAndPeriodResultMarkersRemainIndependent() {
+        val dailyUnachievedPeriodAchieved = summarizeHistoryDay(
+            date = date,
+            states = listOf(TodoState.SKIPPED),
+            periodAchievements = listOf(true),
+        )
+        val dailyCompletedPeriodUnachieved = summarizeHistoryDay(
+            date = date,
+            states = listOf(TodoState.COMPLETED),
+            periodAchievements = listOf(false),
         )
 
-        assertEquals(HistoryDayState.COMPLETED, summary.state)
-        assertTrue(summary.hasAchievedPeriod)
-        assertTrue(summary.hasUnachievedPeriod)
+        assertEquals(HistoryDayState.UNACHIEVED, dailyUnachievedPeriodAchieved.state)
+        assertTrue(dailyUnachievedPeriodAchieved.hasAchievedPeriod)
+        assertFalse(dailyUnachievedPeriodAchieved.hasUnachievedPeriod)
+        assertEquals(HistoryDayState.COMPLETED, dailyCompletedPeriodUnachieved.state)
+        assertFalse(dailyCompletedPeriodUnachieved.hasAchievedPeriod)
+        assertTrue(dailyCompletedPeriodUnachieved.hasUnachievedPeriod)
     }
 
     @Test
