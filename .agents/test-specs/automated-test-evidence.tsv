@@ -124,3 +124,8 @@ AT-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveR
 AT-029	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at029_permanentDeleteFailureRollsBackAllArchivedTodoRows	:app:connectedDebugAndroidTest
 AT-037	app/src/test/java/com/mochisofts/mata/ui/archive/ArchiveListViewModelTest.kt	at037_externalRestoreOrDeleteClosesDetailAndConfirmationSafely	:app:testDebugUnitTest
 ST-041	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st041_autoSaveIsSilentOnSuccessAndRevertsOnlyFailedSetting	:app:testDebugUnitTest
+TL-008	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListGroupingTest.kt	tl008_uncategorizedComesFirstThenCategoriesUseConfiguredOrder	:app:testDebugUnitTest
+TL-009	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListGroupingTest.kt	tl009_sortsByEffectiveDeadlineThenCreationAndTodoId	:app:testDebugUnitTest
+TL-011	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListTopBarActionsTest.kt	tl011_missingDueTimeUsesLogicalDayEndAndDisplaysNoDeadline	:app:connectedDebugAndroidTest
+TL-031	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListContentFlowTest.kt	tl031_rapidDateChangeNeverPublishesContentForThePreviousDate	:app:testDebugUnitTest
+TL-032	app/src/androidTest/java/com/mochisofts/mata/core/designsystem/MataTodoListItemTest.kt	tl032_completionControlCentersAlignAcrossInteractiveAndReadOnlyRows	:app:connectedDebugAndroidTest

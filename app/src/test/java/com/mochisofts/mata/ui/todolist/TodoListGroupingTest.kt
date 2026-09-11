@@ -11,7 +11,7 @@ import org.junit.Test
 
 class TodoListGroupingTest {
     @Test
-    fun groupsUncategorizedFirstThenUsesCategorySortOrder() {
+    fun tl008_uncategorizedComesFirstThenCategoriesUseConfiguredOrder() {
         val later = category(id = "later", sortOrder = 10)
         val earlier = category(id = "earlier", sortOrder = 2)
 
@@ -28,7 +28,7 @@ class TodoListGroupingTest {
     }
 
     @Test
-    fun sortsEachCategoryByActualDeadlineThenCreationAndId() {
+    fun tl009_sortsByEffectiveDeadlineThenCreationAndTodoId() {
         val category = category(id = "night", sortOrder = 0)
         val groups = buildTodoOccurrenceGroups(
             occurrences = listOf(

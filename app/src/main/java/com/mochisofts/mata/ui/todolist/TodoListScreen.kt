@@ -536,7 +536,7 @@ private fun TodoCategoryHeader(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TodoOccurrenceRow(
+internal fun TodoOccurrenceRow(
     occurrence: TodoOccurrence,
     canComplete: Boolean,
     showActions: Boolean,

@@ -96,7 +96,7 @@ class MataTodoListItemTest {
     }
 
     @Test
-    fun completionCheckboxCenterStaysAlignedWhenOnlyPendingItemIsInteractive() {
+    fun tl032_completionControlCentersAlignAcrossInteractiveAndReadOnlyRows() {
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 Column(Modifier.width(360.dp)) {

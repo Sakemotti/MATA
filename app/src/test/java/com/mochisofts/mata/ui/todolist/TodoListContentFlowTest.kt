@@ -17,7 +17,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodoListContentFlowTest {
     @Test
-    fun dateChangeWaitsForMatchingOccurrencesBeforePublishingContent() = runTest {
+    fun tl031_rapidDateChangeNeverPublishesContentForThePreviousDate() = runTest {
         val firstDate = LocalDate.of(2026, 8, 26)
         val nextDate = firstDate.plusDays(1)
         val selectedDate = MutableStateFlow(firstDate)
