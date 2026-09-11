@@ -392,16 +392,16 @@ ST-D05	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Back
 ST-D06	P0	settings.md	未実施	-	-	-	-	-
 ST-D07	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsBuildConfigurationSpecCoverageTest#std07・CI run 33875902463成功
 CTL-001	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-002	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-003	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-004	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-005	P1	category-todo-list.md	未実施	-	-	-	-	-
-CTL-006	P0	category-todo-list.md	未実施	-	-	-	-	-
-CTL-007	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-002	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl002・connectedDebugAndroidTest成功
+CTL-003	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl003・connectedDebugAndroidTest成功
+CTL-004	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl004・connectedDebugAndroidTest成功
+CTL-005	P1	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl005・connectedDebugAndroidTest成功
+CTL-006	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl006・connectedDebugAndroidTest成功
+CTL-007	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl007・connectedDebugAndroidTest成功
 CTL-008	P1	category-todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryTodoListViewModelTest#ctl008・testDebugUnitTest成功
-CTL-009	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-009	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl009・connectedDebugAndroidTest成功
 CTL-010	P1	category-todo-list.md	合格	2026-09-09	OWNER	3	Android Emulator 600dp以上 / Pixel 9a TalkBack	CT-ENV-LARGE・CT-ENV-TALKBACK・回転、幅変更、キーボード、TalkBack後も選択を保持して操作できることを確認
-CTL-011	P1	category-todo-list.md	未実施	-	-	-	-	-
+CTL-011	P1	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	MataTodoListItemTest#ctl011・connectedDebugAndroidTest成功
 DAY-015	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomTodoStateSpecCoverageTest#day015・connectedDebugAndroidTest成功
 DAY-016	P0	app-core.md	合格	2026-09-09	AUTO	3	Local JDK 21 / JVM	ScheduleTestSpecCoverageTest#day016・testDebugUnitTest成功
 STA-013	P0	app-core.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomTodoStateSpecCoverageTest#sta013・connectedDebugAndroidTest成功

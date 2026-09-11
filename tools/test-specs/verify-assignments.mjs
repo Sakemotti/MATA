@@ -84,6 +84,10 @@ function expectedLane(row) {
   if (row.prefix === 'REL') {
     return 'RELEASE_OWNER';
   }
+  const typeParts = new Set(row.type.split('/'));
+  if (typeParts.has('AUTO') && (typeParts.has('UNIT') || typeParts.has('INT'))) {
+    return 'DEV_AUTO';
+  }
   return /(?:^|\/)(?:UI|MANUAL|E2E)(?:\/|$)/.test(row.type)
     ? 'RELEASE_OWNER'
     : 'DEV_AUTO';
