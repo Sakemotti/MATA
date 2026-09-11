@@ -8,7 +8,7 @@ import org.junit.Test
 
 class CalendarGridDatesTest {
     @Test
-    fun mondayStart_alwaysProducesSixWeeksFromExpectedColumn() {
+    fun ch007_calendarGridAlwaysHasSixWeeksAndIncludesAdjacentMonthDates() {
         val dates = calendarGridDates(YearMonth.of(2026, 8), DayOfWeek.MONDAY)
 
         assertEquals(42, dates.size)
@@ -18,12 +18,17 @@ class CalendarGridDatesTest {
     }
 
     @Test
-    fun sundayStart_reordersCalendarColumns() {
-        val dates = calendarGridDates(YearMonth.of(2026, 8), DayOfWeek.SUNDAY)
+    fun ch006_allWeekStartChoicesReorderHeadersAndDateColumnsTogether() {
+        DayOfWeek.entries.forEach { weekStart ->
+            val expectedHeaders = (0..6).map { offset ->
+                DayOfWeek.of((weekStart.value - 1 + offset) % 7 + 1)
+            }
+            val dates = calendarGridDates(YearMonth.of(2026, 8), weekStart)
 
-        assertEquals(LocalDate.of(2026, 7, 26), dates.first())
-        assertEquals(DayOfWeek.SUNDAY, dates.first().dayOfWeek)
-        assertEquals(42, dates.size)
+            assertEquals(expectedHeaders, calendarWeekdays(weekStart))
+            assertEquals(weekStart, dates.first().dayOfWeek)
+            assertEquals(42, dates.size)
+        }
     }
 
     @Test

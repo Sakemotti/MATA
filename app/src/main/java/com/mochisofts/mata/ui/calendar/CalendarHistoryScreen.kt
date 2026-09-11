@@ -413,8 +413,7 @@ private fun MonthControls(
 @Composable
 private fun WeekdayHeader(weekStart: DayOfWeek) {
     Row(Modifier.fillMaxWidth()) {
-        (0..6).forEach { offset ->
-            val day = DayOfWeek.of((weekStart.value - 1 + offset) % 7 + 1)
+        calendarWeekdays(weekStart).forEach { day ->
             Text(
                 text = weekdayShortLabel(day),
                 style = MaterialTheme.typography.labelMedium,
@@ -424,6 +423,9 @@ private fun WeekdayHeader(weekStart: DayOfWeek) {
         }
     }
 }
+
+internal fun calendarWeekdays(weekStart: DayOfWeek): List<DayOfWeek> =
+    (0..6).map { offset -> DayOfWeek.of((weekStart.value - 1 + offset) % 7 + 1) }
 
 @Composable
 private fun MonthGrid(
