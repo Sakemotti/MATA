@@ -57,6 +57,8 @@ data class TodoListUiState(
     val selectedDate: LocalDate = LocalDate.MIN,
     val isToday: Boolean = true,
     val showCompleted: Boolean = false,
+    val completedCount: Int = 0,
+    val plannedCount: Int = 0,
     val groups: List<TodoOccurrenceGroup> = emptyList(),
     val holidayName: String? = null,
     val holidayStatus: HolidayYearStatus? = null,
@@ -133,6 +135,9 @@ class TodoListViewModel @Inject constructor(
             )
         }
         val today = LocalDate.now(clock)
+        val plannedOccurrences = loaded.occurrences.filter { occurrence ->
+            occurrence.state != TodoState.SKIPPED
+        }
         val visibleOccurrences = loaded.occurrences.filter { occurrence ->
             occurrence.state != TodoState.SKIPPED &&
                 (loaded.date != today || showCompleted || occurrence.state != TodoState.COMPLETED)
@@ -142,6 +147,10 @@ class TodoListViewModel @Inject constructor(
             selectedDate = loaded.date,
             isToday = loaded.date == today,
             showCompleted = showCompleted,
+            completedCount = plannedOccurrences.count { occurrence ->
+                occurrence.state == TodoState.COMPLETED
+            },
+            plannedCount = plannedOccurrences.size,
             groups = buildTodoOccurrenceGroups(visibleOccurrences, dayEndHour),
             holidayName = loaded.holidaySnapshot.holidayName(loaded.date),
             holidayStatus = loaded.holidaySnapshot.statusFor(loaded.date.year)
