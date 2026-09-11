@@ -1,14 +1,14 @@
 # 初回リリース進行記録
 
-- 対象: MATA `1.0.0 (3)`
-- 状態: versionCode 3をClosed testingへ公開・上書き更新済み／変更内容と不足環境の再試験中
-- 最終更新日: 2026-09-09
+- 対象: MATA `1.0.0 (4)`
+- 状態: versionCode 3をClosed testingへ公開済み／versionCode 4署名済み候補のアップロード待ち
+- 最終更新日: 2026-09-11
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
 - Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
-- Closed testing引き渡し: [MATA 1.0.0 (3) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-3.md)
-- 公開候補証跡: [MATA 1.0.0 (3) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-3.md)
+- Closed testing引き渡し: [MATA 1.0.0 (4) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-4.md)
+- 公開候補証跡: [MATA 1.0.0 (4) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-4.md)
 
 ## 1. 記録方針
 
@@ -28,18 +28,25 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `3`。Google Play Closed testingへ登録・公開済み | AUTO / CONSOLE / USER |
-| ソースcommit | `307949e2068b1c56ff597c3730b05755b1f37e06` | AUTO |
-| AAB | `app/release/1.0.0-3/mata-1.0.0-3.aab`。Git除外対象 | AUTO |
-| AAB容量 | 12,600,782 bytes | AUTO |
-| AAB SHA-256 | `75a79da8534841cda3312594a086369d1e7ff53029920b56904f856b16fbe019` | AUTO |
-| ビルド日時 | `2026-09-09T01:47:56.549427400Z` | AUTO |
+| versionCode | `4`。Upload Key署名済み、Closed testingへのアップロード待ち | AUTO |
+| ソースcommit | `fe71e1579969d647e95170e47f2d036b19e5b657` | AUTO |
+| AAB | `app/release/1.0.0-4/mata-1.0.0-4.aab`。Git除外対象 | AUTO |
+| AAB容量 | 12,637,169 bytes | AUTO |
+| AAB SHA-256 | `9eb9fce3b57cdc2e1af4d676e1adada056fda81c5088725a956b597415106ef4` | AUTO |
+| ビルド日時 | `2026-09-11T10:20:06.755458600Z` | AUTO |
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
-versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成してInternal testingへ登録済みであり、再アップロードできない。versionCode `2`はcommit`1222267981f2a7887e8c2073bbd7c2bd1a18a78e`から生成してClosed testingへ公開し、Pixel 9aでversionCode `1`からの上書き更新を確認した。その後のClosed testingフィードバックを反映した現在候補が上表のversionCode `3`である。
+versionCode `1`はInternal testing、versionCode `2`と`3`はClosed testingへ登録済みであり、再アップロードできない。versionCode `3`からTODO一覧とカレンダー履歴のデイリープランナーUIを追加した現在候補が上表のversionCode `4`である。
 
 ## 3. リポジトリと自動検査
+
+2026年9月11日にversionCode `4`について次を確認した。
+
+- `main`のcommit`fe71e1579969d647e95170e47f2d036b19e5b657`から、クリーンな作業ツリーで署名済み成果物を生成した。
+- `node tools/release/verify-readiness.mjs --release`は、Git、法的文書、Play掲載成果物、5成果物のハッシュ、226 runtime componentおよびUpload Key署名を含む全7検査に成功した。
+- [PR #183のCI run 34587951161](https://github.com/Sakemotti/MATA/actions/runs/34587951161)は、Repository security、Debug、Release、Performance APK、API 30 instrumented testおよび最終集約に成功した。
+- Release AABの署名証明書SHA-256はPlay Consoleへ登録済みのUpload Keyと一致し、`publishable=true`である。
 
 2026年9月9日にversionCode `3`について次を確認した。
 
@@ -66,6 +73,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 | `1.0.0 (2)`公開候補 | Closed testingへ公開し、versionCode 1からの上書き更新と主要実機試験に使用済み | AUTO / CONSOLE / DEVICE / USER |
 | `1.0.0 (3)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
 | versionCode `2`→`3`上書き更新 | Pixel 9a（Android 17 / API 37）で成功。既存データ、設定、通知、ウィジェットおよびバックアップに問題なし | DEVICE / USER |
+| `1.0.0 (4)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへのアップロード待ち | AUTO |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -124,8 +132,8 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 
 ### 6.2 次の実変更で確認する
 
-- versionCode `3`では全自動ゲート、Upload Key署名、成果物ハッシュ検査およびGoogle Play経由の上書き更新に合格済みである。変更内容固有の実機確認と不足環境の回帰試験を実施する。
-- versionCode `3`公開後にアプリ、ビルド設定、法的本文またはPlay掲載成果物を変更する場合は、versionCodeを`4`以上へ上げて公開候補を再生成する。
+- versionCode `4`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格済みである。Closed testingへ登録後、versionCode `3`からのGoogle Play上書き更新、データ保持およびデイリープランナーUIを確認する。
+- versionCode `4`のAABをGoogle Playへ登録した後にアプリ、ビルド設定、法的本文またはPlay掲載成果物を変更する場合は、versionCodeを`5`以上へ上げて公開候補を再生成する。
 
 ### 6.3 外部状態待ち
 
@@ -137,7 +145,7 @@ versionCode `1`はcommit`e57ababd3b6fb4ad12bf57dada776e9189288dbc`から生成�
 
 1. Closed testing要件を達成し、Production accessの承認を得る。
 2. 公開対象commit、versionName、versionCode、リリースノートおよびAABを最終確定する。
-3. 上表の`1.0.0 (3)`、ソースcommit、AAB SHA-256および保存済み成果物を再照合する。アプリまたは公開成果物を変更した場合はversionCodeを`4`以上へ上げ、クリーンな`main`から署名済み成果物を再生成して`node tools/release/verify-readiness.mjs --release`を成功させる。
+3. 上表の`1.0.0 (4)`、ソースcommit、AAB SHA-256および保存済み成果物を再照合する。Google Play登録後にアプリまたは公開成果物を変更した場合はversionCodeを`5`以上へ上げ、クリーンな`main`から署名済み成果物を再生成して`node tools/release/verify-readiness.mjs --release`を成功させる。
 4. 全P0/P1試験、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 5. 初期配布地域を日本としてProductionへ公開する。
 6. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
