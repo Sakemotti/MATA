@@ -13,6 +13,7 @@
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - 登録・更新手順: [MATA 1.0.0 (3) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-3.md)
+- 次回候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
 - versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
 - 旧版登録・更新実績: [MATA 1.0.0 (2) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-2.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
@@ -44,6 +45,8 @@
 | Production access申請可能予定日 | `未記入` |
 
 versionCode `1`はInternal testingで使用済みである。versionCode `2`はClosed testingでversionCode `1`からの上書き更新と主要実機試験に使用した。Closed testingフィードバックを反映した現在候補は[versionCode 3公開候補生成結果](release-candidate-1.0.0-3.md)であり、versionCode `2`からの更新結果とPlay Console上の状態を本節へ記録する。
+
+2026年9月11日に[versionCode 4公開候補](release-candidate-1.0.0-4.md)を生成した。Play Consoleへ未登録のため、本節の公開状態と参加要件はversionCode `3`の記録を維持する。登録後にversionCode `4`の状態、日時、AAB照合、警告およびversionCode `3`からの上書き更新結果を追記する。
 
 ## 3. テスター・端末台帳
 
