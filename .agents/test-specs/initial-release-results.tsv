@@ -419,3 +419,5 @@ TE-035	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37
 TE-036	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-03・日付固定型だけで未完了繰り越しを設定できることを確認
 TE-037	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-04・過去履歴を保持した編集と確認付き完全削除を確認
 CM-032	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-01・16色の選択反映、ライト・ダーク、エラー表示の優先を確認
+TL-036	P1	todo-list.md	未実施	-	-	-	-	-
+TL-D08	P2	todo-list.md	未実施	-	-	-	-	-

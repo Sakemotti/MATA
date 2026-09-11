@@ -1,7 +1,6 @@
 package com.mochisofts.mata.ui.todolist
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +20,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -41,12 +41,15 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.DrawerValue
@@ -60,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -177,31 +181,44 @@ fun TodoListScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
+        val pageColor = MaterialTheme.colorScheme.surfaceContainerLowest
         Scaffold(
+            containerColor = pageColor,
             topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.todo_list_title)) },
-                    navigationIcon = {
-                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Outlined.Menu,
-                                    contentDescription = stringResource(R.string.content_description_open_menu),
-                                )
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(stringResource(R.string.todo_list_title))
+                        },
+                        navigationIcon = {
+                            if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(
+                                        Icons.Outlined.Menu,
+                                        contentDescription = stringResource(
+                                            R.string.content_description_open_menu,
+                                        ),
+                                    )
+                                }
                             }
-                        }
-                    },
-                    actions = {
-                        TodoListTopBarActions(
-                            isToday = state.isToday,
-                            showCompleted = state.showCompleted,
-                            onToggleCompleted = {
-                                viewModel.setShowCompleted(!state.showCompleted)
-                            },
-                            onToday = viewModel::selectToday,
-                        )
-                    },
-                )
+                        },
+                        actions = {
+                            TodoListTopBarActions(
+                                isToday = state.isToday,
+                                showCompleted = state.showCompleted,
+                                onToggleCompleted = {
+                                    viewModel.setShowCompleted(!state.showCompleted)
+                                },
+                                onToday = viewModel::selectToday,
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             snackbarHost = { MataSnackbarHost(snackbarHostState) },
             floatingActionButton = {
@@ -229,7 +246,11 @@ fun TodoListScreen(
                 )
             },
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
                 HolidayDataStatus(state)
                 DateMode(
                     state = state,
@@ -239,10 +260,16 @@ fun TodoListScreen(
                     onComplete = viewModel::complete,
                     onSkip = viewModel::skip,
                     onArchive = { occurrence ->
-                        archiveTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+                        archiveTarget = TodoActionTarget(
+                            occurrence.todo.id,
+                            occurrence.todo.title,
+                        )
                     },
                     onDelete = { occurrence ->
-                        deleteTarget = TodoActionTarget(occurrence.todo.id, occurrence.todo.title)
+                        deleteTarget = TodoActionTarget(
+                            occurrence.todo.id,
+                            occurrence.todo.title,
+                        )
                     },
                     onOpen = { occurrence ->
                         if (state.selectedDate.isBefore(LocalDate.now())) {
@@ -421,35 +448,15 @@ private fun DateMode(
     onOpen: (TodoOccurrence) -> Unit,
     onRetry: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        IconButton(onClick = onPrevious) {
-            Icon(
-                Icons.Outlined.ChevronLeft,
-                contentDescription = stringResource(R.string.content_description_previous_day),
-            )
-        }
-        TextButton(onClick = onPickDate) {
-            Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                if (state.isToday) {
-                    stringResource(R.string.label_today)
-                } else {
-                    state.selectedDate.toJapaneseDate(stringResource(R.string.date_pattern_short))
-                },
-            )
-        }
-        IconButton(onClick = onNext) {
-            Icon(
-                Icons.Outlined.ChevronRight,
-                contentDescription = stringResource(R.string.content_description_next_day),
-            )
-        }
-    }
+    DailyPlannerHeader(
+        selectedDate = state.selectedDate,
+        isToday = state.isToday,
+        completedCount = state.completedCount,
+        plannedCount = state.plannedCount,
+        onPrevious = onPrevious,
+        onNext = onNext,
+        onPickDate = onPickDate,
+    )
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.message_loading))
@@ -480,7 +487,6 @@ private fun DateMode(
             state.groups.forEach { group ->
                 item(key = "category:${group.category?.id ?: "uncategorized"}") {
                     TodoCategoryHeader(group.category)
-                    HorizontalDivider()
                 }
                 items(
                     items = group.occurrences,
@@ -496,10 +502,106 @@ private fun DateMode(
                         onDelete = onDelete,
                         onOpen = onOpen,
                     )
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                    )
                 }
             }
             item { Spacer(Modifier.height(96.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun DailyPlannerHeader(
+    selectedDate: LocalDate,
+    isToday: Boolean,
+    completedCount: Int,
+    plannedCount: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onPickDate: () -> Unit,
+) {
+    val progress = if (plannedCount == 0) {
+        0f
+    } else {
+        completedCount.toFloat() / plannedCount
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                IconButton(onClick = onPrevious) {
+                    Icon(
+                        Icons.Outlined.ChevronLeft,
+                        contentDescription = stringResource(
+                            R.string.content_description_previous_day,
+                        ),
+                    )
+                }
+                TextButton(onClick = onPickDate) {
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (isToday) {
+                            stringResource(
+                                R.string.todo_list_today_date_format,
+                                selectedDate.toJapaneseDate(
+                                    stringResource(R.string.date_pattern_short),
+                                ),
+                            )
+                        } else {
+                            selectedDate.toJapaneseDate(
+                                stringResource(R.string.date_pattern_short),
+                            )
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                IconButton(onClick = onNext) {
+                    Icon(
+                        Icons.Outlined.ChevronRight,
+                        contentDescription = stringResource(
+                            R.string.content_description_next_day,
+                        ),
+                    )
+                }
+            }
+            Text(
+                text = stringResource(
+                    R.string.todo_list_daily_progress_format,
+                    completedCount,
+                    plannedCount,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(7.dp)
+                    .padding(horizontal = 8.dp)
+                    .clip(RoundedCornerShape(50)),
+            )
         }
     }
 }
@@ -513,24 +615,36 @@ private fun TodoCategoryHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .semantics { heading() }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 6.dp),
     ) {
-        Icon(
-            imageVector = categoryIcon(category?.iconName ?: "CategoryOff"),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = color,
-        )
-        Text(
-            text = name,
-            color = color,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.titleSmall,
-        )
+        Surface(
+            shape = RoundedCornerShape(
+                topStart = 12.dp,
+                topEnd = 12.dp,
+                bottomEnd = 12.dp,
+                bottomStart = 3.dp,
+            ),
+            color = color.copy(alpha = 0.14f),
+            contentColor = color,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = categoryIcon(category?.iconName ?: "CategoryOff"),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = name,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+        }
     }
 }
 

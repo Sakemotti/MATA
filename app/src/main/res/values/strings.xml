@@ -288,6 +288,8 @@
     <string name="content_description_previous_day">前日</string>
     <string name="content_description_next_day">翌日</string>
     <string name="label_today">今日</string>
+    <string name="todo_list_today_date_format">今日・%1$s</string>
+    <string name="todo_list_daily_progress_format">%1$d / %2$d 完了</string>
     <string name="action_return_to_today">今日へ戻る</string>
     <string name="message_loading">読み込み中…</string>
     <string name="empty_today_todos">今日のTODOはありません</string>

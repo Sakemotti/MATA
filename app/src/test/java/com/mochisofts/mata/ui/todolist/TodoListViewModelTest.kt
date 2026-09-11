@@ -99,6 +99,28 @@ class TodoListViewModelTest {
     }
 
     @Test
+    fun tl036_progressIncludesHiddenCompletedAndExcludesSkipped() = runTest {
+        val pending = occurrence("pending")
+        val completed = occurrence("completed").copy(state = TodoState.COMPLETED)
+        val skipped = occurrence("skipped").copy(state = TodoState.SKIPPED)
+        val repository = TodoListTestRepository().apply {
+            todos.value = listOf(pending.todo, completed.todo, skipped.todo)
+            occurrences.value = listOf(pending, completed, skipped)
+        }
+        val viewModel = createViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.showCompleted)
+        assertEquals(1, state.completedCount)
+        assertEquals(2, state.plannedCount)
+        assertEquals(listOf("pending"), state.groups.single().occurrences.map { it.todo.id })
+    }
+
+    @Test
     fun failedActionReportsErrorWithoutPublishingSuccess() = runTest {
         val repository = TodoListTestRepository().apply {
             completeResult = Result.failure(IllegalStateException("write failed"))
