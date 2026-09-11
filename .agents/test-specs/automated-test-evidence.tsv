@@ -121,6 +121,12 @@ CTL-006	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/Categor
 CTL-007	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl007_rowClickOnlyRequestsNavigationAndDoesNotMutateTodoState	:app:connectedDebugAndroidTest
 CTL-009	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl009_deletedSelectedCategoryFallsBackToUncategorizedContent	:app:connectedDebugAndroidTest
 CTL-011	app/src/androidTest/java/com/mochisofts/mata/core/designsystem/MataTodoListItemTest.kt	ctl011_reservedStatusSlotKeepsBodyBoundsAlignedWithVisibleStatus	:app:connectedDebugAndroidTest
+AT-002	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at002_archivedDefinitionsAppearOnceWithoutCategoryGroupingOrOccurrenceExpansion	:app:connectedDebugAndroidTest
+AT-004	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at004_searchMatchesCurrentTitleDescriptionAndCategoryIgnoringAsciiCase	:app:connectedDebugAndroidTest
+AT-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at011_historySummaryCountsCompletedMissedSkippedAndPeriodRows	:app:connectedDebugAndroidTest
+AT-D01	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	atd01_archiveSortModesUseDocumentedStableTieBreakers	:app:connectedDebugAndroidTest
+AT-D02	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	atd02_searchTrimsWhitespaceResetsOnBlankAndIgnoresHistorySnapshots	:app:connectedDebugAndroidTest
+AT-D04	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	atd04_historyUsesTimeTypeAndStableIdTieBreakersWithinTheSameDate	:app:connectedDebugAndroidTest
 AT-005	app/src/test/java/com/mochisofts/mata/ui/archive/ArchiveListViewModelTest.kt	at005_debounceCancelsOldSearchBeforeLatestResult	:app:testDebugUnitTest
 ST-039	app/src/test/java/com/mochisofts/mata/ui/settings/OpenSourceLicensesTest.kt	st039_listSearchEmptyBodyAndLoadFailureStatesAreDistinct	:app:testDebugUnitTest
 ST-042	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st042_fullPartialAndOperationFailuresRemainRetryable	:app:testDebugUnitTest
