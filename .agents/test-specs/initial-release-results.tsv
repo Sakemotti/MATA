@@ -222,14 +222,14 @@ CH-006	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	Ca
 CH-007	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch007・testDebugUnitTest成功
 CH-008	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-009	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#ch009・testDebugUnitTest成功
-CH-010	P0	calendar-history.md	未実施	-	-	-	-	-
-CH-011	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-010	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch010・CI run 34557570307成功
+CH-011	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch011・CI run 34557570307成功
 CH-012	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#ch012・testDebugUnitTest成功
-CH-013	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-013	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch013・CI run 34557570307成功
 CH-014	P0	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#ch014・CI run 34030219484成功
 CH-015	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-016	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-017	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-017	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch017・CI run 34557570307成功
 CH-018	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-019	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-020	P0	calendar-history.md	未実施	-	-	-	-	-
