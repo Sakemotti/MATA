@@ -421,3 +421,4 @@ TE-037	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37
 CM-032	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-01・16色の選択反映、ライト・ダーク、エラー表示の優先を確認
 TL-036	P1	todo-list.md	未実施	-	-	-	-	-
 TL-D08	P2	todo-list.md	未実施	-	-	-	-	-
+CH-036	P2	calendar-history.md	合格	2026-09-11	OWNER	3	Android Emulator / debug build	デイリープランナーUI試作のユーザー確認・カレンダーの表示密度、サマリーカード、状態インデックスを確認

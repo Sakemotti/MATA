@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -45,12 +46,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -68,12 +71,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
@@ -209,7 +214,9 @@ fun CalendarHistoryScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
+        val pageColor = MaterialTheme.colorScheme.surfaceContainerLowest
         Scaffold(
+            containerColor = pageColor,
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.calendar_history_title)) },
@@ -230,6 +237,10 @@ fun CalendarHistoryScreen(
                             }
                         }
                     },
+                    colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                        containerColor = pageColor,
+                        scrolledContainerColor = pageColor,
+                    ),
                 )
             },
             snackbarHost = { MataSnackbarHost(snackbarHostState) },
@@ -304,7 +315,7 @@ private fun CalendarHistoryBody(
                     onSelectMonth = onSelectMonth,
                     onSelectDate = onSelectDate,
                     onRetry = onRetry,
-                    modifier = Modifier.width(paneWidths.leftDp.dp).fillMaxHeight(),
+                    modifier = Modifier.width(paneWidths.leftDp.dp),
                 )
                 DayHistoryArea(
                     state = state,
@@ -328,9 +339,10 @@ private fun CalendarHistoryBody(
                 onSelectMonth = onSelectMonth,
                 onSelectDate = onSelectDate,
                 onRetry = onRetry,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
             )
-            HorizontalDivider()
             DayHistoryArea(
                 state = state,
                 onRetry = onRetry,
@@ -354,25 +366,32 @@ private fun CalendarMonthPane(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier) {
-        MonthControls(
-            state = state,
-            onPrevious = onPreviousMonth,
-            onNext = onNextMonth,
-            onSelectMonth = onSelectMonth,
-        )
-        WeekdayHeader(state.weekStart)
-        when {
-            state.isMonthLoading -> Box(
-                Modifier.fillMaxWidth().heightIn(min = 288.dp),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
-            state.monthErrorRes != null -> ErrorArea(
-                messageRes = requireNotNull(state.monthErrorRes),
-                onRetry = onRetry,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 288.dp),
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(Modifier.padding(horizontal = 6.dp)) {
+            MonthControls(
+                state = state,
+                onPrevious = onPreviousMonth,
+                onNext = onNextMonth,
+                onSelectMonth = onSelectMonth,
             )
-            else -> MonthGrid(state, onSelectDate, onPreviousMonth, onNextMonth)
+            WeekdayHeader(state.weekStart)
+            when {
+                state.isMonthLoading -> Box(
+                    Modifier.fillMaxWidth().heightIn(min = 288.dp),
+                    contentAlignment = Alignment.Center,
+                ) { CircularProgressIndicator() }
+                state.monthErrorRes != null -> ErrorArea(
+                    messageRes = requireNotNull(state.monthErrorRes),
+                    onRetry = onRetry,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 288.dp),
+                )
+                else -> MonthGrid(state, onSelectDate, onPreviousMonth, onNextMonth)
+            }
         }
     }
 }
@@ -418,7 +437,7 @@ private fun WeekdayHeader(weekStart: DayOfWeek) {
                 text = weekdayShortLabel(day),
                 style = MaterialTheme.typography.labelMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.weight(1f).padding(vertical = 4.dp),
+                modifier = Modifier.weight(1f).padding(vertical = 2.dp),
             )
         }
     }
@@ -463,7 +482,7 @@ private fun MonthGrid(
                         today = state.today,
                         summary = state.month.summaries[date],
                         onClick = { onSelectDate(date) },
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                     )
                 }
             }
@@ -528,18 +547,6 @@ private fun CalendarDayCell(
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected || current) FontWeight.Bold else FontWeight.Normal,
         )
-        if (summary?.plannedCount != null && summary.plannedCount > 0) {
-            Text(
-                stringResource(
-                    R.string.calendar_history_cell_count,
-                    summary.completedCount,
-                    summary.plannedCount,
-                ),
-                color = textColor,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
-            )
-        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             summary?.state?.let { HistoryStateIcon(it, Modifier.size(13.dp)) }
             if (summary?.hasAchievedPeriod == true) {
@@ -613,7 +620,7 @@ private fun DayHistoryArea(
                     item { SectionTitle(stringResource(R.string.calendar_history_period_results)) }
                     items(day.periodResults, key = { "period:${it.id}" }) { period ->
                         PeriodResultRow(period, onPeriodClick)
-                        HorizontalDivider()
+                        PlannerRowDivider()
                     }
                 }
                 if (day.entries.isEmpty() && day.periodResults.isEmpty()) {
@@ -640,39 +647,122 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historySection(
     item { SectionTitle(stringResource(titleRes)) }
     items(entries, key = { "entry:${it.id ?: "pending:${it.todoId}:${it.logicalDate}"}" }) { entry ->
         HistoryEntryRow(entry, busyExecutionId, onEntryClick, onUndoAction)
-        HorizontalDivider()
+        PlannerRowDivider()
     }
 }
 
 @Composable
 private fun DaySummaryHeader(day: com.mochisofts.mata.domain.model.HistoryDay) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-        Text(
-            day.date.format(
-                DateTimeFormatter.ofPattern(stringResource(R.string.date_pattern_full), Locale.JAPANESE),
-            ),
-            style = MaterialTheme.typography.titleMedium,
-        )
-        if (day.summary.plannedCount > 0) {
-            Text(
-                stringResource(
-                    R.string.calendar_history_day_count,
-                    day.summary.completedCount,
-                    day.summary.plannedCount,
-                ),
-            )
-            day.summary.state?.let { Text(it.label(), fontWeight = FontWeight.Bold) }
+    val progress = if (day.summary.plannedCount == 0) {
+        0f
+    } else {
+        day.summary.completedCount.toFloat() / day.summary.plannedCount
+    }.coerceIn(0f, 1f)
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    day.date.format(
+                        DateTimeFormatter.ofPattern(
+                            stringResource(R.string.date_pattern_full),
+                            Locale.JAPANESE,
+                        ),
+                    ),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                day.summary.state?.let { state ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        HistoryStateIcon(state, Modifier.size(16.dp))
+                        Text(
+                            state.label(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+            if (day.summary.plannedCount > 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 7.dp)
+                            .clip(RoundedCornerShape(50)),
+                    )
+                    Text(
+                        stringResource(
+                            R.string.calendar_history_day_count,
+                            day.summary.completedCount,
+                            day.summary.plannedCount,
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun SectionTitle(title: String) {
-    Text(
-        title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { heading() }
+            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 4.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(
+                topStart = 12.dp,
+                topEnd = 12.dp,
+                bottomEnd = 12.dp,
+                bottomStart = 3.dp,
+            ),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+            contentColor = MaterialTheme.colorScheme.primary,
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlannerRowDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
     )
 }
 
