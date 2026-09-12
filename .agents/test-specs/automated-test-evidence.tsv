@@ -152,3 +152,11 @@ CH-010	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryR
 CH-011	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch011_historyBelongsToTargetLogicalDateRegardlessOfActionTimeOrLegacyCategoryBoundary	:app:connectedDebugAndroidTest
 CH-013	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch013_finalizedCountPeriodsExposeMarkerCountsAndAchievementOnPeriodEnd	:app:connectedDebugAndroidTest
 CH-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryRepositoryTest.kt	ch017_historySectionsSortByDeadlineHistoricalCategoryAndCreationTime	:app:connectedDebugAndroidTest
+AT-006	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at006_emptyAndSearchEmptyStatesAreDistinctAndSearchCanBeCleared	:app:connectedDebugAndroidTest
+AT-008	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at008_rowOpensReadOnlyFullScreenDetailWithBackNavigation	:app:connectedDebugAndroidTest
+AT-009	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at009_listMenuAndDetailExposeRestoreAndPermanentDeleteWithoutGestures	:app:connectedDebugAndroidTest
+AT-013	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at013_historyModalIsReadOnlyEvenWhenSnapshotActionCanBeUndone	:app:connectedDebugAndroidTest
+AT-015	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at015_restorePreviewWarnsWhenNoFutureOccurrenceExists	:app:connectedDebugAndroidTest
+AT-022	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at022_restorePreviewExplainsUnavailableNotificationsWithoutDiscardingThem	:app:connectedDebugAndroidTest
+AT-025	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at025_successfulRestoreStaysOnListAndOffersNoUndoOrAutomaticEdit	:app:connectedDebugAndroidTest
+AT-027	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at027_permanentDeleteDialogUsesExplicitButtonsWithoutTitleInput	:app:connectedDebugAndroidTest
