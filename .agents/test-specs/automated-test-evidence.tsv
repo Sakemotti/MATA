@@ -168,3 +168,11 @@ TE-031	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTe
 TE-032	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te032_multiWeekCountFilterSaveReloadAndPreviewStayTogether	:app:testDebugUnitTest
 TE-033	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te033_dayPresetsApplyImmediatelyAndIndividualChangesBecomeCustom	:app:testDebugUnitTest
 TE-D04	app/src/test/java/com/mochisofts/mata/domain/model/TodoScheduleCalculatorTest.kt	ted04_monthlyDaysAndMonthEndUseActualLastDayInCommonAndLeapYears	:app:testDebugUnitTest
+TE-006	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te006_categorySelectionNeverChangesGlobalLogicalDayCalculations	:app:testDebugUnitTest
+TE-012	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te012_missingOrFailedHolidayDataKeepsWeekdayPreviewProvisionalAndSaveable	:app:testDebugUnitTest
+TE-016	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te016_notificationLimitDuplicateAndDayEndValidationTrackEditsAndDeletes	:app:testDebugUnitTest
+TE-017	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te017_notificationsSortByComputedTriggerWhilePreservingDifferenceUnits	:app:testDebugUnitTest
+TE-018	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te018_pastCurrentNotificationWarnsWhileFutureCandidatesRemainPreviewed	:app:testDebugUnitTest
+TE-019	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te019_permissionDenialKeepsSettingsAndPermissionGrantReconcilesFutureCandidates	:app:testDebugUnitTest
+TE-020	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	te020_exactAlarmUnavailableFallsBackToInexactRegistration	:app:connectedDebugAndroidTest
+TE-D03	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	ted03_latestCategoryRecurrenceAndDeadlineDriveOneConsistentPreview	:app:testDebugUnitTest
