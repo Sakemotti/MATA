@@ -261,13 +261,13 @@ CM-003	P1	category-management.md	未実施	-	-	-	-	-
 CM-004	P2	category-management.md	未実施	-	-	-	-	-
 CM-005	P1	category-management.md	未実施	-	-	-	-	-
 CM-006	P1	category-management.md	未実施	-	-	-	-	-
-CM-007	P0	category-management.md	未実施	-	-	-	-	-
+CM-007	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryListViewModelTest#cm007・testDebugUnitTest成功
 CM-008	P1	category-management.md	未実施	-	-	-	-	-
 CM-009	P1	category-management.md	未実施	-	-	-	-	-
-CM-010	P0	category-management.md	未実施	-	-	-	-	-
+CM-010	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryTodoListViewModelTest#cm010・testDebugUnitTest成功
 CM-011	P1	category-management.md	未実施	-	-	-	-	-
-CM-012	P0	category-management.md	未実施	-	-	-	-	-
-CM-013	P1	category-management.md	未実施	-	-	-	-	-
+CM-012	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm012・connectedDebugAndroidTest成功
+CM-013	P1	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm013・connectedDebugAndroidTest成功
 CM-014	P1	category-management.md	未実施	-	-	-	-	-
 CM-015	P1	category-management.md	未実施	-	-	-	-	-
 CM-016	P1	category-management.md	未実施	-	-	-	-	-
@@ -275,9 +275,9 @@ CM-017	P2	category-management.md	未実施	-	-	-	-	-
 CM-018	P0	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryEditorViewModelTest#cm018・testDebugUnitTest成功
 CM-019	P1	category-management.md	未実施	-	-	-	-	-
 CM-020	P0	category-management.md	未実施	-	-	-	-	-
-CM-021	P0	category-management.md	未実施	-	-	-	-	-
+CM-021	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm021・connectedDebugAndroidTest成功
 CM-022	P0	category-management.md	未実施	-	-	-	-	-
-CM-023	P0	category-management.md	未実施	-	-	-	-	-
+CM-023	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm023・connectedDebugAndroidTest成功
 CM-024	P0	category-management.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#cm024・CI run 34031589568成功
 CM-025	P1	category-management.md	未実施	-	-	-	-	-
 CM-026	P1	category-management.md	未実施	-	-	-	-	-

@@ -176,3 +176,9 @@ TE-018	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTe
 TE-019	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te019_permissionDenialKeepsSettingsAndPermissionGrantReconcilesFutureCandidates	:app:testDebugUnitTest
 TE-020	app/src/androidTest/java/com/mochisofts/mata/data/notification/NotificationSchedulerTestSpecCoverageTest.kt	te020_exactAlarmUnavailableFallsBackToInexactRegistration	:app:connectedDebugAndroidTest
 TE-D03	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	ted03_latestCategoryRecurrenceAndDeadlineDriveOneConsistentPreview	:app:testDebugUnitTest
+CM-007	app/src/test/java/com/mochisofts/mata/ui/category/CategoryListViewModelTest.kt	cm007_dragOrderSavesOnDropAndRestoresPersistedUserOrder	:app:testDebugUnitTest
+CM-010	app/src/test/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListViewModelTest.kt	cm010_reorderedCategoriesImmediatelyDriveTabsGroupsAndSameCategoryTodos	:app:testDebugUnitTest
+CM-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm012_nameValidationRejectsBlankTooLongAndNormalizedDuplicate	:app:connectedDebugAndroidTest
+CM-013	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm013_saveTrimsOnlyOuterWhitespaceAndPreservesUserNotation	:app:connectedDebugAndroidTest
+CM-021	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm021_editUpdatesCurrentReferencesButPreservesFinalizedHistorySnapshot	:app:connectedDebugAndroidTest
+CM-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm023_deleteMovesActiveAndArchivedTodosButPreservesHistorySnapshot	:app:connectedDebugAndroidTest

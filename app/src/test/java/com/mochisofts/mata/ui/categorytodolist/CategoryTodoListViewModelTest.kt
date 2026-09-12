@@ -16,6 +16,7 @@ import com.mochisofts.mata.ui.ads.BannerLoadState
 import com.mochisofts.mata.ui.ads.reservesSpace
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.ui.todolist.buildTodoOccurrenceGroups
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
@@ -137,6 +138,65 @@ class CategoryTodoListViewModelTest {
             listOf(TodoState.COMPLETED, TodoState.SKIPPED, TodoState.PENDING),
             state.items.map { it.todayState },
         )
+    }
+
+    @Test
+    fun cm010_reorderedCategoriesImmediatelyDriveTabsGroupsAndSameCategoryTodos() = runTest {
+        val first = category(id = "first", sortOrder = 0)
+        val second = category(id = "second", sortOrder = 1)
+        val older = todo(id = "older", categoryId = first.id, createdAt = 1)
+        val newer = todo(id = "newer", categoryId = first.id, createdAt = 2)
+        val secondTodo = todo(id = "second-todo", categoryId = second.id, createdAt = 3)
+        val categoryRepository = CategoryTodoListTestCategoryRepository().apply {
+            categories.value = listOf(first, second)
+        }
+        val todoRepository = CategoryTodoListTestTodoRepository().apply {
+            todos.value = listOf(newer, secondTodo, older)
+        }
+        val viewModel = CategoryTodoListViewModel(
+            savedStateHandle = SavedStateHandle(
+                mapOf("category_todo_list_selected_category_id" to first.id),
+            ),
+            todoRepository = todoRepository,
+            categoryRepository = categoryRepository,
+            clock = Clock.fixed(
+                LocalDate.of(2026, 9, 6).atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
+                ZoneId.of("Asia/Tokyo"),
+            ),
+            adsConsentRepository = CategoryTodoListTestAdsRepository(),
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        val reorderedFirst = first.copy(sortOrder = 1)
+        val reorderedSecond = second.copy(sortOrder = 0)
+        categoryRepository.categories.value = listOf(reorderedFirst, reorderedSecond)
+        runCurrent()
+
+        assertEquals(
+            listOf(second.id, first.id),
+            viewModel.uiState.value.categories.map(Category::id),
+        )
+        assertEquals(listOf("older", "newer"), viewModel.uiState.value.items.map { it.todo.id })
+
+        val groups = buildTodoOccurrenceGroups(
+            occurrences = listOf(
+                occurrence(older, TodoState.PENDING, LocalDate.of(2026, 9, 6)).copy(
+                    category = reorderedFirst,
+                ),
+                occurrence(secondTodo, TodoState.PENDING, LocalDate.of(2026, 9, 6)).copy(
+                    category = reorderedSecond,
+                ),
+                occurrence(newer, TodoState.PENDING, LocalDate.of(2026, 9, 6)).copy(
+                    category = reorderedFirst,
+                ),
+            ),
+            dayEndHour = 0,
+        )
+        assertEquals(listOf(second.id, first.id), groups.map { it.category?.id })
+        assertEquals(listOf("older", "newer"), groups.last().occurrences.map { it.todo.id })
     }
 
     @Test
