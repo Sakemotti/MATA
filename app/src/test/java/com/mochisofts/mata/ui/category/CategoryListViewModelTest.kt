@@ -57,7 +57,7 @@ class CategoryListViewModelTest {
     }
 
     @Test
-    fun dragOrder_isSavedAndReportsNewPosition() = runTest {
+    fun cm007_dragOrderSavesOnDropAndRestoresPersistedUserOrder() = runTest {
         val repository = FakeCategoryRepository(categories())
         val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
         runCurrent()
@@ -72,6 +72,13 @@ class CategoryListViewModelTest {
         assertEquals(listOf("b", "c", "a"), repository.lastOrderedIds)
         assertFalse(viewModel.uiState.value.isOrderSaving)
         assertEquals(CategoryListEffect.OrderSaved(position = 3, total = 3), viewModel.effects.first())
+
+        val reopenedViewModel = CategoryListViewModel(SavedStateHandle(), repository)
+        runCurrent()
+        assertEquals(
+            listOf("b", "c", "a"),
+            reopenedViewModel.uiState.value.categories.map(Category::id),
+        )
     }
 
     @Test
