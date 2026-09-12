@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -112,6 +113,43 @@ class RoomArchiveRepositoryTest {
         assertEquals(1, preview.notificationSettingCount)
         assertEquals(1, preview.historySummary.completedCount)
         assertEquals(1, preview.historySummary.periodResultCount)
+    }
+
+    @Test
+    fun pastEndedTodoRestoreKeepsDefinitionEndedAfterPreviewWarning() = runBlocking {
+        val endDate = date.minusDays(1)
+        val values = insertArchivedTodo(todoId = "ended-restore", endDate = endDate)
+
+        val preview = repository.getActionPreview(values.todo.id).getOrThrow()
+        assertFalse(preview.hasFutureOccurrence)
+
+        repository.restore(values.todo.id).getOrThrow()
+
+        val restored = requireNotNull(todoRepository.getTodo(values.todo.id))
+        assertNull(restored.archivedAt)
+        assertEquals(endDate, restored.endDate)
+        assertTrue(
+            todoRepository.observeOccurrences(date).first()
+                .none { occurrence -> occurrence.todo.id == values.todo.id },
+        )
+    }
+
+    @Test
+    fun unavailableNotificationsRemainConfiguredAndStoppedAfterRestore() = runBlocking {
+        val values = insertArchivedTodo(todoId = "unavailable-notifications")
+        database.scheduledNotificationDao().deleteForTodo(values.todo.id)
+        scheduler.systemStateValue = scheduler.systemStateValue.copy(canPostNotifications = false)
+
+        val preview = repository.getActionPreview(values.todo.id).getOrThrow()
+        assertEquals(1, preview.notificationSettingCount)
+        assertEquals(1, preview.unavailableNotificationCount)
+
+        repository.restore(values.todo.id).getOrThrow()
+
+        assertNull(database.todoDao().findById(values.todo.id)?.archivedAt)
+        assertEquals(1, database.todoNotificationDao().findForTodo(values.todo.id).size)
+        assertTrue(database.scheduledNotificationDao().findForTodo(values.todo.id).isEmpty())
+        assertTrue(scheduler.reconciledTodoIds.contains(values.todo.id))
     }
 
     @Test
@@ -617,6 +655,7 @@ class RoomArchiveRepositoryTest {
         todoId: String = "todo",
         rule: RecurrenceRule = RecurrenceRule.daily(),
         startDate: LocalDate = date.minusDays(20),
+        endDate: LocalDate? = null,
         includeBaseHistory: Boolean = true,
     ): TestValues {
         val category = CategoryEntity(
@@ -637,7 +676,7 @@ class RoomArchiveRepositoryTest {
             description = "説明",
             categoryId = category.id,
             startDate = startDate.toString(),
-            endDate = null,
+            endDate = endDate?.toString(),
             recurrenceType = encoded.typeCode,
             repeatParamsVersion = encoded.paramsVersion,
             repeatParamsJson = encoded.paramsJson,
@@ -915,13 +954,14 @@ private class ArchiveTestNotificationScheduler(
     var failCancellation = false
     var failReconciliation = false
     var todoWasAbsentWhenCancellationAttempted = false
-    override fun systemState() = NotificationSystemState(
+    var systemStateValue = NotificationSystemState(
         canPostNotifications = true,
         runtimePermissionRelevant = false,
         runtimePermissionGranted = true,
         exactAlarmRelevant = false,
         canScheduleExactAlarms = true,
     )
+    override fun systemState() = systemStateValue
     override suspend fun reconcileTodo(todoId: String) {
         reconciledTodoIds += todoId
         if (failReconciliation) {

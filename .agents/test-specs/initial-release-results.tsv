@@ -297,28 +297,28 @@ AT-002	P0	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86
 AT-003	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-004	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at004・connectedDebugAndroidTest成功
 AT-005	P1	archived-todos.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	ArchiveListViewModelTest#at005・testDebugUnitTest成功
-AT-006	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-006	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at006・connectedDebugAndroidTest成功
 AT-007	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-008	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-009	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-008	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at008・connectedDebugAndroidTest成功
+AT-009	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at009・connectedDebugAndroidTest成功
 AT-010	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-011	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at011・connectedDebugAndroidTest成功
 AT-012	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-013	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-013	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at013・connectedDebugAndroidTest成功
 AT-014	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-015	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-015	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at015・RoomArchiveRepositoryTest#pastEndedTodoRestore・connectedDebugAndroidTest成功
 AT-016	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at016・connectedDebugAndroidTest成功
 AT-017	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at017・connectedDebugAndroidTest成功
 AT-018	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at018・CI run 34027426978成功
 AT-019	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at019・CI run 34027426978成功
 AT-020	P0	archived-todos.md	未実施	-	-	-	-	-
 AT-021	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#at021・CI run 34027426978成功
-AT-022	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-022	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at022・RoomArchiveRepositoryTest#unavailableNotificationsRemainConfigured・connectedDebugAndroidTest成功
 AT-023	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at023・connectedDebugAndroidTest成功
 AT-024	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-025	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-025	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at025・connectedDebugAndroidTest成功
 AT-026	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-027	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-027	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at027・connectedDebugAndroidTest成功
 AT-028	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at028・connectedDebugAndroidTest成功
 AT-029	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at029・connectedDebugAndroidTest成功
 AT-030	P0	archived-todos.md	未実施	-	-	-	-	-
