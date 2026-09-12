@@ -104,27 +104,48 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
-    fun monthlyRules_handleMissingDaysAndLeapYear() {
-        val monthly31 = todo(
-            LocalDate.of(2024, 1, 1),
-            LocalDate.of(2024, 4, 30),
-            RecurrenceRule(RecurrenceType.MONTHLY_DAY, monthlyDay = 31),
-        )
-        assertEquals(
-            listOf(
-                LocalDate.of(2024, 1, 31),
-                LocalDate.of(2024, 2, 29),
+    fun ted04_monthlyDaysAndMonthEndUseActualLastDayInCommonAndLeapYears() {
+        listOf(29, 30, 31).forEach { monthlyDay ->
+            val commonYear = todo(
+                LocalDate.of(2023, 1, 1),
+                LocalDate.of(2023, 3, 31),
+                RecurrenceRule(RecurrenceType.MONTHLY_DAY, monthlyDay = monthlyDay),
+            )
+            val leapYear = todo(
+                LocalDate.of(2024, 1, 1),
                 LocalDate.of(2024, 3, 31),
-                LocalDate.of(2024, 4, 30),
-            ),
-            monthly31.occurrencesIn(monthly31.startDate, monthly31.endDate!!),
-        )
+                RecurrenceRule(RecurrenceType.MONTHLY_DAY, monthlyDay = monthlyDay),
+            )
 
-        val monthEnd = monthly31.copy(recurrenceRule = RecurrenceRule(RecurrenceType.MONTH_END))
-        assertEquals(
-            LocalDate.of(2024, 2, 29),
-            monthEnd.occurrencesIn(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29)).single(),
-        )
+            assertEquals(
+                listOf(
+                    LocalDate.of(2023, 1, monthlyDay),
+                    LocalDate.of(2023, 2, 28),
+                    LocalDate.of(2023, 3, monthlyDay),
+                ),
+                commonYear.occurrencesIn(commonYear.startDate, commonYear.endDate!!),
+            )
+            assertEquals(
+                listOf(
+                    LocalDate.of(2024, 1, monthlyDay),
+                    LocalDate.of(2024, 2, 29),
+                    LocalDate.of(2024, 3, monthlyDay),
+                ),
+                leapYear.occurrencesIn(leapYear.startDate, leapYear.endDate!!),
+            )
+        }
+
+        listOf(2023 to 28, 2024 to 29).forEach { (year, februaryEnd) ->
+            val monthEnd = todo(
+                LocalDate.of(year, 2, 1),
+                LocalDate.of(year, 2, februaryEnd),
+                RecurrenceRule(RecurrenceType.MONTH_END),
+            )
+            assertEquals(
+                LocalDate.of(year, 2, februaryEnd),
+                monthEnd.occurrencesIn(monthEnd.startDate, monthEnd.endDate!!).single(),
+            )
+        }
     }
 
     @Test
@@ -232,7 +253,7 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
-    fun deadline_resolvesAgainstLogicalDateBoundary() {
+    fun te015_deadlineResolvesBeforeAtAndAfterLogicalDayBoundary() {
         val zone = ZoneId.of("Asia/Tokyo")
         val date = LocalDate.of(2026, 8, 10)
 
@@ -243,6 +264,10 @@ class TodoScheduleCalculatorTest {
         assertEquals(
             ZonedDateTime.of(2026, 8, 10, 4, 0, 0, 0, zone),
             deadlineAt(date, 4, 4 * 60, zone),
+        )
+        assertEquals(
+            ZonedDateTime.of(2026, 8, 10, 5, 0, 0, 0, zone),
+            deadlineAt(date, 4, 5 * 60, zone),
         )
         assertEquals(
             ZonedDateTime.of(2026, 8, 11, 4, 0, 0, 0, zone),
