@@ -15,12 +15,12 @@ Closed testing参加者には試験ID、担当機能またはチェックリス�
 | レーン | 担当 | 件数 | 対象 |
 | --- | --- | ---: | --- |
 | `CLOSED_TESTER` | 割り当てなし | 0 | Closed testing参加者は項目表を使わず自由操作する |
-| `DEV_AUTO` | `DEV` | 169 | UNIT、Repository、DB、計算、通知スケジューラ、再現性のあるinstrumented UI等の自動検査 |
-| `RELEASE_OWNER` | `OWNER` | 254 | 手動UI、E2E、実機環境、Console、法的文書および公開判定 |
+| `DEV_AUTO` | `DEV` | 177 | UNIT、Repository、DB、計算、通知スケジューラ、再現性のあるinstrumented UI等の自動検査 |
+| `RELEASE_OWNER` | `OWNER` | 246 | 手動UI、E2E、実機環境、Console、法的文書および公開判定 |
 
 各試験IDには正式確認の責任者を1件だけ設定する。外部テスターの自由操作で正確な条件と期待結果まで確認できた場合も、`OWNER`が報告内容を照合し、再現条件、版、端末および証跡を記録した後に項目別結果へ反映する。
 
-`DEV_AUTO`の専用テスト169件は[自動試験証跡TSV](automated-test-evidence.tsv)でJUnitテストと1対1に対応する。既存テストが包括的に成功しただけで、未対応の試験IDを合格にしない。
+`DEV_AUTO`の専用テスト177件は[自動試験証跡TSV](automated-test-evidence.tsv)でJUnitテストと1対1に対応する。既存テストが包括的に成功しただけで、未対応の試験IDを合格にしない。
 
 ## 2. Closed testing参加者への依頼
 

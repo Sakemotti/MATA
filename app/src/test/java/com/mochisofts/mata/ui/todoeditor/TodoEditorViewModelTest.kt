@@ -6,10 +6,13 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
 import com.mochisofts.mata.domain.model.HolidaySnapshot
+import com.mochisofts.mata.domain.model.HolidayYearState
+import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.NotificationUnit
+import com.mochisofts.mata.domain.model.NotificationValidationError
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
@@ -373,7 +376,227 @@ class TodoEditorViewModelTest {
     }
 
     @Test
-    fun notificationPermissionExplanationCompletesSaveAndReconcilesTodo() = runTest {
+    fun te006_categorySelectionNeverChangesGlobalLogicalDayCalculations() = runTest {
+        val categories = listOf(
+            category("CAT-000", "日常", 0),
+            category("CAT-004", "ゲーム", 4),
+        )
+        val viewModel = createViewModel(
+            settingsRepository = FakeSettingsRepository(dayEndHour = 4),
+            categoryRepository = FakeCategoryRepository(categories),
+            clock = fixedClock("2026-09-03T02:00:00+09:00"),
+        )
+        runCurrent()
+        viewModel.setTitle("カテゴリに依存しない期限")
+        viewModel.setRecurrence(RecurrenceType.DAILY)
+        viewModel.setDueMinutes(3 * 60)
+        viewModel.upsertNotification(
+            id = null,
+            relation = NotificationRelation.AT,
+            amount = 0,
+            unit = NotificationUnit.MINUTE,
+        )
+
+        val notificationId = viewModel.uiState.value.notifications.single().id
+        val expectedPreview = tokyoDateTime("2026-09-03T03:00:00+09:00")
+        listOf("CAT-000", "CAT-004", null).forEach { categoryId ->
+            viewModel.setCategory(categoryId)
+            val state = viewModel.uiState.value
+            assertEquals(categoryId, state.categoryId)
+            assertEquals(4, state.effectiveEndHour)
+            assertEquals(LocalDate.of(2026, 9, 2), state.today)
+            assertEquals(expectedPreview, state.notificationPreviews[notificationId])
+            assertTrue(state.notificationErrors.isEmpty())
+        }
+    }
+
+    @Test
+    fun te012_missingOrFailedHolidayDataKeepsWeekdayPreviewProvisionalAndSaveable() = runTest {
+        listOf(
+            HolidayYearStatus.UNAVAILABLE,
+            HolidayYearStatus.FAILED_WITHOUT_CACHE,
+        ).forEach { status ->
+            val repository = FakeTodoRepository()
+            val holidayRepository = FakeHolidayRepository(status = status)
+            val viewModel = createViewModel(
+                todoRepository = repository,
+                holidayRepository = holidayRepository,
+                clock = fixedClock("2026-09-07T09:00:00+09:00"),
+            )
+            runCurrent()
+            viewModel.setTitle("平日の暫定予定")
+            viewModel.setRecurrence(RecurrenceType.WEEKDAYS)
+
+            assertEquals(status, viewModel.uiState.value.holidaySnapshot.statusFor(2026))
+            assertTrue(viewModel.uiState.value.holidaySnapshot.isProvisional(2026))
+            assertTrue(viewModel.uiState.value.canSave)
+            viewModel.save()
+            runCurrent()
+
+            val saved = todoFromSave(requireNotNull(repository.lastSave))
+            assertEquals(
+                listOf(
+                    LocalDate.of(2026, 9, 7),
+                    LocalDate.of(2026, 9, 8),
+                    LocalDate.of(2026, 9, 9),
+                    LocalDate.of(2026, 9, 10),
+                    LocalDate.of(2026, 9, 11),
+                ),
+                saved.occurrencesIn(
+                    LocalDate.of(2026, 9, 7),
+                    LocalDate.of(2026, 9, 11),
+                    viewModel.uiState.value.holidaySnapshot.dates,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun te016_notificationLimitDuplicateAndDayEndValidationTrackEditsAndDeletes() = runTest {
+        val viewModel = createViewModel()
+        runCurrent()
+        viewModel.setTitle("通知検証")
+        viewModel.setDueMinutes(12 * 60)
+
+        repeat(10) { index ->
+            viewModel.upsertNotification(
+                id = null,
+                relation = NotificationRelation.BEFORE,
+                amount = index + 1,
+                unit = NotificationUnit.MINUTE,
+            )
+        }
+        assertEquals(10, viewModel.uiState.value.notifications.size)
+        assertTrue(viewModel.uiState.value.notificationErrors.isEmpty())
+        assertTrue(viewModel.uiState.value.canSave)
+
+        viewModel.upsertNotification(
+            id = null,
+            relation = NotificationRelation.BEFORE,
+            amount = 11,
+            unit = NotificationUnit.MINUTE,
+        )
+        assertTrue(NotificationValidationError.TOO_MANY in viewModel.uiState.value.notificationErrors)
+        assertFalse(viewModel.uiState.value.canSave)
+        viewModel.deleteNotification(viewModel.uiState.value.notifications.last().id)
+
+        val duplicateTarget = viewModel.uiState.value.notifications.last()
+        viewModel.upsertNotification(
+            id = duplicateTarget.id,
+            relation = NotificationRelation.BEFORE,
+            amount = 1,
+            unit = NotificationUnit.MINUTE,
+        )
+        assertTrue(NotificationValidationError.DUPLICATE in viewModel.uiState.value.notificationErrors)
+
+        viewModel.upsertNotification(
+            id = duplicateTarget.id,
+            relation = NotificationRelation.AFTER,
+            amount = 12,
+            unit = NotificationUnit.HOUR,
+        )
+        assertTrue(NotificationValidationError.AFTER_DAY_END in viewModel.uiState.value.notificationErrors)
+        viewModel.deleteNotification(duplicateTarget.id)
+        assertTrue(viewModel.uiState.value.notificationErrors.isEmpty())
+    }
+
+    @Test
+    fun te017_notificationsSortByComputedTriggerWhilePreservingDifferenceUnits() = runTest {
+        val viewModel = createViewModel(clock = fixedClock("2026-09-03T09:00:00+09:00"))
+        runCurrent()
+        viewModel.setTitle("通知順序")
+        viewModel.setDueMinutes(12 * 60)
+
+        viewModel.upsertNotification(null, NotificationRelation.AFTER, 1, NotificationUnit.HOUR)
+        viewModel.upsertNotification(null, NotificationRelation.AT, 0, NotificationUnit.MINUTE)
+        viewModel.upsertNotification(null, NotificationRelation.BEFORE, 30, NotificationUnit.MINUTE)
+
+        val state = viewModel.uiState.value
+        assertEquals(
+            listOf(
+                NotificationRelation.BEFORE,
+                NotificationRelation.AT,
+                NotificationRelation.AFTER,
+            ),
+            state.notifications.map { it.relation },
+        )
+        assertEquals(
+            listOf(
+                tokyoDateTime("2026-09-03T11:30:00+09:00"),
+                tokyoDateTime("2026-09-03T12:00:00+09:00"),
+                tokyoDateTime("2026-09-03T13:00:00+09:00"),
+            ),
+            state.notifications.map { state.notificationPreviews[it.id] },
+        )
+        assertEquals(30, state.notifications[0].amount)
+        assertEquals(NotificationUnit.MINUTE, state.notifications[0].unit)
+        assertEquals(1, state.notifications[2].amount)
+        assertEquals(NotificationUnit.HOUR, state.notifications[2].unit)
+    }
+
+    @Test
+    fun te018_pastCurrentNotificationWarnsWhileFutureCandidatesRemainPreviewed() = runTest {
+        val viewModel = createViewModel(clock = fixedClock("2026-09-03T12:00:00+09:00"))
+        runCurrent()
+        viewModel.setTitle("過去通知を含むTODO")
+        viewModel.setDueMinutes(10 * 60)
+        viewModel.upsertNotification(null, NotificationRelation.AT, 0, NotificationUnit.MINUTE)
+        viewModel.upsertNotification(null, NotificationRelation.AFTER, 3, NotificationUnit.HOUR)
+
+        val state = viewModel.uiState.value
+        val at = state.notifications.single { it.relation == NotificationRelation.AT }
+        val after = state.notifications.single { it.relation == NotificationRelation.AFTER }
+        assertTrue(state.hasPastNotificationForCurrentOccurrence)
+        assertEquals(null, state.notificationPreviews[at.id])
+        assertEquals(
+            tokyoDateTime("2026-09-03T13:00:00+09:00"),
+            state.notificationPreviews[after.id],
+        )
+        assertTrue(state.canSave)
+    }
+
+    @Test
+    fun ted03_latestCategoryRecurrenceAndDeadlineDriveOneConsistentPreview() = runTest {
+        val viewModel = createViewModel(
+            settingsRepository = FakeSettingsRepository(dayEndHour = 4),
+            categoryRepository = FakeCategoryRepository(
+                listOf(category("CAT-004", "朝", 4)),
+            ),
+            clock = fixedClock("2026-09-03T02:00:00+09:00"),
+        )
+        runCurrent()
+        viewModel.setTitle("最新入力のプレビュー")
+        viewModel.setCategory("CAT-004")
+        viewModel.setRecurrence(RecurrenceType.DAILY)
+        viewModel.setDueMinutes(5 * 60)
+        viewModel.upsertNotification(null, NotificationRelation.BEFORE, 1, NotificationUnit.HOUR)
+        val notificationId = viewModel.uiState.value.notifications.single().id
+        assertEquals(
+            tokyoDateTime("2026-09-03T04:00:00+09:00"),
+            viewModel.uiState.value.notificationPreviews[notificationId],
+        )
+
+        viewModel.setRecurrence(RecurrenceType.EVERY_N_DAYS)
+        viewModel.setIntervalDays("2")
+        assertEquals(
+            tokyoDateTime("2026-09-04T04:00:00+09:00"),
+            viewModel.uiState.value.notificationPreviews[notificationId],
+        )
+
+        viewModel.setDueMinutes(3 * 60)
+        val state = viewModel.uiState.value
+        assertEquals("CAT-004", state.categoryId)
+        assertEquals(RecurrenceType.EVERY_N_DAYS, state.recurrenceType)
+        assertEquals(3 * 60, state.dueMinutes)
+        assertEquals(
+            tokyoDateTime("2026-09-05T02:00:00+09:00"),
+            state.notificationPreviews[notificationId],
+        )
+        assertTrue(state.notificationErrors.isEmpty())
+    }
+
+    @Test
+    fun te019_permissionDenialKeepsSettingsAndPermissionGrantReconcilesFutureCandidates() = runTest {
         val repository = FakeTodoRepository()
         val settings = FakeSettingsRepository()
         val scheduler = FakeNotificationScheduler(
@@ -393,23 +616,42 @@ class TodoEditorViewModelTest {
         runCurrent()
 
         viewModel.setTitle("通知付きTODO")
-        viewModel.upsertNotification(
-            id = null,
-            relation = NotificationRelation.AT,
-            amount = 99,
-            unit = NotificationUnit.DAY,
-        )
+        viewModel.setDueMinutes(13 * 60)
+        viewModel.upsertNotification(null, NotificationRelation.BEFORE, 4, NotificationUnit.HOUR)
+        viewModel.upsertNotification(null, NotificationRelation.AT, 0, NotificationUnit.MINUTE)
         viewModel.save()
         runCurrent()
 
         assertEquals(true, settings.notificationPermissionRequestedState.value)
         assertEquals(TodoEditorEffect.ExplainNotificationPermission, viewModel.effects.first())
+        assertEquals(2, repository.lastSave?.notifications?.size)
 
         viewModel.notificationPermissionRequestFinished()
         runCurrent()
 
         assertEquals(listOf("saved-todo"), scheduler.reconciledTodoIds)
         assertEquals(TodoEditorEffect.Saved(isNew = true), viewModel.effects.first())
+
+        val saved = todoFromSave(requireNotNull(repository.lastSave))
+        val now = ZonedDateTime.parse("2026-09-03T12:00:00+09:00")
+        assertEquals(
+            null,
+            com.mochisofts.mata.domain.model.nextNotificationCandidate(
+                saved,
+                saved.notifications.single { it.relation == NotificationRelation.BEFORE },
+                0,
+                now,
+                DayOfWeek.MONDAY,
+            ),
+        )
+        val future = com.mochisofts.mata.domain.model.nextNotificationCandidate(
+            saved,
+            saved.notifications.single { it.relation == NotificationRelation.AT },
+            0,
+            now,
+            DayOfWeek.MONDAY,
+        )
+        assertTrue(requireNotNull(future).triggerAt.isAfter(now))
     }
 
     @Test
@@ -504,6 +746,7 @@ class TodoEditorViewModelTest {
 
     private fun createViewModel(
         todoRepository: FakeTodoRepository = FakeTodoRepository(),
+        categoryRepository: FakeCategoryRepository = FakeCategoryRepository(),
         settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
         notificationScheduler: FakeNotificationScheduler = FakeNotificationScheduler(),
         holidayRepository: FakeHolidayRepository = FakeHolidayRepository(),
@@ -512,7 +755,7 @@ class TodoEditorViewModelTest {
     ) = TodoEditorViewModel(
         savedStateHandle = SavedStateHandle(mapOf("todoId" to todoId)),
         todoRepository = todoRepository,
-        categoryRepository = FakeCategoryRepository(),
+        categoryRepository = categoryRepository,
         settingsRepository = settingsRepository,
         notificationScheduler = notificationScheduler,
         holidayRepository = holidayRepository,
@@ -523,6 +766,9 @@ class TodoEditorViewModelTest {
         val zone = ZoneId.of("Asia/Tokyo")
         return Clock.fixed(ZonedDateTime.parse(value).toInstant(), zone)
     }
+
+    private fun tokyoDateTime(value: String): ZonedDateTime =
+        ZonedDateTime.parse(value).withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
 }
 
 private fun todoFromSave(call: SaveTodoCall) = Todo(
@@ -642,9 +888,11 @@ private class FakeTodoRepository(
     }
 }
 
-private class FakeCategoryRepository : CategoryRepository {
-    override fun observeCategories(): Flow<List<Category>> = flowOf(emptyList())
-    override suspend fun getCategory(id: String): Category? = null
+private class FakeCategoryRepository(
+    private val categories: List<Category> = emptyList(),
+) : CategoryRepository {
+    override fun observeCategories(): Flow<List<Category>> = flowOf(categories)
+    override suspend fun getCategory(id: String): Category? = categories.firstOrNull { it.id == id }
 
     override suspend fun saveCategory(
         id: String?,
@@ -726,9 +974,14 @@ private class FakeNotificationScheduler(
 
 private class FakeHolidayRepository(
     holidays: Set<LocalDate> = emptySet(),
+    status: HolidayYearStatus? = null,
 ) : HolidayRepository {
     private val state = HolidaySnapshot(
         namesByDate = holidays.associateWith { "テスト祝日" },
+        yearStates = status?.let {
+            mapOf(2026 to HolidayYearState(year = 2026, status = it))
+        }.orEmpty(),
+        supportedYears = if (status == null) emptySet() else setOf(2026),
     )
     override val snapshot: Flow<HolidaySnapshot> = flowOf(state)
 
@@ -740,3 +993,11 @@ private class FakeHolidayRepository(
     override suspend fun pendingWidgetGeneration(): Long? = null
     override suspend fun markWidgetGenerationProcessed(generation: Long) = Unit
 }
+
+private fun category(id: String, name: String, colorIndex: Int) = Category(
+    id = id,
+    name = name,
+    colorIndex = colorIndex,
+    iconName = "Category",
+    sortOrder = colorIndex,
+)

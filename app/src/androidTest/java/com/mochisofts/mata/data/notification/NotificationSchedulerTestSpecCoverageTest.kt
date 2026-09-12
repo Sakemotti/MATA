@@ -168,6 +168,20 @@ class NotificationSchedulerTestSpecCoverageTest {
     }
 
     @Test
+    fun te020_exactAlarmUnavailableFallsBackToInexactRegistration() = runBlocking {
+        insertTodo()
+        insertNotification()
+        stateProvider.canScheduleExactAlarms = false
+
+        scheduler.reconcileTodo(TODO_ID)
+
+        val record = database.scheduledNotificationDao().findForTodo(TODO_ID).single()
+        assertEquals(AndroidNotificationScheduler.MODE_INEXACT, record.schedulingMode)
+        assertEquals(AndroidNotificationScheduler.STATE_SCHEDULED, record.state)
+        assertEquals(listOf(false), gateway.scheduled.map { it.exact })
+    }
+
+    @Test
     fun ntf010_platformRebuildRestoresFutureAndDropsPastRegistrations() = runBlocking {
         insertTodo(rule = RecurrenceRule.daily())
         insertNotification()
