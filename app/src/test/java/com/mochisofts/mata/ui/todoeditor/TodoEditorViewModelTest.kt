@@ -16,6 +16,8 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
+import com.mochisofts.mata.domain.model.occurrencesIn
+import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
@@ -82,7 +84,7 @@ class TodoEditorViewModelTest {
     }
 
     @Test
-    fun newTodoUsesCurrentLogicalDateAndRejectsEarlierDate() = runTest {
+    fun te007_newTodoUsesCurrentLogicalDateAndRejectsEarlierDate() = runTest {
         val repository = FakeTodoRepository()
         val viewModel = createViewModel(
             todoRepository = repository,
@@ -125,22 +127,26 @@ class TodoEditorViewModelTest {
     }
 
     @Test
-    fun monthlyNthWeekdaysRequireASelectionAndSaveMultipleValues() = runTest {
+    fun te031_monthlyNthWeekdaysSaveReloadPreviewAndSkipMissingFifthWeekday() = runTest {
         val repository = FakeTodoRepository()
         val viewModel = createViewModel(
             todoRepository = repository,
-            clock = fixedClock("2026-09-03T12:00:00+09:00"),
+            clock = fixedClock("2026-01-01T12:00:00+09:00"),
         )
         runCurrent()
 
         val firstMonday = MonthlyNthWeekday(1, DayOfWeek.MONDAY)
         val thirdFriday = MonthlyNthWeekday(3, DayOfWeek.FRIDAY)
+        val fifthMonday = MonthlyNthWeekday(5, DayOfWeek.MONDAY)
         viewModel.setTitle("月次レビュー")
-        viewModel.setStartDate(LocalDate.of(2026, 9, 7))
+        viewModel.setStartDate(LocalDate.of(2026, 1, 1))
         viewModel.setRecurrence(RecurrenceType.MONTHLY_NTH_WEEKDAYS)
 
-        assertEquals(setOf(firstMonday), viewModel.uiState.value.monthlyNthWeekdays)
-        viewModel.toggleMonthlyNthWeekday(firstMonday.ordinal, firstMonday.dayOfWeek)
+        val initialSelection = viewModel.uiState.value.monthlyNthWeekdays.single()
+        viewModel.toggleMonthlyNthWeekday(
+            initialSelection.ordinal,
+            initialSelection.dayOfWeek,
+        )
         assertFalse(viewModel.uiState.value.canSave)
         viewModel.save()
         runCurrent()
@@ -148,26 +154,56 @@ class TodoEditorViewModelTest {
 
         viewModel.toggleMonthlyNthWeekday(firstMonday.ordinal, firstMonday.dayOfWeek)
         viewModel.toggleMonthlyNthWeekday(thirdFriday.ordinal, thirdFriday.dayOfWeek)
+        viewModel.toggleMonthlyNthWeekday(fifthMonday.ordinal, fifthMonday.dayOfWeek)
         assertTrue(viewModel.uiState.value.canSave)
         viewModel.save()
         runCurrent()
 
+        val savedRule = requireNotNull(repository.lastSave).recurrenceRule
         assertEquals(
-            setOf(firstMonday, thirdFriday),
-            repository.lastSave?.recurrenceRule?.monthlyNthWeekdays,
+            setOf(firstMonday, thirdFriday, fifthMonday),
+            savedRule.monthlyNthWeekdays,
         )
+        val savedTodo = todoFromSave(requireNotNull(repository.lastSave))
+        assertEquals(
+            listOf(
+                LocalDate.of(2026, 1, 5),
+                LocalDate.of(2026, 1, 16),
+                LocalDate.of(2026, 2, 2),
+                LocalDate.of(2026, 2, 20),
+                LocalDate.of(2026, 3, 2),
+                LocalDate.of(2026, 3, 20),
+                LocalDate.of(2026, 3, 30),
+            ),
+            savedTodo.occurrencesIn(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 3, 31),
+            ),
+        )
+
+        val reopened = createViewModel(
+            todoRepository = FakeTodoRepository(mapOf(savedTodo.id to savedTodo)),
+            clock = fixedClock("2026-01-01T12:00:00+09:00"),
+            todoId = savedTodo.id,
+        )
+        runCurrent()
+        assertEquals(savedRule.monthlyNthWeekdays, reopened.uiState.value.monthlyNthWeekdays)
     }
 
     @Test
-    fun weeklyCountPresetAndPeriodAreSavedTogether() = runTest {
+    fun te032_multiWeekCountFilterSaveReloadAndPreviewStayTogether() = runTest {
         val repository = FakeTodoRepository()
-        val viewModel = createViewModel(todoRepository = repository)
+        val holiday = LocalDate.of(2026, 9, 4)
+        val viewModel = createViewModel(
+            todoRepository = repository,
+            holidayRepository = FakeHolidayRepository(setOf(holiday)),
+        )
         runCurrent()
 
         viewModel.setTitle("週末チャレンジ")
         viewModel.setRecurrence(RecurrenceType.WEEKLY_COUNT)
         viewModel.setPeriodWeeks(2)
-        viewModel.setWeeklyCount(4)
+        viewModel.setWeeklyCount(1)
         viewModel.setDayFilter(RecurrenceDayFilter.WEEKENDS_HOLIDAYS)
         viewModel.save()
         runCurrent()
@@ -175,9 +211,26 @@ class TodoEditorViewModelTest {
         val rule = requireNotNull(repository.lastSave).recurrenceRule
         assertEquals(RecurrenceType.WEEKLY_COUNT, rule.type)
         assertEquals(2, rule.periodWeeks)
-        assertEquals(4, rule.requiredCount)
+        assertEquals(1, rule.requiredCount)
         assertEquals(RecurrenceDayFilter.WEEKENDS_HOLIDAYS, rule.dayFilter)
         assertEquals(setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), rule.selectedWeekdays)
+
+        val savedTodo = todoFromSave(requireNotNull(repository.lastSave))
+        assertEquals(
+            LocalDate.of(2026, 9, 3),
+            savedTodo.recurrencePeriod(LocalDate.of(2026, 9, 3), DayOfWeek.MONDAY)?.startDate,
+        )
+        assertTrue(savedTodo.occurrencesIn(holiday, holiday, setOf(holiday)).contains(holiday))
+
+        val reopened = createViewModel(
+            todoRepository = FakeTodoRepository(mapOf(savedTodo.id to savedTodo)),
+            holidayRepository = FakeHolidayRepository(setOf(holiday)),
+            todoId = savedTodo.id,
+        )
+        runCurrent()
+        assertEquals(2, reopened.uiState.value.periodWeeks)
+        assertEquals(1, reopened.uiState.value.weeklyCount)
+        assertEquals(RecurrenceDayFilter.WEEKENDS_HOLIDAYS, reopened.uiState.value.dayFilter)
     }
 
     @Test
@@ -205,10 +258,14 @@ class TodoEditorViewModelTest {
     }
 
     @Test
-    fun inputLimitsAndRecurrenceValuesControlSaveAvailability() = runTest {
+    fun te003_titleAndDescriptionBoundariesControlSaveAvailability() = runTest {
         val viewModel = createViewModel()
         runCurrent()
 
+        viewModel.setTitle("")
+        assertFalse(viewModel.uiState.value.canSave)
+        viewModel.setTitle("a")
+        assertTrue(viewModel.uiState.value.canSave)
         viewModel.setTitle("a".repeat(100))
         viewModel.setDescription("b".repeat(1000))
         assertTrue(viewModel.uiState.value.canSave)
@@ -220,12 +277,99 @@ class TodoEditorViewModelTest {
         assertFalse(viewModel.uiState.value.canSave)
 
         viewModel.setDescription("")
+        assertTrue(viewModel.uiState.value.canSave)
+    }
+
+    @Test
+    fun te009_allRecurrenceTypesAcceptOnlyTheirValidBoundaries() = runTest {
+        val viewModel = createViewModel()
+        runCurrent()
+        viewModel.setTitle("全方式の検証")
+
+        listOf(
+            RecurrenceType.ONCE,
+            RecurrenceType.DAILY,
+            RecurrenceType.WEEKDAYS,
+            RecurrenceType.MONTH_END,
+        ).forEach { type ->
+            viewModel.setRecurrence(type)
+            assertEquals(type, viewModel.uiState.value.recurrenceType)
+            assertTrue("$type must be valid", viewModel.uiState.value.canSave)
+        }
+
+        viewModel.setRecurrence(RecurrenceType.SELECTED_WEEKDAYS)
+        assertTrue(viewModel.uiState.value.selectedWeekdays.isNotEmpty())
+        viewModel.uiState.value.selectedWeekdays.toList().forEach(viewModel::toggleWeekday)
+        assertFalse(viewModel.uiState.value.canSave)
+        viewModel.toggleWeekday(DayOfWeek.MONDAY)
+        assertTrue(viewModel.uiState.value.canSave)
+
+        viewModel.setRecurrence(RecurrenceType.MONTHLY_DAY)
+        viewModel.setMonthlyDay(31)
+        assertTrue(viewModel.uiState.value.canSave)
+        viewModel.setMonthlyDay(32)
+        assertFalse(viewModel.uiState.value.canSave)
+
+        viewModel.setRecurrence(RecurrenceType.MONTHLY_NTH_WEEKDAYS)
+        assertTrue(viewModel.uiState.value.monthlyNthWeekdays.isNotEmpty())
+        val nth = viewModel.uiState.value.monthlyNthWeekdays.single()
+        viewModel.toggleMonthlyNthWeekday(nth.ordinal, nth.dayOfWeek)
+        assertFalse(viewModel.uiState.value.canSave)
+        viewModel.toggleMonthlyNthWeekday(5, DayOfWeek.FRIDAY)
+        assertTrue(viewModel.uiState.value.canSave)
+
         viewModel.setRecurrence(RecurrenceType.EVERY_N_DAYS)
         viewModel.setIntervalDays("0")
         assertFalse(viewModel.uiState.value.canSave)
+        viewModel.setIntervalDays("999")
+        assertTrue(viewModel.uiState.value.canSave)
         viewModel.setIntervalDays("12a34")
         assertEquals("123", viewModel.uiState.value.intervalDaysInput)
+
+        viewModel.setRecurrence(RecurrenceType.WEEKLY_COUNT)
+        viewModel.setPeriodWeeks(0)
+        assertFalse(viewModel.uiState.value.canSave)
+        viewModel.setPeriodWeeks(52)
+        viewModel.setWeeklyCount(364)
         assertTrue(viewModel.uiState.value.canSave)
+        viewModel.setWeeklyCount(365)
+        assertFalse(viewModel.uiState.value.canSave)
+
+        viewModel.setRecurrence(RecurrenceType.MONTHLY_COUNT)
+        viewModel.setMonthlyCount(31)
+        assertTrue(viewModel.uiState.value.canSave)
+        viewModel.setMonthlyCount(32)
+        assertFalse(viewModel.uiState.value.canSave)
+    }
+
+    @Test
+    fun te033_dayPresetsApplyImmediatelyAndIndividualChangesBecomeCustom() = runTest {
+        val viewModel = createViewModel()
+        runCurrent()
+
+        listOf(RecurrenceType.SELECTED_WEEKDAYS, RecurrenceType.WEEKLY_COUNT).forEach { type ->
+            viewModel.setRecurrence(type)
+            viewModel.setDayFilter(RecurrenceDayFilter.WEEKDAYS)
+            assertEquals(
+                DayOfWeek.entries.filterTo(mutableSetOf()) { it.value <= 5 },
+                viewModel.uiState.value.selectedWeekdays,
+            )
+            assertEquals(RecurrenceDayFilter.WEEKDAYS, viewModel.uiState.value.dayFilter)
+
+            viewModel.setDayFilter(RecurrenceDayFilter.WEEKENDS_HOLIDAYS)
+            assertEquals(
+                setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+                viewModel.uiState.value.selectedWeekdays,
+            )
+            assertEquals(
+                RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+                viewModel.uiState.value.dayFilter,
+            )
+
+            viewModel.toggleWeekday(DayOfWeek.MONDAY)
+            assertEquals(RecurrenceDayFilter.CUSTOM, viewModel.uiState.value.dayFilter)
+            assertTrue(DayOfWeek.MONDAY in viewModel.uiState.value.selectedWeekdays)
+        }
     }
 
     @Test
@@ -362,6 +506,7 @@ class TodoEditorViewModelTest {
         todoRepository: FakeTodoRepository = FakeTodoRepository(),
         settingsRepository: FakeSettingsRepository = FakeSettingsRepository(),
         notificationScheduler: FakeNotificationScheduler = FakeNotificationScheduler(),
+        holidayRepository: FakeHolidayRepository = FakeHolidayRepository(),
         clock: Clock = fixedClock("2026-09-03T12:00:00+09:00"),
         todoId: String? = null,
     ) = TodoEditorViewModel(
@@ -370,7 +515,7 @@ class TodoEditorViewModelTest {
         categoryRepository = FakeCategoryRepository(),
         settingsRepository = settingsRepository,
         notificationScheduler = notificationScheduler,
-        holidayRepository = FakeHolidayRepository(),
+        holidayRepository = holidayRepository,
         clock = clock,
     )
 
@@ -379,6 +524,23 @@ class TodoEditorViewModelTest {
         return Clock.fixed(ZonedDateTime.parse(value).toInstant(), zone)
     }
 }
+
+private fun todoFromSave(call: SaveTodoCall) = Todo(
+    id = "saved-todo",
+    title = call.title,
+    description = call.description,
+    categoryId = call.categoryId,
+    startDate = call.startDate,
+    endDate = call.endDate,
+    recurrenceRule = call.recurrenceRule,
+    dueMinutes = call.dueMinutes,
+    definitionRevision = 1,
+    archivedAt = null,
+    createdAt = 1,
+    notifications = call.notifications,
+    dueDate = call.dueDate,
+    carryOverEnabled = call.carryOverEnabled,
+)
 
 private data class SaveTodoCall(
     val id: String?,
@@ -562,8 +724,12 @@ private class FakeNotificationScheduler(
     override suspend fun cancelTodo(todoId: String) = Unit
 }
 
-private class FakeHolidayRepository : HolidayRepository {
-    private val state = HolidaySnapshot()
+private class FakeHolidayRepository(
+    holidays: Set<LocalDate> = emptySet(),
+) : HolidayRepository {
+    private val state = HolidaySnapshot(
+        namesByDate = holidays.associateWith { "テスト祝日" },
+    )
     override val snapshot: Flow<HolidaySnapshot> = flowOf(state)
 
     override suspend fun currentSnapshot(): HolidaySnapshot = state

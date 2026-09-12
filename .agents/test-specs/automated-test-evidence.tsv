@@ -160,3 +160,11 @@ AT-015	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreen
 AT-022	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at022_restorePreviewExplainsUnavailableNotificationsWithoutDiscardingThem	:app:connectedDebugAndroidTest
 AT-025	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at025_successfulRestoreStaysOnListAndOffersNoUndoOrAutomaticEdit	:app:connectedDebugAndroidTest
 AT-027	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at027_permanentDeleteDialogUsesExplicitButtonsWithoutTitleInput	:app:connectedDebugAndroidTest
+TE-003	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te003_titleAndDescriptionBoundariesControlSaveAvailability	:app:testDebugUnitTest
+TE-007	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te007_newTodoUsesCurrentLogicalDateAndRejectsEarlierDate	:app:testDebugUnitTest
+TE-009	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te009_allRecurrenceTypesAcceptOnlyTheirValidBoundaries	:app:testDebugUnitTest
+TE-015	app/src/test/java/com/mochisofts/mata/domain/model/TodoScheduleCalculatorTest.kt	te015_deadlineResolvesBeforeAtAndAfterLogicalDayBoundary	:app:testDebugUnitTest
+TE-031	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te031_monthlyNthWeekdaysSaveReloadPreviewAndSkipMissingFifthWeekday	:app:testDebugUnitTest
+TE-032	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te032_multiWeekCountFilterSaveReloadAndPreviewStayTogether	:app:testDebugUnitTest
+TE-033	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te033_dayPresetsApplyImmediatelyAndIndividualChangesBecomeCustom	:app:testDebugUnitTest
+TE-D04	app/src/test/java/com/mochisofts/mata/domain/model/TodoScheduleCalculatorTest.kt	ted04_monthlyDaysAndMonthEndUseActualLastDayInCommonAndLeapYears	:app:testDebugUnitTest
