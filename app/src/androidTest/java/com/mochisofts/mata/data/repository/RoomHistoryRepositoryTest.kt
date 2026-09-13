@@ -13,6 +13,7 @@ import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.PeriodResultEntity
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
@@ -50,6 +51,7 @@ class RoomHistoryRepositoryTest {
     private lateinit var database: MataDatabase
     private lateinit var repository: RoomHistoryRepository
     private lateinit var workManager: WorkManager
+    private lateinit var scheduler: NoOpNotificationScheduler
     private val observedQueries = CopyOnWriteArrayList<ObservedQuery>()
     private val date = LocalDate.of(2026, 8, 11)
 
@@ -67,6 +69,7 @@ class RoomHistoryRepositoryTest {
             .build()
         workManager = WorkManager.getInstance(context)
         workManager.cancelUniqueWork(WidgetUpdater.IMMEDIATE_UPDATE_WORK_NAME).result.get()
+        scheduler = NoOpNotificationScheduler()
         repository = RoomHistoryRepository(
             database = database,
             todoDao = database.todoDao(),
@@ -76,13 +79,159 @@ class RoomHistoryRepositoryTest {
             runtimeStateDao = database.todoRuntimeStateDao(),
             todoRepository = EmptyTodoRepository(),
             settingsRepository = CalendarSettingsRepository(),
-            notificationScheduler = NoOpNotificationScheduler(),
+            notificationScheduler = scheduler,
             widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
             clock = Clock.fixed(
                 Instant.parse("2026-08-11T03:00:00Z"),
                 ZoneId.of("Asia/Tokyo"),
             ),
         )
+    }
+
+    @Test
+    fun ch019_archivedTodoHistoryRemainsInDayAndMonthWithoutChangingSnapshotPresentation() =
+        runBlocking {
+            val todo = insertTodo(id = "archived-history", rule = RecurrenceRule.daily())
+            insertExecution(todo, date, TodoState.COMPLETED)
+            database.todoDao().upsert(todo.copy(archivedAt = 50, updatedAt = 50))
+
+            val day = repository.observeDay(date).first()
+            val month = repository.observeMonth(date.withDayOfMonth(1), date.withDayOfMonth(31)).first()
+
+            assertEquals(1, day.entries.size)
+            assertEquals(todo.id, day.entries.single().todoId)
+            assertEquals(todo.title, day.entries.single().snapshot.title)
+            assertEquals(TodoState.COMPLETED, day.entries.single().state)
+            assertEquals(1, day.summary.completedCount)
+            assertEquals(1, month.summaries[date]?.completedCount)
+        }
+
+    @Test
+    fun ch022_onlyCurrentEligibleDailyCarryOverAndCountActionsCanBeUndone() = runBlocking {
+        val daily = insertTodo(id = "current-daily", rule = RecurrenceRule.daily())
+        insertExecution(daily, date, TodoState.COMPLETED)
+        val carryOver = insertTodo(id = "current-carry-over", rule = RecurrenceRule.daily())
+            .copy(carryOverEnabled = true)
+            .also { database.todoDao().upsert(it) }
+        insertExecution(
+            todo = carryOver,
+            logicalDate = date,
+            state = TodoState.SKIPPED,
+            scheduledLogicalDate = date.minusDays(1),
+        )
+        val weekly = insertTodo(
+            id = "weekly-count-action",
+            rule = RecurrenceRule(
+                type = com.mochisofts.mata.domain.model.RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 2,
+            ),
+        )
+        insertExecution(
+            todo = weekly,
+            logicalDate = date.minusDays(1),
+            state = TodoState.COMPLETED,
+            id = "weekly-current-execution",
+        )
+        insertExecution(
+            todo = weekly,
+            logicalDate = date.minusDays(8),
+            state = TodoState.COMPLETED,
+            id = "weekly-past-execution",
+        )
+        val pastDaily = insertTodo(id = "past-daily", rule = RecurrenceRule.daily())
+        insertExecution(pastDaily, date.minusDays(1), TodoState.COMPLETED)
+
+        val currentEntries = repository.observeDay(date).first().entries.associateBy { it.todoId }
+        assertTrue(requireNotNull(currentEntries[daily.id]).canUndoAction)
+        assertTrue(requireNotNull(currentEntries[carryOver.id]).canUndoAction)
+        assertTrue(
+            repository.observeDay(date.minusDays(1)).first().entries
+                .first { it.todoId == weekly.id }
+                .canUndoAction,
+        )
+        assertFalse(
+            repository.observeDay(date.minusDays(1)).first().entries
+                .first { it.todoId == pastDaily.id }
+                .canUndoAction,
+        )
+        assertFalse(repository.observeDay(date.minusDays(8)).first().entries.single().canUndoAction)
+    }
+
+    @Test
+    fun ch023_undoCompletionAndSkipRecalculatesHistoryAndRestoresCarryOverState() = runBlocking {
+        val completed = insertTodo(id = "completed-carry-over", rule = RecurrenceRule.daily())
+            .copy(carryOverEnabled = true)
+            .also { database.todoDao().upsert(it) }
+        val skipped = insertTodo(id = "skipped-carry-over", rule = RecurrenceRule.daily())
+            .copy(carryOverEnabled = true)
+            .also { database.todoDao().upsert(it) }
+        listOf(completed, skipped).forEach { todo ->
+            database.todoRuntimeStateDao().upsert(
+                TodoRuntimeStateEntity(
+                    todoId = todo.id,
+                    lastFinalizedLogicalDate = date.minusDays(1).toString(),
+                    lastFinalizedWeeklyPeriodEnd = null,
+                    lastFinalizedMonthlyPeriodEnd = null,
+                    appliedDefinitionRevision = 1,
+                    reconciliationCursorDate = null,
+                    updatedAt = 1,
+                    pendingScheduledLogicalDate = null,
+                ),
+            )
+        }
+        val completedExecution = insertExecution(
+            completed,
+            date,
+            TodoState.COMPLETED,
+            scheduledLogicalDate = date.minusDays(1),
+        )
+        val skippedExecution = insertExecution(
+            skipped,
+            date,
+            TodoState.SKIPPED,
+            scheduledLogicalDate = date.minusDays(1),
+        )
+        val initial = repository.observeDay(date).first()
+        assertEquals(2, initial.summary.plannedCount)
+        assertEquals(1, initial.summary.completedCount)
+        val workBefore = immediateUpdateWorkIds().toSet()
+
+        repository.undoAction(completedExecution.id).getOrThrow()
+        val afterCompletionUndo = repository.observeDay(date).first()
+        assertEquals(listOf(TodoState.SKIPPED), afterCompletionUndo.entries.map { it.state })
+        assertEquals(1, afterCompletionUndo.summary.plannedCount)
+        assertEquals(0, afterCompletionUndo.summary.completedCount)
+        assertEquals(
+            date.minusDays(1).toString(),
+            database.todoRuntimeStateDao().find(completed.id)?.pendingScheduledLogicalDate,
+        )
+        assertTrue(scheduler.reconciledTodoIds.contains(completed.id))
+        assertTrue(immediateUpdateWorkIds().any { it !in workBefore })
+
+        repository.undoAction(skippedExecution.id).getOrThrow()
+        val afterBothUndone = repository.observeDay(date).first()
+        assertTrue(afterBothUndone.entries.isEmpty())
+        assertEquals(0, afterBothUndone.summary.plannedCount)
+        assertNull(repository.observeMonth(date, date).first().summaries[date])
+        assertEquals(
+            date.minusDays(1).toString(),
+            database.todoRuntimeStateDao().find(skipped.id)?.pendingScheduledLogicalDate,
+        )
+        assertTrue(scheduler.reconciledTodoIds.contains(skipped.id))
+    }
+
+    @Test
+    fun chd05_archivedCurrentActionCanBeUndoneWithoutReactivatingDefinition() = runBlocking {
+        val todo = insertTodo(id = "archived-current", rule = RecurrenceRule.daily())
+        val execution = insertExecution(todo, date, TodoState.COMPLETED)
+        database.todoDao().upsert(todo.copy(archivedAt = 50, updatedAt = 50))
+
+        assertTrue(repository.observeDay(date).first().entries.single().canUndoAction)
+        repository.undoAction(execution.id).getOrThrow()
+
+        assertTrue(repository.observeDay(date).first().entries.isEmpty())
+        assertNotNull(database.todoDao().findById(todo.id)?.archivedAt)
+        assertTrue(scheduler.reconciledTodoIds.none { it == todo.id })
     }
 
     @After
@@ -600,11 +749,12 @@ class RoomHistoryRepositoryTest {
         state: TodoState,
         actedAt: Long = 1,
         category: CategoryEntity? = null,
-    ) {
-        database.todoExecutionDao().insert(
-            TodoExecutionEntity(
-                id = "execution-${todo.id}",
-                operationId = "operation-${todo.id}",
+        id: String = "execution-${todo.id}",
+        scheduledLogicalDate: LocalDate = logicalDate,
+    ): TodoExecutionEntity {
+        val execution = TodoExecutionEntity(
+                id = id,
+                operationId = "operation-$id",
                 todoId = todo.id,
                 logicalDate = logicalDate.toString(),
                 status = state.code,
@@ -620,8 +770,11 @@ class RoomHistoryRepositoryTest {
                     weekStart = DayOfWeek.MONDAY,
                     logicalDate = logicalDate,
                 ),
-            ),
+                scheduledLogicalDate = scheduledLogicalDate.toString(),
+                resolvedLogicalDate = logicalDate.toString(),
         )
+        database.todoExecutionDao().insert(execution)
+        return execution
     }
 
     private fun periodResult(
@@ -720,6 +873,7 @@ private class EmptyTodoRepository : TodoRepository {
 
 private class NoOpNotificationScheduler : NotificationScheduler {
     override val notificationCount = MutableStateFlow(0)
+    val reconciledTodoIds = mutableListOf<String>()
     override fun systemState() = NotificationSystemState(
         canPostNotifications = true,
         runtimePermissionRelevant = false,
@@ -727,7 +881,7 @@ private class NoOpNotificationScheduler : NotificationScheduler {
         exactAlarmRelevant = false,
         canScheduleExactAlarms = true,
     )
-    override suspend fun reconcileTodo(todoId: String) = Unit
+    override suspend fun reconcileTodo(todoId: String) { reconciledTodoIds += todoId }
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) = Unit
 }
