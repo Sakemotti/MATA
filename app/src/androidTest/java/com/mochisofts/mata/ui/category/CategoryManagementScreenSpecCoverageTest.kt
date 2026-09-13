@@ -135,25 +135,21 @@ class CategoryManagementScreenSpecCoverageTest {
         val gameHandle = text(R.string.category_reorder_handle, "ゲーム")
 
         val dailyNode = composeRule.onNodeWithContentDescription(dailyHandle)
+        val initialActions = dailyNode.fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        assertEquals(listOf(moveDown), initialActions.map { it.label })
         composeRule.runOnIdle {
-            val actions = dailyNode.fetchSemanticsNode().config[SemanticsActions.CustomActions]
-                assertEquals(listOf(moveDown), actions.map { it.label })
-                assertTrue(actions.single().action())
+            assertTrue(initialActions.single().action())
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             repository.snapshot.map(Category::id) == listOf("game", "daily")
         }
 
-        composeRule.runOnIdle {
-            val actions = composeRule.onNodeWithContentDescription(dailyHandle)
-                .fetchSemanticsNode().config[SemanticsActions.CustomActions]
-                assertEquals(listOf(moveUp), actions.map { it.label })
-        }
-        composeRule.runOnIdle {
-            val actions = composeRule.onNodeWithContentDescription(gameHandle)
-                .fetchSemanticsNode().config[SemanticsActions.CustomActions]
-                assertEquals(listOf(moveDown), actions.map { it.label })
-        }
+        val movedDailyActions = composeRule.onNodeWithContentDescription(dailyHandle)
+            .fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        assertEquals(listOf(moveUp), movedDailyActions.map { it.label })
+        val movedGameActions = composeRule.onNodeWithContentDescription(gameHandle)
+            .fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        assertEquals(listOf(moveDown), movedGameActions.map { it.label })
     }
 
     @Test
@@ -179,7 +175,7 @@ class CategoryManagementScreenSpecCoverageTest {
 
         composeRule.onNodeWithText("日常").performClick()
         composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
-        composeRule.onNodeWithText(text(R.string.category_management_title)).assertIsDisplayed()
+        composeRule.onNodeWithText("ゲーム").assertIsDisplayed()
 
         composeRule.onNodeWithText("日常").performClick()
         val nameInput = composeRule.onNode(hasSetTextAction())
@@ -192,7 +188,7 @@ class CategoryManagementScreenSpecCoverageTest {
 
         composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
         composeRule.onNodeWithText(text(R.string.action_discard)).performClick()
-        composeRule.onNodeWithText(text(R.string.category_management_title)).assertIsDisplayed()
+        composeRule.onNodeWithText("ゲーム").assertIsDisplayed()
         composeRule.onNodeWithText("変更中").assertDoesNotExist()
         composeRule.onNodeWithText("日常").assertIsDisplayed()
     }
@@ -206,9 +202,7 @@ class CategoryManagementScreenSpecCoverageTest {
         nameInput.performTextInput("即時プレビュー")
         composeRule.onAllNodesWithText("即時プレビュー").assertCountEquals(2)
         val preview = composeRule.onNode(hasText("即時プレビュー") and !hasSetTextAction())
-        composeRule.runOnIdle {
-            assertFalse(preview.fetchSemanticsNode().config.contains(SemanticsActions.OnClick))
-        }
+        assertFalse(preview.fetchSemanticsNode().config.contains(SemanticsActions.OnClick))
 
         nameInput.performTextClearance()
         composeRule.onNodeWithText(text(R.string.category_name_preview)).assertIsDisplayed()
