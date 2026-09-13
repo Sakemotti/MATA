@@ -23,8 +23,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
@@ -208,10 +210,76 @@ class CalendarHistoryViewModelTest {
         assertTrue(requireNotNull(viewModel.uiState.value.day).entries.isEmpty())
     }
 
-    private fun createViewModel(repository: CalendarTestHistoryRepository) = CalendarHistoryViewModel(
-        savedStateHandle = SavedStateHandle(),
+    @Test
+    fun ch031_repositoryChangesSettingsAndExplicitRefreshReloadVisibleHistory() = runTest {
+        val repository = CalendarTestHistoryRepository()
+        val settings = CalendarTestSettingsRepository()
+        val viewModel = createViewModel(repository, settingsRepository = settings)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        val updatedSummary = summarizeHistoryDay(
+            TODAY,
+            listOf(TodoState.COMPLETED, TodoState.PENDING),
+            emptyList(),
+        )
+        repository.monthUpdates.value = HistoryMonth(mapOf(TODAY to updatedSummary))
+        repository.dayUpdates.value = HistoryDay(
+            date = TODAY,
+            summary = updatedSummary,
+            entries = emptyList(),
+            periodResults = emptyList(),
+        )
+        runCurrent()
+
+        assertEquals(2, viewModel.uiState.value.month.summaries[TODAY]?.plannedCount)
+        assertEquals(1, viewModel.uiState.value.day?.summary?.completedCount)
+
+        val beforeSettingMonthLoads = repository.monthLoads
+        settings.weekStart.value = DayOfWeek.SUNDAY
+        runCurrent()
+        assertEquals(DayOfWeek.SUNDAY, viewModel.uiState.value.weekStart)
+        assertTrue(repository.monthLoads > beforeSettingMonthLoads)
+
+        val beforeRefreshMonthLoads = repository.monthLoads
+        val beforeRefreshDayLoads = repository.dayLoads
+        viewModel.refresh()
+        runCurrent()
+        assertTrue(repository.monthLoads > beforeRefreshMonthLoads)
+        assertTrue(repository.dayLoads > beforeRefreshDayLoads)
+    }
+
+    @Test
+    fun chd06_freshScreenDoesNotPersistMonthDateOrPositionState() = runTest {
+        val first = createViewModel(CalendarTestHistoryRepository())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            first.uiState.collect()
+        }
+        runCurrent()
+        first.selectDate(LocalDate.of(2026, 7, 12))
+        runCurrent()
+        assertEquals(YearMonth.of(2026, 7), first.uiState.value.displayedMonth)
+
+        val reopened = createViewModel(CalendarTestHistoryRepository())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            reopened.uiState.collect()
+        }
+        runCurrent()
+
+        assertEquals(YearMonth.from(TODAY), reopened.uiState.value.displayedMonth)
+        assertEquals(TODAY, reopened.uiState.value.selectedDate)
+    }
+
+    private fun createViewModel(
+        repository: CalendarTestHistoryRepository,
+        savedStateHandle: SavedStateHandle = SavedStateHandle(),
+        settingsRepository: CalendarTestSettingsRepository = CalendarTestSettingsRepository(),
+    ) = CalendarHistoryViewModel(
+        savedStateHandle = savedStateHandle,
         historyRepository = repository,
-        settingsRepository = CalendarTestSettingsRepository(),
+        settingsRepository = settingsRepository,
         clock = Clock.fixed(
             TODAY.atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
             ZoneId.of("Asia/Tokyo"),
@@ -236,6 +304,8 @@ private class CalendarTestHistoryRepository : HistoryRepository {
     var blockFirstMonth = false
     val firstMonthGate = CompletableDeferred<Unit>()
     var firstMonthCancelled = false
+    val monthUpdates = MutableStateFlow(HistoryMonth(emptyMap()))
+    val dayUpdates = MutableStateFlow(emptyHistoryDay(LocalDate.of(2026, 9, 6)))
 
     override fun observeMonth(startDate: LocalDate, endDate: LocalDate): Flow<HistoryMonth> = flow {
         monthLoads += 1
@@ -247,20 +317,15 @@ private class CalendarTestHistoryRepository : HistoryRepository {
             }
         }
         if (failMonth) error("month load failed")
-        emit(HistoryMonth(emptyMap()))
+        emitAll(monthUpdates)
     }
 
     override fun observeDay(date: LocalDate): Flow<HistoryDay> = flow {
         dayLoads += 1
         if (failDay) error("day load failed")
-        emit(
-            HistoryDay(
-                date = date,
-                summary = summarizeHistoryDay(date, emptyList<TodoState>(), emptyList()),
-                entries = emptyList(),
-                periodResults = emptyList(),
-            ),
-        )
+        emitAll(dayUpdates.map { value ->
+            if (value.date == date) value else emptyHistoryDay(date)
+        })
     }
 
     override suspend fun undoAction(executionId: String): Result<HistoryActionUndoToken> {
@@ -274,6 +339,13 @@ private class CalendarTestHistoryRepository : HistoryRepository {
         return restoreResult
     }
 }
+
+private fun emptyHistoryDay(date: LocalDate) = HistoryDay(
+    date = date,
+    summary = summarizeHistoryDay(date, emptyList<TodoState>(), emptyList()),
+    entries = emptyList(),
+    periodResults = emptyList(),
+)
 
 private class CalendarTestSettingsRepository : SettingsRepository {
     override val showCompleted = MutableStateFlow(false)

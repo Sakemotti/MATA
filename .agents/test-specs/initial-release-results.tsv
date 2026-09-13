@@ -213,7 +213,7 @@ TE-D03	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewMod
 TE-D04	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalculatorTest#ted04・testDebugUnitTest成功
 TE-D05	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#ted05・CI run 34029287328成功
 TE-D06	P1	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#ted06・testDebugUnitTest成功
-CH-001	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-001	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・ドロワーから選択状態のカレンダー履歴へ全画面遷移することを確認
 CH-002	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch002_initialSelectionUsesTodayAndCurrentMonth・testDebugUnitTest成功
 CH-003	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	CalendarHistoryScreenSpecCoverageTest#ch003・CI run 34751041027成功
 CH-004	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch004_selectTodayReturnsFromPastMonthToToday・testDebugUnitTest成功
@@ -243,18 +243,18 @@ CH-027	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	Ca
 CH-028	P0	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch028・testDebugUnitTest成功
 CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功
 CH-030	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch030・testDebugUnitTest成功
-CH-031	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-031	P0	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・履歴更新、週開始曜日変更、明示更新で表示月日を再読込することを確認
 CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-033	P2	calendar-history.md	未実施	-	-	-	-	-
+CH-033	P2	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・検索、絞り込み、共有、出力、FAB、広告を表示しないことを確認
 CH-034	P1	calendar-history.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・日付、履歴状態、期間結果、操作可否を識別して操作できることを確認
 CH-035	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-D01	P2	calendar-history.md	未実施	-	-	-	-	-
-CH-D02	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D01	P2	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・月カレンダーを固定しサマリーと履歴だけがスクロールすることを確認
+CH-D02	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・当月で翌月ボタンと未来方向スワイプが無効になることを確認
 CH-D03	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-D04	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#chd04・testDebugUnitTest成功
 CH-D05	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	RoomHistoryRepositoryTest#chd05・CI run 34751041027成功
-CH-D06	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-D07	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D06	P1	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・再生成した画面が月、日付、位置を保持せず当日に戻ることを確認
+CH-D07	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・実行履歴と期間結果の詳細レイアウト、スクロール、固定閉じる、システム戻るを確認
 CM-001	P1	category-management.md	未実施	-	-	-	-	-
 CM-002	P0	category-management.md	未実施	-	-	-	-	-
 CM-003	P1	category-management.md	未実施	-	-	-	-	-
