@@ -150,7 +150,7 @@ class CategoryManagementScreenSpecCoverageTest {
 
     private fun categories() = listOf(
         Category("daily", "日常", colorIndex = 8, iconName = "Home", sortOrder = 0),
-        Category("game", "ゲーム", colorIndex = 2, iconName = "Game", sortOrder = 1),
+        Category("game", "ゲーム", colorIndex = 2, iconName = "SportsEsports", sortOrder = 1),
     )
 
     private fun text(resId: Int): String =
