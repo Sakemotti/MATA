@@ -213,3 +213,9 @@ CH-D01	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryS
 CH-D02	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	chd02_currentMonthRejectsNextButtonAndFutureSwipe	:app:connectedDebugAndroidTest
 CH-D06	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	chd06_freshScreenDoesNotPersistMonthDateOrPositionState	:app:testDebugUnitTest
 CH-D07	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	chd07_longExecutionAndPeriodDetailsShareScrollableDefinitionAndCloseWithBack	:app:connectedDebugAndroidTest
+CM-001	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm001_drawerOpensCategoryManagementAsSelectedFullScreenDestination	:app:connectedDebugAndroidTest
+CM-002	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm002_listContainsOnlyUserCategoriesAndNeverShowsUncategorized	:app:connectedDebugAndroidTest
+CM-005	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm005_emptyActionAndFabOpenTheSameNewCategoryForm	:app:connectedDebugAndroidTest
+CM-006	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm006_categoryRowLoadsSelectedValuesIntoEditForm	:app:connectedDebugAndroidTest
+CM-011	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm011_editorShowsPreviewNameColorAndIconWithoutEndHour	:app:connectedDebugAndroidTest
+CM-D01	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd01_newEditorUsesSpecifiedDefaultsAndHasNoEndHourInput	:app:connectedDebugAndroidTest

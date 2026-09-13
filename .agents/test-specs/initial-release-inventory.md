@@ -29,7 +29,7 @@
 | カテゴリ別TODO一覧 | 7 | 4 | 0 | 11 |
 | 合計 | 248 | 157 | 18 | 423 |
 
-リリース必須のP0/P1は405件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月13日時点では、項目単位の証跡が揃ったP0を205件、P1を78件`合格`、P0/P1の残り122件を`未実施`として登録した。P2を含む全423件では286件が合格、137件が未実施である。versionCode 3向け17件、広告読込失敗時の`WGT-014`、環境別7セッション、制御異常系17件、TODO一覧の中核表示5件、TODO一覧の状態・操作8件、カレンダー中核計算5件、カレンダー履歴リポジトリ4件、カレンダー履歴の基本操作・表示8件、カレンダー履歴の月移動・データ保全・取り消し8件、カレンダー履歴の画面遷移・再読込・状態・レイアウト7件、カテゴリ別TODO一覧8件、アーカイブ一覧・履歴照会6件、アーカイブ画面UI8件、TODO編集の入力・繰り返し8件、TODO編集の通知・プレビュー8件、カテゴリ管理の並び替え・名称検証・履歴整合性6件、および正式採用したカレンダー履歴のデイリープランナーUIは合格した。
+リリース必須のP0/P1は405件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。2026年9月13日時点では、項目単位の証跡が揃ったP0を206件、P1を83件`合格`、P0/P1の残り116件を`未実施`として登録した。P2を含む全423件では292件が合格、131件が未実施である。versionCode 3向け17件、広告読込失敗時の`WGT-014`、環境別7セッション、制御異常系17件、TODO一覧の中核表示5件、TODO一覧の状態・操作8件、カレンダー中核計算5件、カレンダー履歴リポジトリ4件、カレンダー履歴の基本操作・表示8件、カレンダー履歴の月移動・データ保全・取り消し8件、カレンダー履歴の画面遷移・再読込・状態・レイアウト7件、カテゴリ別TODO一覧8件、アーカイブ一覧・履歴照会6件、アーカイブ画面UI8件、TODO編集の入力・繰り返し8件、TODO編集の通知・プレビュー8件、カテゴリ管理の並び替え・名称検証・履歴整合性6件、カテゴリ管理の基本表示・遷移6件、および正式採用したカレンダー履歴のデイリープランナーUIは合格した。
 
 ## 3. 自動検査の証跡
 
@@ -37,7 +37,7 @@
 | --- | --- | --- | --- |
 | 単体テスト | 41 test suite、199件、失敗0・エラー0・スキップ0 | 2026-09-13のローカル`testDebugUnitTest`結果、[PR #200 CI run 34748557262](https://github.com/Sakemotti/MATA/actions/runs/34748557262) | `REL-001`、論理日・繰り返し・通知・ViewModel等の一部 |
 | Debug検証 | `testDebugUnitTest`、`lintDebug`、`assembleDebug`成功 | [main CI run 33751810640](https://github.com/Sakemotti/MATA/actions/runs/33751810640) | `REL-005`〜`REL-007` |
-| Instrumented test | API 30 x86_64で現行171件完了、失敗なし。API 34 x86_64でも142件時点で失敗なし | [PR #201 CI run 34751041027](https://github.com/Sakemotti/MATA/actions/runs/34751041027)、2026-09-12のローカル`:app:connectedDebugAndroidTest`結果 | `REL-027`、Room Migration・Repository・通知・設定変更・バックアップ・Compose UIの一部 |
+| Instrumented test | API 30 x86_64で現行182件完了、失敗なし。API 34 x86_64でも142件時点で失敗なし | [PR #203 CI run 34756112549](https://github.com/Sakemotti/MATA/actions/runs/34756112549)、2026-09-12のローカル`:app:connectedDebugAndroidTest`結果 | `REL-027`、Room Migration・Repository・通知・設定変更・バックアップ・Compose UIの一部 |
 | Release検証 | `lintRelease`、成果物メタデータ生成、Manifest security、成果物検証が成功 | main CI run 33751810640 | `REL-020`、`REL-025`の正常系 |
 | 性能用成果物 | Benchmark APKとMacrobenchmark APKの生成成功 | main CI run 33751810640 | 性能試験を開始できることの確認 |
 | リポジトリ検査 | 秘密情報・署名ファイル検査、法的サイト検証、Play掲載情報検証が成功 | main CI run 33751810640 | `REL-015`と`REL-018`の自動検査部分 |
@@ -63,6 +63,7 @@
 | TODO編集の入力・繰り返し | タイトル・説明上限、過去日禁止、全10方式の境界、期限時刻の論理日変換、毎月第X曜日、N週間にX回、曜日プリセット、月末丸めを専用ユニットテスト8件で検証 | 2026年9月12日のローカル`:app:testDebugUnitTest`成功 | `TE-003`、`TE-007`、`TE-009`、`TE-015`、`TE-031`〜`TE-033`、`TE-D04` |
 | TODO編集の通知・プレビュー | カテゴリ非依存の論理日、祝日暫定値、通知上限・重複・日末検証、通知順序、過去候補、権限拒否、通常通知フォールバック、連続編集時の再計算を専用テスト8件で検証 | 2026年9月12日のローカル`:app:testDebugUnitTest`とPR CIのAPI 30`:app:connectedDebugAndroidTest`成功 | `TE-006`、`TE-012`、`TE-016`〜`TE-020`、`TE-D03` |
 | カテゴリ管理の並び替え・名称・履歴整合性 | ドロップ保存と再表示、一覧・タブへの順序反映、名称の境界値・正規化・表記保持、編集・削除後の現在参照と確定済み履歴スナップショットを専用テスト6件で検証 | 2026年9月12日のローカル`:app:testDebugUnitTest`とPR CIのAPI 30`:app:connectedDebugAndroidTest`成功 | `CM-007`、`CM-010`、`CM-012`、`CM-013`、`CM-021`、`CM-023` |
+| カテゴリ管理の基本表示・遷移 | ドロワーからの全画面遷移と選択状態、カテゴリ未設定の除外、空状態とFABからの追加、既存値の編集読込、フォーム構成、新規既定値を専用Compose UI test 6件で検証 | [PR #203 CI run 34756112549](https://github.com/Sakemotti/MATA/actions/runs/34756112549)のAPI 30`:app:connectedDebugAndroidTest`成功 | `CM-001`、`CM-002`、`CM-005`、`CM-006`、`CM-011`、`CM-D01` |
 | Release成果物改変検出 | 正常系1件とSBOMの内容・パス・欠損・容量・SHA-256・必須component・依存グラフの異常系6件が成功 | 2026-09-04に`node --test tools/release/release-artifact-verifier.test.mjs`を実行 | `REL-026` |
 | 論理日・繰り返し計算 | 試験IDを接頭辞に持つ専用JUnitテスト26件が成功し、ID・テストメソッド・実行タスクの1対1対応を機械検証 | 2026-09-04に`:app:testDebugUnitTest --tests com.mochisofts.mata.domain.model.ScheduleTestSpecCoverageTest`と`verify-automated-evidence.mjs`を実行 | `DAY-001`〜`DAY-003`、`DAY-006`〜`DAY-008`、`DAY-013`、`RPT-001`〜`RPT-004`、`RPT-007`〜`RPT-018`、`RPT-027`〜`RPT-029` |
 | 履歴・復元・完全削除 | 終了済み論理日の履歴確定、回数期間の達成・未達成、履歴取り消し範囲、復元時の基準と埋め戻し防止、関連データ完全削除をRoom上の専用instrumented test 8件で検証 | `:app:connectedDebugAndroidTest`と`verify-automated-evidence.mjs`を実行 | `DAY-010`、`RPT-024`、`STA-003`、`STA-010`、`STA-011`、`AT-016`、`AT-017`、`AT-028` |
@@ -70,7 +71,7 @@
 | 設定変更時の再計算・履歴不変 | 週開始曜日変更後の現在期間・必要数・完了数・残数の即時再計算と、終了時刻・週開始曜日変更後の確定済み履歴・期間スナップショット不変を専用instrumented test 2件で検証 | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-010`、`ST-011` |
 | バックアップ形式・内容・事前検証 | 全種ユーザーデータ、除外対象、復元前の形式・ハッシュ・構造・型・範囲・参照・互換性検証、ファイル名、ZIP内部メタデータを専用instrumented test 5件で検証 | [PR #126 CI run 33867709111](https://github.com/Sakemotti/MATA/actions/runs/33867709111)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-019`、`ST-020`、`ST-023`、`ST-D02`、`ST-D03` |
 
-[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト214件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
+[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト220件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 
