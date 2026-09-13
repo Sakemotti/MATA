@@ -139,22 +139,22 @@ TL-001	P0	todo-list.md	未実施	-	-	-	-	-
 TL-002	P0	todo-list.md	未実施	-	-	-	-	-
 TL-003	P0	todo-list.md	未実施	-	-	-	-	-
 TL-004	P1	todo-list.md	未実施	-	-	-	-	-
-TL-005	P0	todo-list.md	未実施	-	-	-	-	-
-TL-006	P0	todo-list.md	未実施	-	-	-	-	-
+TL-005	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail・PR CI成功
+TL-006	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl006_futureDateAllowsOpeningEditorButNotCompletionOrSkip・PR CI成功
 TL-007	P1	todo-list.md	未実施	-	-	-	-	-
 TL-008	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListGroupingTest#tl008・testDebugUnitTest成功
 TL-009	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListGroupingTest#tl009・testDebugUnitTest成功
 TL-010	P1	todo-list.md	未実施	-	-	-	-	-
 TL-011	P0	todo-list.md	合格	2026-09-09	AUTO	3	API 34 x86_64 emulator	TodoListTopBarActionsTest#tl011・connectedDebugAndroidTest成功
 TL-012	P1	todo-list.md	未実施	-	-	-	-	-
-TL-013	P0	todo-list.md	未実施	-	-	-	-	-
-TL-014	P0	todo-list.md	未実施	-	-	-	-	-
-TL-015	P0	todo-list.md	未実施	-	-	-	-	-
+TL-013	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl013_completionImmediatelyUpdatesListAndShowsNoUndoAction・PR CI成功
+TL-014	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl014_completedCheckboxIsReadOnlyAndDoesNotChangeProgress・PR CI成功
+TL-015	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl015_skipImmediatelyRemovesRowAndShowsNoUndoAction・PR CI成功
 TL-016	P0	todo-list.md	未実施	-	-	-	-	-
-TL-017	P0	todo-list.md	未実施	-	-	-	-	-
+TL-017	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl017_archiveAndDeleteExplainScopeBeforeIrreversibleAction・PR CI成功
 TL-018	P1	todo-list.md	未実施	-	-	-	-	-
 TL-019	P1	todo-list.md	未実施	-	-	-	-	-
-TL-020	P0	todo-list.md	未実施	-	-	-	-	-
+TL-020	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty・PR CI成功
 TL-021	P1	todo-list.md	未実施	-	-	-	-	-
 TL-022	P1	todo-list.md	未実施	-	-	-	-	-
 TL-023	P1	todo-list.md	未実施	-	-	-	-	-
@@ -419,6 +419,6 @@ TE-035	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37
 TE-036	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-03・日付固定型だけで未完了繰り越しを設定できることを確認
 TE-037	P0	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-04・過去履歴を保持した編集と確認付き完全削除を確認
 CM-032	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-V3-01・16色の選択反映、ライト・ダーク、エラー表示の優先を確認
-TL-036	P1	todo-list.md	未実施	-	-	-	-	-
+TL-036	P1	todo-list.md	合格	2026-09-13	AUTO	5	Local JDK 21	TodoListViewModelTest#tl036_progressIncludesHiddenCompletedAndExcludesSkipped・PR CI成功
 TL-D08	P2	todo-list.md	未実施	-	-	-	-	-
 CH-036	P2	calendar-history.md	合格	2026-09-11	OWNER	3	Android Emulator / debug build	デイリープランナーUI試作のユーザー確認・カレンダーの表示密度、サマリーカード、状態インデックスを確認

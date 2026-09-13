@@ -1,0 +1,398 @@
+package com.mochisofts.mata.ui.todolist
+
+import android.app.Activity
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.lifecycle.SavedStateHandle
+import androidx.test.platform.app.InstrumentationRegistry
+import com.mochisofts.mata.R
+import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
+import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.ArchiveSortOrder
+import com.mochisofts.mata.domain.model.HolidayRefreshResult
+import com.mochisofts.mata.domain.model.HolidaySnapshot
+import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.Todo
+import com.mochisofts.mata.domain.model.TodoNotification
+import com.mochisofts.mata.domain.model.TodoOccurrence
+import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.repository.HolidayRepository
+import com.mochisofts.mata.domain.repository.SettingsRepository
+import com.mochisofts.mata.domain.repository.TodoRepository
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.ZoneId
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class TodoListScreenSpecCoverageTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    @Test
+    fun tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail() {
+        val date = TODAY.minusDays(1)
+        val pending = occurrence("past-pending", "過去の未完了", date, TodoState.PENDING)
+        val completed = occurrence("past-completed", "過去の完了", date, TodoState.COMPLETED)
+        val skipped = occurrence("past-skipped", "過去のスキップ", date, TodoState.SKIPPED)
+        val repository = TestTodoRepository(listOf(pending, completed, skipped))
+
+        setScreen(repository = repository, selectedDate = date)
+        waitForText(pending.todo.title)
+
+        listOf(pending, completed, skipped).forEach { item ->
+            composeRule.onNodeWithText(item.todo.title).assertIsDisplayed()
+        }
+        composeRule.onAllNodesWithContentDescription(text(R.string.content_description_todo_actions))
+            .assertCountEquals(0)
+        composeRule.onNode(toggleState(ToggleableState.On)).assertIsNotEnabled()
+        composeRule.onNode(toggleState(ToggleableState.Off)).assertIsNotEnabled()
+
+        composeRule.onNodeWithText(skipped.todo.title).performClick()
+        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, repository.mutationCount) }
+    }
+
+    @Test
+    fun tl006_futureDateAllowsOpeningEditorButNotCompletionOrSkip() {
+        val date = TODAY.plusDays(1)
+        val future = occurrence("future", "未来のTODO", date, TodoState.PENDING)
+        val repository = TestTodoRepository(listOf(future))
+        val openedIds = mutableListOf<String>()
+
+        setScreen(
+            repository = repository,
+            selectedDate = date,
+            onEditTodo = openedIds::add,
+        )
+        waitForText(future.todo.title)
+
+        composeRule.onAllNodes(hasToggleableState()).assertCountEquals(0)
+        composeRule.onNodeWithText(future.todo.title).performClick()
+        composeRule.runOnIdle { assertEquals(listOf(future.todo.id), openedIds) }
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_todo_actions))
+            .performClick()
+        composeRule.onAllNodesWithText(text(R.string.action_skip)).assertCountEquals(0)
+        composeRule.onNodeWithText(text(R.string.action_archive)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete)).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, repository.mutationCount) }
+    }
+
+    @Test
+    fun tl013_completionImmediatelyUpdatesListAndShowsNoUndoAction() {
+        val pending = occurrence("complete", "完了するTODO", TODAY, TodoState.PENDING)
+        val repository = TestTodoRepository(listOf(pending))
+
+        setScreen(repository)
+        waitForText(pending.todo.title)
+        composeRule.onNode(toggleState(ToggleableState.Off)).performClick()
+
+        waitForText(text(R.string.message_todo_completed))
+        composeRule.onNodeWithText(pending.todo.title).assertDoesNotExist()
+        composeRule.onAllNodesWithText(text(R.string.action_undo)).assertCountEquals(0)
+        composeRule.runOnIdle {
+            assertEquals(1, repository.completeCalls)
+            assertEquals(TodoState.COMPLETED, repository.occurrences.value.single().state)
+        }
+    }
+
+    @Test
+    fun tl014_completedCheckboxIsReadOnlyAndDoesNotChangeProgress() {
+        val completed = occurrence("completed", "完了済みTODO", TODAY, TodoState.COMPLETED)
+        val repository = TestTodoRepository(listOf(completed))
+
+        setScreen(repository = repository, showCompleted = true)
+        waitForText(completed.todo.title)
+
+        composeRule.onNode(toggleState(ToggleableState.On))
+            .assertIsOn()
+            .assertIsNotEnabled()
+        composeRule.onNodeWithText("1 / 1 完了").assertIsDisplayed()
+        composeRule.runOnIdle {
+            assertEquals(0, repository.completeCalls)
+            assertEquals(TodoState.COMPLETED, repository.occurrences.value.single().state)
+        }
+    }
+
+    @Test
+    fun tl015_skipImmediatelyRemovesRowAndShowsNoUndoAction() {
+        val pending = occurrence("skip", "スキップするTODO", TODAY, TodoState.PENDING)
+        val repository = TestTodoRepository(listOf(pending))
+
+        setScreen(repository)
+        waitForText(pending.todo.title)
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_todo_actions))
+            .performClick()
+        composeRule.onNodeWithText(text(R.string.action_skip)).performClick()
+
+        waitForText(text(R.string.message_todo_skipped))
+        composeRule.onNodeWithText(pending.todo.title).assertDoesNotExist()
+        composeRule.onAllNodesWithText(text(R.string.action_undo)).assertCountEquals(0)
+        composeRule.runOnIdle {
+            assertEquals(1, repository.skipCalls)
+            assertEquals(TodoState.SKIPPED, repository.occurrences.value.single().state)
+        }
+    }
+
+    @Test
+    fun tl017_archiveAndDeleteExplainScopeBeforeIrreversibleAction() {
+        val pending = occurrence("actions", "整理するTODO", TODAY, TodoState.PENDING)
+        val repository = TestTodoRepository(listOf(pending))
+
+        setScreen(repository)
+        waitForText(pending.todo.title)
+
+        openActionMenu()
+        composeRule.onNodeWithText(text(R.string.action_archive)).performClick()
+        composeRule.onNodeWithText(text(R.string.dialog_archive_todo_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(
+            text(R.string.dialog_archive_todo_message, pending.todo.title),
+        ).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, repository.archiveCalls) }
+        composeRule.onNodeWithText(text(R.string.action_cancel)).performClick()
+
+        openActionMenu()
+        composeRule.onNodeWithText(text(R.string.action_delete)).performClick()
+        composeRule.onNodeWithText(text(R.string.dialog_delete_todo_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.dialog_delete_todo_message)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, repository.deleteCalls) }
+        composeRule.onNodeWithText(text(R.string.action_cancel)).performClick()
+    }
+
+    @Test
+    fun tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty() {
+        setScreen(repository = TestTodoRepository(emptyList()), selectedDate = TODAY.minusDays(1))
+        waitForText(text(R.string.empty_selected_date_todos))
+
+        composeRule.onAllNodesWithText(text(R.string.action_add_todo)).assertCountEquals(0)
+    }
+
+    private fun setScreen(
+        repository: TestTodoRepository,
+        selectedDate: LocalDate = TODAY,
+        showCompleted: Boolean = false,
+        onEditTodo: (String) -> Unit = {},
+    ) {
+        val viewModel = TodoListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            todoRepository = repository,
+            holidayRepository = TestHolidayRepository(),
+            settingsRepository = TestSettingsRepository(showCompleted),
+            clock = CLOCK,
+            adsConsentRepository = TestAdsConsentRepository(),
+        )
+        viewModel.selectDate(selectedDate)
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                TodoListScreen(
+                    onAddTodo = {},
+                    onEditTodo = onEditTodo,
+                    onDestination = { _: MataDestination -> },
+                    contentReadinessEnabled = false,
+                    viewModel = viewModel,
+                )
+            }
+        }
+    }
+
+    private fun openActionMenu() {
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_todo_actions))
+            .performClick()
+    }
+
+    private fun waitForText(value: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(value).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun text(resourceId: Int, vararg args: Any): String = InstrumentationRegistry
+        .getInstrumentation().targetContext.getString(resourceId, *args)
+
+    private fun occurrence(
+        id: String,
+        title: String,
+        date: LocalDate,
+        state: TodoState,
+    ): TodoOccurrence {
+        val todo = Todo(
+            id = id,
+            title = title,
+            description = "試験用の説明",
+            categoryId = null,
+            startDate = date,
+            endDate = null,
+            recurrenceRule = RecurrenceRule.daily(),
+            dueMinutes = 8 * 60,
+            definitionRevision = 1,
+            archivedAt = null,
+            createdAt = id.hashCode().toLong(),
+        )
+        return TodoOccurrence(
+            todo = todo,
+            category = null,
+            logicalDate = date,
+            state = state,
+        )
+    }
+
+    private fun hasToggleableState() = SemanticsMatcher("has toggleable state") {
+        it.config.contains(SemanticsProperties.ToggleableState)
+    }
+
+    private fun toggleState(state: ToggleableState) = SemanticsMatcher.expectValue(
+        SemanticsProperties.ToggleableState,
+        state,
+    )
+
+    private companion object {
+        val ZONE: ZoneId = ZoneId.systemDefault()
+        val TODAY: LocalDate = LocalDate.now(ZONE)
+        val CLOCK: Clock = Clock.fixed(TODAY.atTime(12, 0).atZone(ZONE).toInstant(), ZONE)
+    }
+}
+
+private class TestTodoRepository(initialOccurrences: List<TodoOccurrence>) : TodoRepository {
+    val occurrences = MutableStateFlow(initialOccurrences)
+    val todos = MutableStateFlow(initialOccurrences.map(TodoOccurrence::todo))
+    var completeCalls = 0
+        private set
+    var skipCalls = 0
+        private set
+    var archiveCalls = 0
+        private set
+    var deleteCalls = 0
+        private set
+    val mutationCount: Int
+        get() = completeCalls + skipCalls + archiveCalls + deleteCalls
+
+    override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = occurrences
+    override fun observeTodos(): Flow<List<Todo>> = todos
+    override suspend fun getTodo(id: String): Todo? = todos.value.firstOrNull { it.id == id }
+
+    override suspend fun saveTodo(
+        id: String?,
+        title: String,
+        description: String,
+        categoryId: String?,
+        startDate: LocalDate,
+        endDate: LocalDate?,
+        recurrenceRule: RecurrenceRule,
+        dueMinutes: Int?,
+        notifications: List<TodoNotification>,
+        dueDate: LocalDate?,
+        carryOverEnabled: Boolean,
+    ): Result<String> = Result.success(id ?: "todo")
+
+    override suspend fun setCompleted(
+        todoId: String,
+        logicalDate: LocalDate,
+        completed: Boolean,
+        operationId: String,
+        scheduledLogicalDate: LocalDate,
+    ): Result<Unit> {
+        completeCalls += 1
+        occurrences.value = occurrences.value.map { occurrence ->
+            if (occurrence.todo.id == todoId && occurrence.logicalDate == logicalDate) {
+                occurrence.copy(state = if (completed) TodoState.COMPLETED else TodoState.PENDING)
+            } else {
+                occurrence
+            }
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun setSkipped(
+        todoId: String,
+        logicalDate: LocalDate,
+        skipped: Boolean,
+        operationId: String,
+        scheduledLogicalDate: LocalDate,
+    ): Result<Unit> {
+        skipCalls += 1
+        occurrences.value = occurrences.value.map { occurrence ->
+            if (occurrence.todo.id == todoId && occurrence.logicalDate == logicalDate) {
+                occurrence.copy(state = if (skipped) TodoState.SKIPPED else TodoState.PENDING)
+            } else {
+                occurrence
+            }
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun archiveTodo(id: String): Result<Unit> {
+        archiveCalls += 1
+        return Result.success(Unit)
+    }
+
+    override suspend fun restoreTodo(id: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun deleteTodo(id: String): Result<Unit> {
+        deleteCalls += 1
+        return Result.success(Unit)
+    }
+}
+
+private class TestSettingsRepository(showCompletedInitially: Boolean) : SettingsRepository {
+    override val showCompleted = MutableStateFlow(showCompletedInitially)
+    override val todoListMode = MutableStateFlow("DATE")
+    override val dayEndHour = MutableStateFlow(0)
+    override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
+    override val theme = MutableStateFlow(AppTheme.SYSTEM)
+    override val notificationPermissionRequested = MutableStateFlow(false)
+    override val archiveSortOrder = MutableStateFlow(ArchiveSortOrder.NEWEST)
+
+    override suspend fun setShowCompleted(value: Boolean) { showCompleted.value = value }
+    override suspend fun setTodoListMode(value: String) { todoListMode.value = value }
+    override suspend fun setDayEndHour(value: Int) { dayEndHour.value = value }
+    override suspend fun setWeekStart(value: DayOfWeek) { weekStart.value = value }
+    override suspend fun setTheme(value: AppTheme) { theme.value = value }
+    override suspend fun setNotificationPermissionRequested(value: Boolean) {
+        notificationPermissionRequested.value = value
+    }
+    override suspend fun setArchiveSortOrder(value: ArchiveSortOrder) {
+        archiveSortOrder.value = value
+    }
+}
+
+private class TestHolidayRepository : HolidayRepository {
+    override val snapshot = MutableStateFlow(HolidaySnapshot())
+    override suspend fun currentSnapshot(): HolidaySnapshot = snapshot.value
+    override suspend fun needsRefresh(): Boolean = false
+    override suspend fun refresh() = HolidayRefreshResult(successful = true)
+    override suspend fun pendingNotificationGeneration(): Long? = null
+    override suspend fun markNotificationGenerationProcessed(generation: Long) = Unit
+    override suspend fun pendingWidgetGeneration(): Long? = null
+    override suspend fun markWidgetGenerationProcessed(generation: Long) = Unit
+}
+
+private class TestAdsConsentRepository : AdsConsentRepository {
+    override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
+    override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+    override fun gatherConsent(activity: Activity) = Unit
+    override fun showPrivacyOptions(activity: Activity) = Unit
+}

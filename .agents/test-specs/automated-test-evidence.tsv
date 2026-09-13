@@ -182,3 +182,11 @@ CM-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategory
 CM-013	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm013_saveTrimsOnlyOuterWhitespaceAndPreservesUserNotation	:app:connectedDebugAndroidTest
 CM-021	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm021_editUpdatesCurrentReferencesButPreservesFinalizedHistorySnapshot	:app:connectedDebugAndroidTest
 CM-023	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomCategoryRepositoryTest.kt	cm023_deleteMovesActiveAndArchivedTodosButPreservesHistorySnapshot	:app:connectedDebugAndroidTest
+TL-005	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail	:app:connectedDebugAndroidTest
+TL-006	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl006_futureDateAllowsOpeningEditorButNotCompletionOrSkip	:app:connectedDebugAndroidTest
+TL-013	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl013_completionImmediatelyUpdatesListAndShowsNoUndoAction	:app:connectedDebugAndroidTest
+TL-014	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl014_completedCheckboxIsReadOnlyAndDoesNotChangeProgress	:app:connectedDebugAndroidTest
+TL-015	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl015_skipImmediatelyRemovesRowAndShowsNoUndoAction	:app:connectedDebugAndroidTest
+TL-017	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl017_archiveAndDeleteExplainScopeBeforeIrreversibleAction	:app:connectedDebugAndroidTest
+TL-020	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty	:app:connectedDebugAndroidTest
+TL-036	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl036_progressIncludesHiddenCompletedAndExcludesSkipped	:app:testDebugUnitTest
