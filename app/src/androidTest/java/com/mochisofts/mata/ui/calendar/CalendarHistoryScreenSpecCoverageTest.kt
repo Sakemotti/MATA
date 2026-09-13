@@ -252,8 +252,9 @@ class CalendarHistoryScreenSpecCoverageTest {
         composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed().performClick()
-        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.mainClock.advanceTimeBy(1_000)
         composeRule.runOnIdle { assertEquals(listOf(token), restored) }
+        composeRule.onAllNodesWithText(text(R.string.action_undo)).assertCountEquals(0)
 
         composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
         composeRule.mainClock.advanceTimeByFrame()
