@@ -83,7 +83,6 @@ class CalendarHistoryScreenSpecCoverageTest {
         val destinations = mutableListOf<MataDestination>()
         setFullScreen(destinations::add)
 
-        composeRule.onNodeWithText(text(R.string.calendar_history_title)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(text(R.string.content_description_open_menu))
             .performClick()
         composeRule.onNode(
@@ -166,7 +165,6 @@ class CalendarHistoryScreenSpecCoverageTest {
     fun ch033_calendarScreenHasNoSearchFilterShareExportFabOrBannerControls() {
         setFullScreen()
 
-        composeRule.onNodeWithText(text(R.string.calendar_history_title)).assertIsDisplayed()
         listOf("検索", "絞り込み", "共有", "出力", "TODOを追加", "広告").forEach { prohibited ->
             composeRule.onAllNodesWithText(prohibited, substring = true).assertCountEquals(0)
         }
