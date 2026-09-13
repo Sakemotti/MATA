@@ -2,6 +2,7 @@ package com.mochisofts.mata.ui.archive
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +23,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -50,6 +51,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -69,6 +71,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -115,6 +119,8 @@ import com.mochisofts.mata.ui.common.TodoDetailCategory
 import com.mochisofts.mata.ui.common.TodoDetailField
 import com.mochisofts.mata.ui.common.TodoDetailModal
 import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.TodoDefinitionCard
+import com.mochisofts.mata.ui.common.ReadOnlyDetailTopAppBar
 import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.DayOfWeek
 import java.time.Instant
@@ -407,16 +413,9 @@ private fun ArchiveSelectedDetail(
         modifier = modifier,
         topBar = {
             if (showTopBar) {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.archive_detail_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Outlined.ArrowBack,
-                                contentDescription = stringResource(R.string.action_back),
-                            )
-                        }
-                    },
+                ReadOnlyDetailTopAppBar(
+                    title = stringResource(R.string.archive_detail_title),
+                    onClose = onBack,
                 )
             }
         },
@@ -653,16 +652,9 @@ fun ArchiveDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.archive_detail_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
+            ReadOnlyDetailTopAppBar(
+                title = stringResource(R.string.archive_detail_title),
+                onClose = onBack,
             )
         },
         bottomBar = {
@@ -719,121 +711,202 @@ private fun ArchiveDetailContent(
     LazyColumn(
         modifier = modifier.mataPageKeyScroll(listState),
         state = listState,
-        contentPadding = PaddingValues(bottom = 24.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        item { ArchiveSectionHeader(R.string.archive_section_todo) }
-        item { ArchiveTodoDefinition(archivedItem) }
-        item { ArchiveSectionHeader(R.string.archive_section_summary) }
-        item { ArchiveSummary(summary) }
-        item { ArchiveSectionHeader(R.string.archive_section_history) }
-        when (val refresh = history.loadState.refresh) {
-            LoadState.Loading -> item {
-                Box(
-                    Modifier.fillMaxWidth().padding(24.dp),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator() }
+        item {
+            TodoDefinitionCard(
+                data = archivedItem.detailModalData(),
+                sectionTitle = stringResource(R.string.archive_section_todo),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            )
+        }
+        item {
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                shape = RoundedCornerShape(28.dp),
+            ) {
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    ArchiveCardTitle(R.string.archive_section_summary)
+                    ArchiveSummary(summary)
+                }
             }
-            is LoadState.Error -> item {
-                ArchiveInlineRetry(R.string.archive_history_load_error, history::retry)
+        }
+        item(key = "history-card-header") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                ArchiveCardTitle(
+                    labelRes = R.string.archive_section_history,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                )
+            }
+        }
+        when (val refresh = history.loadState.refresh) {
+            LoadState.Loading -> item(key = "history-card-loading") {
+                ArchiveHistoryCardMiddle {
+                    Box(
+                        Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator() }
+                }
+            }
+            is LoadState.Error -> item(key = "history-card-error") {
+                ArchiveHistoryCardMiddle {
+                    ArchiveInlineRetry(R.string.archive_history_load_error, history::retry)
+                }
             }
             is LoadState.NotLoading -> {
                 if (history.itemCount == 0) {
-                    item {
-                        Text(
-                            stringResource(R.string.archive_history_empty),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-                        )
+                    item(key = "history-card-empty") {
+                        ArchiveHistoryCardMiddle {
+                            Text(
+                                stringResource(R.string.archive_history_empty),
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                            )
+                        }
                     }
                 } else {
                     items(
                         count = history.itemCount,
                         key = { index -> history[index]?.stableId ?: "history-placeholder-$index" },
                     ) { index ->
-                        val historyItem = history[index] ?: return@items
-                        ArchiveHistoryRow(historyItem) { onHistoryClick(historyItem) }
-                        HorizontalDivider()
+                        ArchiveHistoryCardMiddle {
+                            val historyItem = history[index]
+                            if (historyItem != null) {
+                                ArchiveHistoryRow(historyItem) { onHistoryClick(historyItem) }
+                                HorizontalDivider()
+                            }
+                        }
                     }
                 }
             }
         }
-        when (history.loadState.append) {
-            LoadState.Loading -> item {
-                Box(
-                    Modifier.fillMaxWidth().padding(16.dp),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator(Modifier.size(28.dp)) }
+        item(key = "history-card-footer") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                when (history.loadState.append) {
+                    LoadState.Loading -> Box(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator(Modifier.size(28.dp)) }
+                    is LoadState.Error -> {
+                        ArchiveInlineRetry(R.string.archive_more_load_error, history::retry)
+                    }
+                    is LoadState.NotLoading -> Spacer(Modifier.height(12.dp))
+                }
             }
-            is LoadState.Error -> item {
-                ArchiveInlineRetry(R.string.archive_more_load_error, history::retry)
-            }
-            is LoadState.NotLoading -> Unit
         }
     }
 }
 
 @Composable
-private fun ArchiveTodoDefinition(item: ArchivedTodoItem) {
-    val todo = item.todo
-    Column(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+private fun ArchiveHistoryCardMiddle(content: @Composable () -> Unit) {
+    val borderColor = MaterialTheme.colorScheme.outlineVariant
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(surfaceColor)
+            .drawBehind {
+                val strokeWidth = 1.dp.toPx()
+                val halfStroke = strokeWidth / 2
+                drawLine(
+                    color = borderColor,
+                    start = Offset(halfStroke, 0f),
+                    end = Offset(halfStroke, size.height),
+                    strokeWidth = strokeWidth,
+                )
+                drawLine(
+                    color = borderColor,
+                    start = Offset(size.width - halfStroke, 0f),
+                    end = Offset(size.width - halfStroke, size.height),
+                    strokeWidth = strokeWidth,
+                )
+            },
     ) {
-        Text(todo.title, style = MaterialTheme.typography.titleLarge)
-        if (todo.description.isNotBlank()) Text(todo.description)
-        ArchiveDetailLine(
-            stringResource(R.string.label_category),
-            item.category?.name ?: stringResource(R.string.label_uncategorized),
-        )
-        ArchiveDetailLine(
-            stringResource(R.string.archive_label_schedule),
-            activePeriodDescription(item),
-        )
-        ArchiveDetailLine(
-            stringResource(R.string.archive_label_recurrence),
-            recurrenceDescription(todo.recurrenceRule),
-        )
-        ArchiveDetailLine(
-            stringResource(R.string.archive_label_holiday),
-            stringResource(
-                if (todo.recurrenceType == RecurrenceType.WEEKDAYS) {
-                    R.string.archive_holiday_excluded
-                } else if (todo.recurrenceRule.dayFilter == RecurrenceDayFilter.WEEKDAYS) {
-                    R.string.archive_holiday_excluded
-                } else if (
-                    todo.recurrenceRule.dayFilter == RecurrenceDayFilter.WEEKENDS_HOLIDAYS
-                ) {
-                    R.string.archive_holiday_included
-                } else {
-                    R.string.archive_holiday_not_excluded
-                },
+        content()
+    }
+}
+
+@Composable
+private fun ArchivedTodoItem.detailModalData(): TodoDetailModalData {
+    val item = this
+    val todo = item.todo
+    val fields = buildList {
+        add(TodoDetailField(stringResource(R.string.archive_label_schedule), activePeriodDescription(item)))
+        add(TodoDetailField(stringResource(R.string.archive_label_recurrence), recurrenceDescription(todo.recurrenceRule)))
+        add(
+            TodoDetailField(
+                stringResource(R.string.archive_label_holiday),
+                stringResource(
+                    if (todo.recurrenceType == RecurrenceType.WEEKDAYS) {
+                        R.string.archive_holiday_excluded
+                    } else if (todo.recurrenceRule.dayFilter == RecurrenceDayFilter.WEEKDAYS) {
+                        R.string.archive_holiday_excluded
+                    } else if (
+                        todo.recurrenceRule.dayFilter == RecurrenceDayFilter.WEEKENDS_HOLIDAYS
+                    ) {
+                        R.string.archive_holiday_included
+                    } else {
+                        R.string.archive_holiday_not_excluded
+                    },
+                ),
             ),
         )
-        ArchiveDetailLine(
-            stringResource(R.string.archive_label_due),
-            todo.dueMinutes?.let { minutes ->
-                stringResource(R.string.time_format, minutes / 60, minutes % 60)
-            } ?: stringResource(R.string.archive_due_none),
+        add(
+            TodoDetailField(
+                stringResource(R.string.archive_label_due),
+                todo.dueMinutes?.let { minutes ->
+                    stringResource(R.string.time_format, minutes / 60, minutes % 60)
+                } ?: stringResource(R.string.archive_due_none),
+            ),
         )
         if (todo.recurrenceType == RecurrenceType.ONCE) {
-            ArchiveDetailLine(
-                stringResource(R.string.todo_editor_due_date_label),
-                todo.dueDate?.toPlainDate()
-                    ?: stringResource(R.string.todo_editor_due_date_same_as_execution),
+            add(
+                TodoDetailField(
+                    stringResource(R.string.todo_editor_due_date_label),
+                    todo.dueDate?.toPlainDate()
+                        ?: stringResource(R.string.todo_editor_due_date_same_as_execution),
+                ),
             )
         }
-        ArchiveDetailLine(
-            stringResource(R.string.todo_editor_carry_over_label),
-            stringResource(if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled),
+        add(
+            TodoDetailField(
+                stringResource(R.string.todo_editor_carry_over_label),
+                stringResource(if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled),
+            ),
         )
-        ArchiveDetailLine(
-            stringResource(R.string.archive_label_notifications),
-            notificationDescription(todo.notifications),
+        add(
+            TodoDetailField(
+                stringResource(R.string.archive_label_notifications),
+                notificationDescription(todo.notifications),
+            ),
         )
-        ArchiveDetailLine(
-            stringResource(R.string.archive_label_archived_at),
-            formatEpochMillis(item.archivedAt),
+        add(
+            TodoDetailField(
+                stringResource(R.string.archive_label_archived_at),
+                formatEpochMillis(item.archivedAt),
+            ),
         )
     }
+    return TodoDetailModalData(
+        title = todo.title,
+        description = todo.description,
+        category = TodoDetailCategory(
+            name = item.category?.name ?: stringResource(R.string.label_uncategorized),
+            iconName = item.category?.iconName,
+            colorIndex = item.category?.colorIndex,
+        ),
+        fields = fields,
+    )
 }
 
 @Composable
@@ -845,7 +918,7 @@ private fun ArchiveSummary(summary: ArchiveHistorySummary?) {
         ) { CircularProgressIndicator(Modifier.size(28.dp)) }
         return
     }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+    Column(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.archive_summary_completed, summary.completedCount))
         Text(stringResource(R.string.archive_summary_missed, summary.missedCount))
         Text(stringResource(R.string.archive_summary_skipped, summary.skippedCount))
@@ -1188,21 +1261,16 @@ private fun ExecutionStateIcon(state: TodoState) {
 }
 
 @Composable
-private fun ArchiveSectionHeader(@StringRes labelRes: Int) {
+private fun ArchiveCardTitle(
+    @StringRes labelRes: Int,
+    modifier: Modifier = Modifier,
+) {
     Text(
         stringResource(labelRes),
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+        modifier = modifier.fillMaxWidth(),
     )
-}
-
-@Composable
-private fun ArchiveDetailLine(label: String, value: String) {
-    Column {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text(value)
-    }
 }
 
 @Composable

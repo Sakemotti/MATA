@@ -110,7 +110,7 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.ui.common.TodoDetailCategory
 import com.mochisofts.mata.ui.common.TodoDetailField
-import com.mochisofts.mata.ui.common.TodoDetailModal
+import com.mochisofts.mata.ui.common.TodoDetailFullScreen
 import com.mochisofts.mata.ui.common.TodoDetailModalData
 import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.DayOfWeek
@@ -271,7 +271,7 @@ fun CalendarHistoryScreen(
         )
     }
     dialogItem?.let { item ->
-        TodoDetailModal(
+        TodoDetailFullScreen(
             data = item.detailModalData(),
             onDismiss = { dialogItemKey = null },
         )

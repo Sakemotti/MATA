@@ -2,11 +2,15 @@ package com.mochisofts.mata.ui.common
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import com.mochisofts.mata.core.designsystem.MataTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -84,5 +88,38 @@ class TodoDetailModalTest {
         composeRule.onNodeWithText("閉じる").assertIsDisplayed()
         composeRule.onNodeWithText("最終値").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("閉じる").assertIsDisplayed()
+    }
+
+    @Test
+    fun fullScreenDetailKeepsCommonHeaderVisibleWhileWholeCardScrolls() {
+        var dismissed = false
+        val fields = buildList {
+            repeat(20) { index -> add(TodoDetailField("項目$index", "値$index")) }
+            add(TodoDetailField("最終項目", "最終値"))
+        }
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                TodoDetailFullScreen(
+                    data = TodoDetailModalData(
+                        title = "読み取り専用TODO",
+                        description = "説明",
+                        category = TodoDetailCategory(
+                            name = "カテゴリ",
+                            iconName = "Home",
+                            colorIndex = 2,
+                        ),
+                        fields = fields,
+                    ),
+                    onDismiss = { dismissed = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("TODO詳細").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("閉じる").assertIsDisplayed()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("最終値"))
+        composeRule.onNodeWithText("最終値").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("閉じる").assertIsDisplayed().performClick()
+        composeRule.runOnIdle { assertTrue(dismissed) }
     }
 }
