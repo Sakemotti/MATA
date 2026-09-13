@@ -130,7 +130,7 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-private sealed interface HistoryDialogItem {
+internal sealed interface HistoryDialogItem {
     data class Execution(val value: HistoryEntry) : HistoryDialogItem
     data class Period(val value: PeriodHistoryEntry) : HistoryDialogItem
 }
@@ -619,7 +619,7 @@ private fun DayHistoryArea(
 }
 
 @Composable
-private fun DayHistoryCard(
+internal fun DayHistoryCard(
     day: com.mochisofts.mata.domain.model.HistoryDay,
     busyExecutionId: String?,
     onEntryClick: (HistoryEntry) -> Unit,
@@ -691,7 +691,7 @@ private fun HistorySectionContent(
 }
 
 @Composable
-private fun DaySummaryHeader(day: com.mochisofts.mata.domain.model.HistoryDay) {
+internal fun DaySummaryHeader(day: com.mochisofts.mata.domain.model.HistoryDay) {
     val progress = if (day.summary.plannedCount == 0) {
         0f
     } else {
@@ -822,6 +822,7 @@ internal fun HistoryEntryRow(
                     Text(entry.snapshot.description, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 Text(historyEntrySupportingText(entry))
+                historyEntryScheduleText(entry)?.let { Text(it) }
                 entry.actedAt?.let {
                     Text(
                         stringResource(
@@ -862,7 +863,7 @@ internal fun HistoryEntryRow(
 }
 
 @Composable
-private fun PeriodResultRow(entry: PeriodHistoryEntry, onClick: (PeriodHistoryEntry) -> Unit) {
+internal fun PeriodResultRow(entry: PeriodHistoryEntry, onClick: (PeriodHistoryEntry) -> Unit) {
     MataTodoListItem(
         headlineContent = {
             Text(entry.snapshot.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -951,7 +952,7 @@ private fun HistoryStateIcon(state: HistoryDayState, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
+internal fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
     val snapshot = when (this) {
         is HistoryDialogItem.Execution -> value.snapshot
         is HistoryDialogItem.Period -> value.snapshot
@@ -1119,6 +1120,22 @@ private fun historyEntrySupportingText(entry: HistoryEntry): String {
         stringResource(R.string.time_format, it / 60, it % 60)
     } ?: stringResource(R.string.label_not_set)
     return stringResource(R.string.calendar_history_entry_support, category, due, entry.state.label())
+}
+
+@Composable
+private fun historyEntryScheduleText(entry: HistoryEntry): String? {
+    val scheduledDate = entry.snapshot.scheduledLogicalDate ?: entry.logicalDate
+    val executionDateText = scheduledDate
+        .takeIf { it != entry.logicalDate }
+        ?.let {
+            stringResource(R.string.calendar_history_original_execution_date, it.toShortDate())
+        }
+    val dueDateText = entry.snapshot.dueDate
+        ?.takeIf { it != scheduledDate }
+        ?.let { stringResource(R.string.calendar_history_due_date, it.toShortDate()) }
+    return listOfNotNull(executionDateText, dueDateText)
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString("・")
 }
 
 @Composable
