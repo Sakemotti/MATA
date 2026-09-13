@@ -376,6 +376,40 @@ class TodoEditorViewModelTest {
     }
 
     @Test
+    fun rpt031_individualWeekdayChangeDropsWeekendHolidayPresetSemantics() = runTest {
+        val viewModel = createViewModel()
+        runCurrent()
+
+        viewModel.setRecurrence(RecurrenceType.SELECTED_WEEKDAYS)
+        viewModel.setDayFilter(RecurrenceDayFilter.WEEKDAYS)
+        assertEquals(
+            setOf(
+                DayOfWeek.MONDAY,
+                DayOfWeek.TUESDAY,
+                DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY,
+                DayOfWeek.FRIDAY,
+            ),
+            viewModel.uiState.value.selectedWeekdays,
+        )
+
+        viewModel.setDayFilter(RecurrenceDayFilter.WEEKENDS_HOLIDAYS)
+        assertEquals(
+            setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+            viewModel.uiState.value.selectedWeekdays,
+        )
+        assertEquals(
+            RecurrenceDayFilter.WEEKENDS_HOLIDAYS,
+            viewModel.uiState.value.dayFilter,
+        )
+
+        viewModel.toggleWeekday(DayOfWeek.SUNDAY)
+        assertEquals(setOf(DayOfWeek.SATURDAY), viewModel.uiState.value.selectedWeekdays)
+        assertEquals(RecurrenceDayFilter.CUSTOM, viewModel.uiState.value.dayFilter)
+        assertEquals(RecurrenceDayFilter.CUSTOM, viewModel.uiState.value.recurrenceRule.dayFilter)
+    }
+
+    @Test
     fun te006_categorySelectionNeverChangesGlobalLogicalDayCalculations() = runTest {
         val categories = listOf(
             category("CAT-000", "日常", 0),
