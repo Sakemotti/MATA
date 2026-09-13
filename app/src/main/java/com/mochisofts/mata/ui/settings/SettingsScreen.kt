@@ -15,6 +15,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +44,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -50,6 +53,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +64,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -77,6 +82,9 @@ import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.MataSectionCard
+import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.core.backup.BACKUP_MIME_TYPE
 import com.mochisofts.mata.core.backup.BackupOperationPhase
@@ -144,21 +152,30 @@ fun SettingsScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
+        val pageColor = MaterialTheme.mataPageColor
         Scaffold(
+            containerColor = pageColor,
             topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.settings_title)) },
-                    navigationIcon = {
-                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Outlined.Menu,
-                                    contentDescription = stringResource(R.string.content_description_open_menu),
-                                )
+                Column {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.settings_title)) },
+                        navigationIcon = {
+                            if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(
+                                        Icons.Outlined.Menu,
+                                        contentDescription = stringResource(R.string.content_description_open_menu),
+                                    )
+                                }
                             }
-                        }
-                    },
-                )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
@@ -192,9 +209,11 @@ fun SettingsScreen(
                             .fillMaxSize()
                             .padding(padding)
                             .mataPageKeyScroll(scrollState)
-                            .verticalScroll(scrollState),
+                            .verticalScroll(scrollState)
+                            .padding(MataCardLayout.PageContentPadding),
+                        verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
                     ) {
-                        SettingsSectionHeader(R.string.settings_section_general)
+                        SettingsSectionCard(R.string.settings_section_general) {
                         SettingsValueRow(
                             title = stringResource(R.string.settings_end_hour_title),
                             value = stringResource(R.string.hour_format, state.endHour),
@@ -226,8 +245,9 @@ fun SettingsScreen(
                             enabled = settingsEnabled,
                             onClick = { showWeekStartSheet = true },
                         )
+                        }
 
-                        SettingsSectionHeader(R.string.settings_section_display)
+                        SettingsSectionCard(R.string.settings_section_display) {
                         ShowCompletedRow(
                             checked = state.showCompleted,
                             isSaving = state.savingSetting == SavingSetting.SHOW_COMPLETED,
@@ -243,10 +263,12 @@ fun SettingsScreen(
                             enabled = settingsEnabled,
                             onClick = { showThemeSheet = true },
                         )
+                        }
 
-                        SettingsSectionHeader(R.string.settings_section_notifications)
+                        SettingsSectionCard(R.string.settings_section_notifications) {
                         if (state.hasNotificationStatusError || state.hasNotificationCountError) {
                             ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 headlineContent = {
                                     Text(
                                         stringResource(R.string.settings_notification_status_load_error),
@@ -312,8 +334,9 @@ fun SettingsScreen(
                                 },
                             )
                         }
+                        }
 
-                        SettingsSectionHeader(R.string.settings_section_data)
+                        SettingsSectionCard(R.string.settings_section_data) {
                         SettingsValueRow(
                             title = stringResource(R.string.backup_create_title),
                             value = stringResource(R.string.backup_create_value),
@@ -335,8 +358,9 @@ fun SettingsScreen(
                                 )
                             },
                         )
+                        }
 
-                        SettingsSectionHeader(R.string.settings_section_app_info)
+                        SettingsSectionCard(R.string.settings_section_app_info) {
                         SettingsStaticRow(
                             title = stringResource(R.string.settings_app_name_title),
                             value = stringResource(R.string.app_name),
@@ -424,6 +448,7 @@ fun SettingsScreen(
                                 }
                             },
                         )
+                        }
                         Spacer(Modifier.height(32.dp))
                     }
                 }
@@ -584,12 +609,33 @@ private fun BackupOperationPhase.labelResource(): Int = when (this) {
 }
 
 @Composable
+private fun SettingsSectionCard(
+    @StringRes titleRes: Int,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    MataSectionCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(0.dp),
+    ) {
+        Column {
+            SettingsSectionHeader(titleRes)
+            content()
+        }
+    }
+}
+
+@Composable
 private fun SettingsSectionHeader(@StringRes titleRes: Int) {
     Text(
         text = stringResource(titleRes),
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+        modifier = Modifier.padding(
+            start = MataCardLayout.PageHorizontalPadding,
+            top = 16.dp,
+            end = MataCardLayout.PageHorizontalPadding,
+            bottom = 8.dp,
+        ),
     )
 }
 
@@ -603,6 +649,7 @@ private fun SettingsValueRow(
     onClick: () -> Unit,
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(title) },
         supportingContent = {
             Column {
@@ -630,6 +677,7 @@ private fun SettingsStaticRow(
     description: String,
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(title) },
         supportingContent = {
             Column {
@@ -654,6 +702,7 @@ private fun ShowCompletedRow(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(stringResource(R.string.settings_show_completed_title)) },
         supportingContent = { Text(stringResource(R.string.settings_show_completed_description)) },
         trailingContent = {

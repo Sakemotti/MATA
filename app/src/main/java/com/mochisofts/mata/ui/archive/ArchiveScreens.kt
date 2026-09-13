@@ -2,7 +2,6 @@ package com.mochisofts.mata.ui.archive
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +50,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -60,6 +58,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,8 +70,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -100,6 +97,11 @@ import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.MataSectionCard
+import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
+import com.mochisofts.mata.core.designsystem.mataCardColor
+import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
@@ -119,6 +121,7 @@ import com.mochisofts.mata.ui.common.TodoDetailCategory
 import com.mochisofts.mata.ui.common.TodoDetailField
 import com.mochisofts.mata.ui.common.TodoDetailModal
 import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.TodoDetailSection
 import com.mochisofts.mata.ui.common.TodoDefinitionCard
 import com.mochisofts.mata.ui.common.ReadOnlyDetailTopAppBar
 import com.mochisofts.mata.ui.common.todoNotificationSettingsText
@@ -187,86 +190,96 @@ fun ArchiveListScreen(
             return@MataAdaptiveNavigation
         }
 
+        val pageColor = MaterialTheme.mataPageColor
         Scaffold(
+            containerColor = pageColor,
             topBar = {
-                TopAppBar(
-                    title = {
-                        if (state.searchActive) {
-                            val focusManager = LocalFocusManager.current
-                            TextField(
-                                value = state.searchQuery,
-                                onValueChange = viewModel::updateSearchQuery,
-                                placeholder = { Text(stringResource(R.string.archive_search_hint)) },
-                                singleLine = true,
-                                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                ),
-                            )
-                        } else {
-                            Text(stringResource(R.string.archive_title))
-                        }
-                    },
-                    navigationIcon = {
-                        if (state.searchActive) {
-                            IconButton(onClick = viewModel::closeSearch) {
-                                Icon(
-                                    Icons.Outlined.Close,
-                                    contentDescription = stringResource(R.string.content_description_close_search),
-                                )
-                            }
-                        } else if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Outlined.Menu,
-                                    contentDescription = stringResource(R.string.content_description_open_menu),
-                                )
-                            }
-                        }
-                    },
-                    actions = {
-                        if (!state.searchActive) {
-                            IconButton(onClick = viewModel::openSearch) {
-                                Icon(
-                                    Icons.Outlined.Search,
-                                    contentDescription = stringResource(
-                                        R.string.content_description_archive_search,
+                Column {
+                    TopAppBar(
+                        title = {
+                            if (state.searchActive) {
+                                val focusManager = LocalFocusManager.current
+                                TextField(
+                                    value = state.searchQuery,
+                                    onValueChange = viewModel::updateSearchQuery,
+                                    placeholder = { Text(stringResource(R.string.archive_search_hint)) },
+                                    singleLine = true,
+                                    shape = MataCardLayout.InputShape,
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = MaterialTheme.mataCardColor,
+                                        unfocusedContainerColor = MaterialTheme.mataCardColor,
                                     ),
                                 )
+                            } else {
+                                Text(stringResource(R.string.archive_title))
                             }
-                        }
-                        Box {
-                            IconButton(onClick = { sortMenuExpanded = true }) {
-                                Icon(
-                                    Icons.AutoMirrored.Outlined.Sort,
-                                    contentDescription = stringResource(
-                                        R.string.content_description_archive_sort,
-                                    ),
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = sortMenuExpanded,
-                                onDismissRequest = { sortMenuExpanded = false },
-                            ) {
-                                ArchiveSortOrder.entries.forEach { order ->
-                                    DropdownMenuItem(
-                                        text = { Text(archiveSortLabel(order)) },
-                                        onClick = {
-                                            sortMenuExpanded = false
-                                            viewModel.setSortOrder(order)
-                                        },
-                                        leadingIcon = if (state.sortOrder == order) {
-                                            { Icon(Icons.Outlined.CheckCircle, null) }
-                                        } else {
-                                            null
-                                        },
+                        },
+                        navigationIcon = {
+                            if (state.searchActive) {
+                                IconButton(onClick = viewModel::closeSearch) {
+                                    Icon(
+                                        Icons.Outlined.Close,
+                                        contentDescription = stringResource(R.string.content_description_close_search),
+                                    )
+                                }
+                            } else if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(
+                                        Icons.Outlined.Menu,
+                                        contentDescription = stringResource(R.string.content_description_open_menu),
                                     )
                                 }
                             }
-                        }
-                    },
-                )
+                        },
+                        actions = {
+                            if (!state.searchActive) {
+                                IconButton(onClick = viewModel::openSearch) {
+                                    Icon(
+                                        Icons.Outlined.Search,
+                                        contentDescription = stringResource(
+                                            R.string.content_description_archive_search,
+                                        ),
+                                    )
+                                }
+                            }
+                            Box {
+                                IconButton(onClick = { sortMenuExpanded = true }) {
+                                    Icon(
+                                        Icons.AutoMirrored.Outlined.Sort,
+                                        contentDescription = stringResource(
+                                            R.string.content_description_archive_sort,
+                                        ),
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = sortMenuExpanded,
+                                    onDismissRequest = { sortMenuExpanded = false },
+                                ) {
+                                    ArchiveSortOrder.entries.forEach { order ->
+                                        DropdownMenuItem(
+                                            text = { Text(archiveSortLabel(order)) },
+                                            onClick = {
+                                                sortMenuExpanded = false
+                                                viewModel.setSortOrder(order)
+                                            },
+                                            leadingIcon = if (state.sortOrder == order) {
+                                                { Icon(Icons.Outlined.CheckCircle, null) }
+                                            } else {
+                                                null
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
@@ -411,6 +424,7 @@ private fun ArchiveSelectedDetail(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.mataPageColor,
         topBar = {
             if (showTopBar) {
                 ReadOnlyDetailTopAppBar(
@@ -488,7 +502,12 @@ private fun ArchiveTodoList(
                 LazyColumn(
                     modifier = modifier.mataPageKeyScroll(listState),
                     state = listState,
-                    contentPadding = PaddingValues(bottom = 16.dp),
+                    contentPadding = PaddingValues(
+                        start = MataCardLayout.PageHorizontalPadding,
+                        top = MataCardLayout.PageVerticalPadding,
+                        end = MataCardLayout.PageHorizontalPadding,
+                        bottom = MataCardLayout.PageVerticalPadding,
+                    ),
                 ) {
                     items(
                         count = items.itemCount,
@@ -496,14 +515,25 @@ private fun ArchiveTodoList(
                     ) { index ->
                         val item = items[index] ?: return@items
                         val busy = item.todo.id == loadingPreviewTodoId || item.todo.id == runningTodoId
-                        ArchivedTodoRow(
-                            item = item,
-                            busy = busy,
-                            selected = item.todo.id == selectedTodoId,
-                            onClick = { onOpenDetail(item.todo.id) },
-                            onAction = { action -> onAction(item.todo.id, action) },
-                        )
-                        HorizontalDivider()
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = mataCardSegmentShape(index, items.itemCount),
+                            color = MaterialTheme.mataCardColor,
+                            tonalElevation = 1.dp,
+                        ) {
+                            Column {
+                                ArchivedTodoRow(
+                                    item = item,
+                                    busy = busy,
+                                    selected = item.todo.id == selectedTodoId,
+                                    onClick = { onOpenDetail(item.todo.id) },
+                                    onAction = { action -> onAction(item.todo.id, action) },
+                                )
+                                if (index < items.itemCount - 1) {
+                                    HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                                }
+                            }
+                        }
                     }
                     when (items.loadState.append) {
                         LoadState.Loading -> item {
@@ -651,6 +681,7 @@ fun ArchiveDetailScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.mataPageColor,
         topBar = {
             ReadOnlyDetailTopAppBar(
                 title = stringResource(R.string.archive_detail_title),
@@ -711,7 +742,7 @@ private fun ArchiveDetailContent(
     LazyColumn(
         modifier = modifier.mataPageKeyScroll(listState),
         state = listState,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = MataCardLayout.PageContentPadding,
     ) {
         item {
             TodoDefinitionCard(
@@ -721,28 +752,26 @@ private fun ArchiveDetailContent(
             )
         }
         item {
-            OutlinedCard(
+            MataSectionCard(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                shape = RoundedCornerShape(28.dp),
+                title = stringResource(R.string.archive_section_summary),
             ) {
-                Column(
-                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    ArchiveCardTitle(R.string.archive_section_summary)
-                    ArchiveSummary(summary)
-                }
+                ArchiveSummary(summary)
             }
         }
         item(key = "history-card-header") {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                color = MaterialTheme.mataCardColor,
+                tonalElevation = 1.dp,
             ) {
                 ArchiveCardTitle(
                     labelRes = R.string.archive_section_history,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                    modifier = Modifier.padding(
+                        horizontal = MataCardLayout.PageHorizontalPadding,
+                        vertical = 16.dp,
+                    ),
                 )
             }
         }
@@ -766,7 +795,10 @@ private fun ArchiveDetailContent(
                         ArchiveHistoryCardMiddle {
                             Text(
                                 stringResource(R.string.archive_history_empty),
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = MataCardLayout.PageHorizontalPadding,
+                                    vertical = 16.dp,
+                                ),
                             )
                         }
                     }
@@ -789,8 +821,9 @@ private fun ArchiveDetailContent(
         item(key = "history-card-footer") {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                color = MaterialTheme.mataCardColor,
+                tonalElevation = 1.dp,
             ) {
                 when (history.loadState.append) {
                     LoadState.Loading -> Box(
@@ -809,28 +842,10 @@ private fun ArchiveDetailContent(
 
 @Composable
 private fun ArchiveHistoryCardMiddle(content: @Composable () -> Unit) {
-    val borderColor = MaterialTheme.colorScheme.outlineVariant
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(surfaceColor)
-            .drawBehind {
-                val strokeWidth = 1.dp.toPx()
-                val halfStroke = strokeWidth / 2
-                drawLine(
-                    color = borderColor,
-                    start = Offset(halfStroke, 0f),
-                    end = Offset(halfStroke, size.height),
-                    strokeWidth = strokeWidth,
-                )
-                drawLine(
-                    color = borderColor,
-                    start = Offset(size.width - halfStroke, 0f),
-                    end = Offset(size.width - halfStroke, size.height),
-                    strokeWidth = strokeWidth,
-                )
-            },
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.mataCardColor,
+        tonalElevation = 1.dp,
     ) {
         content()
     }
@@ -840,7 +855,7 @@ private fun ArchiveHistoryCardMiddle(content: @Composable () -> Unit) {
 private fun ArchivedTodoItem.detailModalData(): TodoDetailModalData {
     val item = this
     val todo = item.todo
-    val fields = buildList {
+    val scheduleFields = buildList {
         add(TodoDetailField(stringResource(R.string.archive_label_schedule), activePeriodDescription(item)))
         add(TodoDetailField(stringResource(R.string.archive_label_recurrence), recurrenceDescription(todo.recurrenceRule)))
         add(
@@ -884,18 +899,6 @@ private fun ArchivedTodoItem.detailModalData(): TodoDetailModalData {
                 stringResource(if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled),
             ),
         )
-        add(
-            TodoDetailField(
-                stringResource(R.string.archive_label_notifications),
-                notificationDescription(todo.notifications),
-            ),
-        )
-        add(
-            TodoDetailField(
-                stringResource(R.string.archive_label_archived_at),
-                formatEpochMillis(item.archivedAt),
-            ),
-        )
     }
     return TodoDetailModalData(
         title = todo.title,
@@ -905,7 +908,30 @@ private fun ArchivedTodoItem.detailModalData(): TodoDetailModalData {
             iconName = item.category?.iconName,
             colorIndex = item.category?.colorIndex,
         ),
-        fields = fields,
+        sections = listOf(
+            TodoDetailSection(
+                title = stringResource(R.string.todo_editor_section_schedule),
+                fields = scheduleFields,
+            ),
+            TodoDetailSection(
+                title = stringResource(R.string.todo_editor_section_notification),
+                fields = listOf(
+                    TodoDetailField(
+                        stringResource(R.string.archive_label_notifications),
+                        notificationDescription(todo.notifications),
+                    ),
+                ),
+            ),
+            TodoDetailSection(
+                title = stringResource(R.string.archive_section_archive_info),
+                fields = listOf(
+                    TodoDetailField(
+                        stringResource(R.string.archive_label_archived_at),
+                        formatEpochMillis(item.archivedAt),
+                    ),
+                ),
+            ),
+        ),
     )
 }
 

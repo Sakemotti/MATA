@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -97,10 +98,14 @@ import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
+import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.MataTodoListItem
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.mataCardColor
+import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
 import com.mochisofts.mata.domain.model.HistoryEntry
@@ -112,6 +117,7 @@ import com.mochisofts.mata.ui.common.TodoDetailCategory
 import com.mochisofts.mata.ui.common.TodoDetailField
 import com.mochisofts.mata.ui.common.TodoDetailFullScreen
 import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.TodoDetailSection
 import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.DayOfWeek
 import java.time.Instant
@@ -214,34 +220,37 @@ fun CalendarHistoryScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
-        val pageColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        val pageColor = MaterialTheme.mataPageColor
         Scaffold(
             containerColor = pageColor,
             topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.calendar_history_title)) },
-                    navigationIcon = {
-                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Outlined.Menu,
-                                    contentDescription = stringResource(R.string.content_description_open_menu),
-                                )
+                Column {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.calendar_history_title)) },
+                        navigationIcon = {
+                            if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(
+                                        Icons.Outlined.Menu,
+                                        contentDescription = stringResource(R.string.content_description_open_menu),
+                                    )
+                                }
                             }
-                        }
-                    },
-                    actions = {
-                        if (state.displayedMonth != YearMonth.from(state.today)) {
-                            TextButton(onClick = viewModel::selectToday) {
-                                Text(stringResource(R.string.label_today))
+                        },
+                        actions = {
+                            if (state.displayedMonth != YearMonth.from(state.today)) {
+                                TextButton(onClick = viewModel::selectToday) {
+                                    Text(stringResource(R.string.label_today))
+                                }
                             }
-                        }
-                    },
-                    colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                        containerColor = pageColor,
-                        scrolledContainerColor = pageColor,
-                    ),
-                )
+                        },
+                        colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             snackbarHost = { MataSnackbarHost(snackbarHostState) },
         ) { padding ->
@@ -329,9 +338,7 @@ private fun CalendarHistoryBody(
             }
         }
     } else {
-        Column(
-            modifier = modifier.padding(horizontal = layoutInfo.outerMarginDp.dp),
-        ) {
+        Column(modifier = modifier) {
             CalendarMonthPane(
                 state = state,
                 onPreviousMonth = onPreviousMonth,
@@ -341,7 +348,10 @@ private fun CalendarHistoryBody(
                 onRetry = onRetry,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .padding(
+                        horizontal = MataCardLayout.PageHorizontalPadding,
+                        vertical = MataCardLayout.PageVerticalPadding,
+                    ),
             )
             DayHistoryArea(
                 state = state,
@@ -369,7 +379,7 @@ private fun CalendarMonthPane(
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.mataCardColor,
         tonalElevation = 1.dp,
     ) {
         Column(Modifier.padding(horizontal = 6.dp)) {
@@ -588,55 +598,84 @@ private fun DayHistoryArea(
             LazyColumn(
                 modifier = modifier.fillMaxWidth().mataPageKeyScroll(listState),
                 state = listState,
+                contentPadding = PaddingValues(bottom = MataCardLayout.PageVerticalPadding),
+                verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
             ) {
                 item {
                     DaySummaryHeader(day)
                 }
-                val unfinished = day.entries.filter {
-                    it.state == TodoState.MISSED || it.state == TodoState.PENDING
-                }
-                historySection(
-                    titleRes = R.string.label_unfinished,
-                    entries = unfinished,
-                    onEntryClick = onEntryClick,
-                    onUndoAction = onUndoAction,
-                    busyExecutionId = state.busyExecutionId,
-                )
-                historySection(
-                    titleRes = R.string.label_skipped,
-                    entries = day.entries.filter { it.state == TodoState.SKIPPED },
-                    onEntryClick = onEntryClick,
-                    onUndoAction = onUndoAction,
-                    busyExecutionId = state.busyExecutionId,
-                )
-                historySection(
-                    titleRes = R.string.label_completed,
-                    entries = day.entries.filter { it.state == TodoState.COMPLETED },
-                    onEntryClick = onEntryClick,
-                    onUndoAction = onUndoAction,
-                    busyExecutionId = state.busyExecutionId,
-                )
-                if (day.periodResults.isNotEmpty()) {
-                    item { SectionTitle(stringResource(R.string.calendar_history_period_results)) }
-                    items(day.periodResults, key = { "period:${it.id}" }) { period ->
-                        PeriodResultRow(period, onPeriodClick)
-                        PlannerRowDivider()
-                    }
-                }
-                if (day.entries.isEmpty() && day.periodResults.isEmpty()) {
-                    item {
-                        Box(
-                            Modifier.fillParentMaxHeight().fillMaxWidth().padding(32.dp),
-                            contentAlignment = Alignment.Center,
-                        ) { Text(stringResource(R.string.calendar_history_empty_day)) }
-                    }
+                item(key = "history-card:${day.date}") {
+                    DayHistoryCard(
+                        day = day,
+                        busyExecutionId = state.busyExecutionId,
+                        onEntryClick = onEntryClick,
+                        onPeriodClick = onPeriodClick,
+                        onUndoAction = onUndoAction,
+                    )
                 }
             }
         }
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.historySection(
+@Composable
+private fun DayHistoryCard(
+    day: com.mochisofts.mata.domain.model.HistoryDay,
+    busyExecutionId: String?,
+    onEntryClick: (HistoryEntry) -> Unit,
+    onPeriodClick: (PeriodHistoryEntry) -> Unit,
+    onUndoAction: (String) -> Unit,
+) {
+    MataSectionCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = MataCardLayout.PageHorizontalPadding),
+        contentPadding = PaddingValues(vertical = 8.dp),
+    ) {
+        Column {
+            val unfinished = day.entries.filter {
+                it.state == TodoState.MISSED || it.state == TodoState.PENDING
+            }
+            HistorySectionContent(
+                titleRes = R.string.label_unfinished,
+                entries = unfinished,
+                onEntryClick = onEntryClick,
+                onUndoAction = onUndoAction,
+                busyExecutionId = busyExecutionId,
+            )
+            HistorySectionContent(
+                titleRes = R.string.label_skipped,
+                entries = day.entries.filter { it.state == TodoState.SKIPPED },
+                onEntryClick = onEntryClick,
+                onUndoAction = onUndoAction,
+                busyExecutionId = busyExecutionId,
+            )
+            HistorySectionContent(
+                titleRes = R.string.label_completed,
+                entries = day.entries.filter { it.state == TodoState.COMPLETED },
+                onEntryClick = onEntryClick,
+                onUndoAction = onUndoAction,
+                busyExecutionId = busyExecutionId,
+            )
+            if (day.periodResults.isNotEmpty()) {
+                SectionTitle(stringResource(R.string.calendar_history_period_results))
+                day.periodResults.forEachIndexed { index, period ->
+                    if (index > 0) PlannerRowDivider()
+                    PeriodResultRow(period, onPeriodClick)
+                }
+            }
+            if (day.entries.isEmpty() && day.periodResults.isEmpty()) {
+                Box(
+                    Modifier.fillMaxWidth().heightIn(min = 160.dp).padding(32.dp),
+                    contentAlignment = Alignment.Center,
+                ) { Text(stringResource(R.string.calendar_history_empty_day)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistorySectionContent(
     @androidx.annotation.StringRes titleRes: Int,
     entries: List<HistoryEntry>,
     onEntryClick: (HistoryEntry) -> Unit,
@@ -644,10 +683,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.historySection(
     busyExecutionId: String?,
 ) {
     if (entries.isEmpty()) return
-    item { SectionTitle(stringResource(titleRes)) }
-    items(entries, key = { "entry:${it.id ?: "pending:${it.todoId}:${it.logicalDate}"}" }) { entry ->
+    SectionTitle(stringResource(titleRes))
+    entries.forEachIndexed { index, entry ->
+        if (index > 0) PlannerRowDivider()
         HistoryEntryRow(entry, busyExecutionId, onEntryClick, onUndoAction)
-        PlannerRowDivider()
     }
 }
 
@@ -661,13 +700,13 @@ private fun DaySummaryHeader(day: com.mochisofts.mata.domain.model.HistoryDay) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = MataCardLayout.PageHorizontalPadding),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.mataCardColor,
         tonalElevation = 1.dp,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(
@@ -917,7 +956,7 @@ private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
         is HistoryDialogItem.Execution -> value.snapshot
         is HistoryDialogItem.Period -> value.snapshot
     }
-    val fields = mutableListOf(
+    val scheduleFields = mutableListOf(
         TodoDetailField(
             label = stringResource(R.string.calendar_history_recurrence),
             value = recurrenceLabel(snapshot.recurrenceRule.type),
@@ -928,27 +967,24 @@ private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
                 stringResource(R.string.time_format, it / 60, it % 60)
             } ?: stringResource(R.string.label_not_set),
         ),
-        TodoDetailField(
-            label = stringResource(R.string.calendar_history_notifications),
-            value = todoNotificationSettingsText(snapshot.notifications),
-        ),
     )
     snapshot.dueDate?.let { dueDate ->
-        fields += TodoDetailField(
+        scheduleFields += TodoDetailField(
             label = stringResource(R.string.todo_editor_due_date_label),
             value = dueDate.toShortDate(),
         )
     }
-    fields += TodoDetailField(
+    scheduleFields += TodoDetailField(
         label = stringResource(R.string.todo_editor_carry_over_label),
         value = stringResource(
             if (snapshot.carryOverEnabled) R.string.label_enabled else R.string.label_disabled,
         ),
     )
+    val historyFields = mutableListOf<TodoDetailField>()
     when (this) {
         is HistoryDialogItem.Execution -> {
             snapshot.scheduledLogicalDate?.let { scheduledDate ->
-                fields += TodoDetailField(
+                scheduleFields += TodoDetailField(
                     label = stringResource(R.string.todo_editor_execution_date_label),
                     value = scheduledDate.toShortDate(),
                 )
@@ -956,28 +992,28 @@ private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
             snapshot.resolvedLogicalDate
                 ?.takeIf { it != snapshot.scheduledLogicalDate }
                 ?.let { resolvedDate ->
-                    fields += TodoDetailField(
+                    historyFields += TodoDetailField(
                         label = stringResource(R.string.todo_resolution_date_label),
                         value = resolvedDate.toShortDate(),
                     )
                 }
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_logical_date),
                 value = value.logicalDate.toShortDate(),
             )
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_state),
                 value = value.state.label(),
             )
             value.actedAt?.let {
-                fields += TodoDetailField(
+                historyFields += TodoDetailField(
                     label = stringResource(R.string.calendar_history_operation_time),
                     value = formatEpochMillis(it),
                 )
             }
         }
         is HistoryDialogItem.Period -> {
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_period),
                 value = stringResource(
                     R.string.calendar_history_period_range,
@@ -985,7 +1021,7 @@ private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
                     value.periodEnd.toShortDate(),
                 ),
             )
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_result),
                 value = stringResource(
                     R.string.calendar_history_result_count,
@@ -1004,7 +1040,25 @@ private fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
             iconName = snapshot.categoryIconName,
             colorIndex = snapshot.categoryColorIndex,
         ),
-        fields = fields,
+        sections = listOf(
+            TodoDetailSection(
+                title = stringResource(R.string.todo_editor_section_schedule),
+                fields = scheduleFields,
+            ),
+            TodoDetailSection(
+                title = stringResource(R.string.todo_editor_section_notification),
+                fields = listOf(
+                    TodoDetailField(
+                        label = stringResource(R.string.calendar_history_notifications),
+                        value = todoNotificationSettingsText(snapshot.notifications),
+                    ),
+                ),
+            ),
+            TodoDetailSection(
+                title = stringResource(R.string.archive_section_history),
+                fields = historyFields,
+            ),
+        ),
     )
 }
 
