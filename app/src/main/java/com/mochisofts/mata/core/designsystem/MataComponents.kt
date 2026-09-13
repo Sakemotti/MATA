@@ -21,9 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -146,11 +151,20 @@ fun MataCompletionCheckbox(
     enabled: Boolean = onCheckedChange != null,
     modifier: Modifier = Modifier,
 ) {
+    val accessibleModifier = if (onCheckedChange == null) {
+        modifier.semantics {
+            role = Role.Checkbox
+            toggleableState = if (checked) ToggleableState.On else ToggleableState.Off
+            disabled()
+        }
+    } else {
+        modifier
+    }
     Checkbox(
         checked = checked,
         onCheckedChange = onCheckedChange,
         enabled = enabled,
-        modifier = modifier,
+        modifier = accessibleModifier,
         colors = CheckboxDefaults.colors(
             checkedColor = MaterialTheme.mataColors.statusSuccess,
             checkmarkColor = MaterialTheme.mataColors.onStatusSuccess,

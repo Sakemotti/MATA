@@ -139,8 +139,13 @@ class TodoListViewModel @Inject constructor(
             occurrence.state != TodoState.SKIPPED
         }
         val visibleOccurrences = loaded.occurrences.filter { occurrence ->
-            occurrence.state != TodoState.SKIPPED &&
-                (loaded.date != today || showCompleted || occurrence.state != TodoState.COMPLETED)
+            when {
+                loaded.date.isBefore(today) -> true
+                loaded.date == today ->
+                    occurrence.state != TodoState.SKIPPED &&
+                        (showCompleted || occurrence.state != TodoState.COMPLETED)
+                else -> occurrence.state != TodoState.SKIPPED
+            }
         }
         TodoListUiState(
             isLoading = false,
