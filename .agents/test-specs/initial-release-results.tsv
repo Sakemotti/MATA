@@ -340,14 +340,14 @@ AT-D05	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_6
 AT-D06	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd06・CI run 34027426978成功
 AT-D07	P1	archived-todos.md	未実施	-	-	-	-	-
 ST-001	P1	settings.md	未実施	-	-	-	-	-
-ST-002	P1	settings.md	未実施	-	-	-	-	-
-ST-003	P1	settings.md	未実施	-	-	-	-	-
+ST-002	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・一般、表示、通知、データ管理、アプリ情報の表示順を確認
+ST-003	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・値選択、スイッチ、遷移、処理開始、静的表示の操作種別を確認
 ST-004	P2	settings.md	未実施	-	-	-	-	-
-ST-005	P0	settings.md	未実施	-	-	-	-	-
+ST-005	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・0:00〜23:00の24候補と選択保存を確認
 ST-006	P1	settings.md	未実施	-	-	-	-	-
 ST-007	P0	settings.md	未実施	-	-	-	-	-
 ST-008	P0	settings.md	未実施	-	-	-	-	-
-ST-009	P0	settings.md	未実施	-	-	-	-	-
+ST-009	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・全7曜日の候補と選択保存を確認
 ST-010	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st010・CI run 33863729049成功
 ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st011・CI run 33863729049成功
 ST-012	P1	settings.md	未実施	-	-	-	-	-
@@ -360,7 +360,7 @@ ST-018	P0	settings.md	未実施	-	-	-	-	-
 ST-019	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st019・CI run 33867709111成功
 ST-020	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st020・CI run 33867709111成功
 ST-021	P0	settings.md	未実施	-	-	-	-	-
-ST-022	P1	settings.md	未実施	-	-	-	-	-
+ST-022	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・作成前の個人情報、非暗号化、安全保管の警告を確認
 ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
 ST-024	P0	settings.md	未実施	-	-	-	-	-
 ST-025	P0	settings.md	未実施	-	-	-	-	-
@@ -368,15 +368,15 @@ ST-026	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Back
 ST-027	P0	settings.md	未実施	-	-	-	-	-
 ST-028	P0	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・バックグラウンド移行とプロセス再生成後も処理状態へ復帰し二重実行しないことを確認
 ST-029	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st029・CI run 33871324075成功
-ST-030	P0	settings.md	未実施	-	-	-	-	-
-ST-031	P0	settings.md	未実施	-	-	-	-	-
+ST-030	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・独立広告セクションと掲載位置固定行がないことを確認
+ST-031	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・有料商品、価格、購入、広告削除UIがないことを確認
 ST-032	P1	settings.md	未実施	-	-	-	-	-
 ST-033	P0	settings.md	未実施	-	-	-	-	-
 ST-034	P0	settings.md	未実施	-	-	-	-	-
 ST-035	P0	settings.md	未実施	-	-	-	-	-
 ST-036	P1	settings.md	未実施	-	-	-	-	-
-ST-037	P1	settings.md	未実施	-	-	-	-	-
-ST-038	P1	settings.md	未実施	-	-	-	-	-
+ST-037	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・必須アプリ情報とWebサイト、問合せ非表示を確認
+ST-038	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・Debug版の識別可能なバージョン表記を確認
 ST-039	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	OpenSourceLicensesTest#st039・testDebugUnitTest成功
 ST-040	P1	settings.md	未実施	-	-	-	-	-
 ST-041	P0	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st041・testDebugUnitTest成功

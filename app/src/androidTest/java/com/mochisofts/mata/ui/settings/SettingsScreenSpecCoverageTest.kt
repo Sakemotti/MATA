@@ -2,7 +2,6 @@ package com.mochisofts.mata.ui.settings
 
 import android.app.Activity
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -36,7 +35,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -77,18 +75,25 @@ class SettingsScreenSpecCoverageTest {
         composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.hour_format, 0)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.settings_end_hour_description)).assertIsDisplayed()
-        composeRule.onNode(
-            hasClickAction() and hasAnyDescendant(hasText(text(R.string.settings_end_hour_title))),
-            useUnmergedTree = true,
-        ).assertExists()
+        listOf(
+            R.string.settings_end_hour_title,
+            R.string.settings_licenses_title,
+            R.string.backup_create_title,
+        ).forEach { resourceId ->
+            composeRule.onNode(
+                hasClickAction() and hasText(text(resourceId)),
+            ).assertExists()
+        }
         composeRule.onNode(
             SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch) and
                 hasAnyDescendant(hasText(text(R.string.settings_show_completed_title))),
             useUnmergedTree = true,
         ).assertExists()
-        val staticTitle = composeRule.onNodeWithText(text(R.string.settings_app_name_title))
-            .fetchSemanticsNode()
-        assertFalse(staticTitle.config.contains(SemanticsActions.OnClick))
+        composeRule.onNode(
+            hasText(text(R.string.settings_app_name_title)) and
+                hasText(text(R.string.app_name)) and
+                !hasClickAction(),
+        ).assertExists()
     }
 
     @Test
@@ -136,7 +141,7 @@ class SettingsScreenSpecCoverageTest {
     }
 
     @Test
-    fun st012_completedVisibilitySwitchPersistsImmediately() {
+    fun completedVisibilitySwitchPersistsImmediately() {
         val repository = setScreen(showCompleted = false)
         composeRule.onNodeWithText(text(R.string.settings_show_completed_title)).performScrollTo()
         val switch = composeRule.onNode(
