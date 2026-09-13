@@ -8,6 +8,7 @@
     <string name="action_cancel">キャンセル</string>
     <string name="action_confirm">決定</string>
     <string name="action_close">閉じる</string>
+    <string name="todo_detail_title">TODO詳細</string>
     <string name="action_change">変更</string>
     <string name="action_discard">破棄</string>
     <string name="action_continue_editing">編集を続ける</string>
@@ -89,8 +90,8 @@
     <string name="archive_period_single">%1$s</string>
     <string name="archive_period_indefinite">%1$sから無期限</string>
     <string name="archive_period_range">%1$sから%2$s</string>
-    <string name="archive_section_todo">TODO情報</string>
-    <string name="archive_section_summary">履歴概要</string>
+    <string name="archive_section_todo">TODO定義</string>
+    <string name="archive_section_summary">集計</string>
     <string name="archive_section_history">履歴</string>
     <string name="archive_label_schedule">実施期間</string>
     <string name="archive_label_recurrence">繰り返し設定</string>

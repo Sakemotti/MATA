@@ -75,7 +75,7 @@ class ArchiveListScreenTest {
     }
 
     @Test
-    fun at008_rowOpensReadOnlyFullScreenDetailWithBackNavigation() {
+    fun at008_rowOpensReadOnlyThreeCardFullScreenDetailWithCloseAction() {
         val item = archivedTodo(title = "詳細を開くTODO")
         setScreen(TestArchiveRepository(items = listOf(item)))
         waitForText(item.todo.title)
@@ -83,8 +83,17 @@ class ArchiveListScreenTest {
         composeRule.onNodeWithText(item.todo.title).performClick()
 
         waitForText(text(R.string.archive_detail_title))
-        composeRule.onNodeWithContentDescription(text(R.string.action_back)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(text(R.string.archive_section_todo)).assertIsDisplayed()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(
+            hasText(text(R.string.archive_section_summary)),
+        )
+        composeRule.onNodeWithText(text(R.string.archive_section_summary)).assertIsDisplayed()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(
+            hasText(text(R.string.archive_section_history)),
+        )
+        composeRule.onNodeWithText(text(R.string.archive_section_history)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).performClick()
 
         waitForText(item.todo.title)
         composeRule.onNodeWithText(text(R.string.archive_detail_title)).assertDoesNotExist()
