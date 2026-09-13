@@ -22,24 +22,33 @@ class CalendarHistoryRowTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun bodyStartsAtSamePositionForStateIconCheckboxAndUndoButton() {
+    fun ch018_longRowsKeepBodyAlignedAcrossStateControlsAndShowDistinctScheduleDates() {
+        val pendingTitle = "未完了の長いタイトルが二行を超えても本文領域からはみ出さず末尾が省略されるTODO"
+        val completedTitle = "完了済みの長いタイトルが二行を超えても本文領域からはみ出さず末尾が省略されるTODO"
+        val skippedTitle = "スキップ済みの長いタイトルが二行を超えても本文領域からはみ出さず末尾が省略されるTODO"
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 Column(Modifier.width(360.dp)) {
                     HistoryEntryRow(
-                        entry = historyEntry("未完了項目", TodoState.PENDING, canUndoAction = false),
+                        entry = historyEntry(pendingTitle, TodoState.PENDING, canUndoAction = false),
                         busyExecutionId = null,
                         onClick = {},
                         onUndoAction = {},
                     )
                     HistoryEntryRow(
-                        entry = historyEntry("完了項目", TodoState.COMPLETED, canUndoAction = true),
+                        entry = historyEntry(
+                            completedTitle,
+                            TodoState.COMPLETED,
+                            canUndoAction = true,
+                            scheduledLogicalDate = LocalDate.of(2026, 8, 30),
+                            dueDate = LocalDate.of(2026, 9, 2),
+                        ),
                         busyExecutionId = null,
                         onClick = {},
                         onUndoAction = {},
                     )
                     HistoryEntryRow(
-                        entry = historyEntry("スキップ項目", TodoState.SKIPPED, canUndoAction = true),
+                        entry = historyEntry(skippedTitle, TodoState.SKIPPED, canUndoAction = true),
                         busyExecutionId = null,
                         onClick = {},
                         onUndoAction = {},
@@ -48,18 +57,21 @@ class CalendarHistoryRowTest {
             }
         }
 
-        val pendingLeft = composeRule.onNodeWithText("未完了項目")
+        val pendingLeft = composeRule.onNodeWithText(pendingTitle)
             .fetchSemanticsNode()
             .boundsInRoot.left
-        val completedLeft = composeRule.onNodeWithText("完了項目")
+        val completedLeft = composeRule.onNodeWithText(completedTitle)
             .fetchSemanticsNode()
             .boundsInRoot.left
-        val skippedLeft = composeRule.onNodeWithText("スキップ項目")
+        val skippedLeft = composeRule.onNodeWithText(skippedTitle)
             .fetchSemanticsNode()
             .boundsInRoot.left
 
         assertEquals(pendingLeft, completedLeft, POSITION_TOLERANCE_PX)
         assertEquals(pendingLeft, skippedLeft, POSITION_TOLERANCE_PX)
+        composeRule.onNodeWithText("$completedTitle の履歴に保存された長い説明が二行を超えても全文を読み上げられる説明文")
+            .assertExists()
+        composeRule.onNodeWithText("実行日 2026年8月30日・期限日 2026年9月2日").assertExists()
     }
 }
 
@@ -67,6 +79,8 @@ private fun historyEntry(
     title: String,
     state: TodoState,
     canUndoAction: Boolean,
+    scheduledLogicalDate: LocalDate? = null,
+    dueDate: LocalDate? = null,
 ): HistoryEntry {
     val date = LocalDate.of(2026, 9, 1)
     return HistoryEntry(
@@ -80,7 +94,7 @@ private fun historyEntry(
             todoId = "$title-todo",
             definitionRevision = 1,
             title = title,
-            description = "",
+            description = "$title の履歴に保存された長い説明が二行を超えても全文を読み上げられる説明文",
             startDate = date,
             endDate = null,
             recurrenceRule = RecurrenceRule.daily(),
@@ -94,6 +108,9 @@ private fun historyEntry(
             endHour = 0,
             weekStart = DayOfWeek.MONDAY,
             createdAt = 0L,
+            dueDate = dueDate,
+            scheduledLogicalDate = scheduledLogicalDate,
+            resolvedLogicalDate = date,
         ),
         canUndoAction = canUndoAction,
     )

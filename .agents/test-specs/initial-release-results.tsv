@@ -214,10 +214,10 @@ TE-D04	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalcu
 TE-D05	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#ted05・CI run 34029287328成功
 TE-D06	P1	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#ted06・testDebugUnitTest成功
 CH-001	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-002	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-002	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch002_initialSelectionUsesTodayAndCurrentMonth・testDebugUnitTest成功
 CH-003	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-004	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-005	P0	calendar-history.md	未実施	-	-	-	-	-
+CH-004	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch004_selectTodayReturnsFromPastMonthToToday・testDebugUnitTest成功
+CH-005	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch005_futureDatesAndMonthsCannotBeSelected・testDebugUnitTest成功
 CH-006	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch006・testDebugUnitTest成功
 CH-007	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch007・testDebugUnitTest成功
 CH-008	P1	calendar-history.md	未実施	-	-	-	-	-
@@ -227,18 +227,18 @@ CH-011	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86
 CH-012	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#ch012・testDebugUnitTest成功
 CH-013	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch013・CI run 34557570307成功
 CH-014	P0	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#ch014・CI run 34030219484成功
-CH-015	P1	calendar-history.md	未実施	-	-	-	-	-
-CH-016	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-015	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	CalendarHistoryScreenSpecCoverageTest#ch015_summaryShowsDateStateCountAndProgressWhilePeriodOnlyDayIsNotEmpty・CI run 34748557262成功
+CH-016	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	CalendarHistoryScreenSpecCoverageTest#ch016_nonEmptySectionsAppearInRequiredOrderAndEmptySectionsAreOmitted・CI run 34748557262成功
 CH-017	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch017・CI run 34557570307成功
-CH-018	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-018	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	CalendarHistoryRowTest#ch018_longRowsKeepBodyAlignedAcrossStateControlsAndShowDistinctScheduleDates・CI run 34748557262成功
 CH-019	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-020	P0	calendar-history.md	未実施	-	-	-	-	-
-CH-021	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-021	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	CalendarHistoryScreenSpecCoverageTest#ch021_executionAndPeriodRowsOpenReadOnlyFullScreenDetailAndClose・CI run 34748557262成功
 CH-022	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-023	P0	calendar-history.md	未実施	-	-	-	-	-
 CH-024	P1	calendar-history.md	未実施	-	-	-	-	-
 CH-025	P0	calendar-history.md	未実施	-	-	-	-	-
-CH-026	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-026	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	CalendarHistoryScreenSpecCoverageTest#ch026_emptyDayShowsHistoryEmptyMessage・CI run 34748557262成功
 CH-027	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch027・testDebugUnitTest成功
 CH-028	P0	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch028・testDebugUnitTest成功
 CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功

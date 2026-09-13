@@ -42,6 +42,55 @@ class CalendarHistoryViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
+    fun ch002_initialSelectionUsesTodayAndCurrentMonth() = runTest {
+        val viewModel = createViewModel(CalendarTestHistoryRepository())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        assertEquals(TODAY, viewModel.uiState.value.today)
+        assertEquals(TODAY, viewModel.uiState.value.selectedDate)
+        assertEquals(YearMonth.from(TODAY), viewModel.uiState.value.displayedMonth)
+    }
+
+    @Test
+    fun ch004_selectTodayReturnsFromPastMonthToToday() = runTest {
+        val viewModel = createViewModel(CalendarTestHistoryRepository())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        viewModel.showPreviousMonth()
+        runCurrent()
+        assertEquals(YearMonth.of(2026, 8), viewModel.uiState.value.displayedMonth)
+        assertEquals(LocalDate.of(2026, 8, 6), viewModel.uiState.value.selectedDate)
+
+        viewModel.selectToday()
+        runCurrent()
+        assertEquals(YearMonth.from(TODAY), viewModel.uiState.value.displayedMonth)
+        assertEquals(TODAY, viewModel.uiState.value.selectedDate)
+    }
+
+    @Test
+    fun ch005_futureDatesAndMonthsCannotBeSelected() = runTest {
+        val viewModel = createViewModel(CalendarTestHistoryRepository())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        viewModel.selectDate(TODAY.plusDays(1))
+        viewModel.selectMonth(YearMonth.from(TODAY).plusMonths(1))
+        viewModel.showNextMonth()
+        runCurrent()
+
+        assertEquals(TODAY, viewModel.uiState.value.selectedDate)
+        assertEquals(YearMonth.from(TODAY), viewModel.uiState.value.displayedMonth)
+    }
+
+    @Test
     fun ch027_regionLoadingEmptyErrorsAndRetriesRemainIndependent() = runTest {
         val repository = CalendarTestHistoryRepository().apply {
             failMonth = true
@@ -164,10 +213,14 @@ class CalendarHistoryViewModelTest {
         historyRepository = repository,
         settingsRepository = CalendarTestSettingsRepository(),
         clock = Clock.fixed(
-            LocalDate.of(2026, 9, 6).atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
+            TODAY.atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
             ZoneId.of("Asia/Tokyo"),
         ),
     )
+
+    private companion object {
+        val TODAY: LocalDate = LocalDate.of(2026, 9, 6)
+    }
 }
 
 private class CalendarTestHistoryRepository : HistoryRepository {

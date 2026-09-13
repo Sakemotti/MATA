@@ -190,3 +190,11 @@ TL-015	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSp
 TL-017	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl017_archiveAndDeleteExplainScopeBeforeIrreversibleAction	:app:connectedDebugAndroidTest
 TL-020	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty	:app:connectedDebugAndroidTest
 TL-036	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl036_progressIncludesHiddenCompletedAndExcludesSkipped	:app:testDebugUnitTest
+CH-002	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch002_initialSelectionUsesTodayAndCurrentMonth	:app:testDebugUnitTest
+CH-004	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch004_selectTodayReturnsFromPastMonthToToday	:app:testDebugUnitTest
+CH-005	app/src/test/java/com/mochisofts/mata/ui/calendar/CalendarHistoryViewModelTest.kt	ch005_futureDatesAndMonthsCannotBeSelected	:app:testDebugUnitTest
+CH-015	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	ch015_summaryShowsDateStateCountAndProgressWhilePeriodOnlyDayIsNotEmpty	:app:connectedDebugAndroidTest
+CH-016	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	ch016_nonEmptySectionsAppearInRequiredOrderAndEmptySectionsAreOmitted	:app:connectedDebugAndroidTest
+CH-018	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryRowTest.kt	ch018_longRowsKeepBodyAlignedAcrossStateControlsAndShowDistinctScheduleDates	:app:connectedDebugAndroidTest
+CH-021	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	ch021_executionAndPeriodRowsOpenReadOnlyFullScreenDetailAndClose	:app:connectedDebugAndroidTest
+CH-026	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	ch026_emptyDayShowsHistoryEmptyMessage	:app:connectedDebugAndroidTest

@@ -145,6 +145,8 @@
     <string name="calendar_history_period_results">期間結果</string>
     <string name="calendar_history_empty_day">この日の履歴はありません</string>
     <string name="calendar_history_entry_support">%1$s・期限 %2$s・%3$s</string>
+    <string name="calendar_history_original_execution_date">実行日 %1$s</string>
+    <string name="calendar_history_due_date">期限日 %1$s</string>
     <string name="calendar_history_action_time">操作日時 %1$s</string>
     <string name="calendar_history_weekly_period_format">週%2$d回: %1$d / %2$d %3$s</string>
     <string name="calendar_history_monthly_period_format">月%2$d回: %1$d / %2$d %3$s</string>
