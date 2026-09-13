@@ -245,9 +245,15 @@ class CalendarHistoryScreenSpecCoverageTest {
             MataTheme(useDynamicColor = false) {
                 val hostState = remember { SnackbarHostState() }
                 MataSnackbarHost(hostState)
-                CalendarHistoryEffectHandler(effects, hostState, restored::add)
+                CalendarHistoryEffectHandler(
+                    effects = effects,
+                    snackbarHostState = hostState,
+                    onRestoreAction = restored::add,
+                    undoWindowMillis = TEST_UNDO_WINDOW_MILLIS,
+                )
             }
         }
+        assertEquals(5_000L, CALENDAR_HISTORY_UNDO_WINDOW_MILLIS)
         composeRule.mainClock.advanceTimeByFrame()
 
         composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
@@ -260,8 +266,10 @@ class CalendarHistoryScreenSpecCoverageTest {
         composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed()
-        composeRule.mainClock.advanceTimeBy(5_100)
-        composeRule.onNodeWithText(text(R.string.action_undo)).assertDoesNotExist()
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitUntil(timeoutMillis = 2_000) {
+            composeRule.onAllNodesWithText(text(R.string.action_undo)).fetchSemanticsNodes().isEmpty()
+        }
         composeRule.runOnIdle { assertEquals(listOf(token), restored) }
     }
 
@@ -425,3 +433,4 @@ private fun historySnapshot(title: String): HistoryTodoSnapshot = HistoryTodoSna
 
 private val TEST_DATE: LocalDate = LocalDate.of(2026, 9, 6)
 private const val MONTH_GRID_TAG = "calendar-history-month-grid"
+private const val TEST_UNDO_WINDOW_MILLIS = 100L

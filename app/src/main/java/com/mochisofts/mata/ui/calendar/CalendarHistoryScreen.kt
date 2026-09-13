@@ -1080,6 +1080,7 @@ internal fun CalendarHistoryEffectHandler(
     effects: Flow<CalendarHistoryEffect>,
     snackbarHostState: SnackbarHostState,
     onRestoreAction: (HistoryActionUndoToken) -> Unit,
+    undoWindowMillis: Long = CALENDAR_HISTORY_UNDO_WINDOW_MILLIS,
 ) {
     val resources = LocalResources.current
     val completionUndoneMessage = stringResource(R.string.calendar_history_completion_undone)
@@ -1093,7 +1094,7 @@ internal fun CalendarHistoryEffectHandler(
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
                 is CalendarHistoryEffect.ActionUndone -> {
-                    val result = withTimeoutOrNull(5_000) {
+                    val result = withTimeoutOrNull(undoWindowMillis) {
                         snackbarHostState.showSnackbar(
                             message = if (effect.token.state == TodoState.SKIPPED) {
                                 skipUndoneMessage
@@ -1113,6 +1114,8 @@ internal fun CalendarHistoryEffectHandler(
         }
     }
 }
+
+internal const val CALENDAR_HISTORY_UNDO_WINDOW_MILLIS = 5_000L
 
 @Composable
 private fun ErrorArea(
