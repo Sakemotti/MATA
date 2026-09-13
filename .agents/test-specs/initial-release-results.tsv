@@ -255,17 +255,17 @@ CH-D04	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	Hi
 CH-D05	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	RoomHistoryRepositoryTest#chd05・CI run 34751041027成功
 CH-D06	P1	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・再生成した画面が月、日付、位置を保持せず当日に戻ることを確認
 CH-D07	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・実行履歴と期間結果の詳細レイアウト、スクロール、固定閉じる、システム戻るを確認
-CM-001	P1	category-management.md	未実施	-	-	-	-	-
-CM-002	P0	category-management.md	未実施	-	-	-	-	-
+CM-001	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・ドロワー遷移、全画面表示、選択状態を確認
+CM-002	P0	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・ユーザーカテゴリだけが管理対象になることを確認
 CM-003	P1	category-management.md	未実施	-	-	-	-	-
 CM-004	P2	category-management.md	未実施	-	-	-	-	-
-CM-005	P1	category-management.md	未実施	-	-	-	-	-
-CM-006	P1	category-management.md	未実施	-	-	-	-	-
+CM-005	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空状態ボタンとFABが同じ新規フォームを開くことを確認
+CM-006	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・選択カテゴリの名前、色、アイコンを編集フォームへ読み込むことを確認
 CM-007	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryListViewModelTest#cm007・testDebugUnitTest成功
 CM-008	P1	category-management.md	未実施	-	-	-	-	-
 CM-009	P1	category-management.md	未実施	-	-	-	-	-
 CM-010	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryTodoListViewModelTest#cm010・testDebugUnitTest成功
-CM-011	P1	category-management.md	未実施	-	-	-	-	-
+CM-011	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・プレビュー、名前、色、アイコンと終了時刻入力なしを確認
 CM-012	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm012・connectedDebugAndroidTest成功
 CM-013	P1	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm013・connectedDebugAndroidTest成功
 CM-014	P1	category-management.md	未実施	-	-	-	-	-
@@ -286,7 +286,7 @@ CM-028	P1	category-management.md	未実施	-	-	-	-	-
 CM-029	P1	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryListViewModelTest#cm029・testDebugUnitTest成功
 CM-030	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・カテゴリ名、色、アイコン、選択、順序、エラーを識別して操作できることを確認
 CM-031	P2	category-management.md	未実施	-	-	-	-	-
-CM-D01	P1	category-management.md	未実施	-	-	-	-	-
+CM-D01	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空名、固定緑色、カテゴリアイコンと終了時刻入力なしを確認
 CM-D02	P2	category-management.md	未実施	-	-	-	-	-
 CM-D03	P1	category-management.md	未実施	-	-	-	-	-
 CM-D04	P1	category-management.md	未実施	-	-	-	-	-
