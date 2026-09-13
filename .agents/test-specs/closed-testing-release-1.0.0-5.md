@@ -12,10 +12,10 @@
 | --- | --- |
 | Application ID | `com.mochisofts.mata` |
 | versionName / versionCode | `1.0.0` / `5` |
-| ソースcommit | `99281d24e22256632cc33c95624b3ca39691a106` |
+| ソースcommit | `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d` |
 | AAB | `app/release/1.0.0-5/mata-1.0.0-5.aab` |
-| 容量 | 12,673,367 bytes |
-| SHA-256 | `888272618220628cefdef448f4f96bc28d01f7f22eea6b6b64757a34e64e2ad9` |
+| 容量 | 12,673,373 bytes |
+| SHA-256 | `2ca02fc94c25ccbe29e33d4e38ae12388a52be72e8bc62c8e1d15ea12eb01533` |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` |
 | リリース名 | `1.0.0 (5) Closed testing` |
 | 対象トラック | Closed testing |

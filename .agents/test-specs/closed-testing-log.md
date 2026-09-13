@@ -1,7 +1,7 @@
 # 初回Closed testing実施台帳
 
 - 対象アプリ: MATA `1.0.0 (5)`
-- 対象ソースcommit: `99281d24e22256632cc33c95624b3ca39691a106`
+- 対象ソースcommit: `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`
 - 状態: versionCode 3配布済み／versionCode 4公開状態確認待ち／versionCode 5アップロード待ち／14日間の継続参加確認中
 - テスト開始日: 未定
 - 継続参加の達成予定日: 未定

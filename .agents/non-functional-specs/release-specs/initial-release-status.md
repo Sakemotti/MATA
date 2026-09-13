@@ -29,11 +29,11 @@
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
 | versionCode | `5`。Upload Key署名済み、Closed testingへのアップロード待ち | AUTO |
-| ソースcommit | `99281d24e22256632cc33c95624b3ca39691a106` | AUTO |
+| ソースcommit | `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d` | AUTO |
 | AAB | `app/release/1.0.0-5/mata-1.0.0-5.aab`。Git除外対象 | AUTO |
-| AAB容量 | 12,673,367 bytes | AUTO |
-| AAB SHA-256 | `888272618220628cefdef448f4f96bc28d01f7f22eea6b6b64757a34e64e2ad9` | AUTO |
-| ビルド日時 | `2026-09-13T06:09:19.500058700Z` | AUTO |
+| AAB容量 | 12,673,373 bytes | AUTO |
+| AAB SHA-256 | `2ca02fc94c25ccbe29e33d4e38ae12388a52be72e8bc62c8e1d15ea12eb01533` | AUTO |
+| ビルド日時 | `2026-09-13T06:50:04.715037300Z` | AUTO |
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
@@ -43,9 +43,9 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 
 2026年9月13日にversionCode `5`について次を確認した。
 
-- `main`のcommit`99281d24e22256632cc33c95624b3ca39691a106`から、クリーンな作業ツリーで署名済み成果物を生成した。
+- `main`のcommit`09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`から、更新したストア画像を含むクリーンな作業ツリーで署名済み成果物を再生成した。
 - `node tools/release/verify-readiness.mjs --release`は、Git、法的文書、Play掲載成果物、5成果物のハッシュ、226 runtime componentおよびUpload Key署名を含む全7検査に成功した。
-- [PR #194のCI run 34741198020](https://github.com/Sakemotti/MATA/actions/runs/34741198020)と[PR #195のCI run 34741651049](https://github.com/Sakemotti/MATA/actions/runs/34741651049)は、Repository security、Debug、Release、Performance APK、API 30 instrumented testおよび最終集約に成功した。
+- [PR #194のCI run 34741198020](https://github.com/Sakemotti/MATA/actions/runs/34741198020)、[PR #195のCI run 34741651049](https://github.com/Sakemotti/MATA/actions/runs/34741651049)および[PR #197のCI run 34743486675](https://github.com/Sakemotti/MATA/actions/runs/34743486675)は、Repository security、Debug、Release、Performance APK、API 30 instrumented testおよび最終集約に成功した。
 - Release AABの署名証明書SHA-256はPlay Consoleへ登録済みのUpload Keyと一致し、`publishable=true`である。
 
 2026年9月11日にversionCode `4`について次を確認した。
