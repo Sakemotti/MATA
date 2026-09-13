@@ -1,8 +1,8 @@
 # 初回Closed testing実施台帳
 
-- 対象アプリ: MATA `1.0.0 (3)`
-- 対象ソースcommit: `307949e2068b1c56ff597c3730b05755b1f37e06`
-- 状態: versionCode 3配布・上書き更新・変更内容・環境別再試験済み／14日間の継続参加確認中
+- 対象アプリ: MATA `1.0.0 (5)`
+- 対象ソースcommit: `99281d24e22256632cc33c95624b3ca39691a106`
+- 状態: versionCode 3配布済み／versionCode 4公開状態確認待ち／versionCode 5アップロード待ち／14日間の継続参加確認中
 - テスト開始日: 未定
 - 継続参加の達成予定日: 未定
 - 試験項目: [MATA 総合動作確認項目書](README.md)
@@ -12,8 +12,8 @@
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
-- 登録・更新手順: [MATA 1.0.0 (3) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-3.md)
-- 次回候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
+- 登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
+- 直前候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
 - versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
 - 旧版登録・更新実績: [MATA 1.0.0 (2) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-2.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
@@ -46,7 +46,9 @@
 
 versionCode `1`はInternal testingで使用済みである。versionCode `2`はClosed testingでversionCode `1`からの上書き更新と主要実機試験に使用した。Closed testingフィードバックを反映した現在候補は[versionCode 3公開候補生成結果](release-candidate-1.0.0-3.md)であり、versionCode `2`からの更新結果とPlay Console上の状態を本節へ記録する。
 
-2026年9月11日に[versionCode 4公開候補](release-candidate-1.0.0-4.md)を生成した。Play Consoleへ未登録のため、本節の公開状態と参加要件はversionCode `3`の記録を維持する。登録後にversionCode `4`の状態、日時、AAB照合、警告およびversionCode `3`からの上書き更新結果を追記する。
+2026年9月11日に[versionCode 4公開候補](release-candidate-1.0.0-4.md)を生成し、Closed testingへ登録した。USERの最終確認時点では公開待ちであるため、本節の公開状態と参加要件はversionCode `3`の記録を維持する。versionCode `4`の公開状態、日時、AAB照合、警告および上書き更新結果は公開後に追記する。
+
+2026年9月13日にカードレイアウト改善を含む[versionCode 5公開候補](release-candidate-1.0.0-5.md)を生成した。Closed testingへのアップロード後にversionCode `5`の状態、日時、AAB照合、警告およびGoogle Play経由の上書き更新結果を追記する。
 
 ## 3. テスター・端末台帳
 

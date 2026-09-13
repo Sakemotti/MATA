@@ -1,8 +1,8 @@
 # 初回リリース試験棚卸し
 
-- 対象アプリ: MATA `1.0.0 (4)`
-- 対象ソースcommit: `fe71e1579969d647e95170e47f2d036b19e5b657`
-- 最終更新日: 2026-09-12
+- 対象アプリ: MATA `1.0.0 (5)`
+- 対象ソースcommit: `99281d24e22256632cc33c95624b3ca39691a106`
+- 最終更新日: 2026-09-13
 - 試験項目書: [MATA 総合動作確認項目書](README.md)
 - 項目別結果: [初回リリース試験結果](initial-release-results.tsv)
 - 実機実施計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
@@ -11,7 +11,7 @@
 
 ## 1. 判定
 
-現時点では、versionCode `2`と`3`のGoogle Play配布、主要実機試験、AdMob連携と実広告バナー表示を確認し、デイリープランナーUIを反映したversionCode `4`の署名済み候補も生成済みである。一方、versionCode `4`のClosed testing登録と上書き更新、全P0/P1、Pre-launch reportおよびClosed testing期間の証跡が未完了のため、本番公開判定は`保留`とする。
+現時点では、versionCode `2`と`3`のGoogle Play配布、主要実機試験、AdMob連携と実広告バナー表示を確認し、カードレイアウト改善を反映したversionCode `5`の署名済み候補も生成済みである。一方、versionCode `5`のClosed testing登録と上書き更新、全P0/P1、Pre-launch reportおよびClosed testing期間の証跡が未完了のため、本番公開判定は`保留`とする。
 
 これは不具合による不合格ではなく、項目単位の証跡が不足している状態である。
 
@@ -47,6 +47,7 @@
 | versionCode 2公開候補 | クリーンなmainからUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md) | `REL-021` |
 | versionCode 3公開候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
 | versionCode 4公開候補 | commit `fe71e1579969d647e95170e47f2d036b19e5b657`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (4) 公開候補生成結果](release-candidate-1.0.0-4.md) | `REL-021` |
+| versionCode 5公開候補 | commit `99281d24e22256632cc33c95624b3ca39691a106`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (5) 公開候補生成結果](release-candidate-1.0.0-5.md) | `REL-021` |
 | versionCode 3期限日・繰り越し回帰 | 単発TODOの実行可能期間と期限、繰り越し状態の生成・解決・編集、通知候補、Room 7→8移行、バックアップ形式1〜4の互換性を専用テスト8件で検証 | 2026年9月9日にローカルJDK 21の全176件、API 34 x86_64エミュレータの全116件、および[PR #172のCI](https://github.com/Sakemotti/MATA/actions/runs/34317723204)が成功 | `DAY-015`、`DAY-016`、`STA-013`〜`STA-015`、`NTF-016`、`DAT-011`、`DAT-012` |
 | 制御異常系 | 一覧・フォーム・外部状態の読込失敗と再試行、空状態、操作失敗、検索・月切替の古い応答破棄、広告失敗時の空白非確保を専用テスト9件で検証 | 2026年9月9日のローカル`testDebugUnitTest`成功 | `TL-024`、`TE-D06`、`CH-027`、`CH-030`、`CM-029`、`CTL-008`、`AT-005`、`ST-039`、`ST-042` |
 | TODO一覧の中核表示 | カテゴリ順、実期限順、期限なし表示、高速な日付切替、完了ボタン位置を専用テスト5件で検証 | 2026年9月9日のローカル`testDebugUnitTest`とAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `TL-008`、`TL-009`、`TL-011`、`TL-031`、`TL-032` |
