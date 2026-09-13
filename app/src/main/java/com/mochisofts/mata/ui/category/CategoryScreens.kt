@@ -639,6 +639,7 @@ private fun CategoryListContent(
 
 internal const val CATEGORY_ADD_FAB_TEST_TAG = "category_add_fab"
 internal const val CATEGORY_EMPTY_ADD_TEST_TAG = "category_empty_add"
+internal const val CATEGORY_ICON_LIST_TEST_TAG = "category_icon_list"
 
 @Composable
 private fun CategoryListRow(
@@ -883,7 +884,9 @@ fun CategoryEditorScreen(
                 }
                 Text(stringResource(R.string.category_icon_label), style = MaterialTheme.typography.titleMedium)
                 LazyRow(
-                    modifier = Modifier.focusGroup(),
+                    modifier = Modifier
+                        .focusGroup()
+                        .testTag(CATEGORY_ICON_LIST_TEST_TAG),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(CategoryIconOptions, key = { it.id }) { option ->
@@ -1069,7 +1072,9 @@ private fun CategoryEditorScaffold(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 LazyRow(
-                    modifier = Modifier.focusGroup(),
+                    modifier = Modifier
+                        .focusGroup()
+                        .testTag(CATEGORY_ICON_LIST_TEST_TAG),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(CategoryIconOptions, key = { it.id }) { option ->

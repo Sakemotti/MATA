@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
@@ -80,6 +81,8 @@ class CategoryManagementScreenSpecCoverageTest {
             hasContentDescription(text(R.string.category_color_purple)) and
                 SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
         ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG)
+            .performScrollToNode(hasText(text(R.string.category_icon_game)))
         composeRule.onNode(
             hasText(text(R.string.category_icon_game)) and
                 SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
