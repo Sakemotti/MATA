@@ -99,9 +99,9 @@ class SettingsScreenSpecCoverageTest {
         val options = composeRule.onNodeWithTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG)
         (0..23).forEach { hour ->
             options.performScrollToIndex(hour)
-            composeRule.onNodeWithText(text(R.string.hour_format, hour)).assertExists()
+            selectionOption(text(R.string.hour_format, hour)).assertExists()
         }
-        composeRule.onNodeWithText(text(R.string.hour_format, 23)).performClick()
+        selectionOption(text(R.string.hour_format, 23)).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) { repository.endHour.value == 23 }
         composeRule.onNodeWithText(text(R.string.hour_format, 23)).assertIsDisplayed()
@@ -125,9 +125,9 @@ class SettingsScreenSpecCoverageTest {
         )
         weekdays.forEachIndexed { index, resourceId ->
             options.performScrollToIndex(index)
-            composeRule.onNodeWithText(text(resourceId)).assertExists()
+            selectionOption(text(resourceId)).assertExists()
         }
-        composeRule.onNodeWithText(text(R.string.weekday_sunday_full)).performClick()
+        selectionOption(text(R.string.weekday_sunday_full)).performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
             repository.weekStart.value == DayOfWeek.SUNDAY
@@ -192,7 +192,10 @@ class SettingsScreenSpecCoverageTest {
         ).forEach { resourceId ->
             composeRule.onNodeWithText(text(resourceId)).performScrollTo().assertIsDisplayed()
         }
-        composeRule.onNodeWithText(text(R.string.app_name)).assertIsDisplayed()
+        composeRule.onNode(
+            hasText(text(R.string.app_name)) and
+                hasText(text(R.string.settings_app_name_title)),
+        ).assertIsDisplayed()
         composeRule.onNodeWithText("開発者Webサイト").assertDoesNotExist()
         composeRule.onNodeWithText("お問い合わせ").assertDoesNotExist()
     }
@@ -234,6 +237,11 @@ class SettingsScreenSpecCoverageTest {
     private fun text(resourceId: Int, vararg formatArgs: Any): String =
         InstrumentationRegistry.getInstrumentation().targetContext
             .getString(resourceId, *formatArgs)
+
+    private fun selectionOption(label: String) = composeRule.onNode(
+        SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton) and
+            hasText(label),
+    )
 }
 
 private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : SettingsRepository {
