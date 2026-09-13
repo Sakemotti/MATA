@@ -79,6 +79,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
@@ -315,6 +316,7 @@ fun CategoryListScreen(
             floatingActionButton = {
                 if (!layoutInfo.useTwoPane) {
                     ExtendedFloatingActionButton(
+                        modifier = Modifier.testTag(CATEGORY_ADD_FAB_TEST_TAG),
                         onClick = viewModel::openNewEditor,
                         icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                         text = { Text(stringResource(R.string.action_add_category)) },
@@ -599,7 +601,10 @@ private fun CategoryListContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(stringResource(R.string.category_empty_message))
-                    TextButton(onClick = onAdd) {
+                    TextButton(
+                        onClick = onAdd,
+                        modifier = Modifier.testTag(CATEGORY_EMPTY_ADD_TEST_TAG),
+                    ) {
                         Text(stringResource(R.string.action_add_category))
                     }
                 }
@@ -631,6 +636,9 @@ private fun CategoryListContent(
         item { Spacer(Modifier.height(96.dp)) }
     }
 }
+
+internal const val CATEGORY_ADD_FAB_TEST_TAG = "category_add_fab"
+internal const val CATEGORY_EMPTY_ADD_TEST_TAG = "category_empty_add"
 
 @Composable
 private fun CategoryListRow(

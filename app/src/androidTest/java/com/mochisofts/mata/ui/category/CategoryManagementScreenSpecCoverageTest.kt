@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -59,15 +60,12 @@ class CategoryManagementScreenSpecCoverageTest {
     @Test
     fun cm005_emptyActionAndFabOpenTheSameNewCategoryForm() {
         setScreen(emptyList())
-        val addLabel = text(R.string.action_add_category)
 
-        composeRule.onAllNodesWithText(addLabel).assertCountEquals(2)
-        composeRule.onAllNodesWithText(addLabel)[0].performClick()
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).assertIsDisplayed().performClick()
         assertNewEditorDisplayed()
 
         composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
-        composeRule.onAllNodesWithText(addLabel).assertCountEquals(2)
-        composeRule.onAllNodesWithText(addLabel)[1].performClick()
+        composeRule.onNodeWithTag(CATEGORY_ADD_FAB_TEST_TAG).assertIsDisplayed().performClick()
         assertNewEditorDisplayed()
     }
 
@@ -77,7 +75,7 @@ class CategoryManagementScreenSpecCoverageTest {
 
         composeRule.onNodeWithText("ゲーム").performClick()
         composeRule.onNodeWithText(text(R.string.category_editor_edit_title)).assertIsDisplayed()
-        composeRule.onNodeWithText("ゲーム").assertIsDisplayed()
+        composeRule.onAllNodesWithText("ゲーム").assertCountEquals(2)
         composeRule.onNode(
             hasContentDescription(text(R.string.category_color_purple)) and
                 SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
@@ -91,7 +89,7 @@ class CategoryManagementScreenSpecCoverageTest {
     @Test
     fun cm011_editorShowsPreviewNameColorAndIconWithoutEndHour() {
         setScreen(emptyList())
-        composeRule.onAllNodesWithText(text(R.string.action_add_category))[0].performClick()
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
 
         composeRule.onNodeWithText(text(R.string.category_name_preview)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.category_name_required_label)).assertIsDisplayed()
@@ -105,7 +103,7 @@ class CategoryManagementScreenSpecCoverageTest {
     @Test
     fun cmd01_newEditorUsesSpecifiedDefaultsAndHasNoEndHourInput() {
         setScreen(emptyList())
-        composeRule.onAllNodesWithText(text(R.string.action_add_category))[0].performClick()
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
 
         composeRule.onNodeWithText(text(R.string.category_name_preview)).assertIsDisplayed()
         composeRule.onNode(
