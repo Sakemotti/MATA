@@ -84,10 +84,14 @@ class CalendarHistoryScreenSpecCoverageTest {
             ),
             periodResults = listOf(periodEntry("期間TODO")),
         )
+        val completedOnly = historyDay(
+            entries = listOf(historyEntry("完了だけのTODO", TodoState.COMPLETED)),
+        )
+        val displayedDay = mutableStateOf(day)
 
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
-                DayHistoryCard(day, null, {}, {}, {})
+                DayHistoryCard(displayedDay.value, null, {}, {}, {})
             }
         }
 
@@ -95,14 +99,7 @@ class CalendarHistoryScreenSpecCoverageTest {
             .map { composeRule.onNodeWithText(it).fetchSemanticsNode().boundsInRoot.top }
         assertTrue(sectionTops.zipWithNext().all { (first, second) -> first < second })
 
-        val completedOnly = historyDay(
-            entries = listOf(historyEntry("完了だけのTODO", TodoState.COMPLETED)),
-        )
-        composeRule.setContent {
-            MataTheme(useDynamicColor = false) {
-                DayHistoryCard(completedOnly, null, {}, {}, {})
-            }
-        }
+        composeRule.runOnIdle { displayedDay.value = completedOnly }
         composeRule.onNodeWithText("完了").assertExists()
         composeRule.onNodeWithText("未完了").assertDoesNotExist()
         composeRule.onNodeWithText("スキップ").assertDoesNotExist()
