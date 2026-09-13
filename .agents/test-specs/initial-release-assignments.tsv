@@ -56,7 +56,7 @@ RPT-027	P1	app-core.md	UNIT	DEV_AUTO	DEV	繰り返し
 RPT-028	P0	app-core.md	UNIT/INT	DEV_AUTO	DEV	繰り返し
 RPT-029	P0	app-core.md	UNIT/INT	DEV_AUTO	DEV	繰り返し
 RPT-030	P0	app-core.md	UNIT/INT	DEV_AUTO	DEV	繰り返し
-RPT-031	P0	app-core.md	UNIT/UI	RELEASE_OWNER	OWNER	繰り返し
+RPT-031	P0	app-core.md	UNIT/UI/AUTO	DEV_AUTO	DEV	繰り返し
 STA-001	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
 STA-002	P0	app-core.md	INT/UI	RELEASE_OWNER	OWNER	状態・期限
 STA-003	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
@@ -263,7 +263,7 @@ CM-005	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-006	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-007	P0	category-management.md	UI/INT/UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-008	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-009	P1	category-management.md	MANUAL/UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-009	P1	category-management.md	MANUAL/UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-010	P0	category-management.md	INT/UI/UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-011	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-012	P0	category-management.md	UI/UNIT/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
@@ -280,15 +280,15 @@ CM-022	P0	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-023	P0	category-management.md	INT/UI/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-024	P0	category-management.md	INT	DEV_AUTO	DEV	カテゴリ管理
 CM-025	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-026	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-027	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-026	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
+CM-027	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-028	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-029	P1	category-management.md	UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-030	P1	category-management.md	MANUAL	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-031	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-D01	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-D02	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-D03	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-D03	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-D04	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-D05	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-D06	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理

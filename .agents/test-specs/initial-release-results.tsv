@@ -56,7 +56,7 @@ RPT-027	P1	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleT
 RPT-028	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt028・testDebugUnitTest成功
 RPT-029	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#rpt029・testDebugUnitTest成功
 RPT-030	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt030・CI run 33925067768成功
-RPT-031	P0	app-core.md	未実施	-	-	-	-	-
+RPT-031	P0	app-core.md	合格	2026-09-13	AUTO	5	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#rpt031・testDebugUnitTest成功
 STA-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta001・CI run 33927632450成功
 STA-002	P0	app-core.md	未実施	-	-	-	-	-
 STA-003	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#sta003・connectedDebugAndroidTest成功
@@ -263,7 +263,7 @@ CM-005	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	
 CM-006	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・選択カテゴリの名前、色、アイコンを編集フォームへ読み込むことを確認
 CM-007	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryListViewModelTest#cm007・testDebugUnitTest成功
 CM-008	P1	category-management.md	未実施	-	-	-	-	-
-CM-009	P1	category-management.md	未実施	-	-	-	-	-
+CM-009	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・カスタム移動操作の1位置移動と端の無効方向非提供を確認
 CM-010	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryTodoListViewModelTest#cm010・testDebugUnitTest成功
 CM-011	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・プレビュー、名前、色、アイコンと終了時刻入力なしを確認
 CM-012	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm012・connectedDebugAndroidTest成功
@@ -280,15 +280,15 @@ CM-022	P0	category-management.md	未実施	-	-	-	-	-
 CM-023	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm023・connectedDebugAndroidTest成功
 CM-024	P0	category-management.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#cm024・CI run 34031589568成功
 CM-025	P1	category-management.md	未実施	-	-	-	-	-
-CM-026	P1	category-management.md	未実施	-	-	-	-	-
-CM-027	P1	category-management.md	未実施	-	-	-	-	-
+CM-026	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・削除成功通知と取り消し非提供を確認
+CM-027	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・変更時だけ破棄確認し継続・破棄が仕様どおりであることを確認
 CM-028	P1	category-management.md	未実施	-	-	-	-	-
 CM-029	P1	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryListViewModelTest#cm029・testDebugUnitTest成功
 CM-030	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・カテゴリ名、色、アイコン、選択、順序、エラーを識別して操作できることを確認
 CM-031	P2	category-management.md	未実施	-	-	-	-	-
 CM-D01	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空名、固定緑色、カテゴリアイコンと終了時刻入力なしを確認
 CM-D02	P2	category-management.md	未実施	-	-	-	-	-
-CM-D03	P1	category-management.md	未実施	-	-	-	-	-
+CM-D03	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・即時プレビュー、空名、エラー継続、操作非提供を確認
 CM-D04	P1	category-management.md	未実施	-	-	-	-	-
 CM-D05	P1	category-management.md	未実施	-	-	-	-	-
 CM-D06	P2	category-management.md	未実施	-	-	-	-	-

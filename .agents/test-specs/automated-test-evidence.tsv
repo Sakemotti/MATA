@@ -219,3 +219,8 @@ CM-005	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManageme
 CM-006	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm006_categoryRowLoadsSelectedValuesIntoEditForm	:app:connectedDebugAndroidTest
 CM-011	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm011_editorShowsPreviewNameColorAndIconWithoutEndHour	:app:connectedDebugAndroidTest
 CM-D01	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd01_newEditorUsesSpecifiedDefaultsAndHasNoEndHourInput	:app:connectedDebugAndroidTest
+CM-009	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm009_accessibilityActionsMoveOneStepAndOmitUnavailableDirections	:app:connectedDebugAndroidTest
+CM-026	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm026_deleteSuccessShowsMessageWithoutUndo	:app:connectedDebugAndroidTest
+CM-027	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm027_backOnlyConfirmsDirtyDraftAndDiscardClearsIt	:app:connectedDebugAndroidTest
+CM-D03	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd03_nameChangesPreviewImmediatelyAndInvalidDraftRemainsEditable	:app:connectedDebugAndroidTest
+RPT-031	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	rpt031_individualWeekdayChangeDropsWeekendHolidayPresetSemantics	:app:testDebugUnitTest
