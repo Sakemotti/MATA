@@ -552,6 +552,38 @@ class RoomArchiveRepositoryTest {
     }
 
     @Test
+    fun ch020_permanentDeleteRemovesHistoryPeriodResultsAndCalendarSummaries() = runBlocking {
+        val values = insertArchivedTodo()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val historyRepository = RoomHistoryRepository(
+            database = database,
+            todoDao = database.todoDao(),
+            categoryDao = database.categoryDao(),
+            executionDao = database.todoExecutionDao(),
+            periodResultDao = database.periodResultDao(),
+            runtimeStateDao = database.todoRuntimeStateDao(),
+            todoRepository = todoRepository,
+            settingsRepository = settings,
+            notificationScheduler = scheduler,
+            widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+            clock = clock,
+        )
+        val executionDate = date.minusDays(15)
+        val periodDisplayDate = date.minusDays(8)
+        val before = historyRepository.observeMonth(date.minusDays(20), date).first()
+        assertEquals(1, before.summaries[executionDate]?.completedCount)
+        assertEquals(true, before.summaries[periodDisplayDate]?.hasAchievedPeriod)
+
+        todoRepository.deleteTodo(values.todo.id).getOrThrow()
+
+        assertTrue(historyRepository.observeDay(executionDate).first().entries.isEmpty())
+        assertTrue(historyRepository.observeDay(periodDisplayDate).first().periodResults.isEmpty())
+        val after = historyRepository.observeMonth(date.minusDays(20), date).first()
+        assertNull(after.summaries[executionDate])
+        assertNull(after.summaries[periodDisplayDate])
+    }
+
+    @Test
     fun at028_archivePermanentDeleteRemovesAllRelatedRowsAndScheduledNotifications() = runBlocking {
         val values = insertArchivedTodo()
 

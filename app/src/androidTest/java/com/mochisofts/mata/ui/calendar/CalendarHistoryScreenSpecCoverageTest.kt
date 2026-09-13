@@ -2,20 +2,34 @@ package com.mochisofts.mata.ui.calendar
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.test.platform.app.InstrumentationRegistry
+import com.mochisofts.mata.R
+import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
@@ -28,6 +42,9 @@ import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.ui.common.TodoDetailFullScreen
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
+import kotlinx.coroutines.flow.MutableSharedFlow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -35,6 +52,72 @@ import org.junit.Test
 class CalendarHistoryScreenSpecCoverageTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun ch003_monthButtonsSwipeAndPickerMoveAcrossAllowedMonthsOnly() {
+        val selectedByPicker = mutableListOf<YearMonth>()
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                var state by remember { mutableStateOf(calendarState(YearMonth.of(2026, 8))) }
+                var showPicker by remember { mutableStateOf(false) }
+                val selectMonth: (YearMonth) -> Unit = { month -> state = calendarState(month) }
+                Column(modifierWidth) {
+                    MonthControls(
+                        state = state,
+                        onPrevious = { selectMonth(state.displayedMonth.minusMonths(1)) },
+                        onNext = {
+                            state.displayedMonth.plusMonths(1)
+                                .takeUnless { it.isAfter(YearMonth.from(state.today)) }
+                                ?.let(selectMonth)
+                        },
+                        onSelectMonth = { showPicker = true },
+                    )
+                    MonthGrid(
+                        state = state,
+                        onSelectDate = {},
+                        onPrevious = { selectMonth(state.displayedMonth.minusMonths(1)) },
+                        onNext = { selectMonth(state.displayedMonth.plusMonths(1)) },
+                        modifier = Modifier.testTag(MONTH_GRID_TAG),
+                    )
+                }
+                if (showPicker) {
+                    MonthPickerDialog(
+                        displayedMonth = state.displayedMonth,
+                        today = state.today,
+                        onSelect = {
+                            selectedByPicker += it
+                            selectMonth(it)
+                            showPicker = false
+                        },
+                        onDismiss = { showPicker = false },
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(text(R.string.calendar_history_previous_month))
+            .performClick()
+        composeRule.onNodeWithText("2026年7月").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.calendar_history_next_month))
+            .performClick()
+        composeRule.onNodeWithText("2026年8月").assertIsDisplayed()
+
+        composeRule.onNodeWithTag(MONTH_GRID_TAG).performTouchInput { swipeRight() }
+        composeRule.onNodeWithText("2026年7月").assertIsDisplayed()
+        composeRule.onNodeWithTag(MONTH_GRID_TAG).performTouchInput { swipeLeft() }
+        composeRule.onNodeWithText("2026年8月").performClick()
+        composeRule.onNodeWithText(text(R.string.calendar_history_select_month)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_confirm)).performClick()
+        composeRule.runOnIdle { assertEquals(listOf(YearMonth.of(2026, 8)), selectedByPicker) }
+
+        composeRule.onNodeWithContentDescription(text(R.string.calendar_history_next_month))
+            .performClick()
+        composeRule.onNodeWithText("2026年9月").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.calendar_history_next_month))
+            .assertIsNotEnabled()
+        composeRule.onNodeWithTag(MONTH_GRID_TAG).performTouchInput { swipeLeft() }
+        composeRule.onNodeWithText("2026年9月").assertIsDisplayed()
+    }
 
     @Test
     fun ch015_summaryShowsDateStateCountAndProgressWhilePeriodOnlyDayIsNotEmpty() {
@@ -151,6 +234,79 @@ class CalendarHistoryScreenSpecCoverageTest {
         composeRule.onNodeWithText("期間結果").assertDoesNotExist()
     }
 
+    @Test
+    fun ch024_undoSnackbarRestoresWithinFiveSecondsAndExpiresAfterward() {
+        val effects = MutableSharedFlow<CalendarHistoryEffect>(extraBufferCapacity = 2)
+        val token = undoToken("undo-completed", TodoState.COMPLETED)
+        val restored = mutableListOf<HistoryActionUndoToken>()
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                val hostState = remember { SnackbarHostState() }
+                MataSnackbarHost(hostState)
+                CalendarHistoryEffectHandler(effects, hostState, restored::add)
+            }
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+
+        composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed().performClick()
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.runOnIdle { assertEquals(listOf(token), restored) }
+
+        composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed()
+        composeRule.mainClock.advanceTimeBy(5_100)
+        composeRule.onNodeWithText(text(R.string.action_undo)).assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(listOf(token), restored) }
+    }
+
+    @Test
+    fun ch025_onlyEligibleHistoryRowsExposeUndoAndEveryDetailRemainsReadOnly() {
+        val pending = historyEntry("未完了TODO", TodoState.PENDING)
+        val completed = historyEntry("操作可能な完了", TodoState.COMPLETED)
+        val skipped = historyEntry("操作可能なスキップ", TodoState.SKIPPED)
+        val fixedPast = historyEntry("確定済みの完了", TodoState.COMPLETED, canUndoAction = false)
+        val displayedDay = mutableStateOf(
+            historyDay(
+                entries = listOf(pending, skipped, completed, fixedPast),
+                periodResults = listOf(periodEntry("確定済み期間")),
+            ),
+        )
+        val undoneIds = mutableListOf<String>()
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                var dialogItem by remember { mutableStateOf<HistoryDialogItem?>(null) }
+                Column(modifierWidth) {
+                    DayHistoryCard(
+                        displayedDay.value,
+                        null,
+                        { dialogItem = HistoryDialogItem.Execution(it) },
+                        { dialogItem = HistoryDialogItem.Period(it) },
+                        undoneIds::add,
+                    )
+                }
+                dialogItem?.let { item ->
+                    TodoDetailFullScreen(item.detailModalData()) { dialogItem = null }
+                }
+            }
+        }
+
+        composeRule.onAllNodes(hasToggleableState(), useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onNode(toggleState(ToggleableState.On), useUnmergedTree = true).performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_undo_skip))
+            .performClick()
+        composeRule.runOnIdle {
+            assertEquals(listOf(requireNotNull(completed.id), requireNotNull(skipped.id)), undoneIds)
+            displayedDay.value = historyDay(entries = listOf(pending))
+        }
+
+        composeRule.onNodeWithText(pending.snapshot.title).performClick()
+        assertReadOnlyDetail("対象論理日")
+    }
+
     private fun assertReadOnlyDetail(expectedHistoryField: String) {
         composeRule.onNodeWithText("TODO詳細").assertIsDisplayed()
         composeRule.onNodeWithText("スケジュール").assertIsDisplayed()
@@ -162,6 +318,9 @@ class CalendarHistoryScreenSpecCoverageTest {
         composeRule.onNodeWithText("アーカイブ").assertDoesNotExist()
         composeRule.onNodeWithText("削除").assertDoesNotExist()
     }
+
+    private fun text(resourceId: Int): String = InstrumentationRegistry
+        .getInstrumentation().targetContext.getString(resourceId)
 }
 
 private val modifierWidth = androidx.compose.ui.Modifier.width(360.dp)
@@ -179,7 +338,11 @@ private fun historyDay(
     periodResults: List<PeriodHistoryEntry> = emptyList(),
 ): HistoryDay = HistoryDay(TEST_DATE, summary, entries, periodResults)
 
-private fun historyEntry(title: String, state: TodoState): HistoryEntry = HistoryEntry(
+private fun historyEntry(
+    title: String,
+    state: TodoState,
+    canUndoAction: Boolean = state == TodoState.COMPLETED || state == TodoState.SKIPPED,
+): HistoryEntry = HistoryEntry(
     id = "$title-id",
     todoId = "$title-todo",
     logicalDate = TEST_DATE,
@@ -187,7 +350,41 @@ private fun historyEntry(title: String, state: TodoState): HistoryEntry = Histor
     actedAt = if (state == TodoState.PENDING) null else 1L,
     finalizedAt = null,
     snapshot = historySnapshot(title),
-    canUndoAction = state == TodoState.COMPLETED || state == TodoState.SKIPPED,
+    canUndoAction = canUndoAction,
+)
+
+private fun calendarState(month: YearMonth): CalendarHistoryUiState {
+    val selectedDate = month.atDay(6)
+    return CalendarHistoryUiState(
+        displayedMonth = month,
+        selectedDate = selectedDate,
+        today = LocalDate.of(2026, 9, 6),
+        gridDates = calendarGridDates(month, DayOfWeek.MONDAY),
+        isMonthLoading = false,
+        isDayLoading = false,
+    )
+}
+
+private fun undoToken(id: String, state: TodoState) = HistoryActionUndoToken(
+    id = id,
+    operationId = "$id-operation",
+    todoId = "$id-todo",
+    logicalDate = TEST_DATE,
+    state = state,
+    actedAt = 1,
+    finalizedAt = 1,
+    definitionRevision = 1,
+    snapshotVersion = 1,
+    snapshotJson = "{}",
+)
+
+private fun hasToggleableState() = SemanticsMatcher("has toggleable state") {
+    it.config.contains(SemanticsProperties.ToggleableState)
+}
+
+private fun toggleState(state: ToggleableState) = SemanticsMatcher.expectValue(
+    SemanticsProperties.ToggleableState,
+    state,
 )
 
 private fun periodEntry(title: String): PeriodHistoryEntry = PeriodHistoryEntry(
@@ -225,3 +422,4 @@ private fun historySnapshot(title: String): HistoryTodoSnapshot = HistoryTodoSna
 )
 
 private val TEST_DATE: LocalDate = LocalDate.of(2026, 9, 6)
+private const val MONTH_GRID_TAG = "calendar-history-month-grid"

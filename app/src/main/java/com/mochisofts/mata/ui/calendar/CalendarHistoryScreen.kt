@@ -106,6 +106,7 @@ import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.mataCardColor
 import com.mochisofts.mata.core.designsystem.mataPageColor
+import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
 import com.mochisofts.mata.domain.model.HistoryEntry
@@ -127,6 +128,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -177,43 +179,18 @@ fun CalendarHistoryScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
     var showMonthPicker by rememberSaveable { mutableStateOf(false) }
     var dialogItemKey by rememberSaveable { mutableStateOf<String?>(null) }
     val dialogItem = state.findDialogItem(dialogItemKey)
     val historyListState = rememberLazyListState()
-    val completionUndoneMessage = stringResource(R.string.calendar_history_completion_undone)
-    val skipUndoneMessage = stringResource(R.string.calendar_history_skip_undone)
-    val undoLabel = stringResource(R.string.action_undo)
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
 
-    LaunchedEffect(viewModel, resources, completionUndoneMessage, skipUndoneMessage, undoLabel) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is CalendarHistoryEffect.Message -> {
-                    snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
-                }
-                is CalendarHistoryEffect.ActionUndone -> {
-                    val result = withTimeoutOrNull(5_000) {
-                        snackbarHostState.showSnackbar(
-                            message = if (effect.token.state == TodoState.SKIPPED) {
-                                skipUndoneMessage
-                            } else {
-                                completionUndoneMessage
-                            },
-                            actionLabel = undoLabel,
-                            withDismissAction = true,
-                            duration = SnackbarDuration.Indefinite,
-                        )
-                    }
-                    if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.restoreAction(effect.token)
-                    }
-                }
-            }
-        }
-    }
+    CalendarHistoryEffectHandler(
+        effects = viewModel.effects,
+        snackbarHostState = snackbarHostState,
+        onRestoreAction = viewModel::restoreAction,
+    )
 
     MataAdaptiveNavigation(
         selected = MataDestination.CALENDAR,
@@ -407,7 +384,7 @@ private fun CalendarMonthPane(
 }
 
 @Composable
-private fun MonthControls(
+internal fun MonthControls(
     state: CalendarHistoryUiState,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -457,15 +434,16 @@ internal fun calendarWeekdays(weekStart: DayOfWeek): List<DayOfWeek> =
     (0..6).map { offset -> DayOfWeek.of((weekStart.value - 1 + offset) % 7 + 1) }
 
 @Composable
-private fun MonthGrid(
+internal fun MonthGrid(
     state: CalendarHistoryUiState,
     onSelectDate: (LocalDate) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var dragAmount by remember { mutableFloatStateOf(0f) }
     Column(
-        Modifier
+        modifier
             .fillMaxWidth()
             .focusGroup()
             .pointerInput(state.displayedMonth) {
@@ -1065,7 +1043,7 @@ internal fun HistoryDialogItem.detailModalData(): TodoDetailModalData {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MonthPickerDialog(
+internal fun MonthPickerDialog(
     displayedMonth: YearMonth,
     today: LocalDate,
     onSelect: (YearMonth) -> Unit,
@@ -1095,6 +1073,45 @@ private fun MonthPickerDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         },
     ) { DatePicker(state = state, title = { Text(stringResource(R.string.calendar_history_select_month)) }) }
+}
+
+@Composable
+internal fun CalendarHistoryEffectHandler(
+    effects: Flow<CalendarHistoryEffect>,
+    snackbarHostState: SnackbarHostState,
+    onRestoreAction: (HistoryActionUndoToken) -> Unit,
+) {
+    val resources = LocalResources.current
+    val completionUndoneMessage = stringResource(R.string.calendar_history_completion_undone)
+    val skipUndoneMessage = stringResource(R.string.calendar_history_skip_undone)
+    val undoLabel = stringResource(R.string.action_undo)
+
+    LaunchedEffect(effects, resources, completionUndoneMessage, skipUndoneMessage, undoLabel) {
+        effects.collect { effect ->
+            when (effect) {
+                is CalendarHistoryEffect.Message -> {
+                    snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
+                }
+                is CalendarHistoryEffect.ActionUndone -> {
+                    val result = withTimeoutOrNull(5_000) {
+                        snackbarHostState.showSnackbar(
+                            message = if (effect.token.state == TodoState.SKIPPED) {
+                                skipUndoneMessage
+                            } else {
+                                completionUndoneMessage
+                            },
+                            actionLabel = undoLabel,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Indefinite,
+                        )
+                    }
+                    if (result == SnackbarResult.ActionPerformed) {
+                        onRestoreAction(effect.token)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
