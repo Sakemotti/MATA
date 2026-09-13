@@ -67,8 +67,14 @@ class TodoListScreenSpecCoverageTest {
         }
         composeRule.onAllNodesWithContentDescription(text(R.string.content_description_todo_actions))
             .assertCountEquals(0)
-        composeRule.onNode(toggleState(ToggleableState.On)).assertIsNotEnabled()
-        composeRule.onNode(toggleState(ToggleableState.Off)).assertIsNotEnabled()
+        composeRule.onNode(
+            toggleState(ToggleableState.On),
+            useUnmergedTree = true,
+        ).assertIsNotEnabled()
+        composeRule.onNode(
+            toggleState(ToggleableState.Off),
+            useUnmergedTree = true,
+        ).assertIsNotEnabled()
 
         composeRule.onNodeWithText(skipped.todo.title).performClick()
         composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
@@ -127,7 +133,10 @@ class TodoListScreenSpecCoverageTest {
         setScreen(repository = repository, showCompleted = true)
         waitForText(completed.todo.title)
 
-        composeRule.onNode(toggleState(ToggleableState.On))
+        composeRule.onNode(
+            toggleState(ToggleableState.On),
+            useUnmergedTree = true,
+        )
             .assertIsOn()
             .assertIsNotEnabled()
         composeRule.onNodeWithText("1 / 1 完了").assertIsDisplayed()
