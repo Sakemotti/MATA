@@ -1,0 +1,312 @@
+package com.mochisofts.mata.ui.settings
+
+import android.app.Activity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.test.platform.app.InstrumentationRegistry
+import com.mochisofts.mata.BuildConfig
+import com.mochisofts.mata.R
+import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
+import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.domain.repository.SettingsRepository
+import java.time.DayOfWeek
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class SettingsScreenSpecCoverageTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    @Test
+    fun st002_sectionsAppearInSpecifiedTopToBottomOrder() {
+        setScreen()
+
+        val sectionTitles = listOf(
+            text(R.string.settings_section_general),
+            text(R.string.settings_section_display),
+            text(R.string.settings_section_notifications),
+            text(R.string.settings_section_data),
+            text(R.string.settings_section_app_info),
+        )
+        val renderedTexts = composeRule.onAllNodes(
+            SemanticsMatcher("has text") {
+                it.config.contains(SemanticsProperties.Text)
+            },
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes().flatMap { node ->
+            node.config[SemanticsProperties.Text].map { it.text }
+        }
+        val positions = sectionTitles.map(renderedTexts::indexOf)
+
+        assertTrue("All settings sections must exist: $positions", positions.all { it >= 0 })
+        assertEquals("Settings sections must retain their specified order", positions.sorted(), positions)
+    }
+
+    @Test
+    fun st003_rowsExposeTitleValueDescriptionAndExpectedActionType() {
+        setScreen()
+
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.hour_format, 0)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_description)).assertIsDisplayed()
+        listOf(
+            R.string.settings_end_hour_title,
+            R.string.settings_licenses_title,
+            R.string.backup_create_title,
+        ).forEach { resourceId ->
+            composeRule.onNode(
+                hasClickAction() and hasText(text(resourceId)),
+            ).assertExists()
+        }
+        composeRule.onNode(
+            SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch) and
+                hasAnyDescendant(hasText(text(R.string.settings_show_completed_title))),
+            useUnmergedTree = true,
+        ).assertExists()
+        composeRule.onNode(
+            hasText(text(R.string.settings_app_name_title)) and
+                hasText(text(R.string.app_name)) and
+                !hasClickAction(),
+        ).assertExists()
+    }
+
+    @Test
+    fun st005_endHourOffersEveryWholeHourAndPersistsSelection() {
+        val repository = setScreen()
+
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).performClick()
+        val options = composeRule.onNodeWithTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG)
+        (0..23).forEach { hour ->
+            options.performScrollToIndex(hour)
+            selectionOption(text(R.string.hour_format, hour)).assertExists()
+        }
+        selectionOption(text(R.string.hour_format, 23)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.endHour.value == 23 }
+        composeRule.onNodeWithText(text(R.string.hour_format, 23)).assertIsDisplayed()
+    }
+
+    @Test
+    fun st009_weekStartOffersAllSevenDaysAndPersistsSelection() {
+        val repository = setScreen()
+
+        composeRule.onNodeWithText(text(R.string.settings_week_start_title))
+            .performScrollTo().performClick()
+        val options = composeRule.onNodeWithTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG)
+        val weekdays = listOf(
+            R.string.weekday_monday_full,
+            R.string.weekday_tuesday_full,
+            R.string.weekday_wednesday_full,
+            R.string.weekday_thursday_full,
+            R.string.weekday_friday_full,
+            R.string.weekday_saturday_full,
+            R.string.weekday_sunday_full,
+        )
+        weekdays.forEachIndexed { index, resourceId ->
+            options.performScrollToIndex(index)
+            selectionOption(text(resourceId)).assertExists()
+        }
+        selectionOption(text(R.string.weekday_sunday_full)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            repository.weekStart.value == DayOfWeek.SUNDAY
+        }
+        composeRule.onNodeWithText(text(R.string.weekday_sunday_full)).assertIsDisplayed()
+    }
+
+    @Test
+    fun completedVisibilitySwitchPersistsImmediately() {
+        val repository = setScreen(showCompleted = false)
+        composeRule.onNodeWithText(text(R.string.settings_show_completed_title)).performScrollTo()
+        val switch = composeRule.onNode(
+            SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch),
+            useUnmergedTree = true,
+        )
+
+        switch.assertIsOff().performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.showCompleted.value }
+        switch.assertIsOn()
+    }
+
+    @Test
+    fun st022_backupCreationShowsPersonalDataAndStorageWarningFirst() {
+        setScreen()
+
+        composeRule.onNodeWithText(text(R.string.backup_create_title)).performScrollTo().performClick()
+
+        composeRule.onNodeWithText(text(R.string.backup_warning_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.backup_warning_message)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_continue)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_cancel)).assertIsDisplayed()
+    }
+
+    @Test
+    fun st030_settingsContainNoStandaloneAdvertisingSectionOrPlacementRow() {
+        setScreen()
+
+        composeRule.onNodeWithText("広告", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText("バナー", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun st031_settingsContainNoPaidProductPricePurchaseOrAdRemovalControls() {
+        setScreen()
+
+        listOf("有料", "価格", "購入", "広告削除").forEach { forbiddenText ->
+            composeRule.onNodeWithText(forbiddenText, substring = true).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun st037_appInfoShowsRequiredItemsAndOmitsWebsiteAndContact() {
+        setScreen()
+
+        listOf(
+            R.string.settings_app_name_title,
+            R.string.settings_version_title,
+            R.string.settings_licenses_title,
+            R.string.settings_privacy_policy_title,
+            R.string.settings_terms_title,
+        ).forEach { resourceId ->
+            composeRule.onNodeWithText(text(resourceId)).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNode(
+            hasText(text(R.string.app_name)) and
+                hasText(text(R.string.settings_app_name_title)),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("開発者Webサイト").assertDoesNotExist()
+        composeRule.onNodeWithText("お問い合わせ").assertDoesNotExist()
+    }
+
+    @Test
+    fun st038_debugVersionIsClearlyDistinguishable() {
+        setScreen()
+        val expectedVersion = text(
+            R.string.settings_version_debug_format,
+            BuildConfig.VERSION_NAME,
+        )
+
+        composeRule.onNodeWithText(expectedVersion).performScrollTo().assertIsDisplayed()
+    }
+
+    private fun setScreen(showCompleted: Boolean = false): SettingsScreenTestRepository {
+        val repository = SettingsScreenTestRepository(showCompleted)
+        val viewModel = SettingsViewModel(
+            repository = repository,
+            notificationScheduler = SettingsScreenTestNotificationScheduler(),
+            adsConsentRepository = SettingsScreenTestAdsConsentRepository(),
+        )
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                SettingsScreen(
+                    onDestination = { _: MataDestination -> },
+                    onOpenSourceLicenses = {},
+                    viewModel = viewModel,
+                )
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(text(R.string.settings_end_hour_title))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        return repository
+    }
+
+    private fun text(resourceId: Int, vararg formatArgs: Any): String =
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(resourceId, *formatArgs)
+
+    private fun selectionOption(label: String) = composeRule.onNode(
+        SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton) and
+            hasText(label),
+    )
+}
+
+private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : SettingsRepository {
+    override val showCompleted = MutableStateFlow(showCompletedInitially)
+    private val todoListModeState = MutableStateFlow("DATE")
+    val endHour = MutableStateFlow(0)
+    override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
+    private val themeState = MutableStateFlow(AppTheme.SYSTEM)
+    private val permissionRequestedState = MutableStateFlow(false)
+
+    override val todoListMode: Flow<String> = todoListModeState
+    override val dayEndHour: Flow<Int> = endHour
+    override val theme: Flow<AppTheme> = themeState
+    override val notificationPermissionRequested: Flow<Boolean> = permissionRequestedState
+
+    override suspend fun setShowCompleted(value: Boolean) {
+        showCompleted.emit(value)
+    }
+
+    override suspend fun setTodoListMode(value: String) {
+        todoListModeState.emit(value)
+    }
+
+    override suspend fun setDayEndHour(value: Int) {
+        endHour.emit(value)
+    }
+
+    override suspend fun setWeekStart(value: DayOfWeek) {
+        weekStart.emit(value)
+    }
+
+    override suspend fun setTheme(value: AppTheme) {
+        themeState.emit(value)
+    }
+
+    override suspend fun setNotificationPermissionRequested(value: Boolean) {
+        permissionRequestedState.emit(value)
+    }
+}
+
+private class SettingsScreenTestNotificationScheduler : NotificationScheduler {
+    override val notificationCount: Flow<Int> = MutableStateFlow(0)
+
+    override fun systemState() = NotificationSystemState(
+        canPostNotifications = true,
+        runtimePermissionRelevant = false,
+        runtimePermissionGranted = true,
+        exactAlarmRelevant = false,
+        canScheduleExactAlarms = true,
+    )
+
+    override suspend fun reconcileTodo(todoId: String) = Unit
+    override suspend fun reconcileAll() = Unit
+    override suspend fun cancelTodo(todoId: String) = Unit
+}
+
+private class SettingsScreenTestAdsConsentRepository : AdsConsentRepository {
+    override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
+    override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+
+    override fun gatherConsent(activity: Activity) = Unit
+    override fun showPrivacyOptions(activity: Activity) = Unit
+}

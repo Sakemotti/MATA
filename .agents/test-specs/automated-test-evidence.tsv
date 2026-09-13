@@ -224,3 +224,12 @@ CM-026	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManageme
 CM-027	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm027_backOnlyConfirmsDirtyDraftAndDiscardClearsIt	:app:connectedDebugAndroidTest
 CM-D03	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd03_nameChangesPreviewImmediatelyAndInvalidDraftRemainsEditable	:app:connectedDebugAndroidTest
 RPT-031	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	rpt031_individualWeekdayChangeDropsWeekendHolidayPresetSemantics	:app:testDebugUnitTest
+ST-002	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st002_sectionsAppearInSpecifiedTopToBottomOrder	:app:connectedDebugAndroidTest
+ST-003	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st003_rowsExposeTitleValueDescriptionAndExpectedActionType	:app:connectedDebugAndroidTest
+ST-005	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st005_endHourOffersEveryWholeHourAndPersistsSelection	:app:connectedDebugAndroidTest
+ST-009	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st009_weekStartOffersAllSevenDaysAndPersistsSelection	:app:connectedDebugAndroidTest
+ST-022	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st022_backupCreationShowsPersonalDataAndStorageWarningFirst	:app:connectedDebugAndroidTest
+ST-030	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st030_settingsContainNoStandaloneAdvertisingSectionOrPlacementRow	:app:connectedDebugAndroidTest
+ST-031	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st031_settingsContainNoPaidProductPricePurchaseOrAdRemovalControls	:app:connectedDebugAndroidTest
+ST-037	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st037_appInfoShowsRequiredItemsAndOmitsWebsiteAndContact	:app:connectedDebugAndroidTest
+ST-038	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st038_debugVersionIsClearlyDistinguishable	:app:connectedDebugAndroidTest

@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -745,6 +746,7 @@ private fun <T> SelectionBottomSheet(
                 .fillMaxWidth()
                 .heightIn(max = 520.dp)
                 .selectableGroup()
+                .testTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG)
                 .mataPageKeyScroll(listState),
             state = listState,
         ) {
@@ -768,6 +770,8 @@ private fun <T> SelectionBottomSheet(
         }
     }
 }
+
+internal const val SETTINGS_SELECTION_OPTIONS_TEST_TAG = "settings_selection_options"
 
 @Composable
 private fun weekdayName(day: DayOfWeek): String = stringResource(
