@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,11 +46,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.DrawerValue
@@ -87,12 +88,16 @@ import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataCompletionCheckbox
+import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.MataTodoListItem
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
+import com.mochisofts.mata.core.designsystem.mataCardColor
+import com.mochisofts.mata.core.designsystem.mataPageColor
+import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.RecurrenceType
@@ -181,7 +186,7 @@ fun TodoListScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
-        val pageColor = MaterialTheme.colorScheme.surfaceContainerLowest
+        val pageColor = MaterialTheme.mataPageColor
         Scaffold(
             containerColor = pageColor,
             topBar = {
@@ -251,7 +256,6 @@ fun TodoListScreen(
                     .fillMaxSize()
                     .padding(padding),
             ) {
-                HolidayDataStatus(state)
                 DateMode(
                     state = state,
                     onPrevious = viewModel::selectPreviousDate,
@@ -457,6 +461,7 @@ private fun DateMode(
         onNext = onNext,
         onPickDate = onPickDate,
     )
+    HolidayDataStatus(state)
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.message_loading))
@@ -483,29 +488,54 @@ private fun DateMode(
         LazyColumn(
             modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
             state = listState,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                horizontal = MataCardLayout.PageHorizontalPadding,
+            ),
         ) {
             state.groups.forEach { group ->
                 item(key = "category:${group.category?.id ?: "uncategorized"}") {
-                    TodoCategoryHeader(group.category)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = mataCardSegmentShape(0, group.occurrences.size + 1),
+                        color = MaterialTheme.mataCardColor,
+                        tonalElevation = 1.dp,
+                    ) {
+                        TodoCategoryHeader(group.category)
+                    }
                 }
-                items(
+                itemsIndexed(
                     items = group.occurrences,
-                    key = { "${it.todo.id}:${it.logicalDate}" },
-                ) { occurrence ->
-                    TodoOccurrenceRow(
-                        occurrence = occurrence,
-                        canComplete = state.isToday,
-                        showActions = !state.selectedDate.isBefore(LocalDate.now()),
-                        onComplete = onComplete,
-                        onSkip = onSkip,
-                        onArchive = onArchive,
-                        onDelete = onDelete,
-                        onOpen = onOpen,
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-                    )
+                    key = { _, occurrence -> "${occurrence.todo.id}:${occurrence.logicalDate}" },
+                ) { occurrenceIndex, occurrence ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = mataCardSegmentShape(
+                            occurrenceIndex + 1,
+                            group.occurrences.size + 1,
+                        ),
+                        color = MaterialTheme.mataCardColor,
+                        tonalElevation = 1.dp,
+                    ) {
+                        Column {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                            )
+                            TodoOccurrenceRow(
+                                occurrence = occurrence,
+                                canComplete = state.isToday,
+                                showActions = !state.selectedDate.isBefore(LocalDate.now()),
+                                onComplete = onComplete,
+                                onSkip = onSkip,
+                                onArchive = onArchive,
+                                onDelete = onDelete,
+                                onOpen = onOpen,
+                            )
+                        }
+                    }
+                }
+                item(key = "category-space:${group.category?.id ?: "uncategorized"}") {
+                    Spacer(Modifier.height(MataCardLayout.CardSpacing))
                 }
             }
             item { Spacer(Modifier.height(96.dp)) }
@@ -531,9 +561,9 @@ private fun DailyPlannerHeader(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(MataCardLayout.PageContentPadding),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.mataCardColor,
         tonalElevation = 1.dp,
     ) {
         Column(
@@ -616,7 +646,7 @@ private fun TodoCategoryHeader(
         modifier = Modifier
             .fillMaxWidth()
             .semantics { heading() }
-            .padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 6.dp),
+            .padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 8.dp),
     ) {
         Surface(
             shape = RoundedCornerShape(

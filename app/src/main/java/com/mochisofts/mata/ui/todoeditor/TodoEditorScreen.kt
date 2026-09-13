@@ -57,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,6 +83,9 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
+import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.MataSectionCard
+import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
@@ -153,56 +157,65 @@ fun TodoEditorScreen(
         }
     }
 
+    val pageColor = MaterialTheme.mataPageColor
     Scaffold(
+        containerColor = pageColor,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(
-                            if (state.isNew) R.string.todo_editor_add_title
-                            else R.string.todo_editor_edit_title,
-                        ),
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = ::requestBack) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(
+                                if (state.isNew) R.string.todo_editor_add_title
+                                else R.string.todo_editor_edit_title,
+                            ),
                         )
-                    }
-                },
-                actions = {
-                    if (!state.isNew) {
-                        IconButton(onClick = { showArchiveDialog = true }, enabled = !state.isSaving) {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = ::requestBack) {
                             Icon(
-                                Icons.Outlined.Archive,
-                                contentDescription = stringResource(
-                                    R.string.content_description_archive_todo,
-                                ),
+                                Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
                             )
                         }
-                        IconButton(onClick = { showDeleteDialog = true }, enabled = !state.isSaving) {
-                            Icon(
-                                Icons.Outlined.Delete,
-                                contentDescription = stringResource(R.string.content_description_delete_todo),
-                            )
-                        }
-                    }
-                    TextButton(
-                        onClick = {
-                            if (state.hasPastNotificationForCurrentOccurrence) {
-                                showPastNotificationWarning = true
-                            } else {
-                                viewModel.save()
+                    },
+                    actions = {
+                        if (!state.isNew) {
+                            IconButton(onClick = { showArchiveDialog = true }, enabled = !state.isSaving) {
+                                Icon(
+                                    Icons.Outlined.Archive,
+                                    contentDescription = stringResource(
+                                        R.string.content_description_archive_todo,
+                                    ),
+                                )
                             }
-                        },
-                        enabled = state.canSave && state.isDirty,
-                    ) {
-                        Text(stringResource(R.string.action_save))
-                    }
-                },
-            )
+                            IconButton(onClick = { showDeleteDialog = true }, enabled = !state.isSaving) {
+                                Icon(
+                                    Icons.Outlined.Delete,
+                                    contentDescription = stringResource(R.string.content_description_delete_todo),
+                                )
+                            }
+                        }
+                        TextButton(
+                            onClick = {
+                                if (state.hasPastNotificationForCurrentOccurrence) {
+                                    showPastNotificationWarning = true
+                                } else {
+                                    viewModel.save()
+                                }
+                            },
+                            enabled = state.canSave && state.isDirty,
+                        ) {
+                            Text(stringResource(R.string.action_save))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = pageColor,
+                        scrolledContainerColor = pageColor,
+                    ),
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
         },
     ) { padding ->
         if (state.isLoading) {
@@ -219,16 +232,17 @@ fun TodoEditorScreen(
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
                     .imePadding()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(MataCardLayout.PageContentPadding),
+                verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
             ) {
-                Text(
-                    stringResource(R.string.todo_editor_section_basic_information),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                MataSectionCard(
+                    title = stringResource(R.string.todo_editor_section_basic_information),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = viewModel::setTitle,
+                    shape = MataCardLayout.InputShape,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.todo_editor_title_label)) },
                     singleLine = true,
@@ -241,6 +255,7 @@ fun TodoEditorScreen(
                 OutlinedTextField(
                     value = state.description,
                     onValueChange = viewModel::setDescription,
+                    shape = MataCardLayout.InputShape,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.todo_editor_description_label)) },
                     minLines = 3,
@@ -251,11 +266,12 @@ fun TodoEditorScreen(
                     colors = state.categoryInputColors(),
                 )
                 CategorySelector(state, viewModel::setCategory)
+                }
 
-                Text(
-                    stringResource(R.string.todo_editor_section_schedule),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                MataSectionCard(
+                    title = stringResource(R.string.todo_editor_section_schedule),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                 DateField(
                     state = state,
                     value = state.startDate,
@@ -365,27 +381,32 @@ fun TodoEditorScreen(
                     }
                 }
                 SchedulePreview(state)
+                }
 
-                NotificationEditorSection(
-                    state = state,
-                    viewModel = viewModel,
-                    onOpenNotificationSettings = {
-                        systemSettingsLauncher.launch(
-                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                MataSectionCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        NotificationEditorSection(
+                            state = state,
+                            viewModel = viewModel,
+                            onOpenNotificationSettings = {
+                                systemSettingsLauncher.launch(
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                                )
+                            },
+                            onOpenExactAlarmSettings = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    systemSettingsLauncher.launch(
+                                        Intent(
+                                            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                            Uri.parse("package:${context.packageName}"),
+                                        ),
+                                    )
+                                }
+                            },
                         )
-                    },
-                    onOpenExactAlarmSettings = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            systemSettingsLauncher.launch(
-                                Intent(
-                                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-                                    Uri.parse("package:${context.packageName}"),
-                                ),
-                            )
-                        }
-                    },
-                )
+                    }
+                }
 
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
@@ -573,6 +594,7 @@ private fun DateField(
         OutlinedTextField(
             value = displayValue,
             onValueChange = {},
+            shape = MataCardLayout.InputShape,
             modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
             label = { Text(label) },
             readOnly = true,
@@ -601,6 +623,7 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
         OutlinedTextField(
             value = selectedName,
             onValueChange = {},
+            shape = MataCardLayout.InputShape,
             readOnly = true,
             label = { Text(stringResource(R.string.label_category)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
@@ -639,6 +662,7 @@ private fun RecurrenceSelector(state: TodoEditorUiState, onClick: () -> Unit) {
         OutlinedTextField(
             value = displayValue,
             onValueChange = {},
+            shape = MataCardLayout.InputShape,
             readOnly = true,
             label = { Text(label) },
             modifier = Modifier.fillMaxWidth().clearAndSetSemantics { },
@@ -764,6 +788,7 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
         RecurrenceType.EVERY_N_DAYS -> OutlinedTextField(
             value = state.intervalDaysInput,
             onValueChange = viewModel::setIntervalDays,
+            shape = MataCardLayout.InputShape,
             label = { Text(stringResource(R.string.todo_editor_interval_days_label)) },
             suffix = { Text(stringResource(R.string.unit_day)) },
             singleLine = true,
@@ -857,6 +882,7 @@ private fun NumberSelector(
         OutlinedTextField(
             value = stringResource(formatRes, value),
             onValueChange = {},
+            shape = MataCardLayout.InputShape,
             readOnly = true,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },

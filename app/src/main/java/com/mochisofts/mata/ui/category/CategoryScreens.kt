@@ -58,6 +58,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -102,6 +103,10 @@ import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
+import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
+import com.mochisofts.mata.core.designsystem.mataCardColor
+import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.Category
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -260,43 +265,52 @@ fun CategoryListScreen(
             return@MataAdaptiveNavigation
         }
 
+        val pageColor = MaterialTheme.mataPageColor
         Scaffold(
+            containerColor = pageColor,
             topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.category_management_title)) },
-                    navigationIcon = {
-                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Outlined.Menu,
-                                    contentDescription = stringResource(R.string.content_description_open_menu),
-                                )
-                            }
-                        }
-                    },
-                    actions = {
-                        val editor = state.editor
-                        if (layoutInfo.useTwoPane && editor != null) {
-                            if (!editor.isNew) {
-                                IconButton(
-                                    onClick = { showWideDeleteDialog = true },
-                                    enabled = !editor.isSaving,
-                                ) {
+                Column {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.category_management_title)) },
+                        navigationIcon = {
+                            if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                     Icon(
-                                        Icons.Outlined.Delete,
-                                        contentDescription = stringResource(
-                                            R.string.content_description_delete_category,
-                                        ),
+                                        Icons.Outlined.Menu,
+                                        contentDescription = stringResource(R.string.content_description_open_menu),
                                     )
                                 }
                             }
-                            TextButton(
-                                onClick = viewModel::saveEditor,
-                                enabled = editor.canSave && editor.isDirty,
-                            ) { Text(stringResource(R.string.action_save)) }
-                        }
-                    },
-                )
+                        },
+                        actions = {
+                            val editor = state.editor
+                            if (layoutInfo.useTwoPane && editor != null) {
+                                if (!editor.isNew) {
+                                    IconButton(
+                                        onClick = { showWideDeleteDialog = true },
+                                        enabled = !editor.isSaving,
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.Delete,
+                                            contentDescription = stringResource(
+                                                R.string.content_description_delete_category,
+                                            ),
+                                        )
+                                    }
+                                }
+                                TextButton(
+                                    onClick = viewModel::saveEditor,
+                                    enabled = editor.canSave && editor.isDirty,
+                                ) { Text(stringResource(R.string.action_save)) }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             floatingActionButton = {
                 if (!layoutInfo.useTwoPane) {
@@ -554,6 +568,11 @@ private fun CategoryListContent(
     LazyColumn(
         modifier = modifier.mataPageKeyScroll(listState),
         state = listState,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            start = MataCardLayout.PageHorizontalPadding,
+            top = MataCardLayout.PageVerticalPadding,
+            end = MataCardLayout.PageHorizontalPadding,
+        ),
     ) {
         if (state.isLoading) {
             item(key = "loading") {
@@ -606,7 +625,6 @@ private fun CategoryListContent(
                         onDragEnd = { onDragEnd(category) },
                         onDragCancel = onDragCancel,
                     )
-                    HorizontalDivider()
                 }
             }
         }
@@ -668,8 +686,12 @@ private fun CategoryListRow(
                 scaleY = scale
             },
         shadowElevation = elevation,
+        tonalElevation = 1.dp,
+        shape = mataCardSegmentShape(index, total),
+        color = MaterialTheme.mataCardColor,
     ) {
-        ListItem(
+        Column {
+            ListItem(
             colors = ListItemDefaults.colors(
                 containerColor = if (selected) {
                     MaterialTheme.colorScheme.secondaryContainer
@@ -720,14 +742,18 @@ private fun CategoryListRow(
                     Icon(Icons.Outlined.DragHandle, contentDescription = null)
                 }
             },
-            modifier = Modifier
-                .mataClickablePointer(enabled = !isDragging)
-                .clickable(enabled = !isDragging, onClick = onClick)
-                .semantics {
-                    this.selected = selected
-                    stateDescription = positionLabel
-                },
-        )
+                modifier = Modifier
+                    .mataClickablePointer(enabled = !isDragging)
+                    .clickable(enabled = !isDragging, onClick = onClick)
+                    .semantics {
+                        this.selected = selected
+                        stateDescription = positionLabel
+                    },
+            )
+            if (index < total - 1) {
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            }
+        }
     }
 }
 
@@ -814,6 +840,7 @@ fun CategoryEditorScreen(
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = viewModel::setName,
+                    shape = MataCardLayout.InputShape,
                     label = { Text(stringResource(R.string.category_name_required_label)) },
                     supportingText = {
                         Text(stringResource(R.string.character_counter_format, state.name.length, 30))
@@ -993,6 +1020,7 @@ private fun CategoryEditorScaffold(
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = onNameChange,
+                    shape = MataCardLayout.InputShape,
                     label = { Text(stringResource(R.string.category_name_required_label)) },
                     supportingText = {
                         Text(stringResource(R.string.character_counter_format, state.name.length, 30))

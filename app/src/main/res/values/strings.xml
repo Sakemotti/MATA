@@ -93,6 +93,7 @@
     <string name="archive_section_todo">TODO定義</string>
     <string name="archive_section_summary">集計</string>
     <string name="archive_section_history">履歴</string>
+    <string name="archive_section_archive_info">アーカイブ情報</string>
     <string name="archive_label_schedule">実施期間</string>
     <string name="archive_label_recurrence">繰り返し設定</string>
     <string name="archive_label_holiday">祝日除外</string>

@@ -19,6 +19,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -31,12 +32,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
+import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.domain.model.MAX_NOTIFICATIONS_PER_TODO
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
@@ -96,6 +99,7 @@ fun NotificationEditorSection(
         state.notifications.forEachIndexed { index, notification ->
             if (index > 0) HorizontalDivider()
             ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text(notificationLabel(notification)) },
                 supportingContent = {
                     val preview = state.notificationPreviews[notification.id]
@@ -213,6 +217,7 @@ fun NotificationEditorSection(
                                 amountInput = value.filter(Char::isDigit).take(3),
                             )
                         },
+                        shape = MataCardLayout.InputShape,
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text(stringResource(R.string.todo_editor_notification_amount)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

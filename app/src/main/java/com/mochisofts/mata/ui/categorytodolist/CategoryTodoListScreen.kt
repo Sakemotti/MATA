@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,9 +36,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,10 +63,16 @@ import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.MataStatusLabel
 import com.mochisofts.mata.core.designsystem.MataStatusType
+import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.core.designsystem.MataTodoListItem
 import com.mochisofts.mata.core.designsystem.MataTodoListItemDefaults
 import com.mochisofts.mata.core.designsystem.mataClickablePointer
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.categoryIcon
+import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
+import com.mochisofts.mata.core.designsystem.mataCategoryColor
+import com.mochisofts.mata.core.designsystem.mataCardColor
+import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.ui.ads.MataBannerAd
 import com.mochisofts.mata.ui.todolist.labelRes
@@ -92,23 +101,32 @@ fun CategoryTodoListScreen(
         drawerState = drawerState,
         onSelect = onDestination,
     ) { layoutInfo ->
+        val pageColor = MaterialTheme.mataPageColor
         Scaffold(
+            containerColor = pageColor,
             topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.category_todo_list_title)) },
-                    navigationIcon = {
-                        if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Outlined.Menu,
-                                    contentDescription = stringResource(
-                                        R.string.content_description_open_menu,
-                                    ),
-                                )
+                Column {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.category_todo_list_title)) },
+                        navigationIcon = {
+                            if (layoutInfo.navigationType == MataNavigationType.MODAL_DRAWER) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(
+                                        Icons.Outlined.Menu,
+                                        contentDescription = stringResource(
+                                            R.string.content_description_open_menu,
+                                        ),
+                                    )
+                                }
                             }
-                        }
-                    },
-                )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             floatingActionButton = {
                 ExtendedFloatingActionButton(
@@ -155,7 +173,10 @@ private fun CategoryTabs(
             .heightIn(min = 56.dp)
             .horizontalScroll(rememberScrollState())
             .focusGroup()
-            .padding(horizontal = 12.dp),
+            .padding(
+                horizontal = MataCardLayout.PageHorizontalPadding,
+                vertical = MataCardLayout.PageVerticalPadding,
+            ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -163,6 +184,13 @@ private fun CategoryTabs(
             selected = state.selectedCategoryId == null,
             onClick = { onSelectCategory(null) },
             label = { Text(stringResource(R.string.label_uncategorized)) },
+            leadingIcon = {
+                Icon(
+                    categoryIcon("CategoryOff"),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            },
             modifier = Modifier.mataClickablePointer(),
         )
         state.categories.forEach { category ->
@@ -170,6 +198,14 @@ private fun CategoryTabs(
                 selected = state.selectedCategoryId == category.id,
                 onClick = { onSelectCategory(category.id) },
                 label = { Text(category.name) },
+                leadingIcon = {
+                    Icon(
+                        categoryIcon(category.iconName),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = mataCategoryColor(category.colorIndex),
+                    )
+                },
                 modifier = Modifier.mataClickablePointer(),
             )
         }
@@ -210,54 +246,70 @@ private fun CategoryTodos(
         LazyColumn(
             modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
             state = listState,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                start = MataCardLayout.PageHorizontalPadding,
+                end = MataCardLayout.PageHorizontalPadding,
+            ),
         ) {
-            items(state.items, key = { it.todo.id }) { item ->
+            items(state.items.size, key = { state.items[it].todo.id }) { index ->
+                val item = state.items[index]
                 val stateLabel = item.todayState?.let { stringResource(it.labelRes()) }
-                MataTodoListItem(
-                    headlineContent = {
-                        Text(
-                            item.todo.title,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            buildList {
-                                add(recurrenceSummary(item.todo))
-                                item.todo.dueDate
-                                    ?.takeIf { it != item.todo.startDate }
-                                    ?.let { dueDate ->
-                                        add(
-                                            stringResource(
-                                                R.string.todo_due_date_format,
-                                                "${dueDate.monthValue}/${dueDate.dayOfMonth}",
-                                            ),
-                                        )
-                                    }
-                                if (item.todo.carryOverEnabled) {
-                                    add(stringResource(R.string.todo_editor_carry_over_label))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = mataCardSegmentShape(index, state.items.size),
+                    color = MaterialTheme.mataCardColor,
+                    tonalElevation = 1.dp,
+                ) {
+                    Column {
+                        MataTodoListItem(
+                            headlineContent = {
+                                Text(
+                                    item.todo.title,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    buildList {
+                                        add(recurrenceSummary(item.todo))
+                                        item.todo.dueDate
+                                            ?.takeIf { it != item.todo.startDate }
+                                            ?.let { dueDate ->
+                                                add(
+                                                    stringResource(
+                                                        R.string.todo_due_date_format,
+                                                        "${dueDate.monthValue}/${dueDate.dayOfMonth}",
+                                                    ),
+                                                )
+                                            }
+                                        if (item.todo.carryOverEnabled) {
+                                            add(stringResource(R.string.todo_editor_carry_over_label))
+                                        }
+                                    }.joinToString(" ・ "),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            trailingContent = {
+                                item.todayState?.let { status ->
+                                    CategoryTodoStatus(status)
                                 }
-                            }.joinToString(" ・ "),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
+                            },
+                            reserveTrailingSpace = true,
+                            trailingSlotWidth = MataTodoListItemDefaults.StatusSlotWidth,
+                            modifier = Modifier
+                                .semantics {
+                                    stateLabel?.let { stateDescription = it }
+                                }
+                                .mataClickablePointer()
+                                .clickable { onEditTodo(item.todo.id) },
                         )
-                    },
-                    trailingContent = {
-                        item.todayState?.let { status ->
-                            CategoryTodoStatus(status)
+                        if (index < state.items.lastIndex) {
+                            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                         }
-                    },
-                    reserveTrailingSpace = true,
-                    trailingSlotWidth = MataTodoListItemDefaults.StatusSlotWidth,
-                    modifier = Modifier
-                        .semantics {
-                            stateLabel?.let { stateDescription = it }
-                        }
-                        .mataClickablePointer()
-                        .clickable { onEditTodo(item.todo.id) },
-                )
-                HorizontalDivider()
+                    }
+                }
             }
             item { Spacer(Modifier.height(96.dp)) }
         }
