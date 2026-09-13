@@ -265,7 +265,7 @@ fun CalendarHistoryScreen(
 }
 
 @Composable
-private fun CalendarHistoryBody(
+internal fun CalendarHistoryBody(
     state: CalendarHistoryUiState,
     layoutInfo: MataAdaptiveLayoutInfo,
     historyListState: LazyListState,
