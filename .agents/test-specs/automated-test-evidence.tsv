@@ -243,3 +243,7 @@ TL-003	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecu
 TL-016	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	tl016_weeklyAndMonthlyCountTodosRejectSecondCompletionOnSameLogicalDate	:app:connectedDebugAndroidTest
 TL-018	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl018_pastDetailShowsSnapshotAndOffersNoOccurrenceMutation	:app:connectedDebugAndroidTest
 TL-021	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl021_timePassageWaitsForDefinedRefreshOrDateSelectionTriggers	:app:testDebugUnitTest
+TL-004	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl004_buttonsSwipesDatePickerAndTodayActionMoveToTheExpectedDate	:app:connectedDebugAndroidTest
+TL-007	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl007_eachVisibleCategoryHeaderCarriesItsNameColorAndIcon	:app:connectedDebugAndroidTest
+TL-010	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl010_longTextAndEveryStateKeepCompleteRowInformationWithoutRepeatingCategory	:app:connectedDebugAndroidTest
+TL-012	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl012_overdueDueTimeAndLabelUseErrorToneWithoutChangingRowBackground	:app:connectedDebugAndroidTest
