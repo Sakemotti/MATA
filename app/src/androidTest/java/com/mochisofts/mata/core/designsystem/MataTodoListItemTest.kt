@@ -22,7 +22,7 @@ class MataTodoListItemTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun reservedSlotsKeepBodyBoundsAlignedWithVisibleControls() {
+    fun tl029_reservedSlotsKeepBodyBoundsAlignedAcrossTodoStatesAndActions() {
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 Column(Modifier.width(360.dp)) {

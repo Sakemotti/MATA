@@ -224,6 +224,11 @@ CM-026	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManageme
 CM-027	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm027_backOnlyConfirmsDirtyDraftAndDiscardClearsIt	:app:connectedDebugAndroidTest
 CM-D03	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd03_nameChangesPreviewImmediatelyAndInvalidDraftRemainsEditable	:app:connectedDebugAndroidTest
 RPT-031	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	rpt031_individualWeekdayChangeDropsWeekendHolidayPresetSemantics	:app:testDebugUnitTest
+TL-002	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl002_newViewModelStartsTodayInsteadOfRestoringTransientSelection	:app:testDebugUnitTest
+TL-026	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl026_categoryAddEditDeleteAndReorderReevaluateCurrentGroups	:app:testDebugUnitTest
+TL-029	app/src/androidTest/java/com/mochisofts/mata/core/designsystem/MataTodoListItemTest.kt	tl029_reservedSlotsKeepBodyBoundsAlignedAcrossTodoStatesAndActions	:app:connectedDebugAndroidTest
+TL-D04	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListTopBarActionsTest.kt	tld04_missingDeadlineSortsAtDayEndButRendersAsNotConfigured	:app:connectedDebugAndroidTest
+TL-D06	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tld06_reopeningResetsTransientDateAndScrollPosition	:app:connectedDebugAndroidTest
 ST-002	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st002_sectionsAppearInSpecifiedTopToBottomOrder	:app:connectedDebugAndroidTest
 ST-003	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st003_rowsExposeTitleValueDescriptionAndExpectedActionType	:app:connectedDebugAndroidTest
 ST-005	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st005_endHourOffersEveryWholeHourAndPersistsSelection	:app:connectedDebugAndroidTest

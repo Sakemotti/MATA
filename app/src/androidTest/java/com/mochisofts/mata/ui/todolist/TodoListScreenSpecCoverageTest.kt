@@ -7,13 +7,22 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
@@ -38,6 +47,8 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -200,19 +211,65 @@ class TodoListScreenSpecCoverageTest {
         composeRule.onAllNodesWithText(text(R.string.action_add_todo)).assertCountEquals(0)
     }
 
+    @Test
+    fun tld06_reopeningResetsTransientDateAndScrollPosition() {
+        val occurrences = (1..24).map { index ->
+            occurrence(
+                id = "restart-$index",
+                title = "再表示試験$index",
+                date = TODAY,
+                state = TodoState.PENDING,
+                createdAt = index.toLong(),
+            )
+        }
+        val repository = TestTodoRepository(occurrences)
+        val settingsRepository = TestSettingsRepository(showCompletedInitially = false)
+        lateinit var reopen: () -> Unit
+
+        composeRule.setContent {
+            var generation by remember { mutableIntStateOf(0) }
+            reopen = { generation += 1 }
+            key(generation) {
+                val viewModel = remember {
+                    createViewModel(repository, settingsRepository)
+                }
+                MataTheme(useDynamicColor = false) {
+                    TodoListScreen(
+                        onAddTodo = {},
+                        onEditTodo = {},
+                        onDestination = { _: MataDestination -> },
+                        contentReadinessEnabled = false,
+                        viewModel = viewModel,
+                    )
+                }
+            }
+        }
+
+        waitForText(displayedDate(TODAY, isToday = true))
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_previous_day))
+            .performClick()
+        waitForText(displayedDate(TODAY.minusDays(1), isToday = false))
+        waitForText("再表示試験1")
+        composeRule.onNodeWithTag(TODO_LIST_CONTENT_TAG)
+            .performScrollToNode(hasText("再表示試験24"))
+        composeRule.onNodeWithText("再表示試験24").assertIsDisplayed()
+        composeRule.onNodeWithText("再表示試験1").assertIsNotDisplayed()
+
+        composeRule.runOnIdle { reopen() }
+
+        waitForText(displayedDate(TODAY, isToday = true))
+        composeRule.onNodeWithText("再表示試験1").assertIsDisplayed()
+    }
+
     private fun setScreen(
         repository: TestTodoRepository,
         selectedDate: LocalDate = TODAY,
         showCompleted: Boolean = false,
         onEditTodo: (String) -> Unit = {},
     ) {
-        val viewModel = TodoListViewModel(
-            savedStateHandle = SavedStateHandle(),
-            todoRepository = repository,
-            holidayRepository = TestHolidayRepository(),
+        val viewModel = createViewModel(
+            repository = repository,
             settingsRepository = TestSettingsRepository(showCompleted),
-            clock = CLOCK,
-            adsConsentRepository = TestAdsConsentRepository(),
         )
         viewModel.selectDate(selectedDate)
         composeRule.setContent {
@@ -228,6 +285,18 @@ class TodoListScreenSpecCoverageTest {
         }
     }
 
+    private fun createViewModel(
+        repository: TestTodoRepository,
+        settingsRepository: TestSettingsRepository,
+    ) = TodoListViewModel(
+        savedStateHandle = SavedStateHandle(),
+        todoRepository = repository,
+        holidayRepository = TestHolidayRepository(),
+        settingsRepository = settingsRepository,
+        clock = CLOCK,
+        adsConsentRepository = TestAdsConsentRepository(),
+    )
+
     private fun openActionMenu() {
         composeRule.onNodeWithContentDescription(text(R.string.content_description_todo_actions))
             .performClick()
@@ -242,11 +311,19 @@ class TodoListScreenSpecCoverageTest {
     private fun text(resourceId: Int, vararg args: Any): String = InstrumentationRegistry
         .getInstrumentation().targetContext.getString(resourceId, *args)
 
+    private fun displayedDate(date: LocalDate, isToday: Boolean): String {
+        val shortDate = date.format(
+            DateTimeFormatter.ofPattern(text(R.string.date_pattern_short), Locale.JAPANESE),
+        )
+        return if (isToday) text(R.string.todo_list_today_date_format, shortDate) else shortDate
+    }
+
     private fun occurrence(
         id: String,
         title: String,
         date: LocalDate,
         state: TodoState,
+        createdAt: Long = id.hashCode().toLong(),
     ): TodoOccurrence {
         val todo = Todo(
             id = id,
@@ -259,7 +336,7 @@ class TodoListScreenSpecCoverageTest {
             dueMinutes = 8 * 60,
             definitionRevision = 1,
             archivedAt = null,
-            createdAt = id.hashCode().toLong(),
+            createdAt = createdAt,
         )
         return TodoOccurrence(
             todo = todo,
