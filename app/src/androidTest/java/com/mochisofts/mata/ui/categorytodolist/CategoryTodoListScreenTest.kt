@@ -1,6 +1,18 @@
 package com.mochisofts.mata.ui.categorytodolist
 
 import android.app.Activity
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
@@ -9,14 +21,21 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
+import com.mochisofts.mata.app.ExternalNavigation
+import com.mochisofts.mata.app.MainActivity
+import com.mochisofts.mata.app.resolvedWidgetRoute
+import com.mochisofts.mata.app.toExternalNavigation
 import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveNavigation
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.Category
@@ -27,6 +46,7 @@ import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.widget.todoListIntent
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
@@ -34,6 +54,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -43,6 +64,82 @@ import org.junit.Test
 class CategoryTodoListScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun ctl001_drawerAndWidgetCategoryHeaderOpenIndependentSelectedList() {
+        val category = category(
+            id = "22222222-2222-4222-8222-222222222222",
+            name = "ウィジェット対象",
+            sortOrder = 0,
+        )
+        val repositories = repositories(
+            categories = listOf(category),
+            todos = listOf(
+                todo("uncategorized-entry", "カテゴリ未設定の定義", null),
+                todo("widget-entry", "ウィジェット対象の定義", category.id),
+            ),
+        )
+        val widgetRequest = todoListIntent(
+            context = InstrumentationRegistry.getInstrumentation().targetContext,
+            selectedDate = TODAY.toString(),
+            mode = MainActivity.WIDGET_MODE_CATEGORY,
+            selectedCategoryKey = category.id,
+        ).toExternalNavigation() as ExternalNavigation.Widget
+        val widgetRoute = resolvedWidgetRoute(
+            request = widgetRequest,
+            selectedCategoryKey = category.id,
+        ) as CategoryTodoListRoute
+        var entryMode by mutableStateOf(CategoryTodoEntryMode.DRAWER)
+
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                when (entryMode) {
+                    CategoryTodoEntryMode.DRAWER -> DrawerEntryHarness { destination ->
+                        if (destination == MataDestination.CATEGORY_TODOS) {
+                            entryMode = CategoryTodoEntryMode.DRAWER_RESULT
+                        }
+                    }
+                    CategoryTodoEntryMode.DRAWER_RESULT,
+                    CategoryTodoEntryMode.WIDGET_RESULT,
+                    -> {
+                        val selectedCategoryKey = if (
+                            entryMode == CategoryTodoEntryMode.WIDGET_RESULT
+                        ) {
+                            widgetRoute.selectedCategoryKey
+                        } else {
+                            null
+                        }
+                        val viewModel = remember(entryMode) {
+                            categoryTodoListViewModel(
+                                repositories = repositories,
+                                selectedCategoryKey = selectedCategoryKey,
+                            )
+                        }
+                        CategoryTodoListScreen(
+                            onAddTodo = {},
+                            onEditTodo = {},
+                            onDestination = { _: MataDestination -> },
+                            viewModel = viewModel,
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(
+            stateLabel(R.string.content_description_open_menu),
+        ).performClick()
+        composeRule.onNodeWithText(stateLabel(R.string.nav_category_todo_list)).performClick()
+        waitForText(stateLabel(R.string.category_todo_list_title))
+        waitForText("カテゴリ未設定の定義")
+        composeRule.onNodeWithText(uncategorizedLabel()).assertIsSelected()
+        composeRule.onNodeWithText("ウィジェット対象の定義").assertDoesNotExist()
+
+        composeRule.runOnIdle { entryMode = CategoryTodoEntryMode.WIDGET_RESULT }
+        waitForText("ウィジェット対象の定義")
+        composeRule.onNodeWithText(category.name).assertIsSelected()
+        composeRule.onNodeWithText("カテゴリ未設定の定義").assertDoesNotExist()
+    }
 
     @Test
     fun ctl002_tabsFollowCategoryOrderAndSelectionSwitchesContent() {
@@ -214,13 +311,7 @@ class CategoryTodoListScreenTest {
         repositories: TestRepositories,
         onEditTodo: (String) -> Unit = {},
     ) {
-        val viewModel = CategoryTodoListViewModel(
-            savedStateHandle = SavedStateHandle(),
-            todoRepository = repositories.todoRepository,
-            categoryRepository = repositories.categoryRepository,
-            clock = CLOCK,
-            adsConsentRepository = TestAdsConsentRepository(),
-        )
+        val viewModel = categoryTodoListViewModel(repositories)
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 CategoryTodoListScreen(
@@ -232,6 +323,19 @@ class CategoryTodoListScreenTest {
             }
         }
     }
+
+    private fun categoryTodoListViewModel(
+        repositories: TestRepositories,
+        selectedCategoryKey: String? = null,
+    ) = CategoryTodoListViewModel(
+        savedStateHandle = SavedStateHandle(
+            selectedCategoryKey?.let { mapOf("selectedCategoryKey" to it) } ?: emptyMap(),
+        ),
+        todoRepository = repositories.todoRepository,
+        categoryRepository = repositories.categoryRepository,
+        clock = CLOCK,
+        adsConsentRepository = TestAdsConsentRepository(),
+    )
 
     private fun selectCategory(category: Category) {
         waitForText(category.name)
@@ -308,6 +412,31 @@ class CategoryTodoListScreenTest {
             ZoneId.of("Asia/Tokyo"),
         )
     }
+}
+
+@Composable
+private fun DrawerEntryHarness(onDestination: (MataDestination) -> Unit) {
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    MataAdaptiveNavigation(
+        selected = MataDestination.TODOS,
+        drawerState = drawerState,
+        onSelect = onDestination,
+    ) {
+        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+            Icon(
+                imageVector = Icons.Outlined.Menu,
+                contentDescription = InstrumentationRegistry.getInstrumentation()
+                    .targetContext.getString(R.string.content_description_open_menu),
+            )
+        }
+    }
+}
+
+private enum class CategoryTodoEntryMode {
+    DRAWER,
+    DRAWER_RESULT,
+    WIDGET_RESULT,
 }
 
 private class TestCategoryRepository(categories: List<Category>) : CategoryRepository {

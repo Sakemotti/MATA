@@ -391,7 +391,7 @@ ST-D04	P0	settings.md	UI/INT	RELEASE_OWNER	OWNER	設定
 ST-D05	P0	settings.md	INT	DEV_AUTO	DEV	設定
 ST-D06	P0	settings.md	INT/UI	RELEASE_OWNER	OWNER	設定
 ST-D07	P0	settings.md	INT	DEV_AUTO	DEV	設定
-CTL-001	P0	category-todo-list.md	UI/E2E	RELEASE_OWNER	OWNER	カテゴリ別TODO
+CTL-001	P0	category-todo-list.md	UI/E2E/INT/AUTO	DEV_AUTO	DEV	カテゴリ別TODO
 CTL-002	P0	category-todo-list.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ別TODO
 CTL-003	P0	category-todo-list.md	INT/UI/AUTO	DEV_AUTO	DEV	カテゴリ別TODO
 CTL-004	P0	category-todo-list.md	INT/UI/AUTO	DEV_AUTO	DEV	カテゴリ別TODO
