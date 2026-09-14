@@ -175,7 +175,7 @@ class TodoListScreenSpecCoverageTest {
         waitForText(historical.todo.title)
         composeRule.onNodeWithText(historical.todo.title).performClick()
 
-        composeRule.onNodeWithText(historical.todo.title).assertIsDisplayed()
+        composeRule.onAllNodesWithText(historical.todo.title).assertCountEquals(2)
         listOf(
             historical.todo.description,
             category.name,
