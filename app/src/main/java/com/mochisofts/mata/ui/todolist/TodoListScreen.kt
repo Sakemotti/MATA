@@ -2,6 +2,7 @@ package com.mochisofts.mata.ui.todolist
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,7 +69,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -120,6 +124,22 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
 private data class TodoActionTarget(val id: String, val title: String)
+
+internal const val TODO_DATE_SWIPE_TAG = "todo-list-date-swipe"
+internal const val TODO_ROW_MAX_TEXT_LINES = 2
+internal val TodoCategoryColorIndexKey = SemanticsPropertyKey<Int>("TodoCategoryColorIndex")
+internal val TodoCategoryIconNameKey = SemanticsPropertyKey<String>("TodoCategoryIconName")
+internal val TodoDueToneKey = SemanticsPropertyKey<String>("TodoDueTone")
+internal val TodoRowContainerColorKey = SemanticsPropertyKey<Long>("TodoRowContainerColor")
+private var SemanticsPropertyReceiver.todoCategoryColorIndex by TodoCategoryColorIndexKey
+private var SemanticsPropertyReceiver.todoCategoryIconName by TodoCategoryIconNameKey
+private var SemanticsPropertyReceiver.todoDueTone by TodoDueToneKey
+private var SemanticsPropertyReceiver.todoRowContainerColor by TodoRowContainerColorKey
+
+internal fun todoCategoryHeaderTag(categoryId: String?): String =
+    "todo-category-header:${categoryId ?: "uncategorized"}"
+
+internal fun todoOccurrenceRowTag(todoId: String): String = "todo-occurrence-row:$todoId"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -255,7 +275,25 @@ fun TodoListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(padding)
+                    .testTag(TODO_DATE_SWIPE_TAG)
+                    .pointerInput(viewModel) {
+                        var horizontalDrag = 0f
+                        val threshold = 64.dp.toPx()
+                        detectHorizontalDragGestures(
+                            onDragStart = { horizontalDrag = 0f },
+                            onHorizontalDrag = { change, dragAmount ->
+                                horizontalDrag += dragAmount
+                                change.consume()
+                            },
+                            onDragEnd = {
+                                when {
+                                    horizontalDrag >= threshold -> viewModel.selectPreviousDate()
+                                    horizontalDrag <= -threshold -> viewModel.selectNextDate()
+                                }
+                            },
+                        )
+                    },
             ) {
                 DateMode(
                     state = state,
@@ -511,13 +549,19 @@ private fun DateMode(
                     items = group.occurrences,
                     key = { _, occurrence -> "${occurrence.todo.id}:${occurrence.logicalDate}" },
                 ) { occurrenceIndex, occurrence ->
+                    val rowContainerColor = MaterialTheme.mataCardColor
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(todoOccurrenceRowTag(occurrence.todo.id))
+                            .semantics {
+                                todoRowContainerColor = rowContainerColor.value.toLong()
+                            },
                         shape = mataCardSegmentShape(
                             occurrenceIndex + 1,
                             group.occurrences.size + 1,
                         ),
-                        color = MaterialTheme.mataCardColor,
+                        color = rowContainerColor,
                         tonalElevation = 1.dp,
                     ) {
                         Column {
@@ -653,7 +697,12 @@ private fun TodoCategoryHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { heading() }
+            .testTag(todoCategoryHeaderTag(category?.id))
+            .semantics {
+                heading()
+                todoCategoryColorIndex = category?.colorIndex ?: -1
+                todoCategoryIconName = category?.iconName ?: "CategoryOff"
+            }
             .padding(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 8.dp),
     ) {
         Surface(
@@ -706,7 +755,7 @@ internal fun TodoOccurrenceRow(
         headlineContent = {
             Text(
                 text = occurrence.todo.title,
-                maxLines = 2,
+                maxLines = TODO_ROW_MAX_TEXT_LINES,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = if (completed) TextDecoration.LineThrough else null,
             )
@@ -714,7 +763,11 @@ internal fun TodoOccurrenceRow(
         supportingContent = {
             Column {
                 if (occurrence.todo.description.isNotBlank()) {
-                    Text(occurrence.todo.description, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        occurrence.todo.description,
+                        maxLines = TODO_ROW_MAX_TEXT_LINES,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
                 occurrence.progress?.let { progress ->
                     Text(
@@ -747,12 +800,22 @@ internal fun TodoOccurrenceRow(
                         )
                     }
                     occurrence.todo.dueMinutes?.let { minutes ->
+                        val isOverdue = occurrence.isOverdue &&
+                            occurrence.state == TodoState.PENDING
                         Text(
                             stringResource(
                                 R.string.todo_due_time_format,
                                 minutes / 60,
                                 minutes % 60,
                             ),
+                            modifier = Modifier.semantics {
+                                todoDueTone = if (isOverdue) "ERROR" else "DEFAULT"
+                            },
+                            color = if (isOverdue) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                androidx.compose.ui.graphics.Color.Unspecified
+                            },
                         )
                     } ?: Text(stringResource(R.string.todo_due_none))
                     if (occurrence.isCarryOver) {
