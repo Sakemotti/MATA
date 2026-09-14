@@ -161,10 +161,10 @@ TL-023	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	T
 TL-024	P1	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListViewModelTest#tl024・testDebugUnitTest成功
 TL-025	P1	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・TODO一覧の情報、状態、操作を読み上げ順に操作できることを確認
 TL-026	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions / Gradle 9.7.1	TodoListViewModelTest#tl026・PR #211 CI run 34793793877成功
-TL-027	P0	todo-list.md	未実施	-	-	-	-	-
-TL-028	P1	todo-list.md	未実施	-	-	-	-	-
+TL-027	P0	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#tl027_settingsImmediatelyRecalculateVisibleCurrentAndFutureTodoState・connectedDebugAndroidTest成功
+TL-028	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	MataBannerAdSpecCoverageTest#tl028_consentRevisionReplacesAndConsentLossDisposesBannerResource・connectedDebugAndroidTest成功
 TL-029	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	MataTodoListItemTest#tl029・PR #211 CI run 34793793877成功
-TL-030	P1	todo-list.md	未実施	-	-	-	-	-
+TL-030	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	MataBannerAdSpecCoverageTest#tl030_loadingAndLoadedBannerKeepReservedLayoutWhileTopActionChanges・connectedDebugAndroidTest成功
 TL-031	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListContentFlowTest#tl031・testDebugUnitTest成功
 TL-032	P0	todo-list.md	合格	2026-09-09	AUTO	3	API 34 x86_64 emulator	MataTodoListItemTest#tl032・connectedDebugAndroidTest成功
 TL-D01	P2	todo-list.md	未実施	-	-	-	-	-

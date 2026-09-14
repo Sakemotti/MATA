@@ -1,16 +1,21 @@
 package com.mochisofts.mata.data.repository
 
+import android.app.Activity
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
@@ -18,12 +23,16 @@ import com.mochisofts.mata.domain.model.deadlineAt
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.ui.todolist.TodoListDateSelection
+import com.mochisofts.mata.ui.todolist.TodoListViewModel
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.cancelAndJoin
@@ -350,6 +359,97 @@ class SettingsScheduleSpecCoverageTest {
     }
 
     @Test
+    fun tl027_settingsImmediatelyRecalculateVisibleCurrentAndFutureTodoState() = runBlocking {
+        val selectedDate = LocalDate.of(2026, 8, 11)
+        val completed = dailyTodo(
+            id = "settings-completed",
+            categoryId = null,
+            dueMinutes = 11 * 60,
+        )
+        val weekly = todo(
+            id = "settings-weekly",
+            startDate = "2026-08-03",
+            requiredCount = 3,
+        )
+        database.todoDao().upsert(completed)
+        database.todoDao().upsert(weekly)
+        database.todoExecutionDao().insert(
+            completedExecution(
+                id = "settings-completion",
+                todoId = completed.id,
+                logicalDate = selectedDate.toString(),
+                snapshotJson = "{}",
+            ),
+        )
+        val viewModel = TodoListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            todoRepository = todoRepository,
+            holidayRepository = TestHolidayRepository(),
+            settingsRepository = settings,
+            clock = clock,
+            adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+        )
+
+        val hiddenCompleted = viewModel.uiState.first { state ->
+            !state.isLoading && state.selectedDate == selectedDate && state.groups.isNotEmpty()
+        }
+        assertEquals(false, hiddenCompleted.showCompleted)
+        assertEquals(
+            listOf(weekly.id),
+            hiddenCompleted.groups.flatMap { it.occurrences }.map { it.todo.id },
+        )
+
+        settings.setShowCompleted(true)
+        val shownCompleted = viewModel.uiState.first { state ->
+            state.showCompleted && state.groups.flatMap { it.occurrences }
+                .any { it.todo.id == completed.id }
+        }
+        assertEquals(
+            setOf(completed.id, weekly.id),
+            shownCompleted.groups.flatMap { it.occurrences }.map { it.todo.id }.toSet(),
+        )
+
+        settings.setDayEndHour(13)
+        val shiftedLogicalDay = viewModel.uiState.first { state ->
+            state.newTodoDate == selectedDate.minusDays(1) &&
+                state.groups.flatMap { it.occurrences }.isNotEmpty() &&
+                state.groups.flatMap { it.occurrences }
+                    .all { it.logicalDate == selectedDate.minusDays(1) }
+        }
+        assertEquals(13, settings.dayEndHour.value)
+        assertTrue(
+            shiftedLogicalDay.groups.flatMap { it.occurrences }
+                .first { it.todo.id == completed.id }
+                .isOverdue,
+        )
+
+        settings.setWeekStart(DayOfWeek.SUNDAY)
+        val currentSundayPeriod = viewModel.uiState.first { state ->
+            state.groups.flatMap { it.occurrences }
+                .firstOrNull { it.todo.id == weekly.id }
+                ?.progress?.period?.startDate == LocalDate.of(2026, 8, 9)
+        }
+        assertEquals(
+            LocalDate.of(2026, 8, 15),
+            currentSundayPeriod.groups.flatMap { it.occurrences }
+                .first { it.todo.id == weekly.id }.progress?.period?.endDate,
+        )
+
+        viewModel.selectDate(LocalDate.of(2026, 8, 12))
+        val futureSundayPeriod = viewModel.uiState.first { state ->
+            state.selectedDate == LocalDate.of(2026, 8, 12) &&
+                state.groups.flatMap { it.occurrences }
+                    .firstOrNull { it.todo.id == weekly.id }
+                    ?.progress?.period?.startDate == LocalDate.of(2026, 8, 9)
+        }
+        assertEquals(
+            LocalDate.of(2026, 8, 15),
+            futureSundayPeriod.groups.flatMap { it.occurrences }
+                .first { it.todo.id == weekly.id }.progress?.period?.endDate,
+        )
+    }
+
+    @Test
     fun st011_settingChangesNeverRewriteFinalizedHistoryOrPeriodSnapshot() = runBlocking {
         database.todoDao().upsert(
             todo(
@@ -579,4 +679,11 @@ private class NoOpSettingsNotificationScheduler : NotificationScheduler {
     override suspend fun reconcileTodo(todoId: String) = Unit
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) = Unit
+}
+
+private class NoOpSettingsAdsConsentRepository : AdsConsentRepository {
+    override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
+    override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+    override fun gatherConsent(activity: Activity) = Unit
+    override fun showPrivacyOptions(activity: Activity) = Unit
 }
