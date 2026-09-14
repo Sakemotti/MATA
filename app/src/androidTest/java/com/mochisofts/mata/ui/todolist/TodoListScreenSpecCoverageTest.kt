@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -19,6 +20,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -29,6 +33,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.MataStatusType
+import com.mochisofts.mata.core.designsystem.MataStatusTypeSemanticsKey
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
@@ -38,6 +44,8 @@ import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrencePeriod
+import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
@@ -87,6 +95,140 @@ class TodoListScreenSpecCoverageTest {
         composeRule.onNodeWithText(text(R.string.todo_list_title)).assertIsDisplayed()
         composeRule.onNodeWithText(displayedDate(TODAY, isToday = true)).assertIsDisplayed()
         composeRule.runOnIdle { assertTrue(destinations.isEmpty()) }
+    }
+
+    @Test
+    fun tl004_buttonsSwipesDatePickerAndTodayActionMoveToTheExpectedDate() {
+        val repository = TestTodoRepository(
+            listOf(occurrence("date-navigation", "日付移動TODO", TODAY, TodoState.PENDING)),
+        )
+        setScreen(repository)
+        waitForText(displayedDate(TODAY, isToday = true))
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_next_day))
+            .performClick()
+        waitForText(displayedDate(TODAY.plusDays(1), isToday = false))
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_previous_day))
+            .performClick()
+        waitForText(displayedDate(TODAY, isToday = true))
+
+        composeRule.onNodeWithTag(TODO_DATE_SWIPE_TAG).performTouchInput { swipeLeft() }
+        waitForText(displayedDate(TODAY.plusDays(1), isToday = false))
+        composeRule.onNodeWithTag(TODO_DATE_SWIPE_TAG).performTouchInput { swipeRight() }
+        waitForText(displayedDate(TODAY, isToday = true))
+
+        composeRule.onNodeWithText(displayedDate(TODAY, isToday = true)).performClick()
+        val calendarTarget = if (TODAY.dayOfMonth == 1) {
+            TODAY.plusDays(1)
+        } else {
+            TODAY.withDayOfMonth(1)
+        }
+        composeRule.onAllNodesWithText(
+            calendarTarget.dayOfMonth.toString(),
+            useUnmergedTree = true,
+        )[0].performClick()
+        composeRule.onNodeWithText(text(R.string.action_confirm)).performClick()
+        waitForText(displayedDate(calendarTarget, isToday = false))
+
+        composeRule.onNodeWithText(text(R.string.action_return_to_today)).performClick()
+        waitForText(displayedDate(TODAY, isToday = true))
+    }
+
+    @Test
+    fun tl007_eachVisibleCategoryHeaderCarriesItsNameColorAndIcon() {
+        val home = Category("home", "日常", 2, "Home", 0)
+        val game = Category("game", "ゲーム", 4, "SportsEsports", 1)
+        setScreen(
+            TestTodoRepository(
+                listOf(
+                    occurrence("home-row", "日常TODO", TODAY, TodoState.PENDING, category = home),
+                    occurrence("game-row", "ゲームTODO", TODAY, TodoState.PENDING, category = game),
+                ),
+            ),
+        )
+        waitForText("日常TODO")
+
+        listOf(home, game).forEach { category ->
+            composeRule.onNode(
+                hasTestTag(todoCategoryHeaderTag(category.id)) and
+                    SemanticsMatcher.expectValue(
+                        TodoCategoryColorIndexKey,
+                        category.colorIndex,
+                    ) and
+                    SemanticsMatcher.expectValue(
+                        TodoCategoryIconNameKey,
+                        category.iconName,
+                    ),
+            ).assertIsDisplayed()
+            composeRule.onNodeWithText(category.name).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun tl010_longTextAndEveryStateKeepCompleteRowInformationWithoutRepeatingCategory() {
+        val date = TODAY.minusDays(1)
+        val category = Category("routine", "ルーチン", 1, "Repeat", 0)
+        val longTitle = "長いタイトル".repeat(20)
+        val longDescription = "長い説明文".repeat(50)
+        val pending = occurrence("long", longTitle, date, TodoState.PENDING, category = category)
+            .copy(
+                todo = occurrence(
+                    "long",
+                    longTitle,
+                    date,
+                    TodoState.PENDING,
+                    category = category,
+                ).todo.copy(description = longDescription),
+                progress = RecurrenceProgress(
+                    period = RecurrencePeriod(date.minusDays(6), date, 3),
+                    completedCount = 1,
+                ),
+            )
+        val completed = occurrence("complete-info", "完了情報", date, TodoState.COMPLETED, category = category)
+        val skipped = occurrence("skip-info", "スキップ情報", date, TodoState.SKIPPED, category = category)
+        val missed = occurrence("missed-info", "未完了情報", date, TodoState.MISSED, category = category)
+
+        setScreen(TestTodoRepository(listOf(pending, completed, skipped, missed)), selectedDate = date)
+        waitForText(longTitle)
+
+        composeRule.onAllNodesWithText(category.name).assertCountEquals(1)
+        composeRule.onNodeWithText(longTitle).assertIsDisplayed()
+        composeRule.onNodeWithText(longDescription).assertIsDisplayed()
+        composeRule.onNodeWithText("1 / 3回").assertIsDisplayed()
+        composeRule.onAllNodesWithText(text(R.string.todo_due_time_format, 8, 0))
+            .assertCountEquals(4)
+        composeRule.onNodeWithText(text(R.string.label_completed)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.label_skipped)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.label_missed)).performScrollTo().assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(2, TODO_ROW_MAX_TEXT_LINES) }
+    }
+
+    @Test
+    fun tl012_overdueDueTimeAndLabelUseErrorToneWithoutChangingRowBackground() {
+        val category = Category("deadline", "期限確認", 3, "Schedule", 0)
+        val normal = occurrence("normal", "通常期限", TODAY, TodoState.PENDING, category = category)
+        val overdue = occurrence("overdue", "超過期限", TODAY, TodoState.PENDING, category = category)
+            .copy(isOverdue = true)
+        setScreen(TestTodoRepository(listOf(normal, overdue)))
+        waitForText(overdue.todo.title)
+
+        composeRule.onNode(
+            hasText(text(R.string.todo_due_time_format, 8, 0)) and
+                SemanticsMatcher.expectValue(TodoDueToneKey, "ERROR"),
+            useUnmergedTree = true,
+        ).assertIsDisplayed()
+        composeRule.onNode(
+            hasText(text(R.string.todo_overdue)) and
+                SemanticsMatcher.expectValue(
+                    MataStatusTypeSemanticsKey,
+                    MataStatusType.ERROR,
+                ),
+        ).assertIsDisplayed()
+        val normalColor = composeRule.onNodeWithTag(todoOccurrenceRowTag(normal.todo.id))
+            .fetchSemanticsNode().config[TodoRowContainerColorKey]
+        val overdueColor = composeRule.onNodeWithTag(todoOccurrenceRowTag(overdue.todo.id))
+            .fetchSemanticsNode().config[TodoRowContainerColorKey]
+        assertEquals(normalColor, overdueColor)
     }
 
     @Test
