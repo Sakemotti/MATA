@@ -144,7 +144,7 @@ internal fun todoOccurrenceRowTag(todoId: String): String = "todo-occurrence-row
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoListScreen(
-    onAddTodo: () -> Unit,
+    onAddTodo: (LocalDate) -> Unit,
     onEditTodo: (String) -> Unit,
     onDestination: (MataDestination) -> Unit,
     contentReadinessEnabled: Boolean = true,
@@ -250,7 +250,7 @@ fun TodoListScreen(
             floatingActionButton = {
                 if (!state.selectedDate.isBefore(LocalDate.now())) {
                     ExtendedFloatingActionButton(
-                        onClick = onAddTodo,
+                        onClick = { onAddTodo(state.newTodoDate) },
                         icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                         text = { Text(stringResource(R.string.action_add_todo)) },
                     )

@@ -1,7 +1,9 @@
 package com.mochisofts.mata.ui.todolist
 
 import android.app.Activity
+import android.os.SystemClock
 import android.text.format.DateFormat
+import android.view.MotionEvent
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
@@ -13,11 +15,13 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -31,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso.pressBack
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.core.designsystem.MataTheme
@@ -54,6 +59,8 @@ import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
+import com.mochisofts.mata.ui.ads.BannerLoadState
+import com.mochisofts.mata.ui.ads.reservesSpace
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -69,6 +76,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -458,6 +466,168 @@ class TodoListScreenSpecCoverageTest {
     }
 
     @Test
+    fun tl019_addUsesCurrentLogicalDateOrDisplayedFutureDate() {
+        val addedDates = mutableListOf<LocalDate>()
+        setScreen(
+            repository = TestTodoRepository(emptyList()),
+            dayEndHour = 13,
+            onAddTodo = addedDates::add,
+        )
+        waitForText(text(R.string.empty_today_todos))
+
+        composeRule.onNodeWithText(
+            text(R.string.action_add_todo),
+            useUnmergedTree = true,
+        ).performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_next_day))
+            .performClick()
+        waitForText(displayedDate(TODAY.plusDays(1), isToday = false))
+        composeRule.onNodeWithText(
+            text(R.string.action_add_todo),
+            useUnmergedTree = true,
+        ).performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(listOf(TODAY.minusDays(1), TODAY.plusDays(1)), addedDates)
+        }
+    }
+
+    @Test
+    fun tl022_dateCompletedVisibilityAndScrollRestoreWithSavedInstanceState() {
+        val completed = occurrence(
+            id = "restore-completed",
+            title = "復元対象の完了TODO",
+            date = TODAY,
+            state = TodoState.COMPLETED,
+            createdAt = 0,
+        )
+        val pending = (1..30).map { index ->
+            occurrence(
+                id = "restore-$index",
+                title = "復元対象TODO$index",
+                date = TODAY,
+                state = TodoState.PENDING,
+                createdAt = index.toLong(),
+            )
+        }
+        val repository = TestTodoRepository(listOf(completed) + pending)
+        val settingsRepository = TestSettingsRepository(showCompletedInitially = false)
+        val savedStateHandle = SavedStateHandle()
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            val viewModel = remember {
+                createViewModel(repository, settingsRepository, savedStateHandle)
+            }
+            MataTheme(useDynamicColor = false) {
+                TodoListScreen(
+                    onAddTodo = {},
+                    onEditTodo = {},
+                    onDestination = { _: MataDestination -> },
+                    contentReadinessEnabled = false,
+                    viewModel = viewModel,
+                )
+            }
+        }
+        waitForText("復元対象TODO1")
+        composeRule.onNodeWithText(text(R.string.content_description_show_completed_todos))
+            .performClick()
+        waitForText(completed.todo.title)
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_previous_day))
+            .performClick()
+        waitForText(displayedDate(TODAY.minusDays(1), isToday = false))
+        composeRule.onNodeWithTag(TODO_LIST_CONTENT_TAG)
+            .performScrollToNode(hasText("復元対象TODO30"))
+        composeRule.onNodeWithText("復元対象TODO30").assertIsDisplayed()
+        composeRule.onNodeWithText("復元対象TODO1").assertIsNotDisplayed()
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        waitForText(displayedDate(TODAY.minusDays(1), isToday = false))
+        composeRule.runOnIdle { assertTrue(settingsRepository.showCompleted.value) }
+        composeRule.onNodeWithText("復元対象TODO30").assertIsDisplayed()
+        composeRule.onNodeWithText("復元対象TODO1").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun tl023_consentPendingAndFailedAdLeaveNoEmptyBannerSpace() {
+        setScreen(repository = TestTodoRepository(emptyList()))
+        waitForText(text(R.string.empty_today_todos))
+
+        composeRule.onNodeWithText(
+            text(R.string.action_add_todo),
+            useUnmergedTree = true,
+        ).assertIsDisplayed()
+        val rootBottom = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.bottom
+        val contentBottom = composeRule.onNodeWithTag(TODO_DATE_SWIPE_TAG)
+            .fetchSemanticsNode().boundsInRoot.bottom
+        assertEquals(rootBottom, contentBottom, 1f)
+        assertFalse(BannerLoadState.FAILED.reservesSpace)
+    }
+
+    @Test
+    fun tld07_longPastDetailShowsAllFieldsAndDismissesWithEverySupportedAction() {
+        val date = TODAY.minusDays(1)
+        val category = Category("detail", "詳細カテゴリ", 5, "Checklist", 0)
+        val detail = occurrence(
+            id = "long-past-detail",
+            title = "全項目を持つ過去TODO",
+            date = date,
+            state = TodoState.COMPLETED,
+            category = category,
+        ).let { base ->
+            base.copy(
+                todo = base.todo.copy(
+                    description = "長い説明です。".repeat(100),
+                    endDate = date.plusMonths(3),
+                    carryOverEnabled = true,
+                    notifications = listOf(
+                        TodoNotification(
+                            id = "before",
+                            relation = com.mochisofts.mata.domain.model.NotificationRelation.BEFORE,
+                            amount = 1,
+                            unit = com.mochisofts.mata.domain.model.NotificationUnit.HOUR,
+                        ),
+                    ),
+                ),
+                scheduledLogicalDate = date.minusDays(1),
+            )
+        }
+        setScreen(repository = TestTodoRepository(listOf(detail)), selectedDate = date)
+        waitForText(detail.todo.title)
+
+        fun openDetail() {
+            composeRule.onNodeWithText(detail.todo.title).performClick()
+            composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(2)
+        }
+
+        openDetail()
+        listOf(
+            R.string.todo_editor_description_label,
+            R.string.label_category,
+            R.string.calendar_history_logical_date,
+            R.string.todo_editor_execution_date_label,
+            R.string.todo_editor_due_date_label,
+            R.string.calendar_history_due,
+            R.string.calendar_history_recurrence,
+            R.string.calendar_history_notifications,
+            R.string.calendar_history_state,
+            R.string.todo_editor_carry_over_label,
+        ).forEach { resourceId ->
+            composeRule.onNodeWithText(text(resourceId)).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed().performClick()
+        composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(1)
+
+        openDetail()
+        pressBack()
+        composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(1)
+
+        openDetail()
+        tapScreenAt(x = 1f, y = 500f)
+        composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(1)
+    }
+
+    @Test
     fun tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty() {
         setScreen(repository = TestTodoRepository(emptyList()), selectedDate = TODAY.minusDays(1))
         waitForText(text(R.string.empty_selected_date_todos))
@@ -519,18 +689,20 @@ class TodoListScreenSpecCoverageTest {
         repository: TestTodoRepository,
         selectedDate: LocalDate = TODAY,
         showCompleted: Boolean = false,
+        dayEndHour: Int = 0,
+        onAddTodo: (LocalDate) -> Unit = {},
         onEditTodo: (String) -> Unit = {},
         onDestination: (MataDestination) -> Unit = {},
     ) {
         val viewModel = createViewModel(
             repository = repository,
-            settingsRepository = TestSettingsRepository(showCompleted),
+            settingsRepository = TestSettingsRepository(showCompleted, dayEndHour),
         )
         viewModel.selectDate(selectedDate)
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 TodoListScreen(
-                    onAddTodo = {},
+                    onAddTodo = onAddTodo,
                     onEditTodo = onEditTodo,
                     onDestination = onDestination,
                     contentReadinessEnabled = false,
@@ -543,8 +715,9 @@ class TodoListScreenSpecCoverageTest {
     private fun createViewModel(
         repository: TestTodoRepository,
         settingsRepository: TestSettingsRepository,
+        savedStateHandle: SavedStateHandle = SavedStateHandle(),
     ) = TodoListViewModel(
-        savedStateHandle = SavedStateHandle(),
+        savedStateHandle = savedStateHandle,
         todoRepository = repository,
         holidayRepository = TestHolidayRepository(),
         settingsRepository = settingsRepository,
@@ -555,6 +728,19 @@ class TodoListScreenSpecCoverageTest {
     private fun openActionMenu() {
         composeRule.onNodeWithContentDescription(text(R.string.content_description_todo_actions))
             .performClick()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun tapScreenAt(x: Float, y: Float) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val downTime = SystemClock.uptimeMillis()
+        instrumentation.sendPointerSync(
+            MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0),
+        )
+        instrumentation.sendPointerSync(
+            MotionEvent.obtain(downTime, downTime + 50, MotionEvent.ACTION_UP, x, y, 0),
+        )
+        instrumentation.waitForIdleSync()
     }
 
     private fun waitForText(value: String) {
@@ -710,10 +896,13 @@ private class TestTodoRepository(initialOccurrences: List<TodoOccurrence>) : Tod
     }
 }
 
-private class TestSettingsRepository(showCompletedInitially: Boolean) : SettingsRepository {
+private class TestSettingsRepository(
+    showCompletedInitially: Boolean,
+    dayEndHourInitially: Int = 0,
+) : SettingsRepository {
     override val showCompleted = MutableStateFlow(showCompletedInitially)
     override val todoListMode = MutableStateFlow("DATE")
-    override val dayEndHour = MutableStateFlow(0)
+    override val dayEndHour = MutableStateFlow(dayEndHourInitially)
     override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
     override val theme = MutableStateFlow(AppTheme.SYSTEM)
     override val notificationPermissionRequested = MutableStateFlow(false)

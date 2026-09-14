@@ -147,10 +147,16 @@ class TodoEditorViewModel @Inject constructor(
     holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : ViewModel() {
-    private val route = TodoEditorRoute(savedStateHandle["todoId"])
+    private val route = TodoEditorRoute(
+        todoId = savedStateHandle["todoId"],
+        initialDate = savedStateHandle["initialDate"],
+    )
     private val today = LocalDate.now(clock)
+    private val initialDate = route.initialDate
+        ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
+        ?: today
     private val _uiState = MutableStateFlow(
-        TodoEditorUiState(isNew = route.todoId == null, today = today, startDate = today),
+        TodoEditorUiState(isNew = route.todoId == null, today = today, startDate = initialDate),
     )
     val uiState: StateFlow<TodoEditorUiState> = _uiState.asStateFlow()
 

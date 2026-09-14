@@ -16,7 +16,10 @@ data class CategoryTodoListRoute(
 )
 
 @Serializable
-data class TodoEditorRoute(val todoId: String? = null)
+data class TodoEditorRoute(
+    val todoId: String? = null,
+    val initialDate: String? = null,
+)
 
 @Serializable
 data object CategoryListRoute

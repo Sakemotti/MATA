@@ -280,7 +280,9 @@ private fun MataApp(
     NavHost(navController = navController, startDestination = TodoListRoute()) {
         composable<TodoListRoute> {
             TodoListScreen(
-                onAddTodo = { navController.navigate(TodoEditorRoute()) },
+                onAddTodo = { date ->
+                    navController.navigate(TodoEditorRoute(initialDate = date.toString()))
+                },
                 onEditTodo = { navController.navigate(TodoEditorRoute(it)) },
                 onDestination = navigateToDestination,
                 contentReadinessEnabled = externalNavigation == null,

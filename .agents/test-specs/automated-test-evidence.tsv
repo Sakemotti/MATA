@@ -247,3 +247,7 @@ TL-004	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSp
 TL-007	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl007_eachVisibleCategoryHeaderCarriesItsNameColorAndIcon	:app:connectedDebugAndroidTest
 TL-010	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl010_longTextAndEveryStateKeepCompleteRowInformationWithoutRepeatingCategory	:app:connectedDebugAndroidTest
 TL-012	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl012_overdueDueTimeAndLabelUseErrorToneWithoutChangingRowBackground	:app:connectedDebugAndroidTest
+TL-019	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl019_addUsesCurrentLogicalDateOrDisplayedFutureDate	:app:connectedDebugAndroidTest
+TL-022	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl022_dateCompletedVisibilityAndScrollRestoreWithSavedInstanceState	:app:connectedDebugAndroidTest
+TL-023	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl023_consentPendingAndFailedAdLeaveNoEmptyBannerSpace	:app:connectedDebugAndroidTest
+TL-D07	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tld07_longPastDetailShowsAllFieldsAndDismissesWithEverySupportedAction	:app:connectedDebugAndroidTest
