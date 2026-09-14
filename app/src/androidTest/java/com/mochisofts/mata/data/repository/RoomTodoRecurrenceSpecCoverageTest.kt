@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
@@ -82,6 +83,44 @@ class RoomTodoRecurrenceSpecCoverageTest {
     @After
     fun tearDown() {
         database.close()
+    }
+
+    @Test
+    fun tl003_todayUsesOneGlobalLogicalDateAcrossUncategorizedAndUserCategories() = runBlocking {
+        val calendarDate = LocalDate.of(2026, 8, 11)
+        val logicalDate = calendarDate.minusDays(1)
+        settings.dayEndHour.value = 4
+        clock.setDateTime(calendarDate, hour = 2)
+        database.categoryDao().upsert(
+            CategoryEntity(
+                id = "game",
+                name = "ゲーム",
+                normalizedName = "ゲーム",
+                colorIndex = 4,
+                iconName = "SportsEsports",
+                legacyEndHour = 22,
+                sortOrder = 0,
+                createdAt = 1,
+            ),
+        )
+        database.todoDao().upsert(
+            todoEntity("uncategorized", RecurrenceRule.daily(), startDate = logicalDate),
+        )
+        database.todoDao().upsert(
+            todoEntity(
+                "categorized",
+                RecurrenceRule.daily(),
+                startDate = logicalDate,
+                categoryId = "game",
+            ),
+        )
+
+        val occurrences = todoRepository.observeOccurrences(calendarDate).first()
+
+        assertEquals(setOf("uncategorized", "categorized"), occurrences.map { it.todo.id }.toSet())
+        assertEquals(setOf(logicalDate), occurrences.map { it.logicalDate }.toSet())
+        assertEquals(setOf(null, "game"), occurrences.map { it.category?.id }.toSet())
+        assertEquals(setOf(logicalDate), occurrences.map { it.effectiveDueDate }.toSet())
     }
 
     @Test
@@ -208,6 +247,42 @@ class RoomTodoRecurrenceSpecCoverageTest {
             1,
             todoRepository.observeOccurrences(clock.date).first().single().progress?.completedCount,
         )
+    }
+
+    @Test
+    fun tl016_weeklyAndMonthlyCountTodosRejectSecondCompletionOnSameLogicalDate() = runBlocking {
+        val rules = listOf(
+            RecurrenceRule(RecurrenceType.WEEKLY_COUNT, requiredCount = 2),
+            RecurrenceRule(RecurrenceType.MONTHLY_COUNT, requiredCount = 2),
+        )
+
+        rules.forEachIndexed { index, rule ->
+            val todo = todoEntity("count-$index", rule)
+            database.todoDao().upsert(todo)
+            todoRepository.setCompleted(
+                todo.id,
+                clock.date,
+                true,
+                operationId = "first-$index",
+            ).getOrThrow()
+
+            val duplicate = todoRepository.setCompleted(
+                todo.id,
+                clock.date,
+                true,
+                operationId = "duplicate-$index",
+            )
+
+            assertTrue(duplicate.isFailure)
+            assertEquals(1, database.todoExecutionDao().findForTodo(todo.id).size)
+            assertEquals(
+                1,
+                todoRepository.observeOccurrences(clock.date).first()
+                    .single { it.todo.id == todo.id }
+                    .progress
+                    ?.completedCount,
+            )
+        }
     }
 
     @Test
@@ -450,13 +525,14 @@ class RoomTodoRecurrenceSpecCoverageTest {
         rule: RecurrenceRule,
         startDate: LocalDate = LocalDate.of(2026, 8, 10),
         dueMinutes: Int? = null,
+        categoryId: String? = null,
     ): TodoEntity {
         val encoded = RecurrenceRuleJson.encode(rule)
         return TodoEntity(
             id = id,
             title = id,
             description = "",
-            categoryId = null,
+            categoryId = categoryId,
             startDate = startDate.toString(),
             endDate = null,
             recurrenceType = encoded.typeCode,
@@ -517,6 +593,10 @@ private class MutableRecurrenceClock(
 
     fun setDate(value: LocalDate) {
         currentInstant = value.atTime(12, 0).atZone(clockZone).toInstant()
+    }
+
+    fun setDateTime(value: LocalDate, hour: Int) {
+        currentInstant = value.atTime(hour, 0).atZone(clockZone).toInstant()
     }
 
     override fun getZone(): ZoneId = clockZone

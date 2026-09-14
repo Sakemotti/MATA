@@ -529,6 +529,8 @@ private fun DateMode(
                                 occurrence = occurrence,
                                 canComplete = state.isToday,
                                 showActions = !state.selectedDate.isBefore(LocalDate.now()),
+                                displayLogicalDate = state.isToday &&
+                                    occurrence.logicalDate != state.selectedDate,
                                 onComplete = onComplete,
                                 onSkip = onSkip,
                                 onArchive = onArchive,
@@ -690,6 +692,7 @@ internal fun TodoOccurrenceRow(
     occurrence: TodoOccurrence,
     canComplete: Boolean,
     showActions: Boolean,
+    displayLogicalDate: Boolean = false,
     onComplete: (TodoOccurrence) -> Unit,
     onSkip: (TodoOccurrence) -> Unit,
     onArchive: (TodoOccurrence) -> Unit,
@@ -726,6 +729,13 @@ internal fun TodoOccurrenceRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    if (displayLogicalDate) {
+                        Text(
+                            occurrence.logicalDate.toJapaneseDate(
+                                stringResource(R.string.date_pattern_short),
+                            ),
+                        )
+                    }
                     if (occurrence.effectiveDueDate != occurrence.scheduledLogicalDate) {
                         Text(
                             stringResource(

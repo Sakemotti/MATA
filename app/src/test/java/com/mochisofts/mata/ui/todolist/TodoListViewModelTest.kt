@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
@@ -64,6 +65,55 @@ class TodoListViewModelTest {
 
         assertEquals(TODAY, relaunchedViewModel.uiState.value.selectedDate)
         assertTrue(relaunchedViewModel.uiState.value.isToday)
+    }
+
+    @Test
+    fun tl021_timePassageWaitsForDefinedRefreshOrDateSelectionTriggers() = runTest {
+        val selection = TodoListDateSelection(
+            initialDate = TODAY,
+            followsTodayInitially = true,
+        )
+        var overdue = false
+        val emissions = mutableListOf<TodoListContent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            observeTodoListContent(
+                selectedDate = selection.requests,
+                occurrencesForDate = { date ->
+                    flowOf(
+                        listOf(
+                            occurrence("deadline").copy(
+                                logicalDate = date,
+                                scheduledLogicalDate = date,
+                                effectiveDueDate = date,
+                                isOverdue = overdue,
+                            ),
+                        ),
+                    )
+                },
+                todos = MutableStateFlow(emptyList()),
+                holidaySnapshot = MutableStateFlow(HolidaySnapshot()),
+            ).collect { emissions += it }
+        }
+        runCurrent()
+        assertEquals(1, emissions.size)
+        assertFalse(emissions.last().occurrences.single().isOverdue)
+
+        overdue = true
+        runCurrent()
+        assertEquals(1, emissions.size)
+
+        selection.refresh(TODAY)
+        runCurrent()
+        assertEquals(2, emissions.size)
+        assertTrue(emissions.last().occurrences.single().isOverdue)
+
+        selection.refresh(TODAY.plusDays(1))
+        runCurrent()
+        assertEquals(TODAY.plusDays(1), emissions.last().date)
+
+        selection.select(TODAY.plusDays(5))
+        runCurrent()
+        assertEquals(TODAY.plusDays(5), emissions.last().date)
     }
 
     @Test

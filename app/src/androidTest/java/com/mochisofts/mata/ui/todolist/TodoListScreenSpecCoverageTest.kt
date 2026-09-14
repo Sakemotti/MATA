@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -33,6 +34,7 @@ import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
+import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceRule
@@ -63,6 +65,52 @@ class TodoListScreenSpecCoverageTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun tl001_normalLaunchAndCurrentDrawerItemKeepSingleDateTodoList() {
+        val destinations = mutableListOf<MataDestination>()
+
+        setScreen(
+            repository = TestTodoRepository(emptyList()),
+            onDestination = destinations::add,
+        )
+        waitForText(displayedDate(TODAY, isToday = true))
+        composeRule.onNodeWithText(text(R.string.todo_list_title)).assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_open_menu))
+            .performClick()
+        val currentDestination = composeRule.onNode(
+            hasText(text(R.string.nav_todo_list)) and
+                SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
+        )
+        currentDestination.assertIsDisplayed().performClick()
+        currentDestination.assertIsNotDisplayed()
+
+        composeRule.onNodeWithText(text(R.string.todo_list_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(displayedDate(TODAY, isToday = true)).assertIsDisplayed()
+        composeRule.runOnIdle { assertTrue(destinations.isEmpty()) }
+    }
+
+    @Test
+    fun logicalDateDifferentFromCalendarTodayIsShownForEveryCategoryRow() {
+        val logicalDate = TODAY.minusDays(1)
+        val home = Category("home", "日常", 2, "Home", 0)
+        val game = Category("game", "ゲーム", 4, "SportsEsports", 1)
+        val repository = TestTodoRepository(
+            listOf(
+                occurrence("home-todo", "日常TODO", logicalDate, TodoState.PENDING, category = home),
+                occurrence("game-todo", "ゲームTODO", logicalDate, TodoState.PENDING, category = game),
+            ),
+        )
+
+        setScreen(repository)
+        waitForText("日常TODO")
+
+        composeRule.onNodeWithText("日常").assertIsDisplayed()
+        composeRule.onNodeWithText("ゲーム").assertIsDisplayed()
+        composeRule.onAllNodesWithText(displayedDate(logicalDate, isToday = false))
+            .assertCountEquals(2)
+    }
+
+    @Test
     fun tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail() {
         val date = TODAY.minusDays(1)
         val pending = occurrence("past-pending", "過去の未完了", date, TodoState.PENDING)
@@ -89,6 +137,62 @@ class TodoListScreenSpecCoverageTest {
 
         composeRule.onNodeWithText(skipped.todo.title).performClick()
         composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, repository.mutationCount) }
+    }
+
+    @Test
+    fun tl018_pastDetailShowsSnapshotAndOffersNoOccurrenceMutation() {
+        val date = TODAY.minusDays(1)
+        val category = Category("health", "健康", 2, "FitnessCenter", 0)
+        val historical = occurrence(
+            id = "past-detail",
+            title = "過去時点のストレッチ",
+            date = date,
+            state = TodoState.COMPLETED,
+            category = category,
+        ).copy(
+            todo = occurrence(
+                id = "past-detail",
+                title = "過去時点のストレッチ",
+                date = date,
+                state = TodoState.COMPLETED,
+                category = category,
+            ).todo.copy(
+                description = "履歴に保存された説明",
+                notifications = listOf(
+                    TodoNotification(
+                        id = "before",
+                        relation = com.mochisofts.mata.domain.model.NotificationRelation.BEFORE,
+                        amount = 1,
+                        unit = com.mochisofts.mata.domain.model.NotificationUnit.HOUR,
+                    ),
+                ),
+            ),
+        )
+        val repository = TestTodoRepository(listOf(historical))
+
+        setScreen(repository = repository, selectedDate = date)
+        waitForText(historical.todo.title)
+        composeRule.onNodeWithText(historical.todo.title).performClick()
+
+        composeRule.onNodeWithText(historical.todo.title).assertIsDisplayed()
+        listOf(
+            historical.todo.description,
+            category.name,
+            text(R.string.calendar_history_logical_date),
+            text(R.string.calendar_history_due),
+            text(R.string.calendar_history_recurrence),
+            text(R.string.calendar_history_notifications),
+            text(R.string.calendar_history_state),
+        ).forEach { value ->
+            composeRule.onNodeWithText(value).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText(text(R.string.action_edit)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(text(R.string.action_skip)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(text(R.string.action_archive)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(text(R.string.action_undo)).assertCountEquals(0)
         composeRule.runOnIdle { assertEquals(0, repository.mutationCount) }
     }
 
@@ -266,6 +370,7 @@ class TodoListScreenSpecCoverageTest {
         selectedDate: LocalDate = TODAY,
         showCompleted: Boolean = false,
         onEditTodo: (String) -> Unit = {},
+        onDestination: (MataDestination) -> Unit = {},
     ) {
         val viewModel = createViewModel(
             repository = repository,
@@ -277,7 +382,7 @@ class TodoListScreenSpecCoverageTest {
                 TodoListScreen(
                     onAddTodo = {},
                     onEditTodo = onEditTodo,
-                    onDestination = { _: MataDestination -> },
+                    onDestination = onDestination,
                     contentReadinessEnabled = false,
                     viewModel = viewModel,
                 )
@@ -324,12 +429,13 @@ class TodoListScreenSpecCoverageTest {
         date: LocalDate,
         state: TodoState,
         createdAt: Long = id.hashCode().toLong(),
+        category: Category? = null,
     ): TodoOccurrence {
         val todo = Todo(
             id = id,
             title = title,
             description = "試験用の説明",
-            categoryId = null,
+            categoryId = category?.id,
             startDate = date,
             endDate = null,
             recurrenceRule = RecurrenceRule.daily(),
@@ -340,7 +446,7 @@ class TodoListScreenSpecCoverageTest {
         )
         return TodoOccurrence(
             todo = todo,
-            category = null,
+            category = category,
             logicalDate = date,
             state = state,
         )
