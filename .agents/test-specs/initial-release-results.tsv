@@ -220,7 +220,7 @@ CH-004	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHist
 CH-005	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch005_futureDatesAndMonthsCannotBeSelected・testDebugUnitTest成功
 CH-006	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch006・testDebugUnitTest成功
 CH-007	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch007・testDebugUnitTest成功
-CH-008	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-008	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#ch008・ライト、ダーク、Dynamic Colorで選択日文字の4.5:1以上のコントラスト、現在日枠、選択中・今日の意味を確認
 CH-009	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#ch009・testDebugUnitTest成功
 CH-010	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch010・CI run 34557570307成功
 CH-011	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch011・CI run 34557570307成功
@@ -244,13 +244,13 @@ CH-028	P0	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	Ca
 CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功
 CH-030	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch030・testDebugUnitTest成功
 CH-031	P0	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・履歴更新、週開始曜日変更、明示更新で表示月日を再読込することを確認
-CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-032	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#ch032・一時再生成で過去月、日、一覧位置、詳細、取り消し表示を保持し、新規ViewModelは今日へ戻ることを確認
 CH-033	P2	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・検索、絞り込み、共有、出力、FAB、広告を表示しないことを確認
 CH-034	P1	calendar-history.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・日付、履歴状態、期間結果、操作可否を識別して操作できることを確認
-CH-035	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-035	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#ch035・320dp幅、fontScale 2.0で月移動、日付、集計、全状態履歴、取り消し操作へ到達できることを確認
 CH-D01	P2	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・月カレンダーを固定しサマリーと履歴だけがスクロールすることを確認
 CH-D02	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・当月で翌月ボタンと未来方向スワイプが無効になることを確認
-CH-D03	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D03	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#chd03・月外日を弱く表示し、未来日はdisabled semanticsで色以外にも操作不能を伝えることを確認
 CH-D04	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#chd04・testDebugUnitTest成功
 CH-D05	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	RoomHistoryRepositoryTest#chd05・CI run 34751041027成功
 CH-D06	P1	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・再生成した画面が月、日付、位置を保持せず当日に戻ることを確認
