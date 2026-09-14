@@ -67,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -486,7 +487,10 @@ private fun DateMode(
     } else {
         val listState = rememberLazyListState()
         LazyColumn(
-            modifier = Modifier.fillMaxSize().mataPageKeyScroll(listState),
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag(TODO_LIST_CONTENT_TAG)
+                .mataPageKeyScroll(listState),
             state = listState,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                 horizontal = MataCardLayout.PageHorizontalPadding,
@@ -542,6 +546,8 @@ private fun DateMode(
         }
     }
 }
+
+internal const val TODO_LIST_CONTENT_TAG = "todo-list-content"
 
 @Composable
 private fun DailyPlannerHeader(

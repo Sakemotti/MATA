@@ -9,13 +9,15 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -247,7 +249,10 @@ class TodoListScreenSpecCoverageTest {
         composeRule.onNodeWithContentDescription(text(R.string.content_description_previous_day))
             .performClick()
         waitForText(displayedDate(TODAY.minusDays(1), isToday = false))
-        composeRule.onNodeWithText("再表示試験24").performScrollTo().assertIsDisplayed()
+        waitForText("再表示試験1")
+        composeRule.onNodeWithTag(TODO_LIST_CONTENT_TAG)
+            .performScrollToNode(hasText("再表示試験24"))
+        composeRule.onNodeWithText("再表示試験24").assertIsDisplayed()
         composeRule.onNodeWithText("再表示試験1").assertIsNotDisplayed()
 
         composeRule.runOnIdle { reopen() }
