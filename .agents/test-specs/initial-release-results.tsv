@@ -391,7 +391,7 @@ ST-D04	P0	settings.md	未実施	-	-	-	-	-
 ST-D05	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std05・CI run 33871324075成功
 ST-D06	P0	settings.md	未実施	-	-	-	-	-
 ST-D07	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsBuildConfigurationSpecCoverageTest#std07・CI run 33875902463成功
-CTL-001	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-001	P0	category-todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl001_drawerAndWidgetCategoryHeaderOpenIndependentSelectedList・connectedDebugAndroidTest成功
 CTL-002	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl002・connectedDebugAndroidTest成功
 CTL-003	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl003・connectedDebugAndroidTest成功
 CTL-004	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl004・connectedDebugAndroidTest成功

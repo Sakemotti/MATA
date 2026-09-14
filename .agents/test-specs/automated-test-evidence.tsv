@@ -254,3 +254,4 @@ TL-D07	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSp
 TL-027	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	tl027_settingsImmediatelyRecalculateVisibleCurrentAndFutureTodoState	:app:connectedDebugAndroidTest
 TL-028	app/src/androidTest/java/com/mochisofts/mata/ui/ads/MataBannerAdSpecCoverageTest.kt	tl028_consentRevisionReplacesAndConsentLossDisposesBannerResource	:app:connectedDebugAndroidTest
 TL-030	app/src/androidTest/java/com/mochisofts/mata/ui/ads/MataBannerAdSpecCoverageTest.kt	tl030_loadingAndLoadedBannerKeepReservedLayoutWhileTopActionChanges	:app:connectedDebugAndroidTest
+CTL-001	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	ctl001_drawerAndWidgetCategoryHeaderOpenIndependentSelectedList	:app:connectedDebugAndroidTest
