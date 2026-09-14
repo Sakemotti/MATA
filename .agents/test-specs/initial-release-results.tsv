@@ -135,9 +135,9 @@ REL-024	P0	app-core.md	合格	2026-09-03	AUTO+USER	1	署名済みAAB・Play Cons
 REL-025	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	Release SBOM生成と成果物検証成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-026	P0	app-core.md	合格	2026-09-04	AUTO	1	Node.js 18.13.0 / Windows	release-artifact-verifier.test.mjsの正常系・改変検出7ケース成功
 REL-027	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions API 30 x86_64	instrumented test 34件成功 https://github.com/Sakemotti/MATA/actions/runs/33750730765
-TL-001	P0	todo-list.md	未実施	-	-	-	-	-
+TL-001	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl001・PR #212 CI run 34799349988成功
 TL-002	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListViewModelTest#tl002・PR #211 CI run 34793793877成功
-TL-003	P0	todo-list.md	未実施	-	-	-	-	-
+TL-003	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#tl003とTODO行表示試験・PR #212 CI run 34799349988成功
 TL-004	P1	todo-list.md	未実施	-	-	-	-	-
 TL-005	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail・PR CI成功
 TL-006	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl006_futureDateAllowsOpeningEditorButNotCompletionOrSkip・PR CI成功
@@ -150,12 +150,12 @@ TL-012	P1	todo-list.md	未実施	-	-	-	-	-
 TL-013	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl013_completionImmediatelyUpdatesListAndShowsNoUndoAction・PR CI成功
 TL-014	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl014_completedCheckboxIsReadOnlyAndDoesNotChangeProgress・PR CI成功
 TL-015	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl015_skipImmediatelyRemovesRowAndShowsNoUndoAction・PR CI成功
-TL-016	P0	todo-list.md	未実施	-	-	-	-	-
+TL-016	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#tl016・PR #212 CI run 34799349988成功
 TL-017	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl017_archiveAndDeleteExplainScopeBeforeIrreversibleAction・PR CI成功
-TL-018	P1	todo-list.md	未実施	-	-	-	-	-
+TL-018	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl018・PR #212 CI run 34799349988成功
 TL-019	P1	todo-list.md	未実施	-	-	-	-	-
 TL-020	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty・PR CI成功
-TL-021	P1	todo-list.md	未実施	-	-	-	-	-
+TL-021	P1	todo-list.md	合格	2026-09-14	AUTO	5	Gradle 9.7.1 / GitHub Actions	TodoListViewModelTest#tl021・PR #212 CI run 34799349988成功
 TL-022	P1	todo-list.md	未実施	-	-	-	-	-
 TL-023	P1	todo-list.md	未実施	-	-	-	-	-
 TL-024	P1	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListViewModelTest#tl024・testDebugUnitTest成功
