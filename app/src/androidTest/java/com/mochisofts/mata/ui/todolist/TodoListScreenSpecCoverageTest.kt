@@ -176,9 +176,15 @@ class TodoListScreenSpecCoverageTest {
         composeRule.onNodeWithText(historical.todo.title).performClick()
 
         composeRule.onAllNodesWithText(historical.todo.title).assertCountEquals(2)
+        composeRule.onAllNodesWithText(historical.todo.description)
+            .assertCountEquals(2)[1]
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText(category.name)
+            .assertCountEquals(2)[1]
+            .performScrollTo()
+            .assertIsDisplayed()
         listOf(
-            historical.todo.description,
-            category.name,
             text(R.string.calendar_history_logical_date),
             text(R.string.calendar_history_due),
             text(R.string.calendar_history_recurrence),
