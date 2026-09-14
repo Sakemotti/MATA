@@ -2,7 +2,7 @@
 
 - 対象アプリ: MATA `1.0.0 (5)`
 - 対象ソースcommit: `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`
-- 最終更新日: 2026-09-13
+- 最終更新日: 2026-09-14
 - 試験項目書: [MATA 総合動作確認項目書](README.md)
 - 項目別結果: [初回リリース試験結果](initial-release-results.tsv)
 - 実機実施計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
@@ -31,15 +31,15 @@
 
 リリース必須のP0/P1は405件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。
 
-2026年9月14日時点では、項目単位の証跡が揃ったP0を213件、P1を95件`合格`、P0/P1の残り97件を`未実施`として登録した。P2を含む全423件では311件が合格、112件が未実施である。今回はTODO一覧の新規表示時の日付初期化、カテゴリ変更時の再評価、行本文の固定領域、期限なしの内部並びと表示、再表示時の日付・スクロール位置初期化の5件を追加合格とした。
+2026年9月14日時点では、項目単位の証跡が揃ったP0を216件、P1を97件`合格`、P0/P1の残り92件を`未実施`として登録した。P2を含む全423件では316件が合格、107件が未実施である。今回はTODO一覧の通常表示と現在地ドロワー、全カテゴリ共通の論理日、週・月回数指定TODOの同日二重完了拒否、過去履歴詳細、定義済み更新契機での再評価の5件を追加合格とした。
 
 ## 3. 自動検査の証跡
 
 | 対象 | 結果 | 証跡 | 対応する主な項目 |
 | --- | --- | --- | --- |
-| 単体テスト | 41 test suite、204件、失敗0・エラー0・スキップ0 | 2026-09-14のローカル`testDebugUnitTest`結果、[PR #211 CI run 34793793877](https://github.com/Sakemotti/MATA/actions/runs/34793793877) | `REL-001`、論理日・繰り返し・通知・ViewModel等の一部 |
+| 単体テスト | 41 test suite、205件、失敗0・エラー0・スキップ0 | 2026-09-14のローカル`testDebugUnitTest`結果、[PR #212 CI run 34799349988](https://github.com/Sakemotti/MATA/actions/runs/34799349988) | `REL-001`、論理日・繰り返し・通知・ViewModel等の一部 |
 | Debug検証 | `testDebugUnitTest`、`lintDebug`、`assembleDebug`成功 | [main CI run 33751810640](https://github.com/Sakemotti/MATA/actions/runs/33751810640) | `REL-005`〜`REL-007` |
-| Instrumented test | API 30 x86_64で現行198件完了、失敗なし。API 34 x86_64でも142件時点で失敗なし | [PR #211 CI run 34793793877](https://github.com/Sakemotti/MATA/actions/runs/34793793877)、2026-09-12のローカル`:app:connectedDebugAndroidTest`結果 | `REL-027`、Room Migration・Repository・通知・設定変更・バックアップ・Compose UIの一部 |
+| Instrumented test | API 30 x86_64で現行203件完了、失敗なし。API 34 x86_64でも142件時点で失敗なし | [PR #212 CI run 34799349988](https://github.com/Sakemotti/MATA/actions/runs/34799349988)、2026-09-12のローカル`:app:connectedDebugAndroidTest`結果 | `REL-027`、Room Migration・Repository・通知・設定変更・バックアップ・Compose UIの一部 |
 | Release検証 | `lintRelease`、成果物メタデータ生成、Manifest security、成果物検証が成功 | main CI run 33751810640 | `REL-020`、`REL-025`の正常系 |
 | 性能用成果物 | Benchmark APKとMacrobenchmark APKの生成成功 | main CI run 33751810640 | 性能試験を開始できることの確認 |
 | リポジトリ検査 | 秘密情報・署名ファイル検査、法的サイト検証、Play掲載情報検証が成功 | main CI run 33751810640 | `REL-015`と`REL-018`の自動検査部分 |
@@ -55,6 +55,7 @@
 | TODO一覧の中核表示 | カテゴリ順、実期限順、期限なし表示、高速な日付切替、完了ボタン位置を専用テスト5件で検証 | 2026年9月9日のローカル`testDebugUnitTest`とAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `TL-008`、`TL-009`、`TL-011`、`TL-031`、`TL-032` |
 | TODO一覧の状態・操作 | 過去日の全状態と読み取り専用操作、未来日の操作制限、完了・スキップの即時反映と取り消し非提供、完了済み操作禁止、アーカイブ・完全削除の事前説明、過去日の追加禁止、非表示状態を含む進捗集計を専用テスト8件で検証 | 2026年9月13日のローカル`testDebugUnitTest`とPR CIのAPI 30`:app:connectedDebugAndroidTest`成功 | `TL-005`、`TL-006`、`TL-013`〜`TL-015`、`TL-017`、`TL-020`、`TL-036` |
 | TODO一覧の初期化・再評価・固定表示 | 新規表示時の日付初期化、カテゴリ追加・編集・削除・並び替えの即時再評価、操作有無によらない本文領域、期限なしの内部並びと表示、再表示時の日付・スクロール位置初期化を専用テスト5件で検証 | [PR #211 CI run 34793793877](https://github.com/Sakemotti/MATA/actions/runs/34793793877)のAPI 30`:app:connectedDebugAndroidTest`と`testDebugUnitTest`成功 | `TL-002`、`TL-026`、`TL-029`、`TL-D04`、`TL-D06` |
+| TODO一覧の画面遷移・論理日・履歴詳細 | 通常表示と現在地ドロワー、深夜帯の共通論理日と行の日付、週・月回数指定TODOの同日二重完了拒否、過去履歴詳細の表示・操作制限、定義済み更新契機だけでの論理日・期限再評価を専用テスト6件で検証 | [PR #212 CI run 34799349988](https://github.com/Sakemotti/MATA/actions/runs/34799349988)のAPI 30`:app:connectedDebugAndroidTest`と`testDebugUnitTest`成功 | `TL-001`、`TL-003`、`TL-016`、`TL-018`、`TL-021` |
 | カレンダー中核計算 | 全週開始曜日、6週グリッド、日別件数、日状態優先順位、期間結果マーカーの独立性を専用テスト5件で検証 | 2026年9月11日のローカル`testDebugUnitTest`成功 | `CH-006`、`CH-007`、`CH-009`、`CH-012`、`CH-D04` |
 | カレンダー履歴リポジトリ | 回数型の操作日集計、対象論理日への帰属、週・月期間結果、履歴の安定順序をRoom上の専用instrumented test 4件で検証 | [PR #180 CI run 34557570307](https://github.com/Sakemotti/MATA/actions/runs/34557570307)のAPI 30`:app:connectedDebugAndroidTest`成功 | `CH-010`、`CH-011`、`CH-013`、`CH-017` |
 | カレンダー履歴の基本操作・表示 | 初期日付、今日へ戻る、未来選択禁止、日サマリー、セクション順、長文行、日・期間詳細、空状態を専用テスト8件で検証 | [PR #200 CI run 34748557262](https://github.com/Sakemotti/MATA/actions/runs/34748557262)の`testDebugUnitTest`とAPI 30`:app:connectedDebugAndroidTest`成功 | `CH-002`、`CH-004`、`CH-005`、`CH-015`、`CH-016`、`CH-018`、`CH-021`、`CH-026` |
@@ -76,7 +77,7 @@
 | 設定変更時の再計算・履歴不変 | 週開始曜日変更後の現在期間・必要数・完了数・残数の即時再計算と、終了時刻・週開始曜日変更後の確定済み履歴・期間スナップショット不変を専用instrumented test 2件で検証 | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-010`、`ST-011` |
 | バックアップ形式・内容・事前検証 | 全種ユーザーデータ、除外対象、復元前の形式・ハッシュ・構造・型・範囲・参照・互換性検証、ファイル名、ZIP内部メタデータを専用instrumented test 5件で検証 | [PR #126 CI run 33867709111](https://github.com/Sakemotti/MATA/actions/runs/33867709111)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-019`、`ST-020`、`ST-023`、`ST-D02`、`ST-D03` |
 
-[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト239件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
+[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト244件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 

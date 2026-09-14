@@ -238,3 +238,8 @@ ST-030	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSp
 ST-031	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st031_settingsContainNoPaidProductPricePurchaseOrAdRemovalControls	:app:connectedDebugAndroidTest
 ST-037	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st037_appInfoShowsRequiredItemsAndOmitsWebsiteAndContact	:app:connectedDebugAndroidTest
 ST-038	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st038_debugVersionIsClearlyDistinguishable	:app:connectedDebugAndroidTest
+TL-001	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl001_normalLaunchAndCurrentDrawerItemKeepSingleDateTodoList	:app:connectedDebugAndroidTest
+TL-003	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	tl003_todayUsesOneGlobalLogicalDateAcrossUncategorizedAndUserCategories	:app:connectedDebugAndroidTest
+TL-016	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomTodoRecurrenceSpecCoverageTest.kt	tl016_weeklyAndMonthlyCountTodosRejectSecondCompletionOnSameLogicalDate	:app:connectedDebugAndroidTest
+TL-018	app/src/androidTest/java/com/mochisofts/mata/ui/todolist/TodoListScreenSpecCoverageTest.kt	tl018_pastDetailShowsSnapshotAndOffersNoOccurrenceMutation	:app:connectedDebugAndroidTest
+TL-021	app/src/test/java/com/mochisofts/mata/ui/todolist/TodoListViewModelTest.kt	tl021_timePassageWaitsForDefinedRefreshOrDateSelectionTriggers	:app:testDebugUnitTest
