@@ -136,7 +136,7 @@ REL-025	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	Release SB
 REL-026	P0	app-core.md	合格	2026-09-04	AUTO	1	Node.js 18.13.0 / Windows	release-artifact-verifier.test.mjsの正常系・改変検出7ケース成功
 REL-027	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions API 30 x86_64	instrumented test 34件成功 https://github.com/Sakemotti/MATA/actions/runs/33750730765
 TL-001	P0	todo-list.md	未実施	-	-	-	-	-
-TL-002	P0	todo-list.md	未実施	-	-	-	-	-
+TL-002	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListViewModelTest#tl002・PR #211 CI run 34793793877成功
 TL-003	P0	todo-list.md	未実施	-	-	-	-	-
 TL-004	P1	todo-list.md	未実施	-	-	-	-	-
 TL-005	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail・PR CI成功
@@ -160,19 +160,19 @@ TL-022	P1	todo-list.md	未実施	-	-	-	-	-
 TL-023	P1	todo-list.md	未実施	-	-	-	-	-
 TL-024	P1	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListViewModelTest#tl024・testDebugUnitTest成功
 TL-025	P1	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・TODO一覧の情報、状態、操作を読み上げ順に操作できることを確認
-TL-026	P0	todo-list.md	未実施	-	-	-	-	-
+TL-026	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions / Gradle 9.7.1	TodoListViewModelTest#tl026・PR #211 CI run 34793793877成功
 TL-027	P0	todo-list.md	未実施	-	-	-	-	-
 TL-028	P1	todo-list.md	未実施	-	-	-	-	-
-TL-029	P1	todo-list.md	未実施	-	-	-	-	-
+TL-029	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	MataTodoListItemTest#tl029・PR #211 CI run 34793793877成功
 TL-030	P1	todo-list.md	未実施	-	-	-	-	-
 TL-031	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListContentFlowTest#tl031・testDebugUnitTest成功
 TL-032	P0	todo-list.md	合格	2026-09-09	AUTO	3	API 34 x86_64 emulator	MataTodoListItemTest#tl032・connectedDebugAndroidTest成功
 TL-D01	P2	todo-list.md	未実施	-	-	-	-	-
 TL-D02	P2	todo-list.md	未実施	-	-	-	-	-
 TL-D03	P2	todo-list.md	未実施	-	-	-	-	-
-TL-D04	P1	todo-list.md	未実施	-	-	-	-	-
+TL-D04	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListTopBarActionsTest#tld04・PR #211 CI run 34793793877成功
 TL-D05	P2	todo-list.md	未実施	-	-	-	-	-
-TL-D06	P1	todo-list.md	未実施	-	-	-	-	-
+TL-D06	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tld06・PR #211 CI run 34793793877成功
 TL-D07	P1	todo-list.md	未実施	-	-	-	-	-
 TE-001	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-002	P1	todo-editor.md	未実施	-	-	-	-	-
