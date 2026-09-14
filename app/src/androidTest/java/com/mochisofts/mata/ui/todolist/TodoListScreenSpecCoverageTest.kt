@@ -1,6 +1,7 @@
 package com.mochisofts.mata.ui.todolist
 
 import android.app.Activity
+import android.text.format.DateFormat
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
@@ -57,8 +58,12 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -123,9 +128,7 @@ class TodoListScreenSpecCoverageTest {
         } else {
             TODAY.withDayOfMonth(1)
         }
-        composeRule.onAllNodesWithText(
-            calendarTarget.dayOfMonth.toString(),
-        )[0].performClick()
+        composeRule.onNodeWithText(datePickerDescription(calendarTarget)).performClick()
         composeRule.onNodeWithText(text(R.string.action_confirm)).performClick()
         waitForText(displayedDate(calendarTarget, isToday = false))
 
@@ -568,6 +571,17 @@ class TodoListScreenSpecCoverageTest {
             DateTimeFormatter.ofPattern(text(R.string.date_pattern_short), Locale.JAPANESE),
         )
         return if (isToday) text(R.string.todo_list_today_date_format, shortDate) else shortDate
+    }
+
+    private fun datePickerDescription(date: LocalDate): String {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val locale = context.resources.configuration.locales[0]
+        val pattern = DateFormat.getBestDateTimePattern(locale, "yMMMMEEEEd")
+        return SimpleDateFormat(pattern, locale).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }.format(
+            Date.from(date.atStartOfDay(ZoneOffset.UTC).toInstant()),
+        )
     }
 
     private fun occurrence(
