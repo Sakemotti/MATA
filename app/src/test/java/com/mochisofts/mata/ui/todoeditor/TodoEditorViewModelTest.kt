@@ -117,6 +117,16 @@ class TodoEditorViewModelTest {
     }
 
     @Test
+    fun routedInitialDateStartsANonRepeatingNewTodoOnThatDate() = runTest {
+        val initialDate = LocalDate.of(2026, 9, 10)
+        val viewModel = createViewModel(initialDate = initialDate)
+        runCurrent()
+
+        assertEquals(initialDate, viewModel.uiState.value.startDate)
+        assertEquals(RecurrenceType.ONCE, viewModel.uiState.value.recurrenceType)
+    }
+
+    @Test
     fun existingTodoWithPastStartDateCanStillBeSaved() {
         val state = TodoEditorUiState(
             isLoading = false,
@@ -786,8 +796,14 @@ class TodoEditorViewModelTest {
         holidayRepository: FakeHolidayRepository = FakeHolidayRepository(),
         clock: Clock = fixedClock("2026-09-03T12:00:00+09:00"),
         todoId: String? = null,
+        initialDate: LocalDate? = null,
     ) = TodoEditorViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("todoId" to todoId)),
+        savedStateHandle = SavedStateHandle(
+            mapOf(
+                "todoId" to todoId,
+                "initialDate" to initialDate?.toString(),
+            ),
+        ),
         todoRepository = todoRepository,
         categoryRepository = categoryRepository,
         settingsRepository = settingsRepository,

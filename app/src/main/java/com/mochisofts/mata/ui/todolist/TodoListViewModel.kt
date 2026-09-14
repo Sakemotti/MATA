@@ -14,6 +14,7 @@ import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.effectiveDueSortMinutes
+import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.usesHolidayData
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
@@ -23,6 +24,7 @@ import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -56,6 +58,7 @@ data class TodoListUiState(
     val hasLoadError: Boolean = false,
     val selectedDate: LocalDate = LocalDate.MIN,
     val isToday: Boolean = true,
+    val newTodoDate: LocalDate = LocalDate.MIN,
     val showCompleted: Boolean = false,
     val completedCount: Int = 0,
     val plannedCount: Int = 0,
@@ -90,11 +93,18 @@ class TodoListViewModel @Inject constructor(
     adsConsentRepository: AdsConsentRepository,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<TodoListRoute>()
+    private val restoredDate = savedStateHandle.get<String>(SELECTED_DATE_STATE_KEY)
+        ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
     private val dateSelection = TodoListDateSelection(
-        initialDate = route.selectedDate
+        initialDate = restoredDate ?: route.selectedDate
             ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
             ?: LocalDate.now(clock),
-        followsTodayInitially = route.selectedDate == null,
+        followsTodayInitially = savedStateHandle.get<Boolean>(FOLLOWS_TODAY_STATE_KEY)
+            ?: (route.selectedDate == null),
+        onSelectionChanged = { date, followsToday ->
+            savedStateHandle[SELECTED_DATE_STATE_KEY] = date.toString()
+            savedStateHandle[FOLLOWS_TODAY_STATE_KEY] = followsToday
+        },
     )
     private val effectsChannel = Channel<TodoListEffect>(Channel.BUFFERED)
     private val activeTodoOperations = mutableSetOf<String>()
@@ -131,6 +141,7 @@ class TodoListViewModel @Inject constructor(
                 hasLoadError = loadState is TodoListLoadState.Error,
                 selectedDate = dateSelection.value,
                 isToday = dateSelection.value == LocalDate.now(clock),
+                newTodoDate = newTodoDate(dateSelection.value, dayEndHour),
                 showCompleted = showCompleted,
             )
         }
@@ -151,6 +162,7 @@ class TodoListViewModel @Inject constructor(
             isLoading = false,
             selectedDate = loaded.date,
             isToday = loaded.date == today,
+            newTodoDate = newTodoDate(loaded.date, dayEndHour),
             showCompleted = showCompleted,
             completedCount = plannedOccurrences.count { occurrence ->
                 occurrence.state == TodoState.COMPLETED
@@ -167,8 +179,18 @@ class TodoListViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = TodoListUiState(selectedDate = dateSelection.value),
+        initialValue = TodoListUiState(
+            selectedDate = dateSelection.value,
+            newTodoDate = dateSelection.value,
+        ),
     )
+
+    private fun newTodoDate(selectedDate: LocalDate, dayEndHour: Int): LocalDate =
+        if (selectedDate == LocalDate.now(clock)) {
+            logicalDate(ZonedDateTime.now(clock), dayEndHour)
+        } else {
+            selectedDate
+        }
 
     fun selectPreviousDate() {
         dateSelection.select(dateSelection.value.minusDays(1))
@@ -276,6 +298,7 @@ class TodoListViewModel @Inject constructor(
 internal class TodoListDateSelection(
     initialDate: LocalDate,
     followsTodayInitially: Boolean,
+    private val onSelectionChanged: (LocalDate, Boolean) -> Unit = { _, _ -> },
 ) {
     private val selectedDate = MutableStateFlow(initialDate)
     private val refreshGeneration = MutableStateFlow(0)
@@ -292,10 +315,12 @@ internal class TodoListDateSelection(
     fun select(date: LocalDate) {
         followsToday = false
         selectedDate.value = date
+        onSelectionChanged(date, followsToday)
     }
 
     fun selectToday(today: LocalDate) {
         followsToday = true
+        onSelectionChanged(today, followsToday)
         if (selectedDate.value == today) {
             refreshGeneration.update(Int::inc)
         } else {
@@ -306,11 +331,15 @@ internal class TodoListDateSelection(
     fun refresh(today: LocalDate) {
         if (followsToday && selectedDate.value != today) {
             selectedDate.value = today
+            onSelectionChanged(today, followsToday)
         } else {
             refreshGeneration.update(Int::inc)
         }
     }
 }
+
+private const val SELECTED_DATE_STATE_KEY = "todoListSelectedDate"
+private const val FOLLOWS_TODAY_STATE_KEY = "todoListFollowsToday"
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 internal fun observeTodoListContent(
