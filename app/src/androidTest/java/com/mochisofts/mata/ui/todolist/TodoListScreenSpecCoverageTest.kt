@@ -125,7 +125,6 @@ class TodoListScreenSpecCoverageTest {
         }
         composeRule.onAllNodesWithText(
             calendarTarget.dayOfMonth.toString(),
-            useUnmergedTree = true,
         )[0].performClick()
         composeRule.onNodeWithText(text(R.string.action_confirm)).performClick()
         waitForText(displayedDate(calendarTarget, isToday = false))
