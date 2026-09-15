@@ -259,3 +259,8 @@ CH-008	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryS
 CH-032	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	ch032_rotationRestoresMonthDayListDetailAndUndoMessageWhileFreshOpenUsesToday	:app:connectedDebugAndroidTest
 CH-035	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	ch035_maximumFontAndCompactDisplayKeepAllCalendarHistoryActionsReachable	:app:connectedDebugAndroidTest
 CH-D03	app/src/androidTest/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreenSpecCoverageTest.kt	chd03_outsideMonthIsMutedAndFutureDateIsSemanticallyDisabled	:app:connectedDebugAndroidTest
+ST-032	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st032_privacyOptionsRowIsHiddenWhenUmpDoesNotRequireIt	:app:connectedDebugAndroidTest
+ST-033	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st033_requiredPrivacyOptionsAppearInsideAppInformation	:app:connectedDebugAndroidTest
+ST-034	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st034_privacyOptionsRowLaunchesTheUmpFormOnce	:app:connectedDebugAndroidTest
+ST-035	app/src/androidTest/java/com/mochisofts/mata/ui/ads/MataBannerAdSpecCoverageTest.kt	st035_umpChangesDisposeExistingAdsAndReevaluateTheNewConsentState	:app:connectedDebugAndroidTest
+ST-036	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st036_umpFormFailureKeepsSettingsUsableAndShowsAnError	:app:connectedDebugAndroidTest
