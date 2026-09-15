@@ -339,12 +339,12 @@ AT-D04	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86
 AT-D05	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd05・CI run 34027426978成功
 AT-D06	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd06・CI run 34027426978成功
 AT-D07	P1	archived-todos.md	未実施	-	-	-	-	-
-ST-001	P1	settings.md	未実施	-	-	-	-	-
+ST-001	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st001・設定画面のドロワー選択状態と別画面への遷移通知を確認
 ST-002	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・一般、表示、通知、データ管理、アプリ情報の表示順を確認
 ST-003	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・値選択、スイッチ、遷移、処理開始、静的表示の操作種別を確認
 ST-004	P2	settings.md	未実施	-	-	-	-	-
 ST-005	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・0:00〜23:00の24候補と選択保存を確認
-ST-006	P1	settings.md	未実施	-	-	-	-	-
+ST-006	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st006・0時、4時、12時で全TODO適用の案内と論理日境界説明が動的に変わることを確認
 ST-007	P0	settings.md	未実施	-	-	-	-	-
 ST-008	P0	settings.md	未実施	-	-	-	-	-
 ST-009	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・全7曜日の候補と選択保存を確認
@@ -355,7 +355,7 @@ ST-013	P1	settings.md	未実施	-	-	-	-	-
 ST-014	P1	settings.md	未実施	-	-	-	-	-
 ST-015	P1	settings.md	未実施	-	-	-	-	-
 ST-016	P2	settings.md	未実施	-	-	-	-	-
-ST-017	P1	settings.md	未実施	-	-	-	-	-
+ST-017	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st017・設定本文に他の主要画面への重複導線が表示されないことを確認
 ST-018	P0	settings.md	未実施	-	-	-	-	-
 ST-019	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st019・CI run 33867709111成功
 ST-020	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st020・CI run 33867709111成功
@@ -363,7 +363,7 @@ ST-021	P0	settings.md	未実施	-	-	-	-	-
 ST-022	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・作成前の個人情報、非暗号化、安全保管の警告を確認
 ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
 ST-024	P0	settings.md	未実施	-	-	-	-	-
-ST-025	P0	settings.md	未実施	-	-	-	-	-
+ST-025	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st025・復元確認に作成情報、対象件数、全置換・取消不可・非暗号化警告が揃うことを確認
 ST-026	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st026・CI run 33871324075成功
 ST-027	P0	settings.md	未実施	-	-	-	-	-
 ST-028	P0	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・バックグラウンド移行とプロセス再生成後も処理状態へ復帰し二重実行しないことを確認
@@ -387,7 +387,7 @@ ST-045	P1	settings.md	未実施	-	-	-	-	-
 ST-D01	P2	settings.md	未実施	-	-	-	-	-
 ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std02・CI run 33867709111成功
 ST-D03	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std03・CI run 33867709111成功
-ST-D04	P0	settings.md	未実施	-	-	-	-	-
+ST-D04	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#std04・文字入力なしで確認を中止でき、復元開始後は取消操作と戻る操作で閉じないことを確認
 ST-D05	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std05・CI run 33871324075成功
 ST-D06	P0	settings.md	未実施	-	-	-	-	-
 ST-D07	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsBuildConfigurationSpecCoverageTest#std07・CI run 33875902463成功
