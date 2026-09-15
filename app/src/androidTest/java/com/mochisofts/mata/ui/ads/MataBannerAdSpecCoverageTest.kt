@@ -92,6 +92,63 @@ class MataBannerAdSpecCoverageTest {
     }
 
     @Test
+    fun st035_umpChangesDisposeExistingAdsAndReevaluateTheNewConsentState() {
+        var runtimeState by mutableStateOf(eligibleRuntime(consentRevision = 1))
+        val created = mutableListOf<Long>()
+        val disposed = mutableListOf<Long>()
+
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                MataBannerAdLayout(
+                    runtimeState = runtimeState,
+                    isForeground = true,
+                    isScreenVisible = true,
+                    isImeVisible = false,
+                    hasOverlay = false,
+                    hasValidConfiguration = true,
+                ) { _, consentRevision, _ ->
+                    val resource = rememberDisposableResource(
+                        key = consentRevision,
+                        create = {
+                            created += consentRevision
+                            TestBannerResource(consentRevision)
+                        },
+                        dispose = { resource -> disposed += resource.consentRevision },
+                    )
+                    Box(
+                        Modifier
+                            .testTag(bannerTag(resource.consentRevision))
+                            .fillMaxWidth()
+                            .height(50.dp),
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithTag(bannerTag(1)).assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            runtimeState = runtimeState.copy(isShowingPrivacyOptions = true)
+        }
+        composeRule.onNodeWithTag(bannerTag(1)).assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(listOf(1L), disposed) }
+
+        composeRule.runOnIdle {
+            runtimeState = eligibleRuntime(consentRevision = 2)
+        }
+        composeRule.onNodeWithTag(bannerTag(2)).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(listOf(1L, 2L), created) }
+
+        composeRule.runOnIdle {
+            runtimeState = runtimeState.copy(
+                canRequestAds = false,
+                consentRevision = 3,
+            )
+        }
+        composeRule.onNodeWithTag(bannerTag(2)).assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(listOf(1L, 2L), disposed) }
+    }
+
+    @Test
     fun tl030_loadingAndLoadedBannerKeepReservedLayoutWhileTopActionChanges() {
         var loadState by mutableStateOf(BannerLoadState.LOADING)
         var isToday by mutableStateOf(true)

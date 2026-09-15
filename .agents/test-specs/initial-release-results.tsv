@@ -370,11 +370,11 @@ ST-028	P0	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / ver
 ST-029	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st029・CI run 33871324075成功
 ST-030	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・独立広告セクションと掲載位置固定行がないことを確認
 ST-031	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・有料商品、価格、購入、広告削除UIがないことを確認
-ST-032	P1	settings.md	未実施	-	-	-	-	-
-ST-033	P0	settings.md	未実施	-	-	-	-	-
-ST-034	P0	settings.md	未実施	-	-	-	-	-
-ST-035	P0	settings.md	未実施	-	-	-	-	-
-ST-036	P1	settings.md	未実施	-	-	-	-	-
+ST-032	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st032・UMPが要求しない場合にプライバシーオプション行を表示しないことを確認
+ST-033	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st033・要求時にアプリ情報内の規約リンク間へプライバシーオプション行を表示することを確認
+ST-034	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st034・プライバシーオプション行からUMPフォーム起動を1回要求することを確認
+ST-035	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	MataBannerAdSpecCoverageTest#st035・フォーム表示時に既存広告を破棄し、更新後のcanRequestAdsと同意revisionで再評価することを確認
+ST-036	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st036・UMPエラーを表示して設定画面と基本設定値を維持することを確認
 ST-037	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・必須アプリ情報とWebサイト、問合せ非表示を確認
 ST-038	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・Debug版の識別可能なバージョン表記を確認
 ST-039	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	OpenSourceLicensesTest#st039・testDebugUnitTest成功

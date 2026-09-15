@@ -185,6 +185,81 @@ class SettingsScreenSpecCoverageTest {
     }
 
     @Test
+    fun st032_privacyOptionsRowIsHiddenWhenUmpDoesNotRequireIt() {
+        val adsConsentRepository = SettingsScreenTestAdsConsentRepository(
+            initialState = AdsRuntimeState(privacyOptionsRequired = false),
+        )
+
+        setScreen(adsConsentRepository = adsConsentRepository)
+
+        composeRule.onNodeWithText(text(R.string.settings_ads_privacy_options_title))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun st033_requiredPrivacyOptionsAppearInsideAppInformation() {
+        val adsConsentRepository = SettingsScreenTestAdsConsentRepository(
+            initialState = AdsRuntimeState(privacyOptionsRequired = true),
+        )
+
+        setScreen(adsConsentRepository = adsConsentRepository)
+
+        composeRule.onNodeWithText(text(R.string.settings_ads_privacy_options_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        val renderedTexts = composeRule.onAllNodes(
+            SemanticsMatcher("has text") {
+                it.config.contains(SemanticsProperties.Text)
+            },
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes().flatMap { node ->
+            node.config[SemanticsProperties.Text].map { it.text }
+        }
+        val positions = listOf(
+            R.string.settings_section_app_info,
+            R.string.settings_privacy_policy_title,
+            R.string.settings_ads_privacy_options_title,
+            R.string.settings_terms_title,
+        ).map { resourceId -> renderedTexts.indexOf(text(resourceId)) }
+        assertTrue(
+            "privacy options must stay inside app information: $positions",
+            positions.all { it >= 0 },
+        )
+        assertEquals(positions.sorted(), positions)
+    }
+
+    @Test
+    fun st034_privacyOptionsRowLaunchesTheUmpFormOnce() {
+        val adsConsentRepository = SettingsScreenTestAdsConsentRepository(
+            initialState = AdsRuntimeState(privacyOptionsRequired = true),
+        )
+
+        setScreen(adsConsentRepository = adsConsentRepository)
+        composeRule.onNodeWithText(text(R.string.settings_ads_privacy_options_title))
+            .performScrollTo()
+            .performClick()
+
+        composeRule.runOnIdle { assertEquals(1, adsConsentRepository.showPrivacyOptionsCalls) }
+    }
+
+    @Test
+    fun st036_umpFormFailureKeepsSettingsUsableAndShowsAnError() {
+        val adsConsentRepository = SettingsScreenTestAdsConsentRepository(
+            initialState = AdsRuntimeState(privacyOptionsRequired = true),
+        )
+        val repository = setScreen(adsConsentRepository = adsConsentRepository)
+
+        composeRule.runOnIdle {
+            assertTrue(adsConsentRepository.eventFlow.tryEmit(AdsConsentEvent.PRIVACY_OPTIONS_ERROR))
+        }
+
+        composeRule.onNodeWithText(text(R.string.settings_ads_privacy_options_error))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).assertExists()
+        composeRule.runOnIdle { assertEquals(0, repository.endHour.value) }
+    }
+
+    @Test
     fun st037_appInfoShowsRequiredItemsAndOmitsWebsiteAndContact() {
         setScreen()
 
@@ -216,12 +291,16 @@ class SettingsScreenSpecCoverageTest {
         composeRule.onNodeWithText(expectedVersion).performScrollTo().assertIsDisplayed()
     }
 
-    private fun setScreen(showCompleted: Boolean = false): SettingsScreenTestRepository {
+    private fun setScreen(
+        showCompleted: Boolean = false,
+        adsConsentRepository: SettingsScreenTestAdsConsentRepository =
+            SettingsScreenTestAdsConsentRepository(),
+    ): SettingsScreenTestRepository {
         val repository = SettingsScreenTestRepository(showCompleted)
         val viewModel = SettingsViewModel(
             repository = repository,
             notificationScheduler = SettingsScreenTestNotificationScheduler(),
-            adsConsentRepository = SettingsScreenTestAdsConsentRepository(),
+            adsConsentRepository = adsConsentRepository,
         )
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
@@ -303,10 +382,18 @@ private class SettingsScreenTestNotificationScheduler : NotificationScheduler {
     override suspend fun cancelTodo(todoId: String) = Unit
 }
 
-private class SettingsScreenTestAdsConsentRepository : AdsConsentRepository {
-    override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
-    override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+private class SettingsScreenTestAdsConsentRepository(
+    initialState: AdsRuntimeState = AdsRuntimeState(),
+) : AdsConsentRepository {
+    val runtimeState = MutableStateFlow(initialState)
+    val eventFlow = MutableSharedFlow<AdsConsentEvent>(extraBufferCapacity = 1)
+    var showPrivacyOptionsCalls = 0
+
+    override val state: StateFlow<AdsRuntimeState> = runtimeState
+    override val events: Flow<AdsConsentEvent> = eventFlow
 
     override fun gatherConsent(activity: Activity) = Unit
-    override fun showPrivacyOptions(activity: Activity) = Unit
+    override fun showPrivacyOptions(activity: Activity) {
+        showPrivacyOptionsCalls += 1
+    }
 }
