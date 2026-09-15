@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TodoListRoute
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.HolidayYearStatus
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -115,6 +117,14 @@ class TodoListViewModel @Inject constructor(
     init {
         if (route.showTodoNotFound) {
             effectsChannel.trySend(TodoListEffect.Message(R.string.error_todo_not_found))
+        }
+        viewModelScope.launch {
+            savedStateHandle.getStateFlow<Int?>(TODO_EDITOR_RESULT_KEY, null)
+                .filterNotNull()
+                .collect { messageRes ->
+                    savedStateHandle[TODO_EDITOR_RESULT_KEY] = null
+                    effectsChannel.send(TodoListEffect.Message(messageRes))
+                }
         }
     }
 

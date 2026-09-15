@@ -174,20 +174,20 @@ TL-D04	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	Tod
 TL-D05	P2	todo-list.md	未実施	-	-	-	-	-
 TL-D06	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tld06・PR #211 CI run 34793793877成功
 TL-D07	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	TodoListScreenSpecCoverageTest#tld07_longPastDetailShowsAllFieldsAndDismissesWithEverySupportedAction・connectedDebugAndroidTest成功
-TE-001	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-002	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-001	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te001・connectedDebugAndroidTest成功
+TE-002	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te002・connectedDebugAndroidTest成功
 TE-003	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te003・testDebugUnitTest成功
-TE-004	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-004	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te004・connectedDebugAndroidTest成功
 TE-005	P0	todo-editor.md	未実施	-	-	-	-	-
 TE-006	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te006・testDebugUnitTest成功
 TE-007	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te007・testDebugUnitTest成功
-TE-008	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-008	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te008・connectedDebugAndroidTest成功
 TE-009	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te009・testDebugUnitTest成功
-TE-010	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-010	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local JDK 21 / JVM	TodoEditorViewModelTest#te010・testDebugUnitTest成功
 TE-011	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#te011・CI run 34029287328成功
 TE-012	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te012・testDebugUnitTest成功
 TE-013	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-014	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-014	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local JDK 21 / JVM	TodoScheduleCalculatorTest#te014・testDebugUnitTest成功
 TE-015	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalculatorTest#te015・testDebugUnitTest成功
 TE-016	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te016・testDebugUnitTest成功
 TE-017	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te017・testDebugUnitTest成功
@@ -197,10 +197,10 @@ TE-020	P1	todo-editor.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86
 TE-021	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#te021・CI run 34029287328成功
 TE-022	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te022・CI run 34029287328成功
 TE-023	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te023・CI run 34029287328成功
-TE-024	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-024	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te024・connectedDebugAndroidTest成功
 TE-025	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te025・testDebugUnitTest成功
-TE-026	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-027	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-026	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te026・connectedDebugAndroidTest成功
+TE-027	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te027・connectedDebugAndroidTest成功
 TE-028	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te028・testDebugUnitTest成功
 TE-029	P1	todo-editor.md	未実施	-	-	-	-	-
 TE-030	P1	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・全入力、選択、エラー、保存、戻るを色だけに依存せず操作できることを確認

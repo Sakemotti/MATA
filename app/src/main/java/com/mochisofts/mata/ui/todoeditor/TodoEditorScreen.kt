@@ -67,6 +67,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -637,11 +638,13 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.label_uncategorized)) },
                 onClick = { onSelect(null); expanded = false },
+                modifier = Modifier.testTag(TODO_EDITOR_UNCATEGORIZED_MENU_TAG),
             )
             state.categories.forEach { category ->
                 DropdownMenuItem(
                     text = { Text(category.name) },
                     onClick = { onSelect(category.id); expanded = false },
+                    modifier = Modifier.testTag(todoEditorCategoryMenuTag(category.id)),
                 )
             }
         }
@@ -1106,3 +1109,6 @@ private fun weekdayLabel(day: DayOfWeek): String = stringResource(
 private fun LocalDate.toJapaneseDate(): String = format(
     DateTimeFormatter.ofPattern(stringResource(R.string.date_pattern_full), Locale.JAPANESE),
 )
+
+internal const val TODO_EDITOR_UNCATEGORIZED_MENU_TAG = "todo-editor-category-uncategorized"
+internal fun todoEditorCategoryMenuTag(categoryId: String) = "todo-editor-category-$categoryId"

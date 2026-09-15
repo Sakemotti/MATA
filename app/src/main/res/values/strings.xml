@@ -287,6 +287,8 @@
     <string name="content_description_show_completed_todos">完了済みTODOを表示</string>
     <string name="content_description_hide_completed_todos">完了済みTODOを非表示</string>
     <string name="message_todo_completed">TODOを完了しました</string>
+    <string name="message_todo_added">TODOを追加しました</string>
+    <string name="message_todo_updated">TODOを更新しました</string>
     <string name="message_todo_skipped">TODOをスキップしました</string>
     <string name="message_todo_archived">TODOをアーカイブしました</string>
     <string name="message_todo_deleted">TODOを完全削除しました</string>

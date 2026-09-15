@@ -1,8 +1,15 @@
 package com.mochisofts.mata.core.navigation
 
+import androidx.annotation.StringRes
+import com.mochisofts.mata.R
 import kotlinx.serialization.Serializable
 
 const val UNCATEGORIZED_CATEGORY_KEY = "__uncategorized__"
+const val TODO_EDITOR_RESULT_KEY = "todo_editor_result"
+
+@StringRes
+fun todoEditorSavedMessageRes(isNew: Boolean): Int =
+    if (isNew) R.string.message_todo_added else R.string.message_todo_updated
 
 @Serializable
 data class TodoListRoute(

@@ -65,7 +65,9 @@ import com.mochisofts.mata.core.navigation.OpenSourceLicensesRoute
 import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
 import com.mochisofts.mata.core.navigation.UNCATEGORIZED_CATEGORY_KEY
+import com.mochisofts.mata.core.navigation.todoEditorSavedMessageRes
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
 import com.mochisofts.mata.ui.category.CategoryListScreen
 import com.mochisofts.mata.ui.categorytodolist.CategoryTodoListScreen
@@ -300,7 +302,12 @@ private fun MataApp(
             MataContentFrame(maxWidth = 720.dp) {
                 TodoEditorScreen(
                     onBack = navController::popBackStack,
-                    onSaved = { navController.popBackStack() },
+                    onSaved = { isNew ->
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(TODO_EDITOR_RESULT_KEY, todoEditorSavedMessageRes(isNew))
+                        navController.popBackStack()
+                    },
                     onNotFound = {
                         navController.navigate(TodoListRoute(showTodoNotFound = true)) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }

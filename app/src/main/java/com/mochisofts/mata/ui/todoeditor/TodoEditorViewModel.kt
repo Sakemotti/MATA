@@ -137,6 +137,37 @@ sealed interface TodoEditorEffect {
     data object NotFound : TodoEditorEffect
 }
 
+private data class TodoEditorPersistedDraft(
+    val title: String,
+    val description: String,
+    val categoryId: String?,
+    val startDate: LocalDate,
+    val endDate: LocalDate?,
+    val recurrenceRule: RecurrenceRule,
+    val dueMinutes: Int?,
+    val notifications: List<TodoNotification>,
+    val dueDate: LocalDate?,
+    val carryOverEnabled: Boolean,
+)
+
+private fun TodoEditorUiState.toPersistedDraft() = TodoEditorPersistedDraft(
+    title = title,
+    description = description,
+    categoryId = categoryId,
+    startDate = startDate,
+    endDate = endDate.takeUnless { recurrenceType == RecurrenceType.ONCE },
+    recurrenceRule = recurrenceRule,
+    dueMinutes = dueMinutes,
+    notifications = notifications.sortedWith(
+        compareBy<TodoNotification>(TodoNotification::id)
+            .thenBy { it.relation.ordinal }
+            .thenBy(TodoNotification::amount)
+            .thenBy { it.unit.ordinal },
+    ),
+    dueDate = dueDate.takeIf { recurrenceType == RecurrenceType.ONCE },
+    carryOverEnabled = carryOverEnabled && !recurrenceType.isCountBased,
+)
+
 @HiltViewModel
 class TodoEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -163,6 +194,7 @@ class TodoEditorViewModel @Inject constructor(
     private val effectsChannel = Channel<TodoEditorEffect>(Channel.BUFFERED)
     val effects: Flow<TodoEditorEffect> = effectsChannel.receiveAsFlow()
     private var pendingSavedResult: Pair<Boolean, String>? = null
+    private var initialPersistedDraft: TodoEditorPersistedDraft? = null
 
     init {
         viewModelScope.launch {
@@ -211,8 +243,8 @@ class TodoEditorViewModel @Inject constructor(
                 effectsChannel.send(TodoEditorEffect.NotFound)
                 return@launch
             }
-            _uiState.update { state -> refreshDerived(
-                if (todo == null) {
+            _uiState.update { state ->
+                val loadedState = refreshDerived(if (todo == null) {
                     state.copy(isLoading = false)
                 } else {
                     state.copy(
@@ -236,8 +268,10 @@ class TodoEditorViewModel @Inject constructor(
                         carryOverEnabled = todo.carryOverEnabled,
                         notifications = todo.notifications,
                     )
-                }
-            ) }
+                })
+                initialPersistedDraft = loadedState.toPersistedDraft()
+                loadedState.copy(isDirty = false)
+            }
         }
         refreshNotificationStatus()
     }
@@ -452,7 +486,12 @@ class TodoEditorViewModel @Inject constructor(
 
     private fun edit(transform: TodoEditorUiState.() -> TodoEditorUiState) {
         _uiState.update { state ->
-            refreshDerived(state.transform().copy(isDirty = true, errorMessageRes = null))
+            val editedState = refreshDerived(state.transform().copy(errorMessageRes = null))
+            editedState.copy(
+                isDirty = initialPersistedDraft?.let { baseline ->
+                    editedState.toPersistedDraft() != baseline
+                } ?: true,
+            )
         }
     }
 
