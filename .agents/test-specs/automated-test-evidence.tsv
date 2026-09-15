@@ -264,3 +264,8 @@ ST-033	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSp
 ST-034	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st034_privacyOptionsRowLaunchesTheUmpFormOnce	:app:connectedDebugAndroidTest
 ST-035	app/src/androidTest/java/com/mochisofts/mata/ui/ads/MataBannerAdSpecCoverageTest.kt	st035_umpChangesDisposeExistingAdsAndReevaluateTheNewConsentState	:app:connectedDebugAndroidTest
 ST-036	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st036_umpFormFailureKeepsSettingsUsableAndShowsAnError	:app:connectedDebugAndroidTest
+ST-001	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st001_drawerShowsSettingsAsTheSelectedFullScreenDestination	:app:connectedDebugAndroidTest
+ST-006	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st006_endHourExplainsItsGlobalAndDynamicLogicalDayBoundary	:app:connectedDebugAndroidTest
+ST-017	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st017_settingsContentHasNoDuplicateNavigationToOtherScreens	:app:connectedDebugAndroidTest
+ST-025	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st025_restoreConfirmationShowsMetadataCountsAndIrreversibleWarning	:app:connectedDebugAndroidTest
+ST-D04	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	std04_restoreCanBeCancelledBeforeStartButNotWhileRunning	:app:connectedDebugAndroidTest

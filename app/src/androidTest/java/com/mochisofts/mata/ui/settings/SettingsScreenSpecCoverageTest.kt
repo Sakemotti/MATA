@@ -1,26 +1,40 @@
 package com.mochisofts.mata.ui.settings
 
 import android.app.Activity
+import android.net.Uri
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso.pressBack
 import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.backup.BackupCounts
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupManifest
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationState
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
+import com.mochisofts.mata.core.backup.BackupSummary
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AdsConsentEvent
@@ -42,6 +56,23 @@ import org.junit.Test
 class SettingsScreenSpecCoverageTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun st001_drawerShowsSettingsAsTheSelectedFullScreenDestination() {
+        val destinations = mutableListOf<MataDestination>()
+        setScreen(onDestination = destinations::add)
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_open_menu))
+            .performClick()
+        composeRule.onNode(
+            hasText(text(R.string.nav_settings)) and
+                SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
+        ).assertIsDisplayed()
+
+        composeRule.onNodeWithText(text(R.string.nav_todo_list)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { destinations.isNotEmpty() }
+        composeRule.runOnIdle { assertEquals(listOf(MataDestination.TODOS), destinations) }
+    }
 
     @Test
     fun st002_sectionsAppearInSpecifiedTopToBottomOrder() {
@@ -113,6 +144,23 @@ class SettingsScreenSpecCoverageTest {
     }
 
     @Test
+    fun st006_endHourExplainsItsGlobalAndDynamicLogicalDayBoundary() {
+        setScreen()
+
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_description))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.day_boundary_midnight)).assertIsDisplayed()
+
+        selectEndHour(4)
+        composeRule.onNodeWithText(text(R.string.day_boundary_format, 4, 3))
+            .assertIsDisplayed()
+
+        selectEndHour(12)
+        composeRule.onNodeWithText(text(R.string.day_boundary_format, 12, 11))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun st009_weekStartOffersAllSevenDaysAndPersistsSelection() {
         val repository = setScreen()
 
@@ -153,6 +201,21 @@ class SettingsScreenSpecCoverageTest {
 
         composeRule.waitUntil(timeoutMillis = 5_000) { repository.showCompleted.value }
         switch.assertIsOn()
+    }
+
+    @Test
+    fun st017_settingsContentHasNoDuplicateNavigationToOtherScreens() {
+        setScreen()
+
+        listOf(
+            R.string.nav_todo_list,
+            R.string.nav_category_todo_list,
+            R.string.nav_calendar_history,
+            R.string.nav_category_management,
+            R.string.nav_archived_todos,
+        ).forEach { destinationLabel ->
+            composeRule.onNodeWithText(text(destinationLabel)).assertIsNotDisplayed()
+        }
     }
 
     @Test
@@ -291,21 +354,69 @@ class SettingsScreenSpecCoverageTest {
         composeRule.onNodeWithText(expectedVersion).performScrollTo().assertIsDisplayed()
     }
 
+    @Test
+    fun st025_restoreConfirmationShowsMetadataCountsAndIrreversibleWarning() {
+        val backupGateway = SettingsScreenTestBackupGateway(restoreConfirmationState())
+        setScreen(backupGateway = backupGateway)
+
+        composeRule.onNodeWithText(text(R.string.backup_restore_confirm_title))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("作成日時:", substring = true).assertIsDisplayed()
+        listOf(
+            text(R.string.backup_restore_confirm_app_version, "3.0-test"),
+            text(R.string.backup_restore_confirm_todos, 12),
+            text(R.string.backup_restore_confirm_archived, 2),
+            text(R.string.backup_restore_confirm_categories, 3),
+            text(R.string.backup_restore_confirm_notifications, 4),
+            text(R.string.backup_restore_confirm_history, 5),
+            text(R.string.backup_restore_confirm_periods, 6),
+            text(R.string.backup_restore_confirm_warning),
+            text(R.string.backup_restore_action),
+            text(R.string.action_cancel),
+        ).forEach { expected -> composeRule.onNodeWithText(expected).assertIsDisplayed() }
+    }
+
+    @Test
+    fun std04_restoreCanBeCancelledBeforeStartButNotWhileRunning() {
+        val backupGateway = SettingsScreenTestBackupGateway(restoreConfirmationState())
+        setScreen(backupGateway = backupGateway)
+
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        composeRule.onNodeWithText(text(R.string.action_cancel)).performClick()
+        composeRule.runOnIdle { assertEquals(1, backupGateway.cancelCalls) }
+        composeRule.onNodeWithText(text(R.string.backup_restore_confirm_title))
+            .assertDoesNotExist()
+
+        composeRule.runOnIdle {
+            backupGateway.runtimeState.value = restoreConfirmationState()
+        }
+        composeRule.onNodeWithText(text(R.string.backup_restore_action)).performClick()
+        composeRule.runOnIdle { assertEquals(1, backupGateway.confirmCalls) }
+        composeRule.onNodeWithText(text(R.string.backup_progress_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_cancel)).assertDoesNotExist()
+
+        pressBack()
+        composeRule.onNodeWithText(text(R.string.backup_progress_title)).assertIsDisplayed()
+    }
+
     private fun setScreen(
         showCompleted: Boolean = false,
         adsConsentRepository: SettingsScreenTestAdsConsentRepository =
             SettingsScreenTestAdsConsentRepository(),
+        backupGateway: SettingsScreenTestBackupGateway? = null,
+        onDestination: (MataDestination) -> Unit = {},
     ): SettingsScreenTestRepository {
         val repository = SettingsScreenTestRepository(showCompleted)
         val viewModel = SettingsViewModel(
             repository = repository,
             notificationScheduler = SettingsScreenTestNotificationScheduler(),
+            backupGateway = backupGateway,
             adsConsentRepository = adsConsentRepository,
         )
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 SettingsScreen(
-                    onDestination = { _: MataDestination -> },
+                    onDestination = onDestination,
                     onOpenSourceLicenses = {},
                     viewModel = viewModel,
                 )
@@ -317,6 +428,41 @@ class SettingsScreenSpecCoverageTest {
         }
         return repository
     }
+
+    private fun selectEndHour(hour: Int) {
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).performClick()
+        composeRule.onNodeWithTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG).performScrollToIndex(hour)
+        selectionOption(text(R.string.hour_format, hour)).performClick()
+        composeRule.onNodeWithText(text(R.string.hour_format, hour)).assertIsDisplayed()
+    }
+
+    private fun restoreConfirmationState() = BackupOperationState(
+        operationId = "restore-operation",
+        type = BackupOperationType.RESTORE_VALIDATION,
+        status = BackupOperationStatus.AWAITING_CONFIRMATION,
+        phase = BackupOperationPhase.VALIDATING,
+        summary = BackupSummary(
+            manifest = BackupManifest(
+                backupId = "backup-id",
+                createdAt = 1_786_417_200_000L,
+                appVersionName = "3.0-test",
+                appVersionCode = 3,
+                roomSchemaVersion = 5,
+                dataSha256 = "a".repeat(64),
+                dataUncompressedBytes = 1_024,
+                counts = BackupCounts(
+                    categories = 3,
+                    todos = 12,
+                    notifications = 4,
+                    executions = 5,
+                    periodResults = 6,
+                    runtimeStates = 7,
+                ),
+                formatVersion = 4,
+            ),
+            archivedTodoCount = 2,
+        ),
+    )
 
     private fun text(resourceId: Int, vararg formatArgs: Any): String =
         InstrumentationRegistry.getInstrumentation().targetContext
@@ -380,6 +526,43 @@ private class SettingsScreenTestNotificationScheduler : NotificationScheduler {
     override suspend fun reconcileTodo(todoId: String) = Unit
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) = Unit
+}
+
+private class SettingsScreenTestBackupGateway(
+    initialState: BackupOperationState = BackupOperationState(),
+) : BackupGateway {
+    val runtimeState = MutableStateFlow(initialState)
+    var confirmCalls = 0
+    var cancelCalls = 0
+
+    override val state: StateFlow<BackupOperationState> = runtimeState
+
+    override fun suggestedFileName() = "MATA_backup_test.mata-backup"
+
+    override fun startCreate(uri: Uri) = true
+
+    override fun startRestoreValidation(uri: Uri) = true
+
+    override fun confirmRestore(): Boolean {
+        confirmCalls += 1
+        runtimeState.value = BackupOperationState(
+            operationId = "restore-operation",
+            type = BackupOperationType.RESTORE,
+            status = BackupOperationStatus.RUNNING,
+            phase = BackupOperationPhase.RESTORING,
+            progress = 50,
+        )
+        return true
+    }
+
+    override fun cancelRestoreConfirmation() {
+        cancelCalls += 1
+        runtimeState.value = BackupOperationState()
+    }
+
+    override fun acknowledgeResult() = Unit
+
+    override suspend fun recoverInterruptedOperation() = Unit
 }
 
 private class SettingsScreenTestAdsConsentRepository(
