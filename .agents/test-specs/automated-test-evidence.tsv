@@ -302,3 +302,7 @@ AT-001	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreen
 AT-003	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at003_sortModesReorderRowsAndOnlyTheLastSelectionIsPersisted	:app:connectedDebugAndroidTest
 AT-007	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at007_rowShowsDefinitionSummaryAndLimitsLongTitleAndDescriptionToTwoLines	:app:connectedDebugAndroidTest
 AT-010	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at010_detailShowsAllReadOnlyDefinitionFieldsInThreeCards	:app:connectedDebugAndroidTest
+AT-014	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at014_restoreDialogExplainsFutureResumeNoBackfillAndIrreversibility	:app:connectedDebugAndroidTest
+AT-020	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at020_restoreRespectsFutureStartAndPastEndInCategoryOccurrences	:app:connectedDebugAndroidTest
+AT-026	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at026_permanentDeleteDialogShowsHistoryScopeCalendarImpactAndNoUndo	:app:connectedDebugAndroidTest
+AT-030	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at030_archiveDeleteRemovesHistoryPeriodResultsAndCalendarSummaries	:app:connectedDebugAndroidTest
