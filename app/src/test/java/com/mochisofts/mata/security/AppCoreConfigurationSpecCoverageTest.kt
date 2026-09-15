@@ -96,6 +96,39 @@ class AppCoreConfigurationSpecCoverageTest {
         assertTrue(settingsScreen.contains("viewModel::restoreFileSelected"))
     }
 
+    @Test
+    fun sta002_onlyCalendarHistoryExposesUndoAfterCompletion() {
+        val todoList = source(
+            "src/main/java/com/mochisofts/mata/ui/todolist/TodoListScreen.kt",
+        )
+        val notification = source(
+            "src/main/java/com/mochisofts/mata/app/notification/NotificationReceivers.kt",
+        )
+        val widgetAction = source(
+            "src/main/java/com/mochisofts/mata/widget/WidgetTodoActionActivity.kt",
+        )
+        val widgetInfrastructure = source(
+            "src/main/java/com/mochisofts/mata/data/widget/WidgetUpdateInfrastructure.kt",
+        )
+        val calendarHistory = source(
+            "src/main/java/com/mochisofts/mata/ui/calendar/CalendarHistoryScreen.kt",
+        )
+
+        assertFalse(todoList.contains("R.string.action_undo"))
+        assertFalse(notification.contains("ACTION_UNDO"))
+        assertFalse(notification.contains("R.string.action_undo"))
+        assertTrue(
+            Regex(
+                """\.onSuccess\s*\{[^}]*presenter\.cancel\(""",
+                RegexOption.DOT_MATCHES_ALL,
+            ).containsMatchIn(notification),
+        )
+        assertFalse(widgetAction.contains("recordCompletionUndo"))
+        assertFalse(widgetAction.contains("undoOperationId"))
+        assertFalse(widgetInfrastructure.contains("WidgetUndoExpiryWorker"))
+        assertTrue(calendarHistory.contains("R.string.action_undo"))
+    }
+
     private fun stringValue(relativePath: String, name: String): String {
         val source = source(relativePath)
         val match = Regex("""<string\s+name=[\"]${Regex.escape(name)}[\"]>([^<]+)</string>""")

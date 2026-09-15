@@ -58,10 +58,10 @@ RPT-029	P0	app-core.md	UNIT/INT	DEV_AUTO	DEV	繰り返し
 RPT-030	P0	app-core.md	UNIT/INT	DEV_AUTO	DEV	繰り返し
 RPT-031	P0	app-core.md	UNIT/UI/AUTO	DEV_AUTO	DEV	繰り返し
 STA-001	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
-STA-002	P0	app-core.md	INT/UI	RELEASE_OWNER	OWNER	状態・期限
+STA-002	P0	app-core.md	UNIT/UI/AUTO	DEV_AUTO	DEV	状態・期限
 STA-003	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
 STA-004	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
-STA-005	P0	app-core.md	INT/UI	RELEASE_OWNER	OWNER	状態・期限
+STA-005	P0	app-core.md	INT/UI/AUTO	DEV_AUTO	DEV	状態・期限
 STA-006	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
 STA-007	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
 STA-008	P0	app-core.md	INT	DEV_AUTO	DEV	状態・期限
