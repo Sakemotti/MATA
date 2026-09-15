@@ -2,7 +2,10 @@ package com.mochisofts.mata.ui.settings
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -29,6 +32,7 @@ import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.ads.AdsConsentRepository
 import com.mochisofts.mata.core.backup.BackupCounts
+import com.mochisofts.mata.core.backup.BACKUP_MIME_TYPE
 import com.mochisofts.mata.core.backup.BackupGateway
 import com.mochisofts.mata.core.backup.BackupManifest
 import com.mochisofts.mata.core.backup.BackupOperationPhase
@@ -42,6 +46,7 @@ import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.repository.NotificationChangeImpact
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
@@ -163,6 +168,43 @@ class SettingsScreenSpecCoverageTest {
     }
 
     @Test
+    fun st008_invalidNotificationImpactCanBeCancelledOrConfirmedBeforeChanging() {
+        val scheduler = SettingsScreenTestNotificationScheduler(
+            endHourImpact = NotificationChangeImpact(todoCount = 2, notificationCount = 3),
+        )
+        val repository = setScreen(notificationScheduler = scheduler)
+        var reconcileCallsBeforeChange = 0
+        composeRule.runOnIdle { reconcileCallsBeforeChange = scheduler.reconcileCalls }
+
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).performClick()
+        composeRule.onNodeWithTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG).performScrollToIndex(4)
+        selectionOption(text(R.string.hour_format, 4)).performClick()
+
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_impact_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(
+            text(R.string.settings_end_hour_impact_message, 2, 3),
+        ).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, repository.endHour.value) }
+        composeRule.onNodeWithText(text(R.string.action_cancel)).performClick()
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_impact_title)).assertDoesNotExist()
+        composeRule.runOnIdle { assertEquals(0, repository.endHour.value) }
+
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).performClick()
+        composeRule.onNodeWithTag(SETTINGS_SELECTION_OPTIONS_TEST_TAG).performScrollToIndex(4)
+        selectionOption(text(R.string.hour_format, 4)).performClick()
+        composeRule.onNodeWithText(text(R.string.action_change)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.endHour.value == 4 }
+        composeRule.onNodeWithText(
+            text(R.string.settings_invalid_notifications_suppressed, 3),
+        ).assertIsDisplayed()
+        composeRule.runOnIdle {
+            assertEquals(listOf(4, 4, 4), scheduler.previewedEndHours)
+            assertEquals(reconcileCallsBeforeChange + 1, scheduler.reconcileCalls)
+        }
+    }
+
+    @Test
     fun st009_weekStartOffersAllSevenDaysAndPersistsSelection() {
         val repository = setScreen()
 
@@ -230,6 +272,46 @@ class SettingsScreenSpecCoverageTest {
         composeRule.onNodeWithText(text(R.string.backup_warning_message)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.action_continue)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.action_cancel)).assertIsDisplayed()
+    }
+
+    @Test
+    fun st018_backupUsesSafSuggestedNameWithoutStoragePermissionAndCancellationIsSilent() {
+        val backupGateway = SettingsScreenTestBackupGateway()
+        val requestedNames = mutableListOf<String>()
+        lateinit var viewModel: SettingsViewModel
+        setScreen(
+            backupGateway = backupGateway,
+            onViewModelCreated = { viewModel = it },
+            createBackupTargetRequester = { suggestedName ->
+                requestedNames += suggestedName
+                viewModel.createTargetSelected(null)
+            },
+        )
+
+        composeRule.onNodeWithText(text(R.string.backup_create_title))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithText(text(R.string.action_continue)).performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(listOf(backupGateway.suggestedFileName()), requestedNames)
+            assertTrue(backupGateway.createUris.isEmpty())
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val createDocumentIntent = ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE)
+                .createIntent(context, requestedNames.single())
+            assertEquals(Intent.ACTION_CREATE_DOCUMENT, createDocumentIntent.action)
+            assertEquals(BACKUP_MIME_TYPE, createDocumentIntent.type)
+            assertEquals(requestedNames.single(), createDocumentIntent.getStringExtra(Intent.EXTRA_TITLE))
+            val requestedPermissions = context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_PERMISSIONS,
+            ).requestedPermissions.orEmpty().toSet()
+            assertFalse("android.permission.READ_EXTERNAL_STORAGE" in requestedPermissions)
+            assertFalse("android.permission.WRITE_EXTERNAL_STORAGE" in requestedPermissions)
+            assertFalse("android.permission.MANAGE_EXTERNAL_STORAGE" in requestedPermissions)
+        }
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).assertExists()
+        composeRule.onNodeWithText(text(R.string.backup_operation_error)).assertDoesNotExist()
     }
 
     @Test
@@ -473,14 +555,19 @@ class SettingsScreenSpecCoverageTest {
         onDestination: (MataDestination) -> Unit = {},
         onRestoreCompleted: () -> Unit = {},
         legalDocumentOpener: (Context, String, String) -> Boolean = ::openLegalDocument,
+        notificationScheduler: SettingsScreenTestNotificationScheduler =
+            SettingsScreenTestNotificationScheduler(),
+        createBackupTargetRequester: ((String) -> Unit)? = null,
+        onViewModelCreated: (SettingsViewModel) -> Unit = {},
     ): SettingsScreenTestRepository {
         val repository = SettingsScreenTestRepository(showCompleted)
         val viewModel = SettingsViewModel(
             repository = repository,
-            notificationScheduler = SettingsScreenTestNotificationScheduler(),
+            notificationScheduler = notificationScheduler,
             backupGateway = backupGateway,
             adsConsentRepository = adsConsentRepository,
         )
+        onViewModelCreated(viewModel)
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 SettingsScreen(
@@ -488,6 +575,7 @@ class SettingsScreenSpecCoverageTest {
                     onOpenSourceLicenses = {},
                     onRestoreCompleted = onRestoreCompleted,
                     legalDocumentOpener = legalDocumentOpener,
+                    createBackupTargetRequester = createBackupTargetRequester,
                     viewModel = viewModel,
                 )
             }
@@ -582,8 +670,12 @@ private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : Se
     }
 }
 
-private class SettingsScreenTestNotificationScheduler : NotificationScheduler {
+private class SettingsScreenTestNotificationScheduler(
+    private val endHourImpact: NotificationChangeImpact = NotificationChangeImpact(),
+) : NotificationScheduler {
     override val notificationCount: Flow<Int> = MutableStateFlow(0)
+    val previewedEndHours = mutableListOf<Int>()
+    var reconcileCalls = 0
 
     override fun systemState() = NotificationSystemState(
         canPostNotifications = true,
@@ -594,7 +686,14 @@ private class SettingsScreenTestNotificationScheduler : NotificationScheduler {
     )
 
     override suspend fun reconcileTodo(todoId: String) = Unit
-    override suspend fun reconcileAll() = Unit
+    override suspend fun previewDayEndHourChange(newEndHour: Int): NotificationChangeImpact {
+        previewedEndHours += newEndHour
+        return endHourImpact
+    }
+
+    override suspend fun reconcileAll() {
+        reconcileCalls += 1
+    }
     override suspend fun cancelTodo(todoId: String) = Unit
 }
 
@@ -605,12 +704,16 @@ private class SettingsScreenTestBackupGateway(
     var confirmCalls = 0
     var cancelCalls = 0
     var acknowledgeCalls = 0
+    val createUris = mutableListOf<Uri>()
 
     override val state: StateFlow<BackupOperationState> = runtimeState
 
     override fun suggestedFileName() = "MATA_backup_test.mata-backup"
 
-    override fun startCreate(uri: Uri) = true
+    override fun startCreate(uri: Uri): Boolean {
+        createUris += uri
+        return true
+    }
 
     override fun startRestoreValidation(uri: Uri) = true
 
