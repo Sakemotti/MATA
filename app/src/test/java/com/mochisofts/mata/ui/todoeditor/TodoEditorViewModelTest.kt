@@ -2,6 +2,7 @@ package com.mochisofts.mata.ui.todoeditor
 
 import androidx.lifecycle.SavedStateHandle
 import com.mochisofts.mata.MainDispatcherRule
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
@@ -43,6 +44,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -73,6 +75,155 @@ class TodoEditorViewModelTest {
         assertEquals(RecurrenceType.ONCE, reopened.uiState.value.recurrenceType)
         assertEquals("1", reopened.uiState.value.intervalDaysInput)
         assertTrue(reopened.uiState.value.selectedWeekdays.isEmpty())
+    }
+
+    @Test
+    fun createdCategoryResultSelectsItWithoutLosingTheCurrentDraft() = runTest {
+        val savedStateHandle = SavedStateHandle(
+            mapOf("todoId" to null, "initialDate" to null),
+        )
+        val categories = FakeCategoryRepository(
+            listOf(category("before", "変更前", 1)),
+        )
+        val viewModel = createViewModel(
+            categoryRepository = categories,
+            savedStateHandle = savedStateHandle,
+        )
+        runCurrent()
+        viewModel.setTitle("入力途中")
+        viewModel.setDescription("保持する説明")
+        viewModel.setCategory("before")
+
+        categories.replace(
+            listOf(
+                category("before", "変更前", 1),
+                category("created", "新規カテゴリ", 2),
+            ),
+        )
+        savedStateHandle[TODO_EDITOR_CATEGORY_RESULT_KEY] = "created"
+        runCurrent()
+
+        assertEquals("入力途中", viewModel.uiState.value.title)
+        assertEquals("保持する説明", viewModel.uiState.value.description)
+        assertEquals("created", viewModel.uiState.value.categoryId)
+        assertTrue(viewModel.uiState.value.isDirty)
+        assertNull(savedStateHandle[TODO_EDITOR_CATEGORY_RESULT_KEY])
+    }
+
+    @Test
+    fun deletingTheSelectedCategoryFallsBackToUncategorizedAndMarksTheDraftDirty() = runTest {
+        val target = Todo(
+            id = "todo",
+            title = "カテゴリ削除対象",
+            description = "",
+            categoryId = "category",
+            startDate = LocalDate.of(2026, 9, 3),
+            endDate = null,
+            recurrenceRule = RecurrenceRule.daily(),
+            dueMinutes = null,
+            definitionRevision = 1,
+            archivedAt = null,
+            createdAt = 1,
+        )
+        val categories = FakeCategoryRepository(listOf(category("category", "削除対象", 3)))
+        val viewModel = createViewModel(
+            todoRepository = FakeTodoRepository(mapOf(target.id to target)),
+            categoryRepository = categories,
+            todoId = target.id,
+        )
+        runCurrent()
+        assertEquals("category", viewModel.uiState.value.categoryId)
+        assertFalse(viewModel.uiState.value.isDirty)
+        val effect = async { viewModel.effects.first() }
+
+        categories.replace(emptyList())
+        runCurrent()
+
+        assertNull(viewModel.uiState.value.categoryId)
+        assertTrue(viewModel.uiState.value.isDirty)
+        assertEquals(TodoEditorEffect.SelectedCategoryRemoved, effect.await())
+    }
+
+    @Test
+    fun processRecreationRestoresEveryDraftAndModeSpecificTemporaryValue() = runTest {
+        val firstHandle = SavedStateHandle(
+            mapOf("todoId" to null, "initialDate" to null),
+        )
+        val repository = FakeCategoryRepository(listOf(category("category", "カテゴリ", 3)))
+        val first = createViewModel(
+            categoryRepository = repository,
+            savedStateHandle = firstHandle,
+        )
+        runCurrent()
+
+        first.setTitle("復元するタイトル")
+        first.setDescription("復元する説明")
+        first.setCategory("category")
+        first.setStartDate(LocalDate.of(2026, 9, 20))
+        first.setEndDate(LocalDate.of(2027, 3, 31))
+        first.setRecurrence(RecurrenceType.SELECTED_WEEKDAYS)
+        first.toggleWeekday(DayOfWeek.TUESDAY)
+        first.setRecurrence(RecurrenceType.MONTHLY_NTH_WEEKDAYS)
+        first.toggleMonthlyNthWeekday(3, DayOfWeek.FRIDAY)
+        val monthlyNthWeekdays = first.uiState.value.monthlyNthWeekdays
+        first.setRecurrence(RecurrenceType.MONTHLY_DAY)
+        first.setMonthlyDay(29)
+        first.setRecurrence(RecurrenceType.EVERY_N_DAYS)
+        first.setIntervalDays("17")
+        first.setRecurrence(RecurrenceType.WEEKLY_COUNT)
+        first.setPeriodWeeks(3)
+        first.setWeeklyCount(4)
+        first.setDayFilter(RecurrenceDayFilter.WEEKDAYS)
+        val selectedWeekdays = first.uiState.value.selectedWeekdays
+        first.setRecurrence(RecurrenceType.MONTHLY_COUNT)
+        first.setMonthlyCount(5)
+        first.setRecurrence(RecurrenceType.DAILY)
+        first.setDueMinutes(21 * 60)
+        first.setDueDate(LocalDate.of(2026, 9, 25))
+        first.setCarryOverEnabled(true)
+        first.upsertNotification(
+            id = null,
+            relation = NotificationRelation.BEFORE,
+            amount = 2,
+            unit = NotificationUnit.HOUR,
+        )
+
+        val restoredHandle = SavedStateHandle(
+            mapOf(
+                "todoId" to null,
+                "initialDate" to null,
+                TODO_EDITOR_DRAFT_KEY to firstHandle[TODO_EDITOR_DRAFT_KEY],
+            ),
+        )
+        val restored = createViewModel(
+            categoryRepository = repository,
+            savedStateHandle = restoredHandle,
+        )
+        runCurrent()
+        val state = restored.uiState.value
+
+        assertEquals("復元するタイトル", state.title)
+        assertEquals("復元する説明", state.description)
+        assertEquals("category", state.categoryId)
+        assertEquals(LocalDate.of(2026, 9, 20), state.startDate)
+        assertEquals(LocalDate.of(2027, 3, 31), state.endDate)
+        assertEquals(RecurrenceType.DAILY, state.recurrenceType)
+        assertEquals(selectedWeekdays, state.selectedWeekdays)
+        assertEquals(monthlyNthWeekdays, state.monthlyNthWeekdays)
+        assertEquals(29, state.monthlyDay)
+        assertEquals("17", state.intervalDaysInput)
+        assertEquals(4, state.weeklyCount)
+        assertEquals(3, state.periodWeeks)
+        assertEquals(RecurrenceDayFilter.WEEKDAYS, state.dayFilter)
+        assertEquals(5, state.monthlyCount)
+        assertEquals(21 * 60, state.dueMinutes)
+        assertEquals(LocalDate.of(2026, 9, 25), state.dueDate)
+        assertTrue(state.carryOverEnabled)
+        assertEquals(1, state.notifications.size)
+        assertEquals(NotificationRelation.BEFORE, state.notifications.single().relation)
+        assertEquals(2, state.notifications.single().amount)
+        assertEquals(NotificationUnit.HOUR, state.notifications.single().unit)
+        assertTrue(state.isDirty)
     }
 
     @Test
@@ -820,8 +971,9 @@ class TodoEditorViewModelTest {
         clock: Clock = fixedClock("2026-09-03T12:00:00+09:00"),
         todoId: String? = null,
         initialDate: LocalDate? = null,
+        savedStateHandle: SavedStateHandle? = null,
     ) = TodoEditorViewModel(
-        savedStateHandle = SavedStateHandle(
+        savedStateHandle = savedStateHandle ?: SavedStateHandle(
             mapOf(
                 "todoId" to todoId,
                 "initialDate" to initialDate?.toString(),
@@ -962,10 +1114,16 @@ private class FakeTodoRepository(
 }
 
 private class FakeCategoryRepository(
-    private val categories: List<Category> = emptyList(),
+    categories: List<Category> = emptyList(),
 ) : CategoryRepository {
-    override fun observeCategories(): Flow<List<Category>> = flowOf(categories)
-    override suspend fun getCategory(id: String): Category? = categories.firstOrNull { it.id == id }
+    private val categoryState = MutableStateFlow(categories)
+
+    override fun observeCategories(): Flow<List<Category>> = categoryState
+    override suspend fun getCategory(id: String): Category? = categoryState.value.firstOrNull { it.id == id }
+
+    fun replace(categories: List<Category>) {
+        categoryState.value = categories
+    }
 
     override suspend fun saveCategory(
         id: String?,

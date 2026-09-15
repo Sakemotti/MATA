@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.NotificationRelation
@@ -134,6 +135,7 @@ sealed interface TodoEditorEffect {
     data object Deleted : TodoEditorEffect
     data object Archived : TodoEditorEffect
     data object ExplainNotificationPermission : TodoEditorEffect
+    data object SelectedCategoryRemoved : TodoEditorEffect
     data object NotFound : TodoEditorEffect
 }
 
@@ -170,7 +172,7 @@ private fun TodoEditorUiState.toPersistedDraft() = TodoEditorPersistedDraft(
 
 @HiltViewModel
 class TodoEditorViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val todoRepository: TodoRepository,
     categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
@@ -195,6 +197,7 @@ class TodoEditorViewModel @Inject constructor(
     val effects: Flow<TodoEditorEffect> = effectsChannel.receiveAsFlow()
     private var pendingSavedResult: Pair<Boolean, String>? = null
     private var initialPersistedDraft: TodoEditorPersistedDraft? = null
+    private var knownCategoryIds: Set<String> = emptySet()
 
     init {
         viewModelScope.launch {
@@ -204,8 +207,43 @@ class TodoEditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             categoryRepository.observeCategories().collect { categories ->
-                _uiState.update { state -> refreshDerived(state.copy(categories = categories)) }
+                val categoryIds = categories.mapTo(mutableSetOf(), Category::id)
+                var selectedCategoryRemoved = false
+                _uiState.update { state ->
+                    selectedCategoryRemoved = !state.isLoading &&
+                        state.categoryId != null &&
+                        state.categoryId in knownCategoryIds &&
+                        state.categoryId !in categoryIds
+                    val updatedState = refreshDerived(
+                        state.copy(
+                            categories = categories,
+                            categoryId = state.categoryId.takeUnless { selectedCategoryRemoved },
+                        ),
+                    )
+                    if (selectedCategoryRemoved) {
+                        updatedState.copy(
+                            isDirty = initialPersistedDraft?.let { baseline ->
+                                updatedState.toPersistedDraft() != baseline
+                            } ?: true,
+                        ).also(::persistDraft)
+                    } else {
+                        updatedState
+                    }
+                }
+                knownCategoryIds = categoryIds
+                if (selectedCategoryRemoved) {
+                    effectsChannel.send(TodoEditorEffect.SelectedCategoryRemoved)
+                }
             }
+        }
+        viewModelScope.launch {
+            savedStateHandle
+                .getStateFlow<String?>(TODO_EDITOR_CATEGORY_RESULT_KEY, null)
+                .collect { categoryId ->
+                    categoryId ?: return@collect
+                    edit { copy(categoryId = categoryId) }
+                    savedStateHandle.remove<String>(TODO_EDITOR_CATEGORY_RESULT_KEY)
+                }
         }
         viewModelScope.launch {
             settingsRepository.dayEndHour.collect { endHour ->
@@ -270,7 +308,19 @@ class TodoEditorViewModel @Inject constructor(
                     )
                 })
                 initialPersistedDraft = loadedState.toPersistedDraft()
-                loadedState.copy(isDirty = false)
+                val restoredState = TodoEditorDraftState.restore(
+                    encoded = savedStateHandle[TODO_EDITOR_DRAFT_KEY],
+                    todoId = route.todoId,
+                    baseState = loadedState,
+                )
+                if (restoredState == null) {
+                    savedStateHandle.remove<String>(TODO_EDITOR_DRAFT_KEY)
+                }
+                refreshDerived(restoredState ?: loadedState).let { finalState ->
+                    finalState.copy(
+                        isDirty = finalState.toPersistedDraft() != initialPersistedDraft,
+                    )
+                }
             }
         }
         refreshNotificationStatus()
@@ -413,6 +463,7 @@ class TodoEditorViewModel @Inject constructor(
                 dueDate = state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
                 carryOverEnabled = state.carryOverEnabled && !state.recurrenceType.isCountBased,
             ).onSuccess { todoId ->
+                clearDraft()
                 val systemState = notificationScheduler.systemState()
                 val shouldRequestPermission = state.notifications.isNotEmpty() &&
                     systemState.runtimePermissionRelevant &&
@@ -452,7 +503,10 @@ class TodoEditorViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             todoRepository.deleteTodo(todoId)
-                .onSuccess { effectsChannel.send(TodoEditorEffect.Deleted) }
+                .onSuccess {
+                    clearDraft()
+                    effectsChannel.send(TodoEditorEffect.Deleted)
+                }
                 .onFailure {
                     _uiState.update { state ->
                         state.copy(
@@ -470,7 +524,10 @@ class TodoEditorViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             todoRepository.archiveTodo(todoId)
-                .onSuccess { effectsChannel.send(TodoEditorEffect.Archived) }
+                .onSuccess {
+                    clearDraft()
+                    effectsChannel.send(TodoEditorEffect.Archived)
+                }
                 .onFailure { throwable ->
                     _uiState.update { state ->
                         state.copy(
@@ -491,8 +548,21 @@ class TodoEditorViewModel @Inject constructor(
                 isDirty = initialPersistedDraft?.let { baseline ->
                     editedState.toPersistedDraft() != baseline
                 } ?: true,
+            ).also(::persistDraft)
+        }
+    }
+
+    private fun persistDraft(state: TodoEditorUiState) {
+        if (!state.isLoading) {
+            savedStateHandle[TODO_EDITOR_DRAFT_KEY] = TodoEditorDraftState.encode(
+                state = state,
+                todoId = route.todoId,
             )
         }
+    }
+
+    private fun clearDraft() {
+        savedStateHandle.remove<String>(TODO_EDITOR_DRAFT_KEY)
     }
 
     private fun refreshDerived(state: TodoEditorUiState): TodoEditorUiState {

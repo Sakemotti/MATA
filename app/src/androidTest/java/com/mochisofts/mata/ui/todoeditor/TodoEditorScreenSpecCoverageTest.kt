@@ -2,11 +2,15 @@ package com.mochisofts.mata.ui.todoeditor
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -14,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
@@ -135,6 +140,33 @@ class TodoEditorScreenSpecCoverageTest {
     }
 
     @Test
+    fun te005_openingCategoryCreationKeepsDraftAndCancelKeepsPreviousSelection() {
+        val category = Category("selected", "Selected", 2, "Home", 0)
+        val viewModel = viewModel(categories = listOf(category))
+        var addCategoryCount = 0
+        setScreen(
+            displayedViewModel = mutableStateOf(viewModel),
+            onAddCategory = { addCategoryCount += 1 },
+        )
+        waitForText(text(R.string.todo_editor_add_title))
+
+        composeRule.runOnIdle {
+            viewModel.setTitle("入力途中のTODO")
+            viewModel.setDescription("カテゴリ画面との往復後も保持")
+            viewModel.setCategory(category.id)
+        }
+        composeRule.onNode(hasText(category.name) and hasClickAction()).performClick()
+        composeRule.onNodeWithTag(TODO_EDITOR_ADD_CATEGORY_TAG).performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1, addCategoryCount)
+            assertEquals("入力途中のTODO", viewModel.uiState.value.title)
+            assertEquals("カテゴリ画面との往復後も保持", viewModel.uiState.value.description)
+            assertEquals(category.id, viewModel.uiState.value.categoryId)
+        }
+    }
+
+    @Test
     fun te008_onceAndRepeatingModesShowTheirOwnDateControls() {
         val viewModel = viewModel()
         setScreen(mutableStateOf(viewModel))
@@ -231,15 +263,63 @@ class TodoEditorScreenSpecCoverageTest {
         composeRule.runOnIdle { assertEquals(2, backCount) }
     }
 
+    @Test
+    fun te029_scrollRestoresWhileAnOpenSelectionSheetCloses() {
+        val viewModel = viewModel()
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            MataTheme(useDynamicColor = false) {
+                TodoEditorScreen(
+                    onBack = {},
+                    onSaved = {},
+                    onNotFound = {},
+                    viewModel = viewModel,
+                )
+            }
+        }
+        waitForText(text(R.string.todo_editor_add_title))
+        composeRule.onNodeWithText(text(R.string.action_add_notification))
+            .performScrollTo()
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onAllNodesWithText(text(R.string.todo_editor_add_notification_title))
+            .assertCountEquals(2)
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeRule.onAllNodesWithText(text(R.string.todo_editor_add_notification_title))
+            .assertCountEquals(1)
+        composeRule.onNodeWithText(text(R.string.action_add_notification)).assertIsDisplayed()
+        composeRule.onNodeWithTag(TODO_EDITOR_TITLE_TAG).assertIsNotDisplayed()
+    }
+
+    @Test
+    fun ted02_newEditorFocusesTitleAndKeepsSaveReachableWhileEnteringText() {
+        val viewModel = viewModel()
+        setScreen(mutableStateOf(viewModel))
+        waitForText(text(R.string.todo_editor_add_title))
+
+        composeRule.onNodeWithTag(TODO_EDITOR_TITLE_TAG)
+            .assertIsFocused()
+            .performTextInput("IME入力")
+        composeRule.onNodeWithText(text(R.string.action_add_notification))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_save)).assertIsDisplayed().assertIsEnabled()
+        composeRule.runOnIdle { assertEquals("IME入力", viewModel.uiState.value.title) }
+    }
+
     private fun setScreen(
         displayedViewModel: androidx.compose.runtime.MutableState<TodoEditorViewModel>,
         onBack: () -> Unit = {},
+        onAddCategory: () -> Unit = {},
         onSaved: (Boolean) -> Unit = {},
     ) {
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 TodoEditorScreen(
                     onBack = onBack,
+                    onAddCategory = onAddCategory,
                     onSaved = onSaved,
                     onNotFound = {},
                     viewModel = displayedViewModel.value,

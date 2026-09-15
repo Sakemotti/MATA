@@ -178,7 +178,7 @@ TE-001	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 
 TE-002	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te002・connectedDebugAndroidTest成功
 TE-003	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te003・testDebugUnitTest成功
 TE-004	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te004・connectedDebugAndroidTest成功
-TE-005	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-005	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te005・connectedDebugAndroidTest成功
 TE-006	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te006・testDebugUnitTest成功
 TE-007	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te007・testDebugUnitTest成功
 TE-008	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te008・connectedDebugAndroidTest成功
@@ -202,13 +202,13 @@ TE-025	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEdi
 TE-026	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te026・connectedDebugAndroidTest成功
 TE-027	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te027・connectedDebugAndroidTest成功
 TE-028	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te028・testDebugUnitTest成功
-TE-029	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-029	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te029・connectedDebugAndroidTest成功
 TE-030	P1	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・全入力、選択、エラー、保存、戻るを色だけに依存せず操作できることを確認
 TE-031	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te031・testDebugUnitTest成功
 TE-032	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te032・testDebugUnitTest成功
 TE-033	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te033・testDebugUnitTest成功
 TE-D01	P2	todo-editor.md	未実施	-	-	-	-	-
-TE-D02	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-D02	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#ted02・connectedDebugAndroidTest成功
 TE-D03	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#ted03・testDebugUnitTest成功
 TE-D04	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalculatorTest#ted04・testDebugUnitTest成功
 TE-D05	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#ted05・CI run 34029287328成功

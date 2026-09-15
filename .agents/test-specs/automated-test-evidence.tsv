@@ -294,3 +294,6 @@ TE-014	app/src/test/java/com/mochisofts/mata/domain/model/TodoScheduleCalculator
 TE-024	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te024_saveIsEnabledOnlyForAValidDirtyDraftAndDisablesAfterRevert	:app:connectedDebugAndroidTest
 TE-026	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te026_saveReportsNewOrEditModeForListNavigationAndMessageSelection	:app:connectedDebugAndroidTest
 TE-027	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te027_backConfirmsOnlyDirtyDraftAndContinueOrDiscardBehaveAsSelected	:app:connectedDebugAndroidTest
+TE-005	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te005_openingCategoryCreationKeepsDraftAndCancelKeepsPreviousSelection	:app:connectedDebugAndroidTest
+TE-029	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te029_scrollRestoresWhileAnOpenSelectionSheetCloses	:app:connectedDebugAndroidTest
+TE-D02	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	ted02_newEditorFocusesTitleAndKeepsSaveReachableWhileEnteringText	:app:connectedDebugAndroidTest

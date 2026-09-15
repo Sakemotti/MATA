@@ -178,7 +178,7 @@ TE-001	P0	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-002	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-003	P0	todo-editor.md	UI/UNIT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-004	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
-TE-005	P0	todo-editor.md	UI	RELEASE_OWNER	OWNER	TODO登録・編集
+TE-005	P0	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-006	P0	todo-editor.md	UNIT/UI/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-007	P0	todo-editor.md	UI/UNIT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-008	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
@@ -202,13 +202,13 @@ TE-025	P0	todo-editor.md	UNIT	DEV_AUTO	DEV	TODO登録・編集
 TE-026	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-027	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-028	P0	todo-editor.md	UNIT	DEV_AUTO	DEV	TODO登録・編集
-TE-029	P1	todo-editor.md	UI	RELEASE_OWNER	OWNER	TODO登録・編集
+TE-029	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-030	P1	todo-editor.md	MANUAL	RELEASE_OWNER	OWNER	TODO登録・編集
 TE-031	P0	todo-editor.md	UI/UNIT/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-032	P0	todo-editor.md	UI/UNIT/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-033	P1	todo-editor.md	UI/UNIT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-D01	P2	todo-editor.md	UI	RELEASE_OWNER	OWNER	TODO登録・編集
-TE-D02	P1	todo-editor.md	UI	RELEASE_OWNER	OWNER	TODO登録・編集
+TE-D02	P1	todo-editor.md	UI/INT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-D03	P0	todo-editor.md	UI/UNIT/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-D04	P0	todo-editor.md	UNIT/UI/AUTO	DEV_AUTO	DEV	TODO登録・編集
 TE-D05	P0	todo-editor.md	INT	DEV_AUTO	DEV	TODO登録・編集

@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 
 const val UNCATEGORIZED_CATEGORY_KEY = "__uncategorized__"
 const val TODO_EDITOR_RESULT_KEY = "todo_editor_result"
+const val TODO_EDITOR_CATEGORY_RESULT_KEY = "todo_editor_category_result"
 
 @StringRes
 fun todoEditorSavedMessageRes(isNew: Boolean): Int =
@@ -32,7 +33,10 @@ data class TodoEditorRoute(
 data object CategoryListRoute
 
 @Serializable
-data class CategoryEditorRoute(val categoryId: String? = null)
+data class CategoryEditorRoute(
+    val categoryId: String? = null,
+    val selectForTodoEditor: Boolean = false,
+)
 
 @Serializable
 data object SettingsRoute
