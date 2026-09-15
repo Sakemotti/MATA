@@ -290,6 +290,11 @@ class RoomTodoRepository @Inject constructor(
     override fun observeTodos(): Flow<List<Todo>> =
         todoDao.observeActive().map { entities -> entities.map(TodoEntity::toDomain) }
 
+    override fun observeCompletedDates(todoId: String): Flow<List<LocalDate>> =
+        executionDao.observeCompletedLogicalDates(todoId).map { values ->
+            values.mapNotNull { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
+        }
+
     override suspend fun getTodo(id: String): Todo? = todoDao.findById(id)?.let { entity ->
         entity.toDomain(
             notifications = notificationDao.findForTodo(id).map(TodoNotificationEntity::toDomain),

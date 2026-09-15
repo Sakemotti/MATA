@@ -297,3 +297,4 @@ TE-027	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScre
 TE-005	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te005_openingCategoryCreationKeepsDraftAndCancelKeepsPreviousSelection	:app:connectedDebugAndroidTest
 TE-029	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te029_scrollRestoresWhileAnOpenSelectionSheetCloses	:app:connectedDebugAndroidTest
 TE-D02	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	ted02_newEditorFocusesTitleAndKeepsSaveReachableWhileEnteringText	:app:connectedDebugAndroidTest
+TE-013	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te013_schedulePreviewShowsThreeFixedDatesAndLiveCountProgress	:app:connectedDebugAndroidTest

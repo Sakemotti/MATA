@@ -186,7 +186,7 @@ TE-009	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewMod
 TE-010	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local JDK 21 / JVM	TodoEditorViewModelTest#te010・testDebugUnitTest成功
 TE-011	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#te011・CI run 34029287328成功
 TE-012	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te012・testDebugUnitTest成功
-TE-013	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-013	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te013・connectedDebugAndroidTest成功
 TE-014	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local JDK 21 / JVM	TodoScheduleCalculatorTest#te014・testDebugUnitTest成功
 TE-015	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalculatorTest#te015・testDebugUnitTest成功
 TE-016	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te016・testDebugUnitTest成功
