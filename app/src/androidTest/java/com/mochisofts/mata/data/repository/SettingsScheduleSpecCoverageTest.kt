@@ -2,12 +2,14 @@ package com.mochisofts.mata.data.repository
 
 import android.app.Activity
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mochisofts.mata.core.observability.DiagnosticLogger
 import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.data.backup.DataMutationGate
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
@@ -22,13 +24,19 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.deadlineAt
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
+import com.mochisofts.mata.ui.settings.SettingsViewModel
 import com.mochisofts.mata.ui.todolist.TodoListDateSelection
 import com.mochisofts.mata.ui.todolist.TodoListViewModel
+import java.io.File
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +49,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -48,6 +57,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SettingsScheduleSpecCoverageTest {
+    private lateinit var context: Context
     private lateinit var database: MataDatabase
     private lateinit var settings: MutableTestSettingsRepository
     private lateinit var todoRepository: RoomTodoRepository
@@ -56,7 +66,7 @@ class SettingsScheduleSpecCoverageTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        context = ApplicationProvider.getApplicationContext()
         clock = Clock.fixed(
             Instant.parse("2026-08-11T03:00:00Z"),
             ZoneId.of("Asia/Tokyo"),
@@ -356,6 +366,116 @@ class SettingsScheduleSpecCoverageTest {
         assertEquals(4, sundayProgress.period.requiredCount)
         assertEquals(1, sundayProgress.completedCount)
         assertEquals(3, sundayProgress.remainingCount)
+    }
+
+    @Test
+    fun st012_settingsAndTodoListShareCompletedVisibilityImmediately() = runBlocking {
+        val selectedDate = LocalDate.of(2026, 8, 11)
+        val dataStoreFile = File(
+            context.cacheDir,
+            "settings-shared-${System.nanoTime()}.preferences_pb",
+        )
+        val dataStoreScopes = mutableListOf<CoroutineScope>()
+        fun openSettingsRepository(): DataStoreSettingsRepository {
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            dataStoreScopes += scope
+            return DataStoreSettingsRepository(
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { dataStoreFile },
+                ),
+                DataMutationGate(),
+            )
+        }
+        dataStoreFile.delete()
+        val completed = dailyTodo(id = "shared-completed", categoryId = null, dueMinutes = null)
+        val pending = dailyTodo(id = "shared-pending", categoryId = null, dueMinutes = null)
+        database.todoDao().upsert(completed)
+        database.todoDao().upsert(pending)
+        database.todoExecutionDao().insert(
+            completedExecution(
+                id = "shared-completion",
+                todoId = completed.id,
+                logicalDate = selectedDate.toString(),
+                snapshotJson = "{}",
+            ),
+        )
+        try {
+            val persistentSettings = openSettingsRepository()
+            val persistentTodoRepository = RoomTodoRepository(
+                database = database,
+                todoDao = database.todoDao(),
+                categoryDao = database.categoryDao(),
+                executionDao = database.todoExecutionDao(),
+                notificationDao = database.todoNotificationDao(),
+                runtimeStateDao = database.todoRuntimeStateDao(),
+                settingsRepository = persistentSettings,
+                notificationScheduler = NoOpSettingsNotificationScheduler(),
+                widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+                holidayRepository = TestHolidayRepository(),
+                clock = clock,
+            )
+            val settingsViewModel = SettingsViewModel(
+                repository = persistentSettings,
+                notificationScheduler = NoOpSettingsNotificationScheduler(),
+                adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+            )
+            val todoListViewModel = TodoListViewModel(
+                savedStateHandle = SavedStateHandle(),
+                todoRepository = persistentTodoRepository,
+                holidayRepository = TestHolidayRepository(),
+                settingsRepository = persistentSettings,
+                clock = clock,
+                adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+            )
+
+            val initiallyHidden = todoListViewModel.uiState.first { state ->
+                !state.isLoading && state.groups.isNotEmpty()
+            }
+            assertFalse(settingsViewModel.uiState.value.showCompleted)
+            assertFalse(initiallyHidden.showCompleted)
+            assertEquals(
+                listOf(pending.id),
+                initiallyHidden.groups.flatMap { it.occurrences }.map { it.todo.id },
+            )
+
+            settingsViewModel.setShowCompleted(true)
+            val shownFromSettings = todoListViewModel.uiState.first { state ->
+                state.showCompleted && state.groups.flatMap { it.occurrences }
+                    .any { it.todo.id == completed.id }
+            }
+            assertEquals(
+                setOf(completed.id, pending.id),
+                shownFromSettings.groups.flatMap { it.occurrences }.map { it.todo.id }.toSet(),
+            )
+            assertTrue(
+                settingsViewModel.uiState.first { !it.isLoading && it.showCompleted }.showCompleted,
+            )
+
+            todoListViewModel.setShowCompleted(false)
+            assertFalse(
+                settingsViewModel.uiState.first { !it.isLoading && !it.showCompleted }.showCompleted,
+            )
+
+            settingsViewModel.setShowCompleted(true)
+            settingsViewModel.uiState.first { state ->
+                state.showCompleted && state.savingSetting == null
+            }
+            dataStoreScopes.single().coroutineContext[Job]?.cancelAndJoin()
+
+            val reopenedSettings = openSettingsRepository()
+            val reopenedSettingsViewModel = SettingsViewModel(
+                repository = reopenedSettings,
+                notificationScheduler = NoOpSettingsNotificationScheduler(),
+                adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+            )
+            assertTrue(
+                reopenedSettingsViewModel.uiState.first { !it.isLoading }.showCompleted,
+            )
+        } finally {
+            dataStoreScopes.forEach { scope -> scope.coroutineContext[Job]?.cancelAndJoin() }
+            assertTrue(dataStoreFile.delete() || !dataStoreFile.exists())
+        }
     }
 
     @Test

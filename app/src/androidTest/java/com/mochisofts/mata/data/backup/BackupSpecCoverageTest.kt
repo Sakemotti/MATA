@@ -69,6 +69,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -239,6 +240,34 @@ class BackupSpecCoverageTest {
             "holidays-jp",
             "temporary-operation",
         ).forEach { excluded -> assertFalse(excluded, serialized.contains(excluded)) }
+    }
+
+    @Test
+    fun std06_adsConsentChangesNeverAlterTheUserDataBackupPayload() = runBlocking {
+        seedAllUserData()
+        val beforeConsentChange = zipEntries(writeArchive()).getValue(DATA_ENTRY)
+
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("ump_consent_state")] = "denied"
+            preferences[stringPreferencesKey("ad_runtime_state")] = "cannot-request-ads"
+        }
+        val afterDenied = zipEntries(writeArchive()).getValue(DATA_ENTRY)
+
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("ump_consent_state")] = "granted"
+            preferences[stringPreferencesKey("ad_runtime_state")] = "can-request-ads"
+        }
+        val afterGranted = zipEntries(writeArchive()).getValue(DATA_ENTRY)
+
+        assertArrayEquals(beforeConsentChange, afterDenied)
+        assertArrayEquals(beforeConsentChange, afterGranted)
+        val payload = afterGranted.toString(Charsets.UTF_8)
+        assertFalse(payload.contains("ump_consent_state"))
+        assertFalse(payload.contains("ad_runtime_state"))
+        assertEquals(
+            TODO_ID,
+            singleObject(parseObject(afterGranted), "todos").getValue("id").jsonPrimitive.content,
+        )
     }
 
     @Test

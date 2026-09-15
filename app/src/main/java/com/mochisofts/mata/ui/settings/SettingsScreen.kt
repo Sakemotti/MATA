@@ -103,6 +103,7 @@ fun SettingsScreen(
     onDestination: (MataDestination) -> Unit,
     onOpenSourceLicenses: () -> Unit,
     onRestoreCompleted: () -> Unit = { onDestination(MataDestination.TODOS) },
+    legalDocumentOpener: (Context, String, String) -> Boolean = ::openLegalDocument,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -397,7 +398,8 @@ fun SettingsScreen(
                             isSaving = false,
                             enabled = true,
                             onClick = {
-                                if (!openLegalDocument(
+                                if (
+                                    !legalDocumentOpener(
                                         context,
                                         BuildConfig.PRIVACY_POLICY_URL,
                                         PRIVACY_POLICY_PATH,
@@ -435,7 +437,8 @@ fun SettingsScreen(
                             isSaving = false,
                             enabled = true,
                             onClick = {
-                                if (!openLegalDocument(
+                                if (
+                                    !legalDocumentOpener(
                                         context,
                                         BuildConfig.TERMS_URL,
                                         TERMS_PATH,

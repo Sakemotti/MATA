@@ -1,6 +1,7 @@
 package com.mochisofts.mata.ui.settings
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -49,6 +50,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -355,6 +357,70 @@ class SettingsScreenSpecCoverageTest {
     }
 
     @Test
+    fun st027_successfulRestoreIsAcknowledgedAndReturnsToTodoList() {
+        val backupGateway = SettingsScreenTestBackupGateway()
+        var restoreCompletedCalls = 0
+        setScreen(
+            backupGateway = backupGateway,
+            onRestoreCompleted = { restoreCompletedCalls += 1 },
+        )
+
+        composeRule.runOnIdle {
+            backupGateway.runtimeState.value = BackupOperationState(
+                operationId = "successful-restore",
+                type = BackupOperationType.RESTORE,
+                status = BackupOperationStatus.SUCCEEDED,
+                phase = BackupOperationPhase.REBUILDING,
+                progress = 100,
+            )
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { restoreCompletedCalls == 1 }
+        composeRule.runOnIdle { assertEquals(1, backupGateway.acknowledgeCalls) }
+    }
+
+    @Test
+    fun st040_legalLinksOpenApprovedUrlsAndFailureKeepsSettingsVisible() {
+        val opened = mutableListOf<Pair<String, String>>()
+        var simulateBrowserFailure = false
+        setScreen(
+            legalDocumentOpener = { _: Context, url: String, expectedPath: String ->
+                if (simulateBrowserFailure) {
+                    false
+                } else {
+                    opened += url to expectedPath
+                    true
+                }
+            },
+        )
+
+        composeRule.onNodeWithText(text(R.string.settings_privacy_policy_title))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithText(text(R.string.settings_terms_title))
+            .performScrollTo()
+            .performClick()
+        composeRule.runOnIdle {
+            assertEquals(
+                listOf(
+                    BuildConfig.PRIVACY_POLICY_URL to PRIVACY_POLICY_PATH,
+                    BuildConfig.TERMS_URL to TERMS_PATH,
+                ),
+                opened,
+            )
+            assertFalse(isApprovedLegalUrl("not-a-url", PRIVACY_POLICY_PATH))
+            simulateBrowserFailure = true
+        }
+
+        composeRule.onNodeWithText(text(R.string.settings_privacy_policy_title))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithText(text(R.string.settings_external_link_error))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_end_hour_title)).assertExists()
+    }
+
+    @Test
     fun st025_restoreConfirmationShowsMetadataCountsAndIrreversibleWarning() {
         val backupGateway = SettingsScreenTestBackupGateway(restoreConfirmationState())
         setScreen(backupGateway = backupGateway)
@@ -405,6 +471,8 @@ class SettingsScreenSpecCoverageTest {
             SettingsScreenTestAdsConsentRepository(),
         backupGateway: SettingsScreenTestBackupGateway? = null,
         onDestination: (MataDestination) -> Unit = {},
+        onRestoreCompleted: () -> Unit = {},
+        legalDocumentOpener: (Context, String, String) -> Boolean = ::openLegalDocument,
     ): SettingsScreenTestRepository {
         val repository = SettingsScreenTestRepository(showCompleted)
         val viewModel = SettingsViewModel(
@@ -418,6 +486,8 @@ class SettingsScreenSpecCoverageTest {
                 SettingsScreen(
                     onDestination = onDestination,
                     onOpenSourceLicenses = {},
+                    onRestoreCompleted = onRestoreCompleted,
+                    legalDocumentOpener = legalDocumentOpener,
                     viewModel = viewModel,
                 )
             }
@@ -534,6 +604,7 @@ private class SettingsScreenTestBackupGateway(
     val runtimeState = MutableStateFlow(initialState)
     var confirmCalls = 0
     var cancelCalls = 0
+    var acknowledgeCalls = 0
 
     override val state: StateFlow<BackupOperationState> = runtimeState
 
@@ -560,7 +631,9 @@ private class SettingsScreenTestBackupGateway(
         runtimeState.value = BackupOperationState()
     }
 
-    override fun acknowledgeResult() = Unit
+    override fun acknowledgeResult() {
+        acknowledgeCalls += 1
+    }
 
     override suspend fun recoverInterruptedOperation() = Unit
 }

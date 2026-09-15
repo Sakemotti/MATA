@@ -350,7 +350,7 @@ ST-008	P0	settings.md	未実施	-	-	-	-	-
 ST-009	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・全7曜日の候補と選択保存を確認
 ST-010	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st010・CI run 33863729049成功
 ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st011・CI run 33863729049成功
-ST-012	P1	settings.md	未実施	-	-	-	-	-
+ST-012	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#st012・設定とTODO一覧が初期非表示の同一値を共有し、双方の変更と再生成へ即時反映することを確認
 ST-013	P1	settings.md	未実施	-	-	-	-	-
 ST-014	P1	settings.md	未実施	-	-	-	-	-
 ST-015	P1	settings.md	未実施	-	-	-	-	-
@@ -362,10 +362,10 @@ ST-020	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Back
 ST-021	P0	settings.md	未実施	-	-	-	-	-
 ST-022	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・作成前の個人情報、非暗号化、安全保管の警告を確認
 ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
-ST-024	P0	settings.md	未実施	-	-	-	-	-
+ST-024	P0	settings.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	SettingsViewModelTest#st024・無効形式と未対応形式の理由を区別し、現在の設定値を変更しないことを確認
 ST-025	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st025・復元確認に作成情報、対象件数、全置換・取消不可・非暗号化警告が揃うことを確認
 ST-026	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st026・CI run 33871324075成功
-ST-027	P0	settings.md	未実施	-	-	-	-	-
+ST-027	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st027・復元成功を確定して結果を一度だけ消費し、TODO一覧へ戻るコールバックを通知することを確認
 ST-028	P0	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・バックグラウンド移行とプロセス再生成後も処理状態へ復帰し二重実行しないことを確認
 ST-029	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st029・CI run 33871324075成功
 ST-030	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・独立広告セクションと掲載位置固定行がないことを確認
@@ -378,7 +378,7 @@ ST-036	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	Se
 ST-037	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・必須アプリ情報とWebサイト、問合せ非表示を確認
 ST-038	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・Debug版の識別可能なバージョン表記を確認
 ST-039	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	OpenSourceLicensesTest#st039・testDebugUnitTest成功
-ST-040	P1	settings.md	未実施	-	-	-	-	-
+ST-040	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st040・承認済みの規約URLを外部遷移へ渡し、不正URLを拒否してブラウザ失敗時は設定内にエラー表示することを確認
 ST-041	P0	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st041・testDebugUnitTest成功
 ST-042	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st042・testDebugUnitTest成功
 ST-043	P1	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・回転とプロセス再生成後に対象状態を復元し二重実行しないことを確認
@@ -389,7 +389,7 @@ ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Back
 ST-D03	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std03・CI run 33867709111成功
 ST-D04	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#std04・文字入力なしで確認を中止でき、復元開始後は取消操作と戻る操作で閉じないことを確認
 ST-D05	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std05・CI run 33871324075成功
-ST-D06	P0	settings.md	未実施	-	-	-	-	-
+ST-D06	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	BackupSpecCoverageTest#std06・UMP同意と広告状態の変更前後でTODO等のバックアップペイロードが完全一致することを確認
 ST-D07	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsBuildConfigurationSpecCoverageTest#std07・CI run 33875902463成功
 CTL-001	P0	category-todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl001_drawerAndWidgetCategoryHeaderOpenIndependentSelectedList・connectedDebugAndroidTest成功
 CTL-002	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl002・connectedDebugAndroidTest成功
