@@ -12,6 +12,8 @@ import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
+import com.mochisofts.mata.R
 import com.mochisofts.mata.ui.ads.BannerLoadState
 import com.mochisofts.mata.ui.ads.reservesSpace
 import com.mochisofts.mata.domain.repository.CategoryRepository
@@ -21,11 +23,13 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -42,6 +46,32 @@ import org.junit.Test
 class CategoryTodoListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun todoEditorResultReturnsToCategoryListWithTheCompletionMessage() = runTest {
+        val savedStateHandle = SavedStateHandle()
+        val viewModel = CategoryTodoListViewModel(
+            savedStateHandle = savedStateHandle,
+            todoRepository = CategoryTodoListTestTodoRepository(),
+            categoryRepository = CategoryTodoListTestCategoryRepository(),
+            clock = Clock.fixed(
+                LocalDate.of(2026, 9, 6).atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
+                ZoneId.of("Asia/Tokyo"),
+            ),
+            adsConsentRepository = CategoryTodoListTestAdsRepository(),
+        )
+        val effect = async { viewModel.effects.first() }
+        runCurrent()
+
+        savedStateHandle[TODO_EDITOR_RESULT_KEY] = R.string.message_todo_updated
+        runCurrent()
+
+        assertEquals(
+            CategoryTodoListEffect.Message(R.string.message_todo_updated),
+            effect.await(),
+        )
+        assertNull(savedStateHandle.get<Int>(TODO_EDITOR_RESULT_KEY))
+    }
 
     @Test
     fun ctl008_loadingEmptyConsentPendingAndAdFailureLeaveNoBlankAdArea() = runTest {

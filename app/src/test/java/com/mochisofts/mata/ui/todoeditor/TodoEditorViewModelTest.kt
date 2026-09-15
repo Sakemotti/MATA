@@ -53,6 +53,29 @@ class TodoEditorViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
+    fun te010_recurrenceSpecificDraftValuesSurviveModeSwitchButNotANewEditor() = runTest {
+        val viewModel = createViewModel()
+        runCurrent()
+
+        viewModel.setRecurrence(RecurrenceType.SELECTED_WEEKDAYS)
+        viewModel.toggleWeekday(DayOfWeek.TUESDAY)
+        val selectedWeekdays = viewModel.uiState.value.selectedWeekdays
+        viewModel.setRecurrence(RecurrenceType.EVERY_N_DAYS)
+        viewModel.setIntervalDays("17")
+        viewModel.setRecurrence(RecurrenceType.SELECTED_WEEKDAYS)
+
+        assertEquals(selectedWeekdays, viewModel.uiState.value.selectedWeekdays)
+        viewModel.setRecurrence(RecurrenceType.EVERY_N_DAYS)
+        assertEquals("17", viewModel.uiState.value.intervalDaysInput)
+
+        val reopened = createViewModel()
+        runCurrent()
+        assertEquals(RecurrenceType.ONCE, reopened.uiState.value.recurrenceType)
+        assertEquals("1", reopened.uiState.value.intervalDaysInput)
+        assertTrue(reopened.uiState.value.selectedWeekdays.isEmpty())
+    }
+
+    @Test
     fun ted06_missingTargetNeverShowsEmptyFormAndReturnsNotFound() = runTest {
         val existing = Todo(
             id = "target",

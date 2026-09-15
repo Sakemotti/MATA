@@ -17,6 +17,7 @@ import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -49,6 +50,21 @@ import org.junit.Test
 class TodoListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun todoEditorResultIsConsumedOnceWithoutChangingTheListSelection() = runTest {
+        val savedStateHandle = SavedStateHandle()
+        val viewModel = createViewModel(TodoListTestRepository(), savedStateHandle)
+        val effect = async { viewModel.effects.first() }
+        runCurrent()
+
+        savedStateHandle[TODO_EDITOR_RESULT_KEY] = R.string.message_todo_added
+        runCurrent()
+
+        assertEquals(TodoListEffect.Message(R.string.message_todo_added), effect.await())
+        assertEquals(TODAY, viewModel.uiState.value.selectedDate)
+        assertEquals(null, savedStateHandle.get<Int>(TODO_EDITOR_RESULT_KEY))
+    }
 
     @Test
     fun tl002_newViewModelStartsTodayInsteadOfRestoringTransientSelection() = runTest {
@@ -282,8 +298,11 @@ class TodoListViewModelTest {
         assertEquals(1, repository.skipCalls)
     }
 
-    private fun createViewModel(repository: TodoListTestRepository) = TodoListViewModel(
-        savedStateHandle = SavedStateHandle(),
+    private fun createViewModel(
+        repository: TodoListTestRepository,
+        savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    ) = TodoListViewModel(
+        savedStateHandle = savedStateHandle,
         todoRepository = repository,
         holidayRepository = TodoListTestHolidayRepository(),
         settingsRepository = TodoListTestSettingsRepository(),
