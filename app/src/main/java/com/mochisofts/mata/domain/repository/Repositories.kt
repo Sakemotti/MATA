@@ -40,6 +40,7 @@ interface CategoryRepository {
 interface TodoRepository {
     fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>>
     fun observeTodos(): Flow<List<Todo>>
+    fun observeCompletedDates(todoId: String): Flow<List<LocalDate>> = flowOf(emptyList())
     suspend fun getTodo(id: String): Todo?
     suspend fun saveTodo(
         id: String?,

@@ -94,6 +94,7 @@ import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
+import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
@@ -986,13 +987,22 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         if (period == null) {
             Text(stringResource(R.string.todo_editor_no_upcoming_dates))
         } else {
+            val progress = RecurrenceProgress(
+                period = period,
+                completedCount = state.completedLogicalDates.count { date ->
+                    date in period.startDate..period.endDate
+                },
+            )
             Text(
                 stringResource(
                     R.string.todo_editor_count_preview_format,
                     period.startDate.toJapaneseDate(),
                     period.endDate.toJapaneseDate(),
                     period.requiredCount,
+                    progress.completedCount,
+                    progress.remainingCount,
                 ),
+                modifier = Modifier.testTag(TODO_EDITOR_COUNT_PREVIEW_TAG),
             )
         }
         if (state.recurrenceRule.usesHolidayData()) {
@@ -1007,7 +1017,12 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         if (dates.isEmpty()) {
             Text(stringResource(R.string.todo_editor_no_upcoming_dates))
         } else {
-            dates.forEach { date -> Text(date.toJapaneseDate()) }
+            dates.forEachIndexed { index, date ->
+                Text(
+                    date.toJapaneseDate(),
+                    modifier = Modifier.testTag(todoEditorFixedPreviewTag(index)),
+                )
+            }
         }
         if (state.recurrenceRule.usesHolidayData()) {
             val previewYears = (dates.map { it.year } + previewFrom.year).toSet()
@@ -1157,4 +1172,6 @@ private fun LocalDate.toJapaneseDate(): String = format(
 internal const val TODO_EDITOR_UNCATEGORIZED_MENU_TAG = "todo-editor-category-uncategorized"
 internal const val TODO_EDITOR_ADD_CATEGORY_TAG = "todo-editor-category-add"
 internal const val TODO_EDITOR_TITLE_TAG = "todo-editor-title"
+internal const val TODO_EDITOR_COUNT_PREVIEW_TAG = "todo-editor-count-preview"
 internal fun todoEditorCategoryMenuTag(categoryId: String) = "todo-editor-category-$categoryId"
+internal fun todoEditorFixedPreviewTag(index: Int) = "todo-editor-fixed-preview-$index"

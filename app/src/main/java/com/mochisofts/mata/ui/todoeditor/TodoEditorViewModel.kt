@@ -73,6 +73,7 @@ data class TodoEditorUiState(
     val carryOverEnabled: Boolean = false,
     val dayEndHour: Int = 0,
     val notifications: List<TodoNotification> = emptyList(),
+    val completedLogicalDates: List<LocalDate> = emptyList(),
     val holidaySnapshot: HolidaySnapshot = HolidaySnapshot(),
     val notificationPreviews: Map<String, ZonedDateTime?> = emptyMap(),
     val hasPastNotificationForCurrentOccurrence: Boolean = false,
@@ -200,6 +201,15 @@ class TodoEditorViewModel @Inject constructor(
     private var knownCategoryIds: Set<String> = emptySet()
 
     init {
+        route.todoId?.let { todoId ->
+            viewModelScope.launch {
+                todoRepository.observeCompletedDates(todoId).collect { completedDates ->
+                    _uiState.update { state ->
+                        refreshDerived(state.copy(completedLogicalDates = completedDates))
+                    }
+                }
+            }
+        }
         viewModelScope.launch {
             holidayRepository.snapshot.collect { snapshot ->
                 _uiState.update { state -> refreshDerived(state.copy(holidaySnapshot = snapshot)) }

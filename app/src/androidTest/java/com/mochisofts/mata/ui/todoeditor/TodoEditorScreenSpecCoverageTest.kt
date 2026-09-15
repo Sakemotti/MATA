@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -189,6 +190,55 @@ class TodoEditorScreenSpecCoverageTest {
     }
 
     @Test
+    fun te013_schedulePreviewShowsThreeFixedDatesAndLiveCountProgress() {
+        val todo = existingTodo().copy(startDate = TODAY.minusDays(14))
+        val completedDates = listOf(TODAY.minusDays(1), TODAY)
+        val viewModel = viewModel(todo = todo, completedDates = completedDates)
+        setScreen(mutableStateOf(viewModel))
+        waitForText(text(R.string.todo_editor_edit_title))
+
+        composeRule.onNodeWithTag(todoEditorFixedPreviewTag(0))
+            .performScrollTo()
+            .assertTextEquals(japaneseDate(TODAY))
+        composeRule.onNodeWithTag(todoEditorFixedPreviewTag(1))
+            .assertTextEquals(japaneseDate(TODAY.plusDays(1)))
+        composeRule.onNodeWithTag(todoEditorFixedPreviewTag(2))
+            .assertTextEquals(japaneseDate(TODAY.plusDays(2)))
+        composeRule.onNodeWithTag(todoEditorFixedPreviewTag(3)).assertDoesNotExist()
+
+        composeRule.runOnIdle {
+            viewModel.setRecurrence(RecurrenceType.WEEKLY_COUNT)
+            viewModel.setWeeklyCount(3)
+            viewModel.setPeriodWeeks(1)
+        }
+        composeRule.onNodeWithTag(TODO_EDITOR_COUNT_PREVIEW_TAG)
+            .performScrollTo()
+            .assertTextEquals(
+                text(
+                    R.string.todo_editor_count_preview_format,
+                    japaneseDate(LocalDate.of(2026, 9, 14)),
+                    japaneseDate(LocalDate.of(2026, 9, 20)),
+                    3,
+                    2,
+                    1,
+                ),
+            )
+
+        composeRule.runOnIdle { viewModel.setWeeklyCount(1) }
+        composeRule.onNodeWithTag(TODO_EDITOR_COUNT_PREVIEW_TAG)
+            .assertTextEquals(
+                text(
+                    R.string.todo_editor_count_preview_format,
+                    japaneseDate(LocalDate.of(2026, 9, 14)),
+                    japaneseDate(LocalDate.of(2026, 9, 20)),
+                    1,
+                    2,
+                    0,
+                ),
+            )
+    }
+
+    @Test
     fun te024_saveIsEnabledOnlyForAValidDirtyDraftAndDisablesAfterRevert() {
         val todo = existingTodo()
         val viewModel = viewModel(todo = todo)
@@ -331,9 +381,10 @@ class TodoEditorScreenSpecCoverageTest {
     private fun viewModel(
         todo: Todo? = null,
         categories: List<Category> = emptyList(),
+        completedDates: List<LocalDate> = emptyList(),
     ) = TodoEditorViewModel(
         savedStateHandle = SavedStateHandle(mapOf("todoId" to todo?.id, "initialDate" to null)),
-        todoRepository = TodoEditorTestTodoRepository(todo),
+        todoRepository = TodoEditorTestTodoRepository(todo, completedDates),
         categoryRepository = TodoEditorTestCategoryRepository(categories),
         settingsRepository = TodoEditorTestSettingsRepository(),
         notificationScheduler = TodoEditorTestNotificationScheduler(),
@@ -383,13 +434,17 @@ class TodoEditorScreenSpecCoverageTest {
     }
 }
 
-private class TodoEditorTestTodoRepository(todo: Todo?) : TodoRepository {
+private class TodoEditorTestTodoRepository(
+    todo: Todo?,
+    private val completedDates: List<LocalDate>,
+) : TodoRepository {
     private val todoById = todo?.let { mapOf(it.id to it) }.orEmpty()
 
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> =
         flowOf(emptyList())
 
     override fun observeTodos(): Flow<List<Todo>> = flowOf(todoById.values.toList())
+    override fun observeCompletedDates(todoId: String): Flow<List<LocalDate>> = flowOf(completedDates)
     override suspend fun getTodo(id: String): Todo? = todoById[id]
 
     override suspend fun saveTodo(

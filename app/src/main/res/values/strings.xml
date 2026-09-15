@@ -350,7 +350,7 @@
     <string name="todo_editor_count_format">%1$d回</string>
     <string name="todo_editor_schedule_preview_title">スケジュールプレビュー</string>
     <string name="todo_editor_no_upcoming_dates">有効期間内に実行予定はありません</string>
-    <string name="todo_editor_count_preview_format">%1$s〜%2$s・必要回数 %3$d回</string>
+    <string name="todo_editor_count_preview_format">対象期間 %1$s〜%2$s\n必要 %3$d回・完了 %4$d回・残り %5$d回</string>
     <string name="todo_editor_holiday_provisional">祝日情報の取得前は、月曜日から金曜日を暫定的に表示します</string>
     <string name="weekday_monday">月</string>
     <string name="weekday_tuesday">火</string>
