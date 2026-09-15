@@ -131,9 +131,10 @@ class SettingsViewModelTest {
     @Test
     fun st041_autoSaveIsSilentOnSuccessAndRevertsOnlyFailedSetting() = runTest {
         val repository = FakeSettingsRepository()
+        val scheduler = FakeNotificationScheduler()
         val viewModel = SettingsViewModel(
             repository,
-            FakeNotificationScheduler(),
+            scheduler,
             adsConsentRepository = FakeAdsConsentRepository(),
         )
 
@@ -144,6 +145,17 @@ class SettingsViewModelTest {
 
         repository.failNextSave = true
         viewModel.setEndHour(8)
+        runCurrent()
+
+        assertEquals(4, viewModel.uiState.value.endHour)
+        assertNull(viewModel.uiState.value.savingSetting)
+        assertEquals(
+            R.string.settings_save_error,
+            (viewModel.effects.first() as SettingsEffect.Message).messageRes,
+        )
+
+        scheduler.failNextReconcile = true
+        viewModel.setEndHour(12)
         runCurrent()
 
         assertEquals(4, viewModel.uiState.value.endHour)
@@ -235,6 +247,7 @@ class SettingsViewModelTest {
 
     private class FakeNotificationScheduler : NotificationScheduler {
         override val notificationCount: Flow<Int> = MutableStateFlow(0)
+        var failNextReconcile = false
 
         override fun systemState() = NotificationSystemState(
             canPostNotifications = true,
@@ -245,7 +258,12 @@ class SettingsViewModelTest {
         )
 
         override suspend fun reconcileTodo(todoId: String) = Unit
-        override suspend fun reconcileAll() = Unit
+        override suspend fun reconcileAll() {
+            if (failNextReconcile) {
+                failNextReconcile = false
+                error("reconciliation failed")
+            }
+        }
         override suspend fun cancelTodo(todoId: String) = Unit
     }
 

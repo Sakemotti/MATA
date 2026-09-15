@@ -345,8 +345,8 @@ ST-003	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI 
 ST-004	P2	settings.md	未実施	-	-	-	-	-
 ST-005	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・0:00〜23:00の24候補と選択保存を確認
 ST-006	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st006・0時、4時、12時で全TODO適用の案内と論理日境界説明が動的に変わることを確認
-ST-007	P0	settings.md	未実施	-	-	-	-	-
-ST-008	P0	settings.md	未実施	-	-	-	-	-
+ST-007	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#st007・カテゴリ未設定と複数カテゴリを含む対象日、期限順、通知日時と無効通知抑止の再計算を確認
+ST-008	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st008・影響TODO/通知件数を事前表示し、取消時は維持、続行時は再検証後に保存・抑止・件数案内することを確認
 ST-009	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・全7曜日の候補と選択保存を確認
 ST-010	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st010・CI run 33863729049成功
 ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st011・CI run 33863729049成功
@@ -356,10 +356,10 @@ ST-014	P1	settings.md	未実施	-	-	-	-	-
 ST-015	P1	settings.md	未実施	-	-	-	-	-
 ST-016	P2	settings.md	未実施	-	-	-	-	-
 ST-017	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st017・設定本文に他の主要画面への重複導線が表示されないことを確認
-ST-018	P0	settings.md	未実施	-	-	-	-	-
+ST-018	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st018・ACTION_CREATE_DOCUMENT、MIME、候補名、広範ストレージ権限なし、取消の無通知を確認
 ST-019	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st019・CI run 33867709111成功
 ST-020	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st020・CI run 33867709111成功
-ST-021	P0	settings.md	未実施	-	-	-	-	-
+ST-021	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	BackupSpecCoverageTest#st021・容量不足/I/O/中断を分類し、一時データを除去して削除不能な出力名と対処を案内することを確認
 ST-022	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・作成前の個人情報、非暗号化、安全保管の警告を確認
 ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
 ST-024	P0	settings.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	SettingsViewModelTest#st024・無効形式と未対応形式の理由を区別し、現在の設定値を変更しないことを確認

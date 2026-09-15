@@ -1,6 +1,8 @@
 package com.mochisofts.mata.data.backup
 
 import android.content.Context
+import android.system.ErrnoException
+import android.system.OsConstants
 import androidx.room.withTransaction
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -11,6 +13,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.WorkManager
+import com.mochisofts.mata.R
 import com.mochisofts.mata.core.backup.BackupCounts
 import com.mochisofts.mata.core.backup.BackupErrorCode
 import com.mochisofts.mata.core.backup.BackupOperationPhase
@@ -38,11 +41,14 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryReconciliationResult
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.ui.settings.errorFormatArgs
+import com.mochisofts.mata.ui.settings.errorMessage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.DayOfWeek
@@ -587,6 +593,71 @@ class BackupSpecCoverageTest {
         assertEquals(BackupErrorCode.STORAGE_UNAVAILABLE, reloadedRestoreStore.state.value.errorCode)
         assertFalse(restoreFiles.directory.exists())
         assertEquals(expected, backedUpState())
+    }
+
+    @Test
+    fun st021_interruptedWriteCleansStagingAndNamesAnUndeletableOutput() = runBlocking {
+        seedAllUserData()
+        val expectedUserData = backedUpState()
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME).result.get()
+        val operationId = UUID.randomUUID().toString()
+        val outputName = "MATA_backup_interrupted.mata-backup"
+        val files = operationFiles(context, operationId)
+        val store = BackupOperationStore(context)
+        store.clear()
+        assertTrue(
+            store.start(
+                operationId = operationId,
+                type = BackupOperationType.CREATE,
+                uri = "content://com.mochisofts.mata.test/$outputName",
+                outputName = outputName,
+            ),
+        )
+        files.directory.mkdirs()
+        files.data.writeText("partial backup content")
+
+        BackupCoordinator(context, BackupOperationStore(context), clock)
+            .recoverInterruptedOperation()
+
+        val failure = BackupOperationStore(context).state.value
+        assertEquals(BackupOperationStatus.FAILED, failure.status)
+        assertEquals(BackupErrorCode.INCOMPLETE_FILE_REMAINS, failure.errorCode)
+        assertEquals(outputName, failure.outputName)
+        assertEquals(R.string.backup_incomplete_file_remains_named, failure.errorMessage())
+        assertEquals(listOf(outputName), failure.errorFormatArgs())
+        assertFalse(files.directory.exists())
+        assertEquals(expectedUserData, backedUpState())
+        val guidance = context.getString(
+            R.string.backup_incomplete_file_remains_named,
+            failure.outputName,
+        )
+        assertTrue(guidance.contains(outputName))
+        assertTrue(guidance.contains("削除"))
+        assertTrue(guidance.contains("もう一度"))
+        assertEquals(
+            BackupErrorCode.NOT_ENOUGH_SPACE,
+            backupFailureCode(
+                BackupOperationType.CREATE,
+                IOException(ErrnoException("write", OsConstants.ENOSPC)),
+                incompleteOutputRemains = false,
+            ),
+        )
+        assertEquals(
+            BackupErrorCode.STORAGE_UNAVAILABLE,
+            backupFailureCode(
+                BackupOperationType.CREATE,
+                java.io.FileNotFoundException("injected I/O failure"),
+                incompleteOutputRemains = false,
+            ),
+        )
+        assertEquals(
+            BackupErrorCode.INCOMPLETE_FILE_REMAINS,
+            backupFailureCode(
+                BackupOperationType.CREATE,
+                IOException(ErrnoException("write", OsConstants.ENOSPC)),
+                incompleteOutputRemains = true,
+            ),
+        )
     }
 
     @Test

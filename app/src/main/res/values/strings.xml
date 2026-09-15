@@ -241,10 +241,14 @@
     <string name="backup_storage_error">ファイルを読み書きできませんでした</string>
     <string name="backup_not_enough_space">復元に必要な空き容量がありません</string>
     <string name="backup_incomplete_file_remains">バックアップを作成できませんでした。不完全なファイルが残っている可能性があるため、選択した保存先を確認してください</string>
+    <string name="backup_incomplete_file_remains_named">バックアップを作成できませんでした。選択した保存先に「%1$s」が残っている可能性があります。このファイルを削除してから、もう一度お試しください</string>
     <string name="backup_restore_rolled_back">復元できなかったため、元のデータへ戻しました</string>
     <string name="backup_operation_error">バックアップ処理に失敗しました</string>
     <string name="settings_end_hour_title">一日の終了時刻</string>
     <string name="settings_end_hour_description">すべてのTODOに適用します</string>
+    <string name="settings_end_hour_impact_title">通知設定への影響</string>
+    <string name="settings_end_hour_impact_message">この変更により、%1$d件のTODOにある%2$d件の通知設定が無効になります。通知設定は削除されず、修正されるまで通知されません。</string>
+    <string name="settings_invalid_notifications_suppressed">変更しました。%1$d件の通知設定を確認してください</string>
     <string name="settings_week_start_title">週の開始曜日</string>
     <string name="settings_week_start_description">N週間にX回TODOの期間区切りに使用します</string>
     <string name="settings_show_completed_title">完了済みTODOを表示</string>

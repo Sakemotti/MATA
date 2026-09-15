@@ -274,3 +274,7 @@ ST-024	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.k
 ST-027	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st027_successfulRestoreIsAcknowledgedAndReturnsToTodoList	:app:connectedDebugAndroidTest
 ST-040	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st040_legalLinksOpenApprovedUrlsAndFailureKeepsSettingsVisible	:app:connectedDebugAndroidTest
 ST-D06	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std06_adsConsentChangesNeverAlterTheUserDataBackupPayload	:app:connectedDebugAndroidTest
+ST-007	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st007_endHourChangeRecalculatesEveryCategoryScheduleOrderAndNotification	:app:connectedDebugAndroidTest
+ST-008	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st008_invalidNotificationImpactCanBeCancelledOrConfirmedBeforeChanging	:app:connectedDebugAndroidTest
+ST-018	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st018_backupUsesSafSuggestedNameWithoutStoragePermissionAndCancellationIsSilent	:app:connectedDebugAndroidTest
+ST-021	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	st021_interruptedWriteCleansStagingAndNamesAnUndeletableOutput	:app:connectedDebugAndroidTest

@@ -94,11 +94,18 @@ interface SettingsRepository {
 interface NotificationScheduler {
     val notificationCount: Flow<Int>
     fun systemState(): NotificationSystemState
+    suspend fun previewDayEndHourChange(newEndHour: Int): NotificationChangeImpact =
+        NotificationChangeImpact()
     suspend fun reconcileTodo(todoId: String)
     suspend fun reconcileAll()
     suspend fun rebuildAll() = reconcileAll()
     suspend fun cancelTodo(todoId: String)
 }
+
+data class NotificationChangeImpact(
+    val todoCount: Int = 0,
+    val notificationCount: Int = 0,
+)
 
 data class HistoryReconciliationResult(
     val generatedRecords: Int,

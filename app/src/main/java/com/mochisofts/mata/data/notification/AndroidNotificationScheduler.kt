@@ -34,6 +34,7 @@ import com.mochisofts.mata.domain.model.nextNotificationCandidate
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.domain.repository.NotificationChangeImpact
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -66,6 +67,29 @@ class AndroidNotificationScheduler @Inject constructor(
     override val notificationCount: Flow<Int> = notificationDao.observeCount()
 
     override fun systemState(): NotificationSystemState = systemStateProvider.current()
+
+    override suspend fun previewDayEndHourChange(newEndHour: Int): NotificationChangeImpact {
+        require(newEndHour in 0..23)
+        val currentEndHour = settingsRepository.dayEndHour.first()
+        if (currentEndHour == newEndHour) return NotificationChangeImpact()
+
+        var notificationCount = 0
+        var todoCount = 0
+        todoDao.findActiveWithNotifications().forEach { entity ->
+            val notifications = notificationDao.findForTodo(entity.id).map { it.toDomain() }
+            val currentlyValid = notifications.filter { notification ->
+                validateNotifications(listOf(notification), entity.dueMinutes, currentEndHour).isEmpty()
+            }
+            val newlyInvalid = currentlyValid.count { notification ->
+                validateNotifications(listOf(notification), entity.dueMinutes, newEndHour).isNotEmpty()
+            }
+            if (newlyInvalid > 0) {
+                todoCount += 1
+                notificationCount += newlyInvalid
+            }
+        }
+        return NotificationChangeImpact(todoCount, notificationCount)
+    }
 
     private suspend fun reconcileTodoLocked(
         todoId: String,

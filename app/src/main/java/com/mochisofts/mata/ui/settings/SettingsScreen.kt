@@ -104,6 +104,7 @@ fun SettingsScreen(
     onOpenSourceLicenses: () -> Unit,
     onRestoreCompleted: () -> Unit = { onDestination(MataDestination.TODOS) },
     legalDocumentOpener: (Context, String, String) -> Boolean = ::openLegalDocument,
+    createBackupTargetRequester: ((String) -> Unit)? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -139,7 +140,9 @@ fun SettingsScreen(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is SettingsEffect.Message -> {
-                    snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
+                    snackbarHostState.showSnackbar(
+                        resources.getString(effect.messageRes, *effect.formatArgs.toTypedArray()),
+                    )
                 }
                 SettingsEffect.RestoreCompleted -> {
                     Toast.makeText(context, R.string.backup_restore_success, Toast.LENGTH_SHORT).show()
@@ -508,7 +511,9 @@ fun SettingsScreen(
                 TextButton(
                     onClick = {
                         showBackupWarning = false
-                        createDocumentLauncher.launch(viewModel.suggestedBackupFileName())
+                        val suggestedName = viewModel.suggestedBackupFileName()
+                        createBackupTargetRequester?.invoke(suggestedName)
+                            ?: createDocumentLauncher.launch(suggestedName)
                     },
                 ) {
                     Text(stringResource(R.string.action_continue))
@@ -516,6 +521,31 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showBackupWarning = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+    state.pendingEndHourChange?.let { pending ->
+        AlertDialog(
+            onDismissRequest = viewModel::cancelEndHourChange,
+            title = { Text(stringResource(R.string.settings_end_hour_impact_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.settings_end_hour_impact_message,
+                        pending.impact.todoCount,
+                        pending.impact.notificationCount,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmEndHourChange) {
+                    Text(stringResource(R.string.action_change))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::cancelEndHourChange) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
