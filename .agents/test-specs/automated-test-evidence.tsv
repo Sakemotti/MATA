@@ -269,3 +269,8 @@ ST-006	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSp
 ST-017	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st017_settingsContentHasNoDuplicateNavigationToOtherScreens	:app:connectedDebugAndroidTest
 ST-025	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st025_restoreConfirmationShowsMetadataCountsAndIrreversibleWarning	:app:connectedDebugAndroidTest
 ST-D04	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	std04_restoreCanBeCancelledBeforeStartButNotWhileRunning	:app:connectedDebugAndroidTest
+ST-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st012_settingsAndTodoListShareCompletedVisibilityImmediately	:app:connectedDebugAndroidTest
+ST-024	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st024_invalidAndUnsupportedRestoresReportReasonsWithoutChangingSettings	:app:testDebugUnitTest
+ST-027	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st027_successfulRestoreIsAcknowledgedAndReturnsToTodoList	:app:connectedDebugAndroidTest
+ST-040	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st040_legalLinksOpenApprovedUrlsAndFailureKeepsSettingsVisible	:app:connectedDebugAndroidTest
+ST-D06	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std06_adsConsentChangesNeverAlterTheUserDataBackupPayload	:app:connectedDebugAndroidTest
