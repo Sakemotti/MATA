@@ -305,6 +305,7 @@ fun ArchiveListScreen(
                     selectedTodoId = null,
                     loadingPreviewTodoId = state.loadingPreviewTodoId,
                     runningTodoId = state.runningTodoId,
+                    actionsEnabled = !state.dataChangesBlocked,
                     listState = listState,
                     onOpenDetail = viewModel::openDetail,
                     onAction = viewModel::requestAction,
@@ -320,6 +321,7 @@ fun ArchiveListScreen(
             preview = preview,
             action = requireNotNull(state.previewAction),
             running = state.runningTodoId != null,
+            enabled = !state.dataChangesBlocked,
             onConfirm = viewModel::confirmAction,
             onDismiss = viewModel::dismissAction,
         )
@@ -376,6 +378,7 @@ private fun ArchiveTwoPaneContent(
             selectedTodoId = state.selectedTodoId,
             loadingPreviewTodoId = state.loadingPreviewTodoId,
             runningTodoId = state.runningTodoId,
+            actionsEnabled = !state.dataChangesBlocked,
             listState = listState,
             onOpenDetail = onOpenDetail,
             onAction = onAction,
@@ -436,7 +439,8 @@ private fun ArchiveSelectedDetail(
         bottomBar = {
             state.selectedItem?.let {
                 ArchiveBottomActions(
-                    enabled = state.loadingPreviewTodoId == null && state.runningTodoId == null,
+                    enabled = !state.dataChangesBlocked &&
+                        state.loadingPreviewTodoId == null && state.runningTodoId == null,
                     loading = state.loadingPreviewTodoId != null || state.runningTodoId != null,
                     onRestore = { onAction(ArchiveAction.RESTORE) },
                     onDelete = { onAction(ArchiveAction.DELETE) },
@@ -480,6 +484,7 @@ private fun ArchiveTodoList(
     selectedTodoId: String?,
     loadingPreviewTodoId: String?,
     runningTodoId: String?,
+    actionsEnabled: Boolean,
     listState: LazyListState,
     onOpenDetail: (String) -> Unit,
     onAction: (String, ArchiveAction) -> Unit,
@@ -525,6 +530,7 @@ private fun ArchiveTodoList(
                                 ArchivedTodoRow(
                                     item = item,
                                     busy = busy,
+                                    actionsEnabled = actionsEnabled,
                                     selected = item.todo.id == selectedTodoId,
                                     onClick = { onOpenDetail(item.todo.id) },
                                     onAction = { action -> onAction(item.todo.id, action) },
@@ -557,6 +563,7 @@ private fun ArchiveTodoList(
 private fun ArchivedTodoRow(
     item: ArchivedTodoItem,
     busy: Boolean,
+    actionsEnabled: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
     onAction: (ArchiveAction) -> Unit,
@@ -597,7 +604,7 @@ private fun ArchivedTodoRow(
                 CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             } else {
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) {
+                    IconButton(onClick = { menuExpanded = true }, enabled = actionsEnabled) {
                         Icon(
                             Icons.Outlined.MoreVert,
                             contentDescription = stringResource(R.string.archive_row_actions),
@@ -605,6 +612,7 @@ private fun ArchivedTodoRow(
                     }
                     ArchiveRowMenu(
                         expanded = menuExpanded,
+                        enabled = actionsEnabled,
                         onDismiss = { menuExpanded = false },
                         onAction = {
                             menuExpanded = false
@@ -628,16 +636,19 @@ private fun ArchivedTodoRow(
 @Composable
 private fun ArchiveRowMenu(
     expanded: Boolean,
+    enabled: Boolean,
     onDismiss: () -> Unit,
     onAction: (ArchiveAction) -> Unit,
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
+            enabled = enabled,
             text = { Text(stringResource(R.string.action_restore)) },
             leadingIcon = { Icon(Icons.Outlined.Restore, null) },
             onClick = { onAction(ArchiveAction.RESTORE) },
         )
         DropdownMenuItem(
+            enabled = enabled,
             text = { Text(stringResource(R.string.action_delete_permanently)) },
             leadingIcon = {
                 Icon(
@@ -691,7 +702,8 @@ fun ArchiveDetailScreen(
         bottomBar = {
             state.item?.let {
                 ArchiveBottomActions(
-                    enabled = !state.isLoadingPreview && !state.isRunningAction,
+                    enabled = !state.dataChangesBlocked &&
+                        !state.isLoadingPreview && !state.isRunningAction,
                     loading = state.isLoadingPreview || state.isRunningAction,
                     onRestore = { viewModel.requestAction(ArchiveAction.RESTORE) },
                     onDelete = { viewModel.requestAction(ArchiveAction.DELETE) },
@@ -720,6 +732,7 @@ fun ArchiveDetailScreen(
             preview = preview,
             action = requireNotNull(state.previewAction),
             running = state.isRunningAction,
+            enabled = !state.dataChangesBlocked,
             onConfirm = viewModel::confirmAction,
             onDismiss = viewModel::dismissAction,
         )
@@ -1048,6 +1061,7 @@ private fun ArchiveActionDialog(
     preview: ArchiveActionPreview,
     action: ArchiveAction,
     running: Boolean,
+    enabled: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -1112,7 +1126,7 @@ private fun ArchiveActionDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = !running,
+                enabled = !running && enabled,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = if (action == ArchiveAction.DELETE) {
                         MaterialTheme.colorScheme.error

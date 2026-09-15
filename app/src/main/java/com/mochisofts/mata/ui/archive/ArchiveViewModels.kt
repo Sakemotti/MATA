@@ -8,6 +8,8 @@ import androidx.navigation.toRoute
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupOperationState
 import com.mochisofts.mata.core.common.ValidationError
 import com.mochisofts.mata.core.common.ValidationException
 import com.mochisofts.mata.core.navigation.ArchivedTodoDetailRoute
@@ -53,6 +55,7 @@ data class ArchiveListUiState(
     val previewAction: ArchiveAction? = null,
     val loadingPreviewTodoId: String? = null,
     val runningTodoId: String? = null,
+    val dataChangesBlocked: Boolean = false,
     val selectedTodoId: String? = null,
     val selectedItem: ArchivedTodoItem? = null,
     val selectedSummary: ArchiveHistorySummary? = null,
@@ -70,6 +73,7 @@ class ArchiveListViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val repository: ArchiveRepository,
     private val settingsRepository: SettingsRepository,
+    private val backupGateway: BackupGateway? = null,
 ) : ViewModel() {
     private val searchActive = savedStateHandle.getStateFlow(KEY_SEARCH_ACTIVE, false)
     private val searchQuery = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
@@ -80,6 +84,14 @@ class ArchiveListViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, ArchiveSortOrder.NEWEST)
     private val selectedTodoId = savedStateHandle.getStateFlow<String?>(KEY_SELECTED_TODO_ID, null)
     private val operationState = MutableStateFlow(OperationState())
+    private val backupOperation = backupGateway?.state ?: MutableStateFlow(BackupOperationState())
+    private val operationAvailability = combine(operationState, backupOperation) { operation, backup ->
+        OperationAvailability(operation, backup.blocksDataChanges)
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        OperationAvailability(OperationState(), backupOperation.value.blocksDataChanges),
+    )
     private val effectsChannel = Channel<ArchiveListEffect>(Channel.BUFFERED)
     val effects: Flow<ArchiveListEffect> = effectsChannel.receiveAsFlow()
 
@@ -122,9 +134,10 @@ class ArchiveListViewModel @Inject constructor(
         searchActive,
         searchQuery,
         sortOrder,
-        operationState,
+        operationAvailability,
         selectedDetail,
-    ) { active, query, order, operation, detail ->
+    ) { active, query, order, availability, detail ->
+        val operation = availability.operation
         ArchiveListUiState(
             searchActive = active,
             searchQuery = query,
@@ -133,6 +146,7 @@ class ArchiveListViewModel @Inject constructor(
             previewAction = operation.action,
             loadingPreviewTodoId = operation.loadingPreviewTodoId,
             runningTodoId = operation.runningTodoId,
+            dataChangesBlocked = availability.dataChangesBlocked,
             selectedTodoId = detail.todoId,
             selectedItem = detail.item,
             selectedSummary = detail.summary,
@@ -212,7 +226,7 @@ class ArchiveListViewModel @Inject constructor(
     }
 
     fun requestAction(todoId: String, action: ArchiveAction) {
-        if (operationState.value.isBusy) return
+        if (operationState.value.isBusy || backupOperation.value.blocksDataChanges) return
         savedStateHandle[KEY_ACTION_TARGET] = todoId
         savedStateHandle[KEY_ACTION] = action.name
         operationState.update { it.copy(loadingPreviewTodoId = todoId, action = action) }
@@ -240,7 +254,7 @@ class ArchiveListViewModel @Inject constructor(
         val state = operationState.value
         val preview = state.preview ?: return
         val action = state.action ?: return
-        if (state.runningTodoId != null) return
+        if (state.runningTodoId != null || backupOperation.value.blocksDataChanges) return
         operationState.update { it.copy(runningTodoId = preview.todoId) }
         viewModelScope.launch {
             val result = when (action) {
@@ -297,6 +311,11 @@ class ArchiveListViewModel @Inject constructor(
             get() = loadingPreviewTodoId != null || runningTodoId != null
     }
 
+    private data class OperationAvailability(
+        val operation: OperationState,
+        val dataChangesBlocked: Boolean,
+    )
+
     private data class SelectedDetail(
         val todoId: String? = null,
         val item: ArchivedTodoItem? = null,
@@ -335,6 +354,7 @@ data class ArchiveDetailUiState(
     val previewAction: ArchiveAction? = null,
     val isLoadingPreview: Boolean = false,
     val isRunningAction: Boolean = false,
+    val dataChangesBlocked: Boolean = false,
 )
 
 sealed interface ArchiveDetailEffect {
@@ -347,9 +367,11 @@ sealed interface ArchiveDetailEffect {
 class ArchiveDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val repository: ArchiveRepository,
+    private val backupGateway: BackupGateway? = null,
 ) : ViewModel() {
     private val todoId = savedStateHandle.toRoute<ArchivedTodoDetailRoute>().todoId
     private val operationState = MutableStateFlow(OperationState())
+    private val backupOperation = backupGateway?.state ?: MutableStateFlow(BackupOperationState())
     private val effectsChannel = Channel<ArchiveDetailEffect>(Channel.BUFFERED)
     val effects: Flow<ArchiveDetailEffect> = effectsChannel.receiveAsFlow()
 
@@ -363,7 +385,8 @@ class ArchiveDetailViewModel @Inject constructor(
     val uiState: StateFlow<ArchiveDetailUiState> = combine(
         content,
         operationState,
-    ) { (item, summary), operation ->
+        backupOperation,
+    ) { (item, summary), operation, backup ->
         ArchiveDetailUiState(
             isLoading = false,
             item = item,
@@ -373,6 +396,7 @@ class ArchiveDetailViewModel @Inject constructor(
             previewAction = operation.action,
             isLoadingPreview = operation.isLoadingPreview,
             isRunningAction = operation.isRunningAction,
+            dataChangesBlocked = backup.blocksDataChanges,
         )
     }.stateIn(
         viewModelScope,
@@ -390,7 +414,7 @@ class ArchiveDetailViewModel @Inject constructor(
     }
 
     fun requestAction(action: ArchiveAction) {
-        if (operationState.value.isBusy) return
+        if (operationState.value.isBusy || backupOperation.value.blocksDataChanges) return
         savedStateHandle[KEY_DETAIL_ACTION] = action.name
         operationState.value = OperationState(action = action, isLoadingPreview = true)
         viewModelScope.launch {
@@ -420,7 +444,7 @@ class ArchiveDetailViewModel @Inject constructor(
         val state = operationState.value
         val preview = state.preview ?: return
         val action = state.action ?: return
-        if (state.isRunningAction) return
+        if (state.isRunningAction || backupOperation.value.blocksDataChanges) return
         operationState.value = state.copy(isRunningAction = true)
         viewModelScope.launch {
             val result = when (action) {
