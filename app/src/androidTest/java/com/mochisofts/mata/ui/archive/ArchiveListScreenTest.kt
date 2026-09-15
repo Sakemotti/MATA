@@ -262,6 +262,27 @@ class ArchiveListScreenTest {
     }
 
     @Test
+    fun at014_restoreDialogExplainsFutureResumeNoBackfillAndIrreversibility() {
+        val item = archivedTodo(title = "実施期間中の復元対象")
+        val repository = TestArchiveRepository(items = listOf(item))
+        setScreen(repository)
+        waitForText(item.todo.title)
+
+        openRowAction(R.string.action_restore)
+
+        waitForText(text(R.string.archive_restore_dialog_title))
+        composeRule.onNodeWithText(
+            text(R.string.archive_restore_dialog_message, item.todo.title),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.archive_restore_no_future)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.action_restore)).performClick()
+
+        waitForText(text(R.string.archive_restore_success))
+        waitForText(text(R.string.archive_empty))
+        assertEquals(listOf(item.todo.id), repository.restoredTodoIds)
+    }
+
+    @Test
     fun at015_restorePreviewWarnsWhenNoFutureOccurrenceExists() {
         val item = archivedTodo(title = "終了済みTODO", endDate = LocalDate.of(2026, 8, 31))
         val repository = TestArchiveRepository(items = listOf(item)).apply {
@@ -316,6 +337,28 @@ class ArchiveListScreenTest {
         composeRule.onNodeWithText(text(R.string.action_undo)).assertDoesNotExist()
         composeRule.onNodeWithText(text(R.string.todo_editor_edit_title)).assertDoesNotExist()
         assertEquals(listOf(item.todo.id), repository.restoredTodoIds)
+    }
+
+    @Test
+    fun at026_permanentDeleteDialogShowsHistoryScopeCalendarImpactAndNoUndo() {
+        val item = archivedTodo(title = "履歴を持つ完全削除対象")
+        val repository = TestArchiveRepository(items = listOf(item))
+        setScreen(repository)
+        waitForText(item.todo.title)
+
+        openRowAction(R.string.action_delete_permanently)
+
+        waitForText(text(R.string.archive_delete_dialog_title))
+        composeRule.onNodeWithText(
+            text(
+                R.string.archive_delete_dialog_message,
+                item.todo.title,
+                repository.preview.historySummary.executionCount,
+                repository.preview.historySummary.periodResultCount,
+            ),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_cancel)).assertIsDisplayed()
     }
 
     @Test
