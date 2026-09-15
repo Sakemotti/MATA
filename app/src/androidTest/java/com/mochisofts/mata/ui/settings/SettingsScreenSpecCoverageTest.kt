@@ -3,8 +3,9 @@ package com.mochisofts.mata.ui.settings
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -260,6 +261,25 @@ class SettingsScreenSpecCoverageTest {
         ).forEach { destinationLabel ->
             composeRule.onNodeWithText(text(destinationLabel)).assertIsNotDisplayed()
         }
+    }
+
+    @Test
+    fun app007_installedAppDisablesOsBackupAndOffersOnlyManualBackupActions() {
+        setScreen()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val applicationInfo = context.packageManager.getApplicationInfo(context.packageName, 0)
+        assertFalse(applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP != 0)
+
+        composeRule.onAllNodesWithText(text(R.string.backup_create_title)).assertCountEquals(1)
+        composeRule.onAllNodesWithText(text(R.string.backup_restore_title)).assertCountEquals(1)
+        composeRule.onNodeWithText(text(R.string.backup_create_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.backup_restore_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("自動バックアップ").assertDoesNotExist()
     }
 
     @Test

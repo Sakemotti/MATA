@@ -277,6 +277,27 @@ class BackupSpecCoverageTest {
     }
 
     @Test
+    fun dat010_backupIsReadableWithoutAKeyAndWarnsAboutPersonalDataAndSafeStorage() = runBlocking {
+        seedAllUserData()
+
+        val archive = writeArchive()
+        assertEquals('P'.code.toByte(), archive[0])
+        assertEquals('K'.code.toByte(), archive[1])
+        val entries = zipEntries(archive)
+        val payload = entries.getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+        assertTrue(payload.contains("週に一度のTODO"))
+        assertTrue(payload.contains("バックアップ対象"))
+        assertTrue(payload.contains("生活"))
+        assertTrue(parseObject(entries.getValue(DATA_ENTRY)).containsKey("todos"))
+
+        val warning = context.getString(R.string.backup_warning_message)
+        assertTrue(warning.contains("個人情報"))
+        assertTrue(warning.contains("暗号化されません"))
+        assertTrue(warning.contains("安全な保存先"))
+        assertTrue(warning.contains("適切に管理"))
+    }
+
+    @Test
     fun st023_formatHashStructureTypeRangeReferenceAndCompatibilityFailBeforeMutation() = runBlocking {
         seedAllUserData()
         val validArchive = writeArchive()

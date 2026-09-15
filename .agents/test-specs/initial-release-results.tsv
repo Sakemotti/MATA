@@ -5,13 +5,13 @@ APP-003	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (
 APP-004	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・ライト／ダークテーマで主要画面の表示一貫性を確認
 APP-005	P0	app-core.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#app005・CI run 34032419660成功
 APP-006	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・アカウント登録、クラウド同期、複数端末同期の入口がないことを確認
-APP-007	P1	app-core.md	未実施	-	-	-	-	-
+APP-007	P1	app-core.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#app007・connectedDebugAndroidTest成功
 APP-008	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・優先度、チェックリスト、一時停止・再開がないことを確認
 APP-009	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・アプリ独自のPIN、生体認証ロックがないことを確認
 APP-010	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・カテゴリ登録からTODO完了、カレンダー履歴確認までの基本E2Eを確認
 APP-011	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・ドロワーから全主要画面へ移動できることを確認
 APP-012	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・同一画面選択と画面往復時の選択状態、戻る操作を確認
-APP-013	P0	app-core.md	未実施	-	-	-	-	-
+APP-013	P0	app-core.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	AppCoreConfigurationSpecCoverageTest#app013・testDebugUnitTest成功
 DAY-001	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day001・testDebugUnitTest成功
 DAY-002	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day002・testDebugUnitTest成功
 DAY-003	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day003・testDebugUnitTest成功
@@ -99,15 +99,15 @@ WGT-012	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (
 WGT-013	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・操作ダイアログ表示後に別経路で状態変更しても重複・無効な履歴を作らないことを確認
 WGT-014	P1	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing / 機内モード	CT-003・CT-006・実広告の配置と、機内モードで広告が表示されず強制終了せず操作を継続できることを確認
 DAT-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat001・CI run 33929968497成功
-DAT-002	P0	app-core.md	未実施	-	-	-	-	-
+DAT-002	P0	app-core.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	AppCoreConfigurationSpecCoverageTest#dat002・testDebugUnitTest成功
 DAT-003	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	HolidayHttpRequestPrivacyTest#dat003・CI run 33929968497成功
-DAT-004	P1	app-core.md	未実施	-	-	-	-	-
+DAT-004	P1	app-core.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	AppCoreConfigurationSpecCoverageTest#dat004・testDebugUnitTest成功
 DAT-005	P1	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	DataProtectionConfigurationSpecCoverageTest#dat005・CI run 33929968497成功
 DAT-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat006・CI run 33929968497成功
 DAT-007	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat007・CI run 33929968497成功
 DAT-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#dat008・CI run 33929968497成功
 DAT-009	P1	app-core.md	未実施	-	-	-	-	-
-DAT-010	P1	app-core.md	未実施	-	-	-	-	-
+DAT-010	P1	app-core.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	BackupSpecCoverageTest#dat010・connectedDebugAndroidTest成功
 REL-001	P0	app-core.md	合格	2026-09-03	AUTO	1	ローカルJDK 17・GitHub Actions Ubuntu	ローカルJUnit XML 134件成功・main CI https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-002	P0	app-core.md	合格	2026-09-06	OWNER	1	JUnit・Room試験一覧・CI run 34033551344	論理日・繰り返し・期限・履歴の正常/境界/異常を56件の専用テストで確認
 REL-003	P0	app-core.md	合格	2026-09-06	OWNER	1	ローカルJDK 17・PR CI API 30	主要9画面ViewModelの直接テスト32件で読み込み・成功・空・エラー・再試行・二重操作防止を確認
