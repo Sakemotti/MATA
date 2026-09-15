@@ -298,3 +298,7 @@ TE-005	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScre
 TE-029	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te029_scrollRestoresWhileAnOpenSelectionSheetCloses	:app:connectedDebugAndroidTest
 TE-D02	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	ted02_newEditorFocusesTitleAndKeepsSaveReachableWhileEnteringText	:app:connectedDebugAndroidTest
 TE-013	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	te013_schedulePreviewShowsThreeFixedDatesAndLiveCountProgress	:app:connectedDebugAndroidTest
+AT-001	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at001_archiveIsAnIndependentDrawerDestinationWithHamburgerNavigation	:app:connectedDebugAndroidTest
+AT-003	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at003_sortModesReorderRowsAndOnlyTheLastSelectionIsPersisted	:app:connectedDebugAndroidTest
+AT-007	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at007_rowShowsDefinitionSummaryAndLimitsLongTitleAndDescriptionToTwoLines	:app:connectedDebugAndroidTest
+AT-010	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at010_detailShowsAllReadOnlyDefinitionFieldsInThreeCards	:app:connectedDebugAndroidTest

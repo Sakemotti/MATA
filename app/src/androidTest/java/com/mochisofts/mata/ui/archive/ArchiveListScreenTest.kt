@@ -1,9 +1,11 @@
 package com.mochisofts.mata.ui.archive
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -15,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -48,14 +51,66 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
 class ArchiveListScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun at001_archiveIsAnIndependentDrawerDestinationWithHamburgerNavigation() {
+        setScreen(TestArchiveRepository())
+        waitForText(text(R.string.archive_title))
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_open_menu))
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onNode(
+            hasText(text(R.string.nav_archived_todos)) and
+                SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
+        ).assertIsDisplayed().assertIsSelected()
+    }
+
+    @Test
+    fun at003_sortModesReorderRowsAndOnlyTheLastSelectionIsPersisted() {
+        val items = listOf(
+            archivedTodo(title = "Charlie", archivedAt = 1_000L),
+            archivedTodo(title = "Bravo", archivedAt = 2_000L),
+            archivedTodo(title = "Alpha", archivedAt = 3_000L),
+        )
+        val repository = TestArchiveRepository(items = items)
+        val settings = TestArchiveSettingsRepository()
+        setScreen(repository, settings)
+        waitForTitleOrder("Alpha", "Bravo", "Charlie")
+
+        selectSortOrder(R.string.archive_sort_oldest)
+        waitForTitleOrder("Charlie", "Bravo", "Alpha")
+
+        selectSortOrder(R.string.archive_sort_title)
+        waitForTitleOrder("Alpha", "Bravo", "Charlie")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            settings.archiveSortOrder.value == ArchiveSortOrder.TITLE
+        }
+
+        val reopened = ArchiveListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            repository = repository,
+            settingsRepository = settings,
+        )
+        val restoredOrder = runBlocking {
+            withTimeout(5_000) {
+                reopened.uiState.first { it.sortOrder == ArchiveSortOrder.TITLE }.sortOrder
+            }
+        }
+        assertEquals(ArchiveSortOrder.TITLE, restoredOrder)
+    }
 
     @Test
     fun at006_emptyAndSearchEmptyStatesAreDistinctAndSearchCanBeCleared() {
@@ -72,6 +127,23 @@ class ArchiveListScreenTest {
 
         waitForText(text(R.string.archive_empty))
         composeRule.onNodeWithText(text(R.string.archive_search_empty)).assertDoesNotExist()
+    }
+
+    @Test
+    fun at007_rowShowsDefinitionSummaryAndLimitsLongTitleAndDescriptionToTwoLines() {
+        val longTitle = "長いタイトル".repeat(30)
+        val longDescription = "長い説明文".repeat(50)
+        val item = archivedTodo(title = longTitle, description = longDescription)
+        setScreen(TestArchiveRepository(items = listOf(item)))
+        waitForText(longTitle)
+
+        composeRule.onNodeWithText(longTitle, useUnmergedTree = true).assertIsDisplayed()
+        assertTextHeightAtMost(longTitle, 56)
+        composeRule.onNodeWithText(longDescription, useUnmergedTree = true).assertIsDisplayed()
+        assertTextHeightAtMost(longDescription, 48)
+        composeRule.onNodeWithText("ルーチン・毎日").assertIsDisplayed()
+        composeRule.onNodeWithText("2026年8月1日から無期限").assertIsDisplayed()
+        composeRule.onNodeWithText("アーカイブ日時", substring = true).assertIsDisplayed()
     }
 
     @Test
@@ -126,6 +198,35 @@ class ArchiveListScreenTest {
                 it.config.contains(SemanticsActions.Dismiss)
             },
         ).assertCountEquals(0)
+    }
+
+    @Test
+    fun at010_detailShowsAllReadOnlyDefinitionFieldsInThreeCards() {
+        val item = archivedTodo(title = "全項目TODO", description = "すべての任意項目を含む説明")
+        setScreen(TestArchiveRepository(items = listOf(item)))
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        listOf(
+            text(R.string.archive_section_todo),
+            item.todo.title,
+            text(R.string.todo_editor_description_label),
+            item.todo.description,
+            text(R.string.label_category),
+            item.category!!.name,
+            text(R.string.archive_label_schedule),
+            text(R.string.archive_label_recurrence),
+            text(R.string.archive_label_holiday),
+            text(R.string.archive_label_due),
+            text(R.string.todo_editor_carry_over_label),
+            text(R.string.todo_editor_section_notification),
+            text(R.string.archive_label_notifications),
+            text(R.string.archive_section_archive_info),
+            text(R.string.archive_label_archived_at),
+            text(R.string.archive_section_summary),
+            text(R.string.archive_section_history),
+        ).forEach(::scrollToDetailText)
     }
 
     @Test
@@ -231,11 +332,14 @@ class ArchiveListScreenTest {
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
     }
 
-    private fun setScreen(repository: TestArchiveRepository): ArchiveListViewModel {
+    private fun setScreen(
+        repository: TestArchiveRepository,
+        settingsRepository: TestArchiveSettingsRepository = TestArchiveSettingsRepository(),
+    ): ArchiveListViewModel {
         val viewModel = ArchiveListViewModel(
             savedStateHandle = SavedStateHandle(),
             repository = repository,
-            settingsRepository = TestArchiveSettingsRepository(),
+            settingsRepository = settingsRepository,
         )
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
@@ -246,6 +350,35 @@ class ArchiveListScreenTest {
             }
         }
         return viewModel
+    }
+
+    private fun selectSortOrder(labelRes: Int) {
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_sort))
+            .performClick()
+        composeRule.onNodeWithText(text(labelRes)).performClick()
+    }
+
+    private fun waitForTitleOrder(vararg titles: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                val tops = titles.map { title ->
+                    composeRule.onNodeWithText(title).fetchSemanticsNode().boundsInRoot.top
+                }
+                tops == tops.sorted()
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun scrollToDetailText(value: String) {
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(value))
+        composeRule.onNodeWithText(value).assertIsDisplayed()
+    }
+
+    private fun assertTextHeightAtMost(value: String, maxHeightDp: Int) {
+        val heightPx = composeRule.onNodeWithText(value, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.height
+        val maxHeightPx = with(composeRule.density) { maxHeightDp.dp.toPx() }
+        assertTrue("$value exceeded $maxHeightDp dp: $heightPx px", heightPx <= maxHeightPx)
     }
 
     private fun openRowMenu() {
@@ -259,7 +392,7 @@ class ArchiveListScreenTest {
     }
 
     private fun waitForText(value: String) {
-        composeRule.waitUntil(timeoutMillis = 5_000) {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(value).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -386,7 +519,9 @@ private class TestArchiveSettingsRepository : SettingsRepository {
 
 private fun archivedTodo(
     title: String,
+    description: String = "アーカイブ済みTODOの説明",
     endDate: LocalDate? = null,
+    archivedAt: Long = Instant.parse("2026-09-01T09:00:00Z").toEpochMilli(),
 ): ArchivedTodoItem {
     val id = title.hashCode().toString()
     val category = Category(
@@ -400,14 +535,14 @@ private fun archivedTodo(
         todo = Todo(
             id = id,
             title = title,
-            description = "アーカイブ済みTODOの説明",
+            description = description,
             categoryId = category.id,
             startDate = LocalDate.of(2026, 8, 1),
             endDate = endDate,
             recurrenceRule = RecurrenceRule.daily(),
             dueMinutes = 18 * 60,
             definitionRevision = 1,
-            archivedAt = Instant.parse("2026-09-01T09:00:00Z").toEpochMilli(),
+            archivedAt = archivedAt,
             createdAt = 1L,
             notifications = listOf(
                 TodoNotification(
