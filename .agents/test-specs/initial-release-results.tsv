@@ -323,8 +323,8 @@ AT-028	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_6
 AT-029	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at029・connectedDebugAndroidTest成功
 AT-030	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at030・connectedDebugAndroidTest成功
 AT-031	P1	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at031・CI run 34027426978成功
-AT-032	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-033	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-032	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at032・connectedDebugAndroidTest成功
+AT-033	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at033・connectedDebugAndroidTest成功
 AT-034	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-035	P1	archived-todos.md	未実施	-	-	-	-	-
 AT-036	P1	archived-todos.md	未実施	-	-	-	-	-

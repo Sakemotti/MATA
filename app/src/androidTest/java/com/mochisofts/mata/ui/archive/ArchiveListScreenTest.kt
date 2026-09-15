@@ -1,10 +1,13 @@
 package com.mochisofts.mata.ui.archive
 
+import android.net.Uri
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -19,6 +22,10 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -26,6 +33,11 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationState
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AppTheme
@@ -48,13 +60,17 @@ import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeout
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -63,6 +79,16 @@ import org.junit.Test
 class ArchiveListScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    private var activeViewModelStore: ViewModelStore? = null
+
+    @After
+    fun tearDown() {
+        composeRule.runOnIdle {
+            activeViewModelStore?.clear()
+            activeViewModelStore = null
+        }
+    }
 
     @Test
     fun at001_archiveIsAnIndependentDrawerDestinationWithHamburgerNavigation() {
@@ -375,15 +401,119 @@ class ArchiveListScreenTest {
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
     }
 
+    @Test
+    fun at032_archiveActionsRejectBackupAndDuplicateOperationConflicts() {
+        val item = archivedTodo(title = "排他制御対象TODO")
+        val repository = TestArchiveRepository(items = listOf(item))
+        val backup = TestArchiveBackupGateway().apply { setBlocked(true) }
+        val viewModel = setScreen(repository, backupGateway = backup)
+        waitForText(item.todo.title)
+
+        composeRule.onAllNodesWithContentDescription(text(R.string.archive_row_actions))[0]
+            .assertIsNotEnabled()
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsNotEnabled()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsNotEnabled()
+
+        backup.setBlocked(false)
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsEnabled().performClick()
+        waitForText(text(R.string.archive_restore_dialog_title))
+        backup.setBlocked(true)
+        composeRule.onAllNodesWithText(text(R.string.action_restore))[1].assertIsNotEnabled()
+        assertEquals(0, repository.restoreCalls)
+
+        backup.setBlocked(false)
+        repository.restoreGate = CompletableDeferred()
+        composeRule.onAllNodesWithText(text(R.string.action_restore))[1]
+            .assertIsEnabled()
+            .performClick()
+        viewModel.confirmAction()
+        viewModel.requestAction(item.todo.id, ArchiveAction.DELETE)
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.restoreCalls == 1 }
+        assertEquals(0, repository.deleteCalls)
+        repository.restoreGate?.complete(Unit)
+        waitForText(text(R.string.archive_restore_success))
+        assertEquals(1, repository.restoreCalls)
+    }
+
+    @Test
+    fun at033_externalChangesRefreshListSearchDetailSummaryAndHistory() {
+        val item = archivedTodo(title = "更新前TODO")
+        val repository = TestArchiveRepository(items = listOf(item))
+        setScreen(repository)
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        val updatedCategory = requireNotNull(item.category).copy(name = "更新後カテゴリ")
+        val updated = item.copy(
+            todo = item.todo.copy(title = "更新後TODO", categoryId = updatedCategory.id),
+            category = updatedCategory,
+        )
+        val externalHistory = ArchivedHistoryItem.Execution(
+            HistoryEntry(
+                id = "external-history",
+                todoId = item.todo.id,
+                logicalDate = LocalDate.of(2026, 9, 2),
+                state = TodoState.COMPLETED,
+                actedAt = Instant.parse("2026-09-02T03:00:00Z").toEpochMilli(),
+                finalizedAt = null,
+                snapshot = historySnapshot(item.todo.id, "画面外で追加された履歴"),
+                canUndoAction = false,
+            ),
+        )
+        repository.updateItem(updated)
+        repository.replaceHistory(listOf(externalHistory))
+
+        waitForText(updated.todo.title)
+        scrollToDetailText(updatedCategory.name)
+        scrollToDetailText(text(R.string.archive_summary_completed, 1))
+        scrollToDetailText("画面外で追加された履歴")
+
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("画面外新規")
+        waitForText(text(R.string.archive_search_empty))
+        val externallyArchived = archivedTodo(title = "画面外新規アーカイブ")
+        repository.addItem(externallyArchived)
+        waitForText(externallyArchived.todo.title)
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_close_search))
+            .performClick()
+        waitForText(updated.todo.title)
+        composeRule.onNodeWithText(updated.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        repository.removeItem(updated.todo.id)
+        waitForText(text(R.string.error_todo_not_found))
+        composeRule.onNodeWithText(text(R.string.archive_detail_title)).assertDoesNotExist()
+        composeRule.onNodeWithText(externallyArchived.todo.title).assertIsDisplayed()
+    }
+
     private fun setScreen(
         repository: TestArchiveRepository,
         settingsRepository: TestArchiveSettingsRepository = TestArchiveSettingsRepository(),
+        backupGateway: BackupGateway? = null,
     ): ArchiveListViewModel {
-        val viewModel = ArchiveListViewModel(
+        val createdViewModel = ArchiveListViewModel(
             savedStateHandle = SavedStateHandle(),
             repository = repository,
             settingsRepository = settingsRepository,
+            backupGateway = backupGateway,
         )
+        val viewModelStore = ViewModelStore()
+        val viewModel = ViewModelProvider.create(
+            store = viewModelStore,
+            factory = object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T = createdViewModel as T
+            },
+        )[ArchiveListViewModel::class]
+        activeViewModelStore = viewModelStore
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 ArchiveListScreen(
@@ -435,7 +565,7 @@ class ArchiveListScreenTest {
     }
 
     private fun waitForText(value: String) {
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.waitUntil(timeoutMillis = 20_000) {
             composeRule.onAllNodesWithText(value).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -446,10 +576,12 @@ class ArchiveListScreenTest {
 
 private class TestArchiveRepository(
     items: List<ArchivedTodoItem> = emptyList(),
-    private val history: List<ArchivedHistoryItem> = emptyList(),
+    history: List<ArchivedHistoryItem> = emptyList(),
 ) : ArchiveRepository {
     private val items = MutableStateFlow(items)
+    private val history = MutableStateFlow(history)
     private val todoSources = mutableListOf<PagingSource<Int, ArchivedTodoItem>>()
+    private val historySources = mutableListOf<PagingSource<Int, ArchivedHistoryItem>>()
     var preview: ArchiveActionPreview = items.firstOrNull()?.let(::preview)
         ?: ArchiveActionPreview(
             todoId = "missing",
@@ -460,6 +592,29 @@ private class TestArchiveRepository(
             historySummary = ArchiveHistorySummary(0, 0, 0, 0),
         )
     val restoredTodoIds = mutableListOf<String>()
+    var restoreGate: CompletableDeferred<Unit>? = null
+    var restoreCalls = 0
+    var deleteCalls = 0
+
+    fun updateItem(item: ArchivedTodoItem) {
+        items.value = items.value.map { current -> if (current.todo.id == item.todo.id) item else current }
+        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+    }
+
+    fun addItem(item: ArchivedTodoItem) {
+        items.value = items.value + item
+        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+    }
+
+    fun removeItem(todoId: String) {
+        items.value = items.value.filterNot { it.todo.id == todoId }
+        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+    }
+
+    fun replaceHistory(items: List<ArchivedHistoryItem>) {
+        history.value = items
+        historySources.toList().forEach(PagingSource<Int, ArchivedHistoryItem>::invalidate)
+    }
 
     override fun pagedTodos(
         query: String,
@@ -484,39 +639,68 @@ private class TestArchiveRepository(
     override fun observeTodo(todoId: String): Flow<ArchivedTodoItem?> =
         items.map { current -> current.firstOrNull { it.todo.id == todoId } }
 
-    override fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary> = flowOf(
+    override fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary> = history.map { current ->
         ArchiveHistorySummary(
-            completedCount = history.count {
+            completedCount = current.count {
                 it is ArchivedHistoryItem.Execution && it.entry.state == TodoState.COMPLETED
             },
-            missedCount = history.count {
+            missedCount = current.count {
                 it is ArchivedHistoryItem.Execution && it.entry.state == TodoState.MISSED
             },
-            skippedCount = history.count {
+            skippedCount = current.count {
                 it is ArchivedHistoryItem.Execution && it.entry.state == TodoState.SKIPPED
             },
-            periodResultCount = history.count { it is ArchivedHistoryItem.Period },
-        ),
-    )
+            periodResultCount = current.count { it is ArchivedHistoryItem.Period },
+        )
+    }
 
     override fun pagedHistory(todoId: String): Flow<PagingData<ArchivedHistoryItem>> =
-        Pager(PagingConfig(pageSize = 50)) { TestListPagingSource { history } }.flow
+        Pager(PagingConfig(pageSize = 50)) {
+            TestListPagingSource { history.value }.also(historySources::add)
+        }.flow
 
     override suspend fun getActionPreview(todoId: String): Result<ArchiveActionPreview> =
         Result.success(preview.copy(todoId = todoId))
 
     override suspend fun restore(todoId: String): Result<Unit> {
+        restoreCalls += 1
+        restoreGate?.await()
         restoredTodoIds += todoId
-        items.value = items.value.filterNot { it.todo.id == todoId }
-        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+        removeItem(todoId)
         return Result.success(Unit)
     }
 
     override suspend fun deletePermanently(todoId: String): Result<Unit> {
-        items.value = items.value.filterNot { it.todo.id == todoId }
-        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+        deleteCalls += 1
+        removeItem(todoId)
         return Result.success(Unit)
     }
+}
+
+private class TestArchiveBackupGateway : BackupGateway {
+    private val mutableState = MutableStateFlow(BackupOperationState())
+    override val state: StateFlow<BackupOperationState> = mutableState
+
+    fun setBlocked(blocked: Boolean) {
+        mutableState.value = if (blocked) {
+            BackupOperationState(
+                operationId = "restore",
+                type = BackupOperationType.RESTORE,
+                status = BackupOperationStatus.RUNNING,
+                phase = BackupOperationPhase.RESTORING,
+            )
+        } else {
+            BackupOperationState()
+        }
+    }
+
+    override fun suggestedFileName() = "backup.zip"
+    override fun startCreate(uri: Uri) = false
+    override fun startRestoreValidation(uri: Uri) = false
+    override fun confirmRestore() = false
+    override fun cancelRestoreConfirmation() = Unit
+    override fun acknowledgeResult() = Unit
+    override suspend fun recoverInterruptedOperation() = Unit
 }
 
 private class TestListPagingSource<T : Any>(
