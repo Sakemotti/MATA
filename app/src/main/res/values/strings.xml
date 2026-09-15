@@ -323,6 +323,7 @@
     <string name="todo_editor_section_basic_information">基本情報</string>
     <string name="todo_editor_title_label">タイトル（必須）</string>
     <string name="todo_editor_description_label">説明</string>
+    <string name="todo_editor_selected_category_removed">選択していたカテゴリが削除されたため、カテゴリ未設定へ変更しました</string>
     <string name="todo_editor_section_schedule">スケジュール</string>
     <string name="todo_editor_execution_date_label">実行日</string>
     <string name="todo_editor_start_date_label">開始日</string>

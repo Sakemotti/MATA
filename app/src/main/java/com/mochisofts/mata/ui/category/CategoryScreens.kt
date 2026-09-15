@@ -770,7 +770,8 @@ private fun CategoryListRow(
 @Composable
 fun CategoryEditorScreen(
     onBack: () -> Unit,
-    onSaved: (Boolean) -> Unit,
+    onSaved: (String, Boolean) -> Unit,
+    onDeleted: () -> Unit,
     viewModel: CategoryEditorViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -786,8 +787,8 @@ fun CategoryEditorScreen(
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is CategoryEditorEffect.Saved -> onSaved(effect.isNew)
-                CategoryEditorEffect.Deleted -> onSaved(false)
+                is CategoryEditorEffect.Saved -> onSaved(effect.id, effect.isNew)
+                CategoryEditorEffect.Deleted -> onDeleted()
             }
         }
     }

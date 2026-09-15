@@ -44,6 +44,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -66,6 +67,7 @@ import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
 import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.core.navigation.UNCATEGORIZED_CATEGORY_KEY
 import com.mochisofts.mata.core.navigation.todoEditorSavedMessageRes
 import com.mochisofts.mata.ui.category.CategoryEditorScreen
@@ -302,6 +304,9 @@ private fun MataApp(
             MataContentFrame(maxWidth = 720.dp) {
                 TodoEditorScreen(
                     onBack = navController::popBackStack,
+                    onAddCategory = {
+                        navController.navigate(CategoryEditorRoute(selectForTodoEditor = true))
+                    },
                     onSaved = { isNew ->
                         navController.previousBackStackEntry
                             ?.savedStateHandle
@@ -349,11 +354,20 @@ private fun MataApp(
                 onDestination = navigateToDestination,
             )
         }
-        composable<CategoryEditorRoute> {
+        composable<CategoryEditorRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<CategoryEditorRoute>()
             MataContentFrame(maxWidth = 720.dp) {
                 CategoryEditorScreen(
                     onBack = navController::popBackStack,
-                    onSaved = { navController.popBackStack() },
+                    onSaved = { categoryId, _ ->
+                        if (route.selectForTodoEditor) {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set(TODO_EDITOR_CATEGORY_RESULT_KEY, categoryId)
+                        }
+                        navController.popBackStack()
+                    },
+                    onDeleted = navController::popBackStack,
                 )
             }
         }
