@@ -273,7 +273,7 @@ CM-015	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 3
 CM-016	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm016・用途別表示と名前、グループ、正規化キーワード検索を確認
 CM-017	P2	category-management.md	未実施	-	-	-	-	-
 CM-018	P0	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryEditorViewModelTest#cm018・testDebugUnitTest成功
-CM-019	P1	category-management.md	未実施	-	-	-	-	-
+CM-019	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm019・追加後の末尾移動と強調、編集後の一覧位置維持、成功通知を確認
 CM-020	P0	category-management.md	未実施	-	-	-	-	-
 CM-021	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm021・connectedDebugAndroidTest成功
 CM-022	P0	category-management.md	未実施	-	-	-	-	-
@@ -282,7 +282,7 @@ CM-024	P0	category-management.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 
 CM-025	P1	category-management.md	未実施	-	-	-	-	-
 CM-026	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・削除成功通知と取り消し非提供を確認
 CM-027	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・変更時だけ破棄確認し継続・破棄が仕様どおりであることを確認
-CM-028	P1	category-management.md	未実施	-	-	-	-	-
+CM-028	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm028とCategoryListViewModelTest#cm028・一覧位置、下書き、色、アイコン、エラー、検索画面を復元し通常ダイアログを閉じることを確認
 CM-029	P1	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryListViewModelTest#cm029・testDebugUnitTest成功
 CM-030	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・カテゴリ名、色、アイコン、選択、順序、エラーを識別して操作できることを確認
 CM-031	P2	category-management.md	未実施	-	-	-	-	-
