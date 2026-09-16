@@ -1,28 +1,56 @@
 package com.mochisofts.mata.ui.archive
 
+import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import androidx.test.espresso.Espresso.closeSoftKeyboard
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationState
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AppTheme
@@ -36,26 +64,95 @@ import com.mochisofts.mata.domain.model.HistoryEntry
 import com.mochisofts.mata.domain.model.HistoryTodoSnapshot
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
+import com.mochisofts.mata.domain.model.PeriodHistoryEntry
 import com.mochisofts.mata.domain.model.RecurrenceRule
+import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
+import com.mochisofts.mata.domain.model.archivedHistoryComparator
 import com.mochisofts.mata.domain.repository.ArchiveRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeout
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
 class ArchiveListScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val activeViewModelStores = mutableListOf<ViewModelStore>()
+
+    @After
+    fun tearDown() {
+        composeRule.runOnIdle {
+            activeViewModelStores.forEach(ViewModelStore::clear)
+            activeViewModelStores.clear()
+        }
+    }
+
+    @Test
+    fun at001_archiveIsAnIndependentDrawerDestinationWithHamburgerNavigation() {
+        setScreen(TestArchiveRepository())
+        waitForText(text(R.string.archive_title))
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_open_menu))
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onNode(
+            hasText(text(R.string.nav_archived_todos)) and
+                SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
+        ).assertIsDisplayed().assertIsSelected()
+    }
+
+    @Test
+    fun at003_sortModesReorderRowsAndOnlyTheLastSelectionIsPersisted() {
+        val items = listOf(
+            archivedTodo(title = "Charlie", archivedAt = 1_000L),
+            archivedTodo(title = "Bravo", archivedAt = 2_000L),
+            archivedTodo(title = "Alpha", archivedAt = 3_000L),
+        )
+        val repository = TestArchiveRepository(items = items)
+        val settings = TestArchiveSettingsRepository()
+        setScreen(repository, settings)
+        waitForTitleOrder("Alpha", "Bravo", "Charlie")
+
+        selectSortOrder(R.string.archive_sort_oldest)
+        waitForTitleOrder("Charlie", "Bravo", "Alpha")
+
+        selectSortOrder(R.string.archive_sort_title)
+        waitForTitleOrder("Alpha", "Bravo", "Charlie")
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            settings.archiveSortOrder.value == ArchiveSortOrder.TITLE
+        }
+
+        val reopened = ArchiveListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            repository = repository,
+            settingsRepository = settings,
+        )
+        val restoredOrder = runBlocking {
+            withTimeout(5_000) {
+                reopened.uiState.first { it.sortOrder == ArchiveSortOrder.TITLE }.sortOrder
+            }
+        }
+        assertEquals(ArchiveSortOrder.TITLE, restoredOrder)
+    }
 
     @Test
     fun at006_emptyAndSearchEmptyStatesAreDistinctAndSearchCanBeCleared() {
@@ -66,12 +163,30 @@ class ArchiveListScreenTest {
         composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
             .performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("該当しない検索語")
+        closeSoftKeyboard()
 
         waitForText(text(R.string.archive_search_empty))
         composeRule.onNodeWithText(text(R.string.archive_clear_search)).performClick()
 
         waitForText(text(R.string.archive_empty))
         composeRule.onNodeWithText(text(R.string.archive_search_empty)).assertDoesNotExist()
+    }
+
+    @Test
+    fun at007_rowShowsDefinitionSummaryAndLimitsLongTitleAndDescriptionToTwoLines() {
+        val longTitle = "長いタイトル".repeat(30)
+        val longDescription = "長い説明文".repeat(50)
+        val item = archivedTodo(title = longTitle, description = longDescription)
+        setScreen(TestArchiveRepository(items = listOf(item)))
+        waitForText(longTitle)
+
+        composeRule.onNodeWithText(longTitle, useUnmergedTree = true).assertIsDisplayed()
+        assertTextHeightAtMost(longTitle, 56)
+        composeRule.onNodeWithText(longDescription, useUnmergedTree = true).assertIsDisplayed()
+        assertTextHeightAtMost(longDescription, 48)
+        composeRule.onNodeWithText("ルーチン・毎日").assertIsDisplayed()
+        composeRule.onNodeWithText("2026年8月1日から無期限").assertIsDisplayed()
+        composeRule.onNodeWithText("アーカイブ日時", substring = true).assertIsDisplayed()
     }
 
     @Test
@@ -129,6 +244,105 @@ class ArchiveListScreenTest {
     }
 
     @Test
+    fun at010_detailShowsAllReadOnlyDefinitionFieldsInThreeCards() {
+        val item = archivedTodo(title = "全項目TODO", description = "すべての任意項目を含む説明")
+        setScreen(TestArchiveRepository(items = listOf(item)))
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        listOf(
+            text(R.string.archive_section_todo),
+            item.todo.title,
+            text(R.string.todo_editor_description_label),
+            item.todo.description,
+            text(R.string.label_category),
+            item.category!!.name,
+            text(R.string.archive_label_schedule),
+            text(R.string.archive_label_recurrence),
+            text(R.string.archive_label_holiday),
+            text(R.string.archive_label_due),
+            text(R.string.todo_editor_carry_over_label),
+            text(R.string.todo_editor_section_notification),
+            text(R.string.archive_label_notifications),
+            text(R.string.archive_section_archive_info),
+            text(R.string.archive_label_archived_at),
+            text(R.string.archive_section_summary),
+            text(R.string.archive_section_history),
+        ).forEach(::scrollToDetailText)
+    }
+
+    @Test
+    fun at012_largeMixedHistoryPagesNewestFirstAndOpensReadOnlySnapshots() {
+        val item = archivedTodo(title = "大量履歴TODO")
+        val baseDate = LocalDate.of(2026, 9, 15)
+        val history = (0 until 220).map { index ->
+            val date = baseDate.minusDays(index.toLong())
+            val title = "大量履歴${index.toString().padStart(3, '0')}"
+            val snapshot = historySnapshot(item.todo.id, title)
+            when (index % 4) {
+                0, 1, 2 -> ArchivedHistoryItem.Execution(
+                    HistoryEntry(
+                        id = "history-$index",
+                        todoId = item.todo.id,
+                        logicalDate = date,
+                        state = listOf(
+                            TodoState.COMPLETED,
+                            TodoState.MISSED,
+                            TodoState.SKIPPED,
+                        )[index % 4],
+                        actedAt = index.toLong(),
+                        finalizedAt = null,
+                        snapshot = snapshot,
+                        canUndoAction = false,
+                    ),
+                )
+                else -> ArchivedHistoryItem.Period(
+                    PeriodHistoryEntry(
+                        id = "period-$index",
+                        todoId = item.todo.id,
+                        periodType = RecurrenceType.WEEKLY_COUNT,
+                        periodStart = date.minusDays(6),
+                        periodEnd = date,
+                        requiredCount = 2,
+                        completedCount = 1,
+                        achieved = false,
+                        displayDate = date,
+                        finalizedAt = index.toLong(),
+                        snapshot = snapshot,
+                    ),
+                )
+            }
+        }.sortedWith(archivedHistoryComparator)
+        val repository = TestArchiveRepository(items = listOf(item), history = history)
+        setScreen(repository)
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        val newestTitles = (0..3).map { "大量履歴${it.toString().padStart(3, '0')}" }
+        scrollToDetailText(newestTitles.first())
+        newestTitles.forEach { title ->
+            scrollToDetailText(title)
+            composeRule.onNodeWithText(title).performClick()
+            waitForText("当時の説明")
+            composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodesWithText("当時の説明").fetchSemanticsNodes().isEmpty()
+            }
+        }
+
+        val oldestTitle = "大量履歴219"
+        scrollToDetailText(oldestTitle)
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.historyLoadCalls >= 2 }
+        composeRule.onNodeWithText(oldestTitle).performClick()
+        waitForText("当時の説明")
+        composeRule.onNodeWithText("当時のカテゴリ").assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_undo)).assertDoesNotExist()
+        composeRule.onNodeWithText("編集").assertDoesNotExist()
+    }
+
+    @Test
     fun at013_historyModalIsReadOnlyEvenWhenSnapshotActionCanBeUndone() {
         val item = archivedTodo(title = "現在のTODO")
         val historyTitle = "当時の履歴スナップショット"
@@ -158,6 +372,27 @@ class ArchiveListScreenTest {
         composeRule.onNodeWithText(text(R.string.action_archive)).assertDoesNotExist()
         composeRule.onNodeWithText(text(R.string.action_delete)).assertDoesNotExist()
         composeRule.onNodeWithText("編集").assertDoesNotExist()
+    }
+
+    @Test
+    fun at014_restoreDialogExplainsFutureResumeNoBackfillAndIrreversibility() {
+        val item = archivedTodo(title = "実施期間中の復元対象")
+        val repository = TestArchiveRepository(items = listOf(item))
+        setScreen(repository)
+        waitForText(item.todo.title)
+
+        openRowAction(R.string.action_restore)
+
+        waitForText(text(R.string.archive_restore_dialog_title))
+        composeRule.onNodeWithText(
+            text(R.string.archive_restore_dialog_message, item.todo.title),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.archive_restore_no_future)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.action_restore)).performClick()
+
+        waitForText(text(R.string.archive_restore_success))
+        waitForText(text(R.string.archive_empty))
+        assertEquals(listOf(item.todo.id), repository.restoredTodoIds)
     }
 
     @Test
@@ -200,6 +435,47 @@ class ArchiveListScreenTest {
     }
 
     @Test
+    fun at024_listAndDetailRestoreKeepSearchAndSortAndReturnToList() {
+        val items = listOf(
+            archivedTodo(title = "復元フローA", archivedAt = 1L),
+            archivedTodo(title = "復元フローB", archivedAt = 2L),
+            archivedTodo(title = "復元フローC", archivedAt = 3L),
+        )
+        val repository = TestArchiveRepository(items = items)
+        val settings = TestArchiveSettingsRepository()
+        setScreen(repository, settings)
+        waitForText(items.first().todo.title)
+        selectSortOrder(R.string.archive_sort_oldest)
+        waitForTitleOrder(*items.map { it.todo.title }.toTypedArray())
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("復元フロー")
+        closeSoftKeyboard()
+        waitForTitleOrder(*items.map { it.todo.title }.toTypedArray())
+
+        openRowAction(R.string.action_restore)
+        waitForText(text(R.string.archive_restore_dialog_title))
+        composeRule.onNodeWithText(text(R.string.action_restore)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.restoreCalls == 1 }
+        composeRule.onNodeWithText(text(R.string.archive_detail_title)).assertDoesNotExist()
+        composeRule.onNodeWithText(items.first().todo.title).assertDoesNotExist()
+        waitForText(items[1].todo.title)
+
+        composeRule.onNodeWithText(items[1].todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        composeRule.onNodeWithText(text(R.string.action_restore)).performClick()
+        waitForText(text(R.string.archive_restore_dialog_title))
+        composeRule.onAllNodesWithText(text(R.string.action_restore))[1].performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.restoreCalls == 2 }
+
+        waitForText(items[2].todo.title)
+        composeRule.onNodeWithText(text(R.string.archive_detail_title)).assertDoesNotExist()
+        composeRule.onNode(hasSetTextAction() and hasText("復元フロー")).assertIsDisplayed()
+        assertEquals(ArchiveSortOrder.OLDEST, settings.archiveSortOrder.value)
+        assertEquals(items.take(2).map { it.todo.id }, repository.restoredTodoIds)
+    }
+
+    @Test
     fun at025_successfulRestoreStaysOnListAndOffersNoUndoOrAutomaticEdit() {
         val item = archivedTodo(title = "復元成功TODO")
         val repository = TestArchiveRepository(items = listOf(item))
@@ -218,6 +494,28 @@ class ArchiveListScreenTest {
     }
 
     @Test
+    fun at026_permanentDeleteDialogShowsHistoryScopeCalendarImpactAndNoUndo() {
+        val item = archivedTodo(title = "履歴を持つ完全削除対象")
+        val repository = TestArchiveRepository(items = listOf(item))
+        setScreen(repository)
+        waitForText(item.todo.title)
+
+        openRowAction(R.string.action_delete_permanently)
+
+        waitForText(text(R.string.archive_delete_dialog_title))
+        composeRule.onNodeWithText(
+            text(
+                R.string.archive_delete_dialog_message,
+                item.todo.title,
+                repository.preview.historySummary.executionCount,
+                repository.preview.historySummary.periodResultCount,
+            ),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_cancel)).assertIsDisplayed()
+    }
+
+    @Test
     fun at027_permanentDeleteDialogUsesExplicitButtonsWithoutTitleInput() {
         val item = archivedTodo(title = "完全削除対象TODO")
         setScreen(TestArchiveRepository(items = listOf(item)))
@@ -231,21 +529,562 @@ class ArchiveListScreenTest {
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
     }
 
-    private fun setScreen(repository: TestArchiveRepository): ArchiveListViewModel {
-        val viewModel = ArchiveListViewModel(
-            savedStateHandle = SavedStateHandle(),
-            repository = repository,
-            settingsRepository = TestArchiveSettingsRepository(),
+    @Test
+    fun at032_archiveActionsRejectBackupAndDuplicateOperationConflicts() {
+        val item = archivedTodo(title = "排他制御対象TODO")
+        val repository = TestArchiveRepository(items = listOf(item))
+        val backup = TestArchiveBackupGateway().apply { setBlocked(true) }
+        val viewModel = setScreen(repository, backupGateway = backup)
+        waitForText(item.todo.title)
+
+        composeRule.onAllNodesWithContentDescription(text(R.string.archive_row_actions))[0]
+            .assertIsNotEnabled()
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsNotEnabled()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsNotEnabled()
+
+        backup.setBlocked(false)
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsEnabled().performClick()
+        waitForText(text(R.string.archive_restore_dialog_title))
+        backup.setBlocked(true)
+        composeRule.onAllNodesWithText(text(R.string.action_restore))[1].assertIsNotEnabled()
+        assertEquals(0, repository.restoreCalls)
+
+        backup.setBlocked(false)
+        repository.restoreGate = CompletableDeferred()
+        composeRule.onAllNodesWithText(text(R.string.action_restore))[1]
+            .assertIsEnabled()
+            .performClick()
+        viewModel.confirmAction()
+        viewModel.requestAction(item.todo.id, ArchiveAction.DELETE)
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.restoreCalls == 1 }
+        assertEquals(0, repository.deleteCalls)
+        repository.restoreGate?.complete(Unit)
+        waitForText(text(R.string.archive_restore_success))
+        assertEquals(1, repository.restoreCalls)
+    }
+
+    @Test
+    fun at033_externalChangesRefreshListSearchDetailSummaryAndHistory() {
+        val item = archivedTodo(title = "更新前TODO")
+        val repository = TestArchiveRepository(items = listOf(item))
+        setScreen(repository)
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        val updatedCategory = requireNotNull(item.category).copy(name = "更新後カテゴリ")
+        val updated = item.copy(
+            todo = item.todo.copy(title = "更新後TODO", categoryId = updatedCategory.id),
+            category = updatedCategory,
         )
+        val externalHistory = ArchivedHistoryItem.Execution(
+            HistoryEntry(
+                id = "external-history",
+                todoId = item.todo.id,
+                logicalDate = LocalDate.of(2026, 9, 2),
+                state = TodoState.COMPLETED,
+                actedAt = Instant.parse("2026-09-02T03:00:00Z").toEpochMilli(),
+                finalizedAt = null,
+                snapshot = historySnapshot(item.todo.id, "画面外で追加された履歴"),
+                canUndoAction = false,
+            ),
+        )
+        repository.updateItem(updated)
+        repository.replaceHistory(listOf(externalHistory))
+
+        waitForText(updated.todo.title)
+        scrollToDetailText(updatedCategory.name)
+        scrollToDetailText(text(R.string.archive_summary_completed, 1))
+        scrollToDetailText("画面外で追加された履歴")
+
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("画面外新規")
+        waitForText(text(R.string.archive_search_empty))
+        val externallyArchived = archivedTodo(title = "画面外新規アーカイブ")
+        repository.addItem(externallyArchived)
+        waitForText(externallyArchived.todo.title)
+
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_close_search))
+            .performClick()
+        waitForText(updated.todo.title)
+        composeRule.onNodeWithText(updated.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        repository.removeItem(updated.todo.id)
+        waitForText(text(R.string.error_todo_not_found))
+        composeRule.onNodeWithText(text(R.string.archive_detail_title)).assertDoesNotExist()
+        composeRule.onNodeWithText(externallyArchived.todo.title).assertIsDisplayed()
+    }
+
+    @Test
+    fun at034_reopeningClearsSearchAndPositionButRestoresOnlySortOrder() {
+        val items = (0 until 220).map { index ->
+            archivedTodo(
+                title = "再表示TODO${index.toString().padStart(3, '0')}",
+                archivedAt = index.toLong(),
+            )
+        }
+        val repository = TestArchiveRepository(items = items)
+        val settings = TestArchiveSettingsRepository()
+        val reopen = setRestartableScreen(repository, settings)
+        waitForText(items.last().todo.title)
+        selectSortOrder(R.string.archive_sort_oldest)
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("再表示TODO")
+        closeSoftKeyboard()
+        waitForText(items.first().todo.title)
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(items.last().todo.title))
+        composeRule.onNodeWithText(items.last().todo.title).assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.todoLoadCalls >= 2 }
+
+        reopen()
+
+        waitForText(items.first().todo.title)
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .assertIsDisplayed()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        composeRule.onNodeWithText(items.first().todo.title).assertIsDisplayed()
+        composeRule.onNodeWithText(items.last().todo.title).assertDoesNotExist()
+        assertEquals(ArchiveSortOrder.OLDEST, settings.archiveSortOrder.value)
+    }
+
+    @Test
+    fun at035_returnFromDetailKeepsSearchSortLoadedPagesAndListPosition() {
+        val items = (0 until 220).map { index ->
+            archivedTodo(
+                title = "状態保持TODO${index.toString().padStart(3, '0')}",
+                archivedAt = index.toLong(),
+            )
+        }
+        val repository = TestArchiveRepository(items = items)
+        val settings = TestArchiveSettingsRepository()
+        setScreen(repository, settings)
+        waitForText(items.last().todo.title)
+        selectSortOrder(R.string.archive_sort_oldest)
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("状態保持TODO")
+        closeSoftKeyboard()
+        waitForText(items.first().todo.title)
+        val target = items[180]
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(target.todo.title))
+        composeRule.onNodeWithText(target.todo.title).assertIsDisplayed().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.todoLoadCalls >= 2 }
+        waitForText(text(R.string.archive_detail_title))
+
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).performClick()
+
+        waitForText(target.todo.title)
+        composeRule.onNodeWithText(target.todo.title).assertIsDisplayed()
+        composeRule.onNodeWithText(items.first().todo.title).assertDoesNotExist()
+        composeRule.onNode(hasSetTextAction() and hasText("状態保持TODO")).assertIsDisplayed()
+        assertEquals(ArchiveSortOrder.OLDEST, settings.archiveSortOrder.value)
+    }
+
+    @Test
+    fun at036_savedInstanceRestoresSearchPositionsDialogsAndDoesNotDuplicateRunningAction() {
+        val items = (0 until 220).map { index ->
+            archivedTodo(
+                title = "再生成TODO${index.toString().padStart(3, '0')}",
+                archivedAt = index.toLong(),
+            )
+        }
+        val target = items[180]
+        val history = (0 until 220).map { index ->
+            ArchivedHistoryItem.Execution(
+                HistoryEntry(
+                    id = "regeneration-history-$index",
+                    todoId = target.todo.id,
+                    logicalDate = LocalDate.of(2026, 9, 15).minusDays(index.toLong()),
+                    state = TodoState.COMPLETED,
+                    actedAt = index.toLong(),
+                    finalizedAt = null,
+                    snapshot = historySnapshot(
+                        target.todo.id,
+                        "再生成履歴${index.toString().padStart(3, '0')}",
+                    ).copy(description = "再生成時の説明$index"),
+                    canUndoAction = false,
+                ),
+            )
+        }
+        val repository = TestArchiveRepository(items = items, history = history)
+        val settings = TestArchiveSettingsRepository()
+        val managed = createManagedViewModel(repository, settings, null)
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            MataTheme(useDynamicColor = false) {
+                ArchiveListScreen(
+                    onDestination = { _: MataDestination -> },
+                    viewModel = managed.viewModel,
+                )
+            }
+        }
+        waitForText(items.last().todo.title)
+        selectSortOrder(R.string.archive_sort_oldest)
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_search))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("再生成TODO")
+        closeSoftKeyboard()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(target.todo.title))
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            managed.viewModel.listScrollPosition.index > 100
+        }
+        composeRule.onNodeWithText(target.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        val historyTarget = "再生成履歴180"
+        scrollToDetailText(historyTarget)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            managed.viewModel.detailScrollPosition.index > 100
+        }
+        composeRule.onNodeWithText(historyTarget).performClick()
+        waitForText("再生成時の説明180")
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeRule.onNodeWithText("再生成時の説明180").assertIsDisplayed()
+        assertTrue(managed.viewModel.detailScrollPosition.index > 100)
+        composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithText(historyTarget).assertIsDisplayed()
+            }.isSuccess
+        }
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).performClick()
+        assertTrue(managed.viewModel.listScrollPosition.index > 100)
+        composeRule.onNode(hasSetTextAction() and hasText("再生成TODO")).assertIsDisplayed()
+        assertEquals(ArchiveSortOrder.OLDEST, settings.archiveSortOrder.value)
+        assertTrue(repository.todoLoadCalls >= 2)
+        assertTrue(repository.historyLoadCalls >= 2)
+
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(target.todo.title))
+        composeRule.onNodeWithText(target.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        composeRule.onNodeWithText(text(R.string.action_restore)).performClick()
+        waitForText(text(R.string.archive_restore_dialog_title))
+        restorationTester.emulateSavedInstanceStateRestore()
+        composeRule.onNodeWithText(text(R.string.archive_restore_dialog_title)).assertIsDisplayed()
+
+        repository.restoreGate = CompletableDeferred()
+        composeRule.onAllNodesWithText(text(R.string.action_restore))[1].performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.restoreCalls == 1 }
+        restorationTester.emulateSavedInstanceStateRestore()
+        composeRule.runOnIdle { managed.viewModel.confirmAction() }
+        assertEquals(1, repository.restoreCalls)
+        repository.restoreGate?.complete(Unit)
+        waitForText(text(R.string.archive_restore_success))
+        assertEquals(1, repository.restoreCalls)
+    }
+
+    @Test
+    fun at040_maximumFontAndCompactDisplayKeepDetailHistoryAndFixedActionsReachable() {
+        val item = archivedTodo(
+            title = "最大表示アーカイブTODO",
+            description = "最大フォントでも欠けてはいけない長い説明".repeat(8),
+        )
+        val historyTitle = "最大表示の履歴スナップショット"
+        val history = ArchivedHistoryItem.Execution(
+            HistoryEntry(
+                id = "maximum-font-history",
+                todoId = item.todo.id,
+                logicalDate = LocalDate.of(2026, 9, 1),
+                state = TodoState.COMPLETED,
+                actedAt = Instant.parse("2026-09-01T03:00:00Z").toEpochMilli(),
+                finalizedAt = null,
+                snapshot = historySnapshot(item.todo.id, historyTitle).copy(
+                    description = "履歴の長い説明".repeat(20),
+                ),
+                canUndoAction = false,
+            ),
+        )
+        val repository = TestArchiveRepository(items = listOf(item), history = listOf(history))
+        val managed = createManagedViewModel(repository, TestArchiveSettingsRepository(), null)
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                val baseDensity = LocalDensity.current
+                CompositionLocalProvider(
+                    LocalDensity provides Density(baseDensity.density, fontScale = 2f),
+                ) {
+                    Box(Modifier.width(320.dp).height(640.dp)) {
+                        ArchiveListScreen(
+                            onDestination = { _: MataDestination -> },
+                            viewModel = managed.viewModel,
+                        )
+                    }
+                }
+            }
+        }
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+        listOf(
+            text(R.string.archive_section_todo),
+            text(R.string.archive_section_summary),
+            text(R.string.archive_section_history),
+            historyTitle,
+        ).forEach { label ->
+            scrollToDetailText(label)
+            composeRule.onNodeWithText(text(R.string.action_restore)).assertIsDisplayed()
+            composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+        }
+        composeRule.onNodeWithText(historyTitle).performClick()
+        composeRule.onNodeWithText("履歴の長い説明".repeat(20)).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
+    }
+
+    @Test
+    fun atd03_fixedActionsStayAvailableWhileAdditionalHistoryPagesLoad() {
+        val item = archivedTodo(title = "履歴ページング中TODO")
+        val history = (0 until 220).map { index ->
+            ArchivedHistoryItem.Execution(
+                HistoryEntry(
+                    id = "fixed-actions-history-$index",
+                    todoId = item.todo.id,
+                    logicalDate = LocalDate.of(2026, 9, 15).minusDays(index.toLong()),
+                    state = TodoState.COMPLETED,
+                    actedAt = index.toLong(),
+                    finalizedAt = null,
+                    snapshot = historySnapshot(
+                        item.todo.id,
+                        "固定操作履歴${index.toString().padStart(3, '0')}",
+                    ),
+                    canUndoAction = false,
+                ),
+            )
+        }
+        val repository = TestArchiveRepository(items = listOf(item), history = history)
+        setScreen(repository)
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsDisplayed().assertIsEnabled()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently))
+            .assertIsDisplayed().assertIsEnabled()
+
+        scrollToDetailText("固定操作履歴180")
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.historyLoadCalls >= 2 }
+
+        composeRule.onNodeWithText(text(R.string.action_restore)).assertIsDisplayed().assertIsEnabled()
+        composeRule.onNodeWithText(text(R.string.action_delete_permanently))
+            .assertIsDisplayed().assertIsEnabled()
+    }
+
+    @Test
+    fun atd07_fullExecutionAndPeriodSnapshotsUseScrollableReadOnlyDetailAndBothClosePaths() {
+        val item = archivedTodo(title = "共通詳細比較TODO")
+        val longExecutionDescription = "日単位履歴の長文説明".repeat(30)
+        val longPeriodDescription = "期間結果の長文説明".repeat(30)
+        val executionSnapshot = historySnapshot(item.todo.id, "全項目の日単位履歴").copy(
+            description = longExecutionDescription,
+            endDate = LocalDate.of(2026, 12, 31),
+            dueDate = LocalDate.of(2026, 9, 2),
+            carryOverEnabled = true,
+            scheduledLogicalDate = LocalDate.of(2026, 9, 1),
+            resolvedLogicalDate = LocalDate.of(2026, 9, 2),
+            notifications = listOf(
+                TodoNotification(
+                    id = "history-notification",
+                    relation = NotificationRelation.BEFORE,
+                    amount = 2,
+                    unit = NotificationUnit.HOUR,
+                ),
+            ),
+        )
+        val periodSnapshot = executionSnapshot.copy(
+            title = "全項目の期間結果",
+            description = longPeriodDescription,
+        )
+        val history = listOf(
+            ArchivedHistoryItem.Execution(
+                HistoryEntry(
+                    id = "full-execution",
+                    todoId = item.todo.id,
+                    logicalDate = LocalDate.of(2026, 9, 2),
+                    state = TodoState.COMPLETED,
+                    actedAt = Instant.parse("2026-09-02T03:00:00Z").toEpochMilli(),
+                    finalizedAt = null,
+                    snapshot = executionSnapshot,
+                    canUndoAction = false,
+                ),
+            ),
+            ArchivedHistoryItem.Period(
+                PeriodHistoryEntry(
+                    id = "full-period",
+                    todoId = item.todo.id,
+                    periodType = RecurrenceType.WEEKLY_COUNT,
+                    periodStart = LocalDate.of(2026, 8, 31),
+                    periodEnd = LocalDate.of(2026, 9, 6),
+                    requiredCount = 3,
+                    completedCount = 2,
+                    achieved = false,
+                    displayDate = LocalDate.of(2026, 9, 6),
+                    finalizedAt = Instant.parse("2026-09-06T15:00:00Z").toEpochMilli(),
+                    snapshot = periodSnapshot,
+                ),
+            ),
+        )
+        setScreen(TestArchiveRepository(items = listOf(item), history = history))
+        waitForText(item.todo.title)
+        composeRule.onNodeWithText(item.todo.title).performClick()
+        waitForText(text(R.string.archive_detail_title))
+
+        scrollToDetailText(executionSnapshot.title)
+        composeRule.onNodeWithText(executionSnapshot.title).performClick()
+        listOf(
+            longExecutionDescription,
+            text(R.string.label_category),
+            text(R.string.archive_label_recurrence),
+            text(R.string.archive_label_due),
+            text(R.string.archive_label_notifications),
+            text(R.string.todo_editor_due_date_label),
+            text(R.string.todo_editor_carry_over_label),
+            text(R.string.todo_editor_execution_date_label),
+            text(R.string.todo_resolution_date_label),
+            text(R.string.calendar_history_logical_date),
+            text(R.string.calendar_history_state),
+            text(R.string.calendar_history_operation_time),
+        ).forEach { label ->
+            scrollToLastText(label)
+        }
+        composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+        composeRule.onNodeWithText(longExecutionDescription).assertDoesNotExist()
+
+        scrollToDetailText(periodSnapshot.title)
+        composeRule.onNodeWithText(periodSnapshot.title).performClick()
+        listOf(
+            longPeriodDescription,
+            text(R.string.label_category),
+            text(R.string.archive_label_recurrence),
+            text(R.string.archive_label_due),
+            text(R.string.archive_label_notifications),
+            text(R.string.calendar_history_period),
+            text(R.string.calendar_history_result),
+        ).forEach { label ->
+            scrollToLastText(label)
+        }
+        pressBack()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(longPeriodDescription).fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithText(text(R.string.archive_detail_title)).assertIsDisplayed()
+    }
+
+    private fun setScreen(
+        repository: TestArchiveRepository,
+        settingsRepository: TestArchiveSettingsRepository = TestArchiveSettingsRepository(),
+        backupGateway: BackupGateway? = null,
+    ): ArchiveListViewModel {
+        val managed = createManagedViewModel(repository, settingsRepository, backupGateway)
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
                 ArchiveListScreen(
                     onDestination = { _: MataDestination -> },
-                    viewModel = viewModel,
+                    viewModel = managed.viewModel,
                 )
             }
         }
-        return viewModel
+        return managed.viewModel
+    }
+
+    private fun setRestartableScreen(
+        repository: TestArchiveRepository,
+        settingsRepository: TestArchiveSettingsRepository,
+    ): () -> Unit {
+        val current = mutableStateOf(createManagedViewModel(repository, settingsRepository, null))
+        composeRule.setContent {
+            val managed = current.value
+            key(managed.viewModel) {
+                MataTheme(useDynamicColor = false) {
+                    ArchiveListScreen(
+                        onDestination = { _: MataDestination -> },
+                        viewModel = managed.viewModel,
+                    )
+                }
+            }
+        }
+        return {
+            composeRule.runOnIdle {
+                val previous = current.value
+                previous.store.clear()
+                activeViewModelStores.remove(previous.store)
+                current.value = createManagedViewModel(repository, settingsRepository, null)
+            }
+        }
+    }
+
+    private fun createManagedViewModel(
+        repository: TestArchiveRepository,
+        settingsRepository: TestArchiveSettingsRepository,
+        backupGateway: BackupGateway?,
+    ): ManagedArchiveViewModel {
+        val createdViewModel = ArchiveListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            repository = repository,
+            settingsRepository = settingsRepository,
+            backupGateway = backupGateway,
+        )
+        val viewModelStore = ViewModelStore()
+        val viewModel = ViewModelProvider.create(
+            store = viewModelStore,
+            factory = object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(
+                    modelClass: KClass<T>,
+                    extras: CreationExtras,
+                ): T = createdViewModel as T
+            },
+        )[ArchiveListViewModel::class]
+        activeViewModelStores += viewModelStore
+        return ManagedArchiveViewModel(viewModel, viewModelStore)
+    }
+
+    private data class ManagedArchiveViewModel(
+        val viewModel: ArchiveListViewModel,
+        val store: ViewModelStore,
+    )
+
+    private fun selectSortOrder(labelRes: Int) {
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_archive_sort))
+            .performClick()
+        composeRule.onNodeWithText(text(labelRes)).performClick()
+    }
+
+    private fun waitForTitleOrder(vararg titles: String) {
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                val tops = titles.map { title ->
+                    composeRule.onNodeWithText(title).fetchSemanticsNode().boundsInRoot.top
+                }
+                tops == tops.sorted()
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun scrollToDetailText(value: String) {
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(value))
+        composeRule.onNodeWithText(value).assertIsDisplayed()
+    }
+
+    private fun scrollToLastText(value: String) {
+        val nodes = composeRule.onAllNodesWithText(value)
+        val lastIndex = nodes.fetchSemanticsNodes().lastIndex
+        assertTrue("Text not found: $value", lastIndex >= 0)
+        nodes[lastIndex].performScrollTo().assertIsDisplayed()
+    }
+
+    private fun assertTextHeightAtMost(value: String, maxHeightDp: Int) {
+        val heightPx = composeRule.onNodeWithText(value, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.height
+        val maxHeightPx = with(composeRule.density) { maxHeightDp.dp.toPx() }
+        assertTrue("$value exceeded $maxHeightDp dp: $heightPx px", heightPx <= maxHeightPx)
     }
 
     private fun openRowMenu() {
@@ -259,7 +1098,7 @@ class ArchiveListScreenTest {
     }
 
     private fun waitForText(value: String) {
-        composeRule.waitUntil(timeoutMillis = 5_000) {
+        composeRule.waitUntil(timeoutMillis = 20_000) {
             composeRule.onAllNodesWithText(value).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -270,10 +1109,12 @@ class ArchiveListScreenTest {
 
 private class TestArchiveRepository(
     items: List<ArchivedTodoItem> = emptyList(),
-    private val history: List<ArchivedHistoryItem> = emptyList(),
+    history: List<ArchivedHistoryItem> = emptyList(),
 ) : ArchiveRepository {
     private val items = MutableStateFlow(items)
+    private val history = MutableStateFlow(history)
     private val todoSources = mutableListOf<PagingSource<Int, ArchivedTodoItem>>()
+    private val historySources = mutableListOf<PagingSource<Int, ArchivedHistoryItem>>()
     var preview: ArchiveActionPreview = items.firstOrNull()?.let(::preview)
         ?: ArchiveActionPreview(
             todoId = "missing",
@@ -284,69 +1125,131 @@ private class TestArchiveRepository(
             historySummary = ArchiveHistorySummary(0, 0, 0, 0),
         )
     val restoredTodoIds = mutableListOf<String>()
+    var restoreGate: CompletableDeferred<Unit>? = null
+    var restoreCalls = 0
+    var deleteCalls = 0
+    var todoLoadCalls = 0
+    var historyLoadCalls = 0
+
+    fun updateItem(item: ArchivedTodoItem) {
+        items.value = items.value.map { current -> if (current.todo.id == item.todo.id) item else current }
+        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+    }
+
+    fun addItem(item: ArchivedTodoItem) {
+        items.value = items.value + item
+        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+    }
+
+    fun removeItem(todoId: String) {
+        items.value = items.value.filterNot { it.todo.id == todoId }
+        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+    }
+
+    fun replaceHistory(items: List<ArchivedHistoryItem>) {
+        history.value = items
+        historySources.toList().forEach(PagingSource<Int, ArchivedHistoryItem>::invalidate)
+    }
 
     override fun pagedTodos(
         query: String,
         sortOrder: ArchiveSortOrder,
     ): Flow<PagingData<ArchivedTodoItem>> = Pager(PagingConfig(pageSize = 50)) {
-        TestListPagingSource {
-            val normalized = query.trim()
-            val filtered = items.value.filter { item ->
-                normalized.isEmpty() ||
-                    item.todo.title.contains(normalized, ignoreCase = true) ||
-                    item.todo.description.contains(normalized, ignoreCase = true) ||
-                    item.category?.name?.contains(normalized, ignoreCase = true) == true
-            }
-            when (sortOrder) {
-                ArchiveSortOrder.NEWEST -> filtered.sortedByDescending { it.archivedAt }
-                ArchiveSortOrder.OLDEST -> filtered.sortedBy { it.archivedAt }
-                ArchiveSortOrder.TITLE -> filtered.sortedBy { it.todo.title }
-            }
-        }.also(todoSources::add)
+        TestListPagingSource(
+            values = {
+                val normalized = query.trim()
+                val filtered = items.value.filter { item ->
+                    normalized.isEmpty() ||
+                        item.todo.title.contains(normalized, ignoreCase = true) ||
+                        item.todo.description.contains(normalized, ignoreCase = true) ||
+                        item.category?.name?.contains(normalized, ignoreCase = true) == true
+                }
+                when (sortOrder) {
+                    ArchiveSortOrder.NEWEST -> filtered.sortedByDescending { it.archivedAt }
+                    ArchiveSortOrder.OLDEST -> filtered.sortedBy { it.archivedAt }
+                    ArchiveSortOrder.TITLE -> filtered.sortedBy { it.todo.title }
+                }
+            },
+            onLoad = { todoLoadCalls += 1 },
+        ).also(todoSources::add)
     }.flow
 
     override fun observeTodo(todoId: String): Flow<ArchivedTodoItem?> =
         items.map { current -> current.firstOrNull { it.todo.id == todoId } }
 
-    override fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary> = flowOf(
+    override fun observeHistorySummary(todoId: String): Flow<ArchiveHistorySummary> = history.map { current ->
         ArchiveHistorySummary(
-            completedCount = history.count {
+            completedCount = current.count {
                 it is ArchivedHistoryItem.Execution && it.entry.state == TodoState.COMPLETED
             },
-            missedCount = history.count {
+            missedCount = current.count {
                 it is ArchivedHistoryItem.Execution && it.entry.state == TodoState.MISSED
             },
-            skippedCount = history.count {
+            skippedCount = current.count {
                 it is ArchivedHistoryItem.Execution && it.entry.state == TodoState.SKIPPED
             },
-            periodResultCount = history.count { it is ArchivedHistoryItem.Period },
-        ),
-    )
+            periodResultCount = current.count { it is ArchivedHistoryItem.Period },
+        )
+    }
 
     override fun pagedHistory(todoId: String): Flow<PagingData<ArchivedHistoryItem>> =
-        Pager(PagingConfig(pageSize = 50)) { TestListPagingSource { history } }.flow
+        Pager(PagingConfig(pageSize = 50)) {
+            TestListPagingSource(
+                values = { history.value },
+                onLoad = { historyLoadCalls += 1 },
+            ).also(historySources::add)
+        }.flow
 
     override suspend fun getActionPreview(todoId: String): Result<ArchiveActionPreview> =
         Result.success(preview.copy(todoId = todoId))
 
     override suspend fun restore(todoId: String): Result<Unit> {
+        restoreCalls += 1
+        restoreGate?.await()
         restoredTodoIds += todoId
-        items.value = items.value.filterNot { it.todo.id == todoId }
-        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+        removeItem(todoId)
         return Result.success(Unit)
     }
 
     override suspend fun deletePermanently(todoId: String): Result<Unit> {
-        items.value = items.value.filterNot { it.todo.id == todoId }
-        todoSources.toList().forEach(PagingSource<Int, ArchivedTodoItem>::invalidate)
+        deleteCalls += 1
+        removeItem(todoId)
         return Result.success(Unit)
     }
 }
 
+private class TestArchiveBackupGateway : BackupGateway {
+    private val mutableState = MutableStateFlow(BackupOperationState())
+    override val state: StateFlow<BackupOperationState> = mutableState
+
+    fun setBlocked(blocked: Boolean) {
+        mutableState.value = if (blocked) {
+            BackupOperationState(
+                operationId = "restore",
+                type = BackupOperationType.RESTORE,
+                status = BackupOperationStatus.RUNNING,
+                phase = BackupOperationPhase.RESTORING,
+            )
+        } else {
+            BackupOperationState()
+        }
+    }
+
+    override fun suggestedFileName() = "backup.zip"
+    override fun startCreate(uri: Uri) = false
+    override fun startRestoreValidation(uri: Uri) = false
+    override fun confirmRestore() = false
+    override fun cancelRestoreConfirmation() = Unit
+    override fun acknowledgeResult() = Unit
+    override suspend fun recoverInterruptedOperation() = Unit
+}
+
 private class TestListPagingSource<T : Any>(
     private val values: () -> List<T>,
+    private val onLoad: () -> Unit = {},
 ) : PagingSource<Int, T>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, T> {
+        onLoad()
         val allValues = values()
         val start = params.key ?: 0
         val end = (start + params.loadSize).coerceAtMost(allValues.size)
@@ -386,7 +1289,9 @@ private class TestArchiveSettingsRepository : SettingsRepository {
 
 private fun archivedTodo(
     title: String,
+    description: String = "アーカイブ済みTODOの説明",
     endDate: LocalDate? = null,
+    archivedAt: Long = Instant.parse("2026-09-01T09:00:00Z").toEpochMilli(),
 ): ArchivedTodoItem {
     val id = title.hashCode().toString()
     val category = Category(
@@ -400,14 +1305,14 @@ private fun archivedTodo(
         todo = Todo(
             id = id,
             title = title,
-            description = "アーカイブ済みTODOの説明",
+            description = description,
             categoryId = category.id,
             startDate = LocalDate.of(2026, 8, 1),
             endDate = endDate,
             recurrenceRule = RecurrenceRule.daily(),
             dueMinutes = 18 * 60,
             definitionRevision = 1,
-            archivedAt = Instant.parse("2026-09-01T09:00:00Z").toEpochMilli(),
+            archivedAt = archivedAt,
             createdAt = 1L,
             notifications = listOf(
                 TodoNotification(

@@ -221,6 +221,74 @@ class TodoScheduleCalculatorTest {
     }
 
     @Test
+    fun te014_countPeriodsHandleEveryWeekStartPartialPeriodsAndCountBoundaries() {
+        val activeStart = LocalDate.of(2026, 9, 9)
+        val activeEnd = LocalDate.of(2026, 9, 18)
+        val weekly = todo(
+            start = activeStart,
+            end = activeEnd,
+            rule = RecurrenceRule(
+                type = RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 14,
+                periodWeeks = 2,
+            ),
+        )
+
+        DayOfWeek.entries.forEach { weekStart ->
+            val period = requireNotNull(weekly.recurrencePeriod(activeStart, weekStart))
+            assertEquals(activeStart, period.startDate)
+            assertTrue(period.endDate in activeStart..activeEnd)
+            assertEquals(
+                period.endDate.toEpochDay() - period.startDate.toEpochDay() + 1,
+                period.requiredCount.toLong(),
+            )
+        }
+
+        val monthly = todo(
+            start = LocalDate.of(2026, 9, 10),
+            end = LocalDate.of(2026, 9, 12),
+            rule = RecurrenceRule(RecurrenceType.MONTHLY_COUNT, requiredCount = 31),
+        )
+        val partialMonth = RecurrencePeriod(
+                startDate = LocalDate.of(2026, 9, 10),
+                endDate = LocalDate.of(2026, 9, 12),
+                requiredCount = 3,
+            )
+        assertEquals(
+            partialMonth,
+            monthly.recurrencePeriod(LocalDate.of(2026, 9, 11), DayOfWeek.SUNDAY),
+        )
+        assertEquals(1, RecurrenceProgress(partialMonth, completedCount = 2).remainingCount)
+        assertFalse(RecurrenceProgress(partialMonth, completedCount = 2).isAchieved)
+        assertEquals(0, RecurrenceProgress(partialMonth, completedCount = 3).remainingCount)
+        assertTrue(RecurrenceProgress(partialMonth, completedCount = 3).isAchieved)
+
+        assertTrue(
+            RecurrenceRule(
+                RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 1,
+                periodWeeks = 1,
+            ).isValid(),
+        )
+        assertTrue(
+            RecurrenceRule(
+                RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 364,
+                periodWeeks = 52,
+            ).isValid(),
+        )
+        assertFalse(
+            RecurrenceRule(
+                RecurrenceType.WEEKLY_COUNT,
+                requiredCount = 8,
+                periodWeeks = 1,
+            ).isValid(),
+        )
+        assertTrue(RecurrenceRule(RecurrenceType.MONTHLY_COUNT, requiredCount = 31).isValid())
+        assertFalse(RecurrenceRule(RecurrenceType.MONTHLY_COUNT, requiredCount = 32).isValid())
+    }
+
+    @Test
     fun weeklyCount_supportsMultiWeekPeriodsAndEligibleDayFilter() {
         val start = LocalDate.of(2026, 8, 12)
         val holiday = LocalDate.of(2026, 8, 14)

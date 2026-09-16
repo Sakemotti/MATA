@@ -63,10 +63,13 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -145,18 +148,54 @@ fun ArchiveListScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val listState = rememberLazyListState()
-    val detailListState = rememberLazyListState()
+    val listState = rememberPagingRestorableLazyListState(
+        loadedItemCount = todos.itemCount,
+        initialPosition = viewModel.listScrollPosition,
+        onPositionChanged = viewModel::updateListScrollPosition,
+    )
+    val detailListState = rememberPagingRestorableLazyListState(
+        loadedItemCount = history.itemCount,
+        leadingItemCount = 3,
+        initialPosition = viewModel.detailScrollPosition,
+        onPositionChanged = viewModel::updateDetailScrollPosition,
+    )
     val resources = LocalResources.current
-    var sortMenuExpanded by remember { mutableStateOf(false) }
-    var selectedHistory by remember { mutableStateOf<ArchivedHistoryItem?>(null) }
+    var sortMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var selectedHistoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingListRestoreIndex by remember { mutableStateOf<Int?>(null) }
+    val selectedHistory = selectedHistoryId?.let { id ->
+        history.itemSnapshotList.items.firstOrNull { it.stableId == id }
+    }
+    val dismissHistory = {
+        val dismissedId = selectedHistoryId
+        selectedHistoryId = null
+        val historyIndex = history.itemSnapshotList.items.indexOfFirst { it.stableId == dismissedId }
+        if (historyIndex >= 0) {
+            scope.launch { detailListState.scrollToItem(historyIndex + 3) }
+        }
+    }
+    val closeDetail = {
+        val closedTodoId = state.selectedTodoId
+        val todoIndex = todos.itemSnapshotList.items.indexOfFirst { it.todo.id == closedTodoId }
+        pendingListRestoreIndex = viewModel.listScrollPosition.index
+            .takeIf { it > 0 }
+            ?: todoIndex.takeIf { it >= 0 }
+        viewModel.closeDetail()
+    }
 
     BackHandler(state.selectedTodoId != null || state.searchActive) {
-        if (state.selectedTodoId != null) viewModel.closeDetail() else viewModel.closeSearch()
+        if (state.selectedTodoId != null) closeDetail() else viewModel.closeSearch()
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         todos.refresh()
         if (state.selectedTodoId != null) history.refresh()
+    }
+    LaunchedEffect(state.selectedTodoId, todos.itemCount, pendingListRestoreIndex) {
+        val restoreIndex = pendingListRestoreIndex ?: return@LaunchedEffect
+        if (state.selectedTodoId == null && restoreIndex < todos.itemCount) {
+            listState.scrollToItem(restoreIndex)
+            pendingListRestoreIndex = null
+        }
     }
     LaunchedEffect(viewModel, resources) {
         viewModel.effects.collect { effect ->
@@ -179,11 +218,11 @@ fun ArchiveListScreen(
                 history = history,
                 listState = detailListState,
                 showTopBar = true,
-                onBack = viewModel::closeDetail,
+                onBack = closeDetail,
                 onAction = { action ->
                     state.selectedTodoId?.let { viewModel.requestAction(it, action) }
                 },
-                onHistoryClick = { selectedHistory = it },
+                onHistoryClick = { selectedHistoryId = it.stableId },
                 snackbarHostState = snackbarHostState,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -294,8 +333,8 @@ fun ArchiveListScreen(
                     onOpenDetail = viewModel::openDetail,
                     onAction = viewModel::requestAction,
                     onClearSearch = viewModel::closeSearch,
-                    onCloseDetail = viewModel::closeDetail,
-                    onHistoryClick = { selectedHistory = it },
+                    onCloseDetail = closeDetail,
+                    onHistoryClick = { selectedHistoryId = it.stableId },
                     modifier = Modifier.fillMaxSize().padding(padding),
                 )
             } else {
@@ -305,6 +344,7 @@ fun ArchiveListScreen(
                     selectedTodoId = null,
                     loadingPreviewTodoId = state.loadingPreviewTodoId,
                     runningTodoId = state.runningTodoId,
+                    actionsEnabled = !state.dataChangesBlocked,
                     listState = listState,
                     onOpenDetail = viewModel::openDetail,
                     onAction = viewModel::requestAction,
@@ -320,13 +360,73 @@ fun ArchiveListScreen(
             preview = preview,
             action = requireNotNull(state.previewAction),
             running = state.runningTodoId != null,
+            enabled = !state.dataChangesBlocked,
             onConfirm = viewModel::confirmAction,
             onDismiss = viewModel::dismissAction,
         )
     }
     selectedHistory?.let { item ->
-        ArchiveHistoryDialog(item = item, onDismiss = { selectedHistory = null })
+        ArchiveHistoryDialog(item = item, onDismiss = dismissHistory)
     }
+}
+
+@Composable
+private fun rememberPagingRestorableLazyListState(
+    loadedItemCount: Int,
+    initialPosition: ArchiveScrollPosition,
+    onPositionChanged: (index: Int, offset: Int) -> Unit,
+    leadingItemCount: Int = 0,
+): LazyListState {
+    val listState = rememberLazyListState()
+    var savedIndex by rememberSaveable { mutableIntStateOf(initialPosition.index) }
+    var savedOffset by rememberSaveable { mutableIntStateOf(initialPosition.offset) }
+    val targetPosition = remember {
+        if (
+            savedIndex > initialPosition.index ||
+            (savedIndex == initialPosition.index && savedOffset > initialPosition.offset)
+        ) {
+            ArchiveScrollPosition(savedIndex, savedOffset)
+        } else {
+            initialPosition
+        }
+    }
+    var restorationApplied by remember { mutableStateOf(false) }
+
+    LaunchedEffect(loadedItemCount) {
+        if (!restorationApplied && loadedItemCount > 0) {
+            val availableItemCount = loadedItemCount + leadingItemCount
+            if (targetPosition.index < availableItemCount) {
+                listState.scrollToItem(targetPosition.index, targetPosition.offset)
+                restorationApplied = true
+            } else {
+                // Paging without placeholders only exposes loaded rows. Visiting the current
+                // tail requests the next page; repeat until the saved anchor is available.
+                listState.scrollToItem(availableItemCount - 1)
+            }
+        }
+    }
+    LaunchedEffect(listState, restorationApplied) {
+        if (!restorationApplied) return@LaunchedEffect
+        var wasScrolling = false
+        snapshotFlow {
+            Triple(
+                listState.firstVisibleItemIndex,
+                listState.firstVisibleItemScrollOffset,
+                listState.isScrollInProgress,
+            )
+        }.collect { (index, offset, scrolling) ->
+            // A temporary empty Paging snapshot can clamp LazyListState to the header while
+            // the composition is being recreated. Only persist an actual scroll gesture (and
+            // its final settled frame), not that transient layout correction.
+            if (scrolling || wasScrolling) {
+                savedIndex = index
+                savedOffset = offset
+                onPositionChanged(index, offset)
+            }
+            wasScrolling = scrolling
+        }
+    }
+    return listState
 }
 
 internal data class ArchivePaneWidths(
@@ -376,6 +476,7 @@ private fun ArchiveTwoPaneContent(
             selectedTodoId = state.selectedTodoId,
             loadingPreviewTodoId = state.loadingPreviewTodoId,
             runningTodoId = state.runningTodoId,
+            actionsEnabled = !state.dataChangesBlocked,
             listState = listState,
             onOpenDetail = onOpenDetail,
             onAction = onAction,
@@ -436,7 +537,8 @@ private fun ArchiveSelectedDetail(
         bottomBar = {
             state.selectedItem?.let {
                 ArchiveBottomActions(
-                    enabled = state.loadingPreviewTodoId == null && state.runningTodoId == null,
+                    enabled = !state.dataChangesBlocked &&
+                        state.loadingPreviewTodoId == null && state.runningTodoId == null,
                     loading = state.loadingPreviewTodoId != null || state.runningTodoId != null,
                     onRestore = { onAction(ArchiveAction.RESTORE) },
                     onDelete = { onAction(ArchiveAction.DELETE) },
@@ -480,6 +582,7 @@ private fun ArchiveTodoList(
     selectedTodoId: String?,
     loadingPreviewTodoId: String?,
     runningTodoId: String?,
+    actionsEnabled: Boolean,
     listState: LazyListState,
     onOpenDetail: (String) -> Unit,
     onAction: (String, ArchiveAction) -> Unit,
@@ -525,6 +628,7 @@ private fun ArchiveTodoList(
                                 ArchivedTodoRow(
                                     item = item,
                                     busy = busy,
+                                    actionsEnabled = actionsEnabled,
                                     selected = item.todo.id == selectedTodoId,
                                     onClick = { onOpenDetail(item.todo.id) },
                                     onAction = { action -> onAction(item.todo.id, action) },
@@ -557,6 +661,7 @@ private fun ArchiveTodoList(
 private fun ArchivedTodoRow(
     item: ArchivedTodoItem,
     busy: Boolean,
+    actionsEnabled: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
     onAction: (ArchiveAction) -> Unit,
@@ -597,7 +702,7 @@ private fun ArchivedTodoRow(
                 CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             } else {
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) {
+                    IconButton(onClick = { menuExpanded = true }, enabled = actionsEnabled) {
                         Icon(
                             Icons.Outlined.MoreVert,
                             contentDescription = stringResource(R.string.archive_row_actions),
@@ -605,6 +710,7 @@ private fun ArchivedTodoRow(
                     }
                     ArchiveRowMenu(
                         expanded = menuExpanded,
+                        enabled = actionsEnabled,
                         onDismiss = { menuExpanded = false },
                         onAction = {
                             menuExpanded = false
@@ -628,16 +734,19 @@ private fun ArchivedTodoRow(
 @Composable
 private fun ArchiveRowMenu(
     expanded: Boolean,
+    enabled: Boolean,
     onDismiss: () -> Unit,
     onAction: (ArchiveAction) -> Unit,
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         DropdownMenuItem(
+            enabled = enabled,
             text = { Text(stringResource(R.string.action_restore)) },
             leadingIcon = { Icon(Icons.Outlined.Restore, null) },
             onClick = { onAction(ArchiveAction.RESTORE) },
         )
         DropdownMenuItem(
+            enabled = enabled,
             text = { Text(stringResource(R.string.action_delete_permanently)) },
             leadingIcon = {
                 Icon(
@@ -662,8 +771,21 @@ fun ArchiveDetailScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val history = viewModel.history.collectAsLazyPagingItems()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val detailListState = rememberLazyListState()
     val resources = LocalResources.current
-    var selectedHistory by remember { mutableStateOf<ArchivedHistoryItem?>(null) }
+    var selectedHistoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedHistory = selectedHistoryId?.let { id ->
+        history.itemSnapshotList.items.firstOrNull { it.stableId == id }
+    }
+    val dismissHistory = {
+        val dismissedId = selectedHistoryId
+        selectedHistoryId = null
+        val historyIndex = history.itemSnapshotList.items.indexOfFirst { it.stableId == dismissedId }
+        if (historyIndex >= 0) {
+            scope.launch { detailListState.scrollToItem(historyIndex + 3) }
+        }
+    }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { history.refresh() }
     LaunchedEffect(viewModel, resources) {
@@ -691,7 +813,8 @@ fun ArchiveDetailScreen(
         bottomBar = {
             state.item?.let {
                 ArchiveBottomActions(
-                    enabled = !state.isLoadingPreview && !state.isRunningAction,
+                    enabled = !state.dataChangesBlocked &&
+                        !state.isLoadingPreview && !state.isRunningAction,
                     loading = state.isLoadingPreview || state.isRunningAction,
                     onRestore = { viewModel.requestAction(ArchiveAction.RESTORE) },
                     onDelete = { viewModel.requestAction(ArchiveAction.DELETE) },
@@ -709,7 +832,8 @@ fun ArchiveDetailScreen(
                 item = state.item,
                 summary = state.summary,
                 history = history,
-                onHistoryClick = { selectedHistory = it },
+                listState = detailListState,
+                onHistoryClick = { selectedHistoryId = it.stableId },
                 modifier = Modifier.fillMaxSize().padding(padding),
             )
         }
@@ -720,12 +844,13 @@ fun ArchiveDetailScreen(
             preview = preview,
             action = requireNotNull(state.previewAction),
             running = state.isRunningAction,
+            enabled = !state.dataChangesBlocked,
             onConfirm = viewModel::confirmAction,
             onDismiss = viewModel::dismissAction,
         )
     }
     selectedHistory?.let { item ->
-        ArchiveHistoryDialog(item = item, onDismiss = { selectedHistory = null })
+        ArchiveHistoryDialog(item = item, onDismiss = dismissHistory)
     }
 }
 
@@ -1048,6 +1173,7 @@ private fun ArchiveActionDialog(
     preview: ArchiveActionPreview,
     action: ArchiveAction,
     running: Boolean,
+    enabled: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -1112,7 +1238,7 @@ private fun ArchiveActionDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = !running,
+                enabled = !running && enabled,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = if (action == ArchiveAction.DELETE) {
                         MaterialTheme.colorScheme.error

@@ -35,11 +35,18 @@ interface CategoryRepository {
     ): Result<String>
     suspend fun reorderCategories(orderedIds: List<String>): Result<Unit>
     suspend fun deleteCategory(id: String): Result<Unit>
+    suspend fun getTodoCounts(id: String): CategoryTodoCounts = CategoryTodoCounts()
 }
+
+data class CategoryTodoCounts(
+    val active: Int = 0,
+    val archived: Int = 0,
+)
 
 interface TodoRepository {
     fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>>
     fun observeTodos(): Flow<List<Todo>>
+    fun observeCompletedDates(todoId: String): Flow<List<LocalDate>> = flowOf(emptyList())
     suspend fun getTodo(id: String): Todo?
     suspend fun saveTodo(
         id: String?,
@@ -94,11 +101,18 @@ interface SettingsRepository {
 interface NotificationScheduler {
     val notificationCount: Flow<Int>
     fun systemState(): NotificationSystemState
+    suspend fun previewDayEndHourChange(newEndHour: Int): NotificationChangeImpact =
+        NotificationChangeImpact()
     suspend fun reconcileTodo(todoId: String)
     suspend fun reconcileAll()
     suspend fun rebuildAll() = reconcileAll()
     suspend fun cancelTodo(todoId: String)
 }
+
+data class NotificationChangeImpact(
+    val todoCount: Int = 0,
+    val notificationCount: Int = 0,
+)
 
 data class HistoryReconciliationResult(
     val generatedRecords: Int,

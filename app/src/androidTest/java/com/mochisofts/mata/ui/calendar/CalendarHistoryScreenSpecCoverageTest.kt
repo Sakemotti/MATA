@@ -2,24 +2,36 @@ package com.mochisofts.mata.ui.calendar
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -32,6 +44,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.espresso.Espresso.pressBack
@@ -66,6 +79,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -159,6 +174,235 @@ class CalendarHistoryScreenSpecCoverageTest {
             .assertIsNotEnabled()
         composeRule.onNodeWithTag(MONTH_GRID_TAG).performTouchInput { swipeLeft() }
         composeRule.onNodeWithText("2026年9月").assertIsDisplayed()
+    }
+
+    @Test
+    fun ch008_selectedTodayRemainsLegibleAcrossLightDarkAndDynamicThemes() {
+        var theme by mutableStateOf(AppTheme.LIGHT)
+        var dynamicColor by mutableStateOf(false)
+        var selectedDate by mutableStateOf(TEST_DATE)
+        var colorScheme: ColorScheme? = null
+        val state = calendarState(YearMonth.of(2026, 9))
+        val otherDate = TEST_DATE.minusDays(1)
+        val selectedOther = fullDate(otherDate) + text(R.string.calendar_history_selected_suffix)
+        val unselectedToday = fullDate(TEST_DATE) + text(R.string.calendar_history_today_suffix)
+        val selectedToday = fullDate(TEST_DATE) +
+            text(R.string.calendar_history_selected_suffix) +
+            text(R.string.calendar_history_today_suffix)
+        composeRule.setContent {
+            MataTheme(appTheme = theme, useDynamicColor = dynamicColor) {
+                val currentColors = MaterialTheme.colorScheme
+                SideEffect { colorScheme = currentColors }
+                Box(Modifier.width(360.dp).height(360.dp)) {
+                    MonthGrid(
+                        state.copy(selectedDate = selectedDate),
+                        {},
+                        {},
+                        {},
+                        Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+
+        fun verifyTheme(expectedTheme: AppTheme, expectedDynamicColor: Boolean) {
+            composeRule.runOnIdle {
+                theme = expectedTheme
+                dynamicColor = expectedDynamicColor
+                selectedDate = otherDate
+            }
+            composeRule.waitForIdle()
+            composeRule.onNodeWithContentDescription(selectedOther)
+                .assertExists()
+                .assertIsSelected()
+                .assertIsEnabled()
+            composeRule.onNodeWithContentDescription(unselectedToday)
+                .assertExists()
+                .assertIsEnabled()
+            composeRule.runOnIdle { selectedDate = TEST_DATE }
+            composeRule.onNodeWithContentDescription(selectedToday)
+                .assertExists()
+                .assertIsSelected()
+                .assertIsEnabled()
+            composeRule.runOnIdle {
+                val colors = requireNotNull(colorScheme)
+                assertContrastAtLeast(
+                    foreground = calendarDayTextColor(selected = true, colors),
+                    background = colors.primaryContainer,
+                    minimum = 4.5f,
+                )
+                assertTrue(
+                    "today border must differ from selected background",
+                    colors.primary != colors.primaryContainer,
+                )
+            }
+        }
+
+        verifyTheme(AppTheme.LIGHT, expectedDynamicColor = false)
+        verifyTheme(AppTheme.DARK, expectedDynamicColor = false)
+        verifyTheme(AppTheme.LIGHT, expectedDynamicColor = true)
+    }
+
+    @Test
+    fun ch032_rotationRestoresMonthDayListDetailAndUndoMessageWhileFreshOpenUsesToday() {
+        val selectedDate = LocalDate.of(2026, 8, 6)
+        val entries = listOf(historyEntry("回転復元履歴 1", TodoState.COMPLETED)) +
+            (2..24).map { index -> historyEntry("回転復元履歴 $index", TodoState.PENDING) }
+        val token = undoToken("rotation-undo", TodoState.COMPLETED)
+        val repository = CalendarScreenTestHistoryRepository(
+            day = historyDay(entries = entries),
+            undoResult = Result.success(token),
+        )
+        val savedStateHandle = SavedStateHandle()
+        val viewModel = CalendarHistoryViewModel(
+            savedStateHandle = savedStateHandle,
+            historyRepository = repository,
+            settingsRepository = CalendarScreenTestSettingsRepository(),
+            clock = TEST_CLOCK,
+        )
+        viewModel.selectDate(selectedDate)
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            MataTheme(useDynamicColor = false) {
+                CalendarHistoryScreen(onDestination = {}, viewModel = viewModel)
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("2026年8月").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("回転復元履歴 24").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("回転復元履歴 24").performClick()
+        composeRule.onNodeWithText("TODO詳細").assertIsDisplayed()
+        viewModel.undoAction(requireNotNull(entries.first().id))
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(text(R.string.action_undo)).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeRule.onNodeWithText("TODO詳細").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("閉じる").performClick()
+        composeRule.onNodeWithText("2026年8月").assertIsDisplayed()
+        composeRule.onNodeWithText("回転復元履歴 24").assertIsDisplayed()
+        composeRule.onNodeWithText("回転復元履歴 1").assertIsNotDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed()
+
+        val freshViewModel = CalendarHistoryViewModel(
+            savedStateHandle = SavedStateHandle(),
+            historyRepository = CalendarScreenTestHistoryRepository(),
+            settingsRepository = CalendarScreenTestSettingsRepository(),
+            clock = TEST_CLOCK,
+        )
+        assertEquals(TEST_DATE, freshViewModel.uiState.value.selectedDate)
+        assertEquals(YearMonth.from(TEST_DATE), freshViewModel.uiState.value.displayedMonth)
+    }
+
+    @Test
+    fun ch035_maximumFontAndCompactDisplayKeepAllCalendarHistoryActionsReachable() {
+        val completed = historyEntry("最大表示の完了TODO", TodoState.COMPLETED)
+        val skipped = historyEntry("最大表示のスキップTODO", TodoState.SKIPPED)
+        val pending = historyEntry("最大表示の未完了TODO", TodoState.PENDING)
+        val period = periodEntry("最大表示の期間結果TODO")
+        val state = calendarState(YearMonth.from(TEST_DATE)).copy(
+            day = historyDay(
+                summary = HistoryDaySummary(
+                    date = TEST_DATE,
+                    completedCount = 1,
+                    plannedCount = 3,
+                    state = HistoryDayState.UNACHIEVED,
+                    hasAchievedPeriod = false,
+                    hasUnachievedPeriod = true,
+                ),
+                entries = listOf(pending, skipped, completed),
+                periodResults = listOf(period),
+            ),
+        )
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                val baseDensity = LocalDensity.current
+                CompositionLocalProvider(
+                    LocalDensity provides Density(baseDensity.density, fontScale = 2f),
+                ) {
+                    Box(Modifier.width(320.dp).height(640.dp)) {
+                        CalendarHistoryBody(
+                            state = state,
+                            layoutInfo = compactCalendarLayout.copy(
+                                windowWidthDp = 320f,
+                                windowHeightDp = 640f,
+                                availableContentWidthDp = 288f,
+                            ),
+                            historyListState = rememberLazyListState(),
+                            onPreviousMonth = {},
+                            onNextMonth = {},
+                            onSelectMonth = {},
+                            onSelectDate = {},
+                            onRetry = {},
+                            onEntryClick = {},
+                            onPeriodClick = {},
+                            onUndoAction = {},
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(text(R.string.calendar_history_previous_month))
+            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.calendar_history_next_month))
+            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            fullDate(TEST_DATE) + text(R.string.calendar_history_selected_suffix) +
+                text(R.string.calendar_history_today_suffix),
+        ).assertExists()
+        listOf(
+            "2026年9月6日（日）",
+            "完了 1 / 3",
+            "未達成",
+            pending.snapshot.title,
+            skipped.snapshot.title,
+            completed.snapshot.title,
+            period.snapshot.title,
+        ).forEach { label ->
+            composeRule.onNodeWithText(label).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNode(toggleState(ToggleableState.On), useUnmergedTree = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_undo_skip))
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun chd03_outsideMonthIsMutedAndFutureDateIsSemanticallyDisabled() {
+        val selectedDates = mutableListOf<LocalDate>()
+        val outsideDate = LocalDate.of(2026, 8, 31)
+        val futureDate = LocalDate.of(2026, 9, 7)
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                MonthGrid(
+                    state = calendarState(YearMonth.of(2026, 9)),
+                    onSelectDate = selectedDates::add,
+                    onPrevious = {},
+                    onNext = {},
+                    modifier = modifierWidth,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(fullDate(outsideDate))
+            .assertExists()
+            .assertIsEnabled()
+            .performClick()
+        composeRule.onNodeWithContentDescription(fullDate(futureDate))
+            .assertExists()
+            .assertIsNotEnabled()
+        composeRule.runOnIdle {
+            assertEquals(listOf(outsideDate), selectedDates)
+            assertEquals(0.48f, calendarDayAlpha(inMonth = false, enabled = true))
+            assertEquals(0.48f, calendarDayAlpha(inMonth = true, enabled = false))
+            assertEquals(1f, calendarDayAlpha(inMonth = true, enabled = true))
+        }
     }
 
     @Test
@@ -421,12 +665,14 @@ class CalendarHistoryScreenSpecCoverageTest {
 
         composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
         composeRule.mainClock.advanceTimeByFrame()
+        composeRule.mainClock.advanceTimeByFrame()
         composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed().performClick()
         composeRule.mainClock.advanceTimeBy(1_000)
         composeRule.runOnIdle { assertEquals(listOf(token), restored) }
         composeRule.onAllNodesWithText(text(R.string.action_undo)).assertCountEquals(0)
 
         composeRule.runOnIdle { assertTrue(effects.tryEmit(CalendarHistoryEffect.ActionUndone(token))) }
+        composeRule.mainClock.advanceTimeByFrame()
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.onNodeWithText(text(R.string.action_undo)).assertIsDisplayed()
         composeRule.mainClock.autoAdvance = true
@@ -514,6 +760,10 @@ class CalendarHistoryScreenSpecCoverageTest {
 
     private fun text(resourceId: Int): String = InstrumentationRegistry
         .getInstrumentation().targetContext.getString(resourceId)
+
+    private fun fullDate(date: LocalDate): String = date.format(
+        DateTimeFormatter.ofPattern(text(R.string.date_pattern_full), Locale.JAPANESE),
+    )
 }
 
 private val modifierWidth = androidx.compose.ui.Modifier.width(360.dp)
@@ -632,19 +882,43 @@ private val compactCalendarLayout = MataAdaptiveLayoutInfo(
     useTwoPane = false,
 )
 
-private class CalendarScreenTestHistoryRepository : HistoryRepository {
+private class CalendarScreenTestHistoryRepository(
+    private val day: HistoryDay = historyDay(),
+    private val undoResult: Result<HistoryActionUndoToken> =
+        Result.failure(UnsupportedOperationException()),
+) : HistoryRepository {
     private val month = MutableStateFlow(HistoryMonth(emptyMap()))
-    private val day = MutableStateFlow(historyDay())
 
     override fun observeMonth(startDate: LocalDate, endDate: LocalDate): Flow<HistoryMonth> = month
 
-    override fun observeDay(date: LocalDate): Flow<HistoryDay> = day
+    override fun observeDay(date: LocalDate): Flow<HistoryDay> = MutableStateFlow(day.forDate(date))
 
     override suspend fun undoAction(executionId: String): Result<HistoryActionUndoToken> =
-        Result.failure(UnsupportedOperationException())
+        undoResult
 
     override suspend fun restoreAction(token: HistoryActionUndoToken): Result<Unit> =
         Result.failure(UnsupportedOperationException())
+}
+
+private fun HistoryDay.forDate(date: LocalDate): HistoryDay = copy(
+    date = date,
+    summary = summary.copy(date = date),
+    entries = entries.map { entry ->
+        entry.copy(
+            logicalDate = date,
+            snapshot = entry.snapshot.copy(
+                scheduledLogicalDate = date,
+                resolvedLogicalDate = date,
+            ),
+        )
+    },
+)
+
+private fun assertContrastAtLeast(foreground: Color, background: Color, minimum: Float) {
+    val lighter = maxOf(foreground.luminance(), background.luminance())
+    val darker = minOf(foreground.luminance(), background.luminance())
+    val ratio = (lighter + 0.05f) / (darker + 0.05f)
+    assertTrue("contrast ratio $ratio was below $minimum", ratio >= minimum)
 }
 
 private class CalendarScreenTestSettingsRepository : SettingsRepository {

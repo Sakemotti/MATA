@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mochisofts.mata.core.navigation.CategoryTodoListRoute
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
 import com.mochisofts.mata.core.navigation.UNCATEGORIZED_CATEGORY_KEY
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.Todo
@@ -18,15 +19,21 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 
 data class CategoryTodoListItem(
     val todo: Todo,
@@ -45,6 +52,10 @@ private sealed interface CategoryTodoLoadState {
     data object Loading : CategoryTodoLoadState
     data class Data(val value: CategoryTodoListUiState) : CategoryTodoLoadState
     data object Error : CategoryTodoLoadState
+}
+
+sealed interface CategoryTodoListEffect {
+    data class Message(val messageRes: Int) : CategoryTodoListEffect
 }
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -67,6 +78,19 @@ class CategoryTodoListViewModel @Inject constructor(
 
     val adsRuntimeState = adsConsentRepository.state
     private val loadGeneration = MutableStateFlow(0)
+    private val effectsChannel = Channel<CategoryTodoListEffect>(Channel.BUFFERED)
+    val effects: Flow<CategoryTodoListEffect> = effectsChannel.receiveAsFlow()
+
+    init {
+        viewModelScope.launch {
+            savedStateHandle.getStateFlow<Int?>(TODO_EDITOR_RESULT_KEY, null)
+                .filterNotNull()
+                .collect { messageRes ->
+                    savedStateHandle[TODO_EDITOR_RESULT_KEY] = null
+                    effectsChannel.send(CategoryTodoListEffect.Message(messageRes))
+                }
+        }
+    }
 
     val uiState: StateFlow<CategoryTodoListUiState> = loadGeneration.flatMapLatest {
         combine(
@@ -78,6 +102,14 @@ class CategoryTodoListViewModel @Inject constructor(
         ).map<CategoryTodoListUiState, CategoryTodoLoadState>(CategoryTodoLoadState::Data)
             .onStart { emit(CategoryTodoLoadState.Loading) }
             .catch { emit(CategoryTodoLoadState.Error) }
+            .onEach { state ->
+                if (state is CategoryTodoLoadState.Data &&
+                    selectedCategoryId.value != null &&
+                    state.value.selectedCategoryId == null
+                ) {
+                    savedStateHandle[SELECTED_CATEGORY_ID_KEY] = null
+                }
+            }
     }.map { state ->
         when (state) {
             CategoryTodoLoadState.Loading -> CategoryTodoListUiState(isLoading = true)
