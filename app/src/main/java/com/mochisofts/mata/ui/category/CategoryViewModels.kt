@@ -34,7 +34,7 @@ data class CategoryListUiState(
 
 sealed interface CategoryListEffect {
     data class OrderSaved(val position: Int, val total: Int) : CategoryListEffect
-    data class CategorySaved(val isNew: Boolean) : CategoryListEffect
+    data class CategorySaved(val id: String, val isNew: Boolean) : CategoryListEffect
     data object CategoryDeleted : CategoryListEffect
     data class Message(@StringRes val messageRes: Int) : CategoryListEffect
 }
@@ -57,8 +57,17 @@ class CategoryListViewModel @Inject constructor(
     init {
         loadCategories()
         when (savedStateHandle.get<String>(EDITOR_MODE_KEY)) {
-            EDITOR_MODE_NEW -> openNewEditor()
-            EDITOR_MODE_EDIT -> savedStateHandle.get<String>(EDITOR_CATEGORY_ID_KEY)?.let(::openEditor)
+            EDITOR_MODE_NEW -> restoreEditorDraft(isNew = true)
+            EDITOR_MODE_EDIT -> {
+                val categoryId = savedStateHandle.get<String>(EDITOR_CATEGORY_ID_KEY)
+                if (categoryId != null &&
+                    savedStateHandle.get<Boolean>(EDITOR_DRAFT_PRESENT_KEY) == true
+                ) {
+                    restoreEditorDraft(isNew = false, categoryId = categoryId)
+                } else {
+                    categoryId?.let(::openEditor)
+                }
+            }
         }
     }
 
@@ -137,15 +146,13 @@ class CategoryListViewModel @Inject constructor(
 
     fun openNewEditor() {
         editorLoadRequest += 1
-        savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_NEW
-        savedStateHandle[EDITOR_CATEGORY_ID_KEY] = null
-        _uiState.update {
-            it.copy(editor = CategoryEditorUiState(isLoading = false, isNew = true))
-        }
+        clearEditorDraft()
+        setEditorState(CategoryEditorUiState(isLoading = false, isNew = true))
     }
 
     fun openEditor(categoryId: String) {
         val request = ++editorLoadRequest
+        clearEditorDraft()
         savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_EDIT
         savedStateHandle[EDITOR_CATEGORY_ID_KEY] = categoryId
         _uiState.update {
@@ -161,36 +168,33 @@ class CategoryListViewModel @Inject constructor(
             val categoryResult = runCatching { repository.getCategory(categoryId) }
             if (request != editorLoadRequest) return@launch
             val category = categoryResult.getOrNull()
-            _uiState.update { state ->
-                state.copy(
-                    editor = if (category == null) {
-                        state.editor?.copy(
-                            isLoading = false,
-                            errorMessageRes = if (categoryResult.isFailure) {
-                                R.string.category_list_load_error
-                            } else {
-                                R.string.error_category_not_found
-                            },
-                        )
-                    } else {
-                        CategoryEditorUiState(
-                            isLoading = false,
-                            isNew = false,
-                            categoryId = category.id,
-                            name = category.name,
-                            colorIndex = category.colorIndex,
-                            iconName = category.iconName,
-                        )
-                    },
-                )
-            }
+            setEditorState(
+                if (category == null) {
+                    _uiState.value.editor?.copy(
+                        isLoading = false,
+                        errorMessageRes = if (categoryResult.isFailure) {
+                            R.string.category_list_load_error
+                        } else {
+                            R.string.error_category_not_found
+                        },
+                    )
+                } else {
+                    CategoryEditorUiState(
+                        isLoading = false,
+                        isNew = false,
+                        categoryId = category.id,
+                        name = category.name,
+                        colorIndex = category.colorIndex,
+                        iconName = category.iconName,
+                    )
+                },
+            )
         }
     }
 
     fun closeEditor() {
         editorLoadRequest += 1
-        savedStateHandle.remove<String>(EDITOR_MODE_KEY)
-        savedStateHandle.remove<String>(EDITOR_CATEGORY_ID_KEY)
+        clearEditorDraft()
         _uiState.update { it.copy(editor = null) }
     }
 
@@ -201,9 +205,7 @@ class CategoryListViewModel @Inject constructor(
     fun saveEditor() {
         val editor = _uiState.value.editor ?: return
         if (!editor.canSave || !editor.isDirty) return
-        _uiState.update {
-            it.copy(editor = it.editor?.copy(isSaving = true, errorMessageRes = null))
-        }
+        updateEditorState { copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             repository.saveCategory(
                 id = editor.categoryId,
@@ -211,27 +213,21 @@ class CategoryListViewModel @Inject constructor(
                 colorIndex = editor.colorIndex,
                 iconName = editor.iconName,
             ).onSuccess { id ->
-                savedStateHandle[EDITOR_MODE_KEY] = EDITOR_MODE_EDIT
-                savedStateHandle[EDITOR_CATEGORY_ID_KEY] = id
-                _uiState.update { state ->
-                    state.copy(
-                        editor = state.editor?.copy(
-                            categoryId = id,
-                            isNew = false,
-                            isDirty = false,
-                            isSaving = false,
-                        ),
+                updateEditorState {
+                    copy(
+                        categoryId = id,
+                        isNew = false,
+                        isDirty = false,
+                        isSaving = false,
                     )
                 }
-                effectsChannel.send(CategoryListEffect.CategorySaved(editor.isNew))
+                effectsChannel.send(CategoryListEffect.CategorySaved(id, editor.isNew))
             }.onFailure { throwable ->
-                _uiState.update { state ->
-                    state.copy(
-                        editor = state.editor?.copy(
-                            isSaving = false,
-                            errorMessageRes = throwable.toUserMessageRes(
-                                R.string.error_category_save_failed,
-                            ),
+                updateEditorState {
+                    copy(
+                        isSaving = false,
+                        errorMessageRes = throwable.toUserMessageRes(
+                            R.string.error_category_save_failed,
                         ),
                     )
                 }
@@ -241,9 +237,7 @@ class CategoryListViewModel @Inject constructor(
 
     fun deleteEditor() {
         val categoryId = _uiState.value.editor?.categoryId ?: return
-        _uiState.update {
-            it.copy(editor = it.editor?.copy(isSaving = true, errorMessageRes = null))
-        }
+        updateEditorState { copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
             repository.deleteCategory(categoryId)
                 .onSuccess {
@@ -251,12 +245,10 @@ class CategoryListViewModel @Inject constructor(
                     effectsChannel.send(CategoryListEffect.CategoryDeleted)
                 }
                 .onFailure {
-                    _uiState.update { state ->
-                        state.copy(
-                            editor = state.editor?.copy(
-                                isSaving = false,
-                                errorMessageRes = R.string.error_category_delete_failed,
-                            ),
+                    updateEditorState {
+                        copy(
+                            isSaving = false,
+                            errorMessageRes = R.string.error_category_delete_failed,
                         )
                     }
                 }
@@ -266,14 +258,68 @@ class CategoryListViewModel @Inject constructor(
     private fun editEditor(
         transform: CategoryEditorUiState.() -> CategoryEditorUiState,
     ) {
-        _uiState.update { state ->
-            state.copy(
-                editor = state.editor?.transform()?.copy(
-                    isDirty = true,
-                    errorMessageRes = null,
-                ),
+        updateEditorState {
+            transform().copy(
+                isDirty = true,
+                errorMessageRes = null,
             )
         }
+    }
+
+    private fun restoreEditorDraft(isNew: Boolean, categoryId: String? = null) {
+        if (savedStateHandle.get<Boolean>(EDITOR_DRAFT_PRESENT_KEY) != true) {
+            if (isNew) openNewEditor() else categoryId?.let(::openEditor)
+            return
+        }
+        setEditorState(
+            CategoryEditorUiState(
+                isLoading = false,
+                isNew = isNew,
+                categoryId = categoryId,
+                name = savedStateHandle[EDITOR_NAME_KEY] ?: "",
+                colorIndex = savedStateHandle[EDITOR_COLOR_KEY] ?: 8,
+                iconName = savedStateHandle[EDITOR_ICON_KEY] ?: "Category",
+                isDirty = savedStateHandle[EDITOR_DIRTY_KEY] ?: false,
+                errorMessageRes = savedStateHandle[EDITOR_ERROR_KEY],
+            ),
+        )
+    }
+
+    private fun setEditorState(editor: CategoryEditorUiState?) {
+        _uiState.update { it.copy(editor = editor) }
+        editor?.let(::persistEditorDraft)
+    }
+
+    private fun updateEditorState(transform: CategoryEditorUiState.() -> CategoryEditorUiState) {
+        val editor = _uiState.value.editor?.transform() ?: return
+        setEditorState(editor)
+    }
+
+    private fun persistEditorDraft(editor: CategoryEditorUiState) {
+        savedStateHandle[EDITOR_MODE_KEY] = if (editor.isNew) EDITOR_MODE_NEW else EDITOR_MODE_EDIT
+        savedStateHandle[EDITOR_CATEGORY_ID_KEY] = editor.categoryId
+        savedStateHandle[EDITOR_DRAFT_PRESENT_KEY] = !editor.isLoading
+        if (editor.isLoading) return
+        savedStateHandle[EDITOR_NAME_KEY] = editor.name
+        savedStateHandle[EDITOR_COLOR_KEY] = editor.colorIndex
+        savedStateHandle[EDITOR_ICON_KEY] = editor.iconName
+        savedStateHandle[EDITOR_DIRTY_KEY] = editor.isDirty
+        if (editor.errorMessageRes == null) {
+            savedStateHandle.remove<Int>(EDITOR_ERROR_KEY)
+        } else {
+            savedStateHandle[EDITOR_ERROR_KEY] = editor.errorMessageRes
+        }
+    }
+
+    private fun clearEditorDraft() {
+        savedStateHandle.remove<String>(EDITOR_MODE_KEY)
+        savedStateHandle.remove<String>(EDITOR_CATEGORY_ID_KEY)
+        savedStateHandle.remove<Boolean>(EDITOR_DRAFT_PRESENT_KEY)
+        savedStateHandle.remove<String>(EDITOR_NAME_KEY)
+        savedStateHandle.remove<Int>(EDITOR_COLOR_KEY)
+        savedStateHandle.remove<String>(EDITOR_ICON_KEY)
+        savedStateHandle.remove<Boolean>(EDITOR_DIRTY_KEY)
+        savedStateHandle.remove<Int>(EDITOR_ERROR_KEY)
     }
 
     private fun persistOrder(categoryId: String) {
@@ -307,6 +353,12 @@ class CategoryListViewModel @Inject constructor(
     private companion object {
         const val EDITOR_MODE_KEY = "category_editor_mode"
         const val EDITOR_CATEGORY_ID_KEY = "category_editor_category_id"
+        const val EDITOR_DRAFT_PRESENT_KEY = "category_editor_draft_present"
+        const val EDITOR_NAME_KEY = "category_editor_name"
+        const val EDITOR_COLOR_KEY = "category_editor_color"
+        const val EDITOR_ICON_KEY = "category_editor_icon"
+        const val EDITOR_DIRTY_KEY = "category_editor_dirty"
+        const val EDITOR_ERROR_KEY = "category_editor_error"
         const val EDITOR_MODE_NEW = "new"
         const val EDITOR_MODE_EDIT = "edit"
     }

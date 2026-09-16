@@ -118,6 +118,7 @@ import com.mochisofts.mata.domain.model.Category
 import java.text.Normalizer
 import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -143,6 +144,8 @@ fun CategoryListScreen(
     var showWideDeleteDialog by remember { mutableStateOf(false) }
     var pendingEditorAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var useTwoPaneLayout by remember { mutableStateOf(false) }
+    var highlightedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    var highlightUntilEpochMillis by rememberSaveable { mutableStateOf(0L) }
 
     fun runAfterDiscardCheck(action: () -> Unit) {
         if (state.editor?.isSaving == true) return
@@ -160,11 +163,13 @@ fun CategoryListScreen(
 
     fun updateAutoScroll(draggedCenter: Float) {
         val layoutInfo = listState.layoutInfo
-        autoScrollDelta = when {
-            draggedCenter < layoutInfo.viewportStartOffset + edgeThreshold -> -autoScrollStep
-            draggedCenter > layoutInfo.viewportEndOffset - edgeThreshold -> autoScrollStep
-            else -> 0f
-        }
+        autoScrollDelta = categoryAutoScrollDelta(
+            draggedCenter = draggedCenter,
+            viewportStart = layoutInfo.viewportStartOffset.toFloat(),
+            viewportEnd = layoutInfo.viewportEndOffset.toFloat(),
+            edgeThreshold = edgeThreshold,
+            autoScrollStep = autoScrollStep,
+        )
     }
 
     fun moveDraggedCategory(categoryId: String) {
@@ -172,12 +177,21 @@ fun CategoryListScreen(
         val draggedItem = layoutInfo.visibleItemsInfo.firstOrNull { it.key == categoryId } ?: return
         val draggedTop = draggedItem.offset + draggedOffset
         val draggedCenter = draggedTop + draggedItem.size / 2f
-        val targetItem = layoutInfo.visibleItemsInfo.firstOrNull { item ->
+        val visibleCategoryItems = layoutInfo.visibleItemsInfo.filter { item ->
             item.key is String &&
                 item.key != categoryId &&
-                state.categories.any { it.id == item.key } &&
-                draggedCenter >= item.offset &&
-                draggedCenter <= item.offset + item.size
+                state.categories.any { it.id == item.key }
+        }
+        val targetItem = visibleCategoryItems.firstOrNull { item ->
+            draggedCenter >= item.offset && draggedCenter <= item.offset + item.size
+        } ?: when {
+            draggedCenter < (visibleCategoryItems.firstOrNull()?.offset ?: Int.MIN_VALUE) -> {
+                visibleCategoryItems.firstOrNull()
+            }
+            draggedCenter > (
+                visibleCategoryItems.lastOrNull()?.let { it.offset + it.size } ?: Int.MAX_VALUE
+            ) -> visibleCategoryItems.lastOrNull()
+            else -> null
         }
         if (targetItem != null &&
             viewModel.moveReorderingCategory(categoryId, targetItem.key as String)
@@ -202,6 +216,15 @@ fun CategoryListScreen(
                 }
                 is CategoryListEffect.CategorySaved -> {
                     if (!useTwoPaneLayout) viewModel.closeEditor()
+                    if (effect.isNew) {
+                        highlightedCategoryId = effect.id
+                        highlightUntilEpochMillis = System.currentTimeMillis() + CATEGORY_HIGHLIGHT_DURATION_MILLIS
+                        val updated = viewModel.uiState.first { current ->
+                            current.categories.any { it.id == effect.id }
+                        }
+                        val index = updated.categories.indexOfFirst { it.id == effect.id }
+                        if (index >= 0) listState.animateScrollToItem(index)
+                    }
                     snackbarHostState.showSnackbar(
                         resources.getString(
                             if (effect.isNew) {
@@ -222,6 +245,14 @@ fun CategoryListScreen(
                 }
             }
         }
+    }
+
+    LaunchedEffect(highlightedCategoryId, highlightUntilEpochMillis) {
+        if (highlightedCategoryId == null) return@LaunchedEffect
+        val remaining = highlightUntilEpochMillis - System.currentTimeMillis()
+        if (remaining > 0) delay(remaining)
+        highlightedCategoryId = null
+        highlightUntilEpochMillis = 0L
     }
 
     LaunchedEffect(draggedCategoryId, autoScrollDelta) {
@@ -340,6 +371,7 @@ fun CategoryListScreen(
                     listState = listState,
                     draggedCategoryId = draggedCategoryId,
                     draggedOffset = draggedOffset,
+                    highlightedCategoryId = highlightedCategoryId,
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onAdd = { runAfterDiscardCheck(viewModel::openNewEditor) },
                     onEdit = { id -> runAfterDiscardCheck { viewModel.openEditor(id) } },
@@ -377,6 +409,7 @@ fun CategoryListScreen(
                     listState = listState,
                     draggedCategoryId = draggedCategoryId,
                     draggedOffset = draggedOffset,
+                    highlightedCategoryId = highlightedCategoryId,
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onAdd = viewModel::openNewEditor,
                     onEdit = viewModel::openEditor,
@@ -466,6 +499,18 @@ internal data class CategoryPaneWidths(
     val editorWidthDp: Float,
 )
 
+internal fun categoryAutoScrollDelta(
+    draggedCenter: Float,
+    viewportStart: Float,
+    viewportEnd: Float,
+    edgeThreshold: Float,
+    autoScrollStep: Float,
+): Float = when {
+    draggedCenter < viewportStart + edgeThreshold -> -autoScrollStep
+    draggedCenter > viewportEnd - edgeThreshold -> autoScrollStep
+    else -> 0f
+}
+
 internal fun categoryPaneWidths(availableWidthDp: Float): CategoryPaneWidths {
     val gap = 24f
     val contentWidth = (availableWidthDp - gap).coerceAtLeast(0f)
@@ -483,6 +528,7 @@ private fun CategoryTwoPaneContent(
     listState: androidx.compose.foundation.lazy.LazyListState,
     draggedCategoryId: String?,
     draggedOffset: Float,
+    highlightedCategoryId: String?,
     modifier: Modifier,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
@@ -512,6 +558,7 @@ private fun CategoryTwoPaneContent(
                 listState = listState,
                 draggedCategoryId = draggedCategoryId,
                 draggedOffset = draggedOffset,
+                highlightedCategoryId = highlightedCategoryId,
                 modifier = Modifier.fillMaxSize(),
                 onAdd = onAdd,
                 onEdit = onEdit,
@@ -564,6 +611,7 @@ private fun CategoryListContent(
     listState: androidx.compose.foundation.lazy.LazyListState,
     draggedCategoryId: String?,
     draggedOffset: Float,
+    highlightedCategoryId: String?,
     modifier: Modifier,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
@@ -576,7 +624,9 @@ private fun CategoryListContent(
     onRetry: () -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier.mataPageKeyScroll(listState),
+        modifier = modifier
+            .testTag(CATEGORY_LIST_TEST_TAG)
+            .mataPageKeyScroll(listState),
         state = listState,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             start = MataCardLayout.PageHorizontalPadding,
@@ -627,6 +677,7 @@ private fun CategoryListContent(
                         index = index,
                         total = state.categories.size,
                         selected = state.editor?.categoryId == category.id,
+                        highlighted = highlightedCategoryId == category.id,
                         isDragging = isDragging,
                         draggedOffset = if (isDragging) draggedOffset else 0f,
                         reorderEnabled = !state.isOrderSaving,
@@ -647,6 +698,10 @@ private fun CategoryListContent(
 
 internal const val CATEGORY_ADD_FAB_TEST_TAG = "category_add_fab"
 internal const val CATEGORY_EMPTY_ADD_TEST_TAG = "category_empty_add"
+internal const val CATEGORY_LIST_TEST_TAG = "category_list"
+internal const val CATEGORY_ROW_TEST_TAG_PREFIX = "category_row_"
+internal const val CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX = "category_reorder_handle_"
+internal const val CATEGORY_HIGHLIGHT_DURATION_MILLIS = 2_500L
 internal const val CATEGORY_ICON_LIST_TEST_TAG = "category_icon_list"
 internal const val CATEGORY_ICON_PICKER_TEST_TAG = "category_icon_picker"
 internal const val CATEGORY_ICON_SEARCH_TEST_TAG = "category_icon_search"
@@ -658,6 +713,7 @@ internal val CategoryColorIdKey = SemanticsPropertyKey<String>("CategoryColorId"
 internal val CategoryColorArgbKey = SemanticsPropertyKey<Long>("CategoryColorArgb")
 internal val CategoryIconIdKey = SemanticsPropertyKey<String>("CategoryIconId")
 internal val CategoryIconLabelKey = SemanticsPropertyKey<String>("CategoryIconLabel")
+internal val CategoryNewlyAddedKey = SemanticsPropertyKey<Boolean>("CategoryNewlyAdded")
 
 @Composable
 private fun CategoryListRow(
@@ -665,6 +721,7 @@ private fun CategoryListRow(
     index: Int,
     total: Int,
     selected: Boolean,
+    highlighted: Boolean,
     isDragging: Boolean,
     draggedOffset: Float,
     reorderEnabled: Boolean,
@@ -706,6 +763,8 @@ private fun CategoryListRow(
 
     Surface(
         modifier = Modifier
+            .testTag(CATEGORY_ROW_TEST_TAG_PREFIX + category.id)
+            .semantics { this[CategoryNewlyAddedKey] = highlighted }
             .zIndex(if (isDragging) 1f else 0f)
             .graphicsLayer {
                 translationY = draggedOffset
@@ -720,10 +779,10 @@ private fun CategoryListRow(
         Column {
             ListItem(
             colors = ListItemDefaults.colors(
-                containerColor = if (selected) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    Color.Transparent
+                containerColor = when {
+                    highlighted -> MaterialTheme.colorScheme.tertiaryContainer
+                    selected -> MaterialTheme.colorScheme.secondaryContainer
+                    else -> Color.Transparent
                 },
             ),
             leadingContent = {
@@ -748,6 +807,7 @@ private fun CategoryListRow(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
+                        .testTag(CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX + category.id)
                         .semantics {
                             contentDescription = reorderLabel
                             customActions = accessibilityActions

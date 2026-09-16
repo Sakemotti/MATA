@@ -321,3 +321,5 @@ CM-015	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManageme
 CM-016	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm016_iconPickerGroupsAndNormalizesNameGroupAndKeywordSearch	:app:connectedDebugAndroidTest
 CM-D04	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd04_colorCatalogMatchesStableIdsJapaneseNamesAndBaseColors	:app:connectedDebugAndroidTest
 CM-D05	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cmd05_iconCatalogMatchesAllMaterialIdsAndJapaneseNamesWithoutCustomInput	:app:connectedDebugAndroidTest
+CM-019	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm019_addScrollsToHighlightedTailAndEditKeepsTheListPosition	:app:connectedDebugAndroidTest
+CM-028	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm028_recreationRestoresListDraftPickerSearchAndClosesNormalDialog	:app:connectedDebugAndroidTest

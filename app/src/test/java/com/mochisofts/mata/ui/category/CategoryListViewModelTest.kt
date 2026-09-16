@@ -134,7 +134,58 @@ class CategoryListViewModelTest {
         assertEquals("a", viewModel.uiState.value.editor?.categoryId)
         assertEquals("Updated", viewModel.uiState.value.editor?.name)
         assertFalse(requireNotNull(viewModel.uiState.value.editor).isDirty)
-        assertEquals(CategoryListEffect.CategorySaved(isNew = false), viewModel.effects.first())
+        assertEquals(CategoryListEffect.CategorySaved(id = "a", isNew = false), viewModel.effects.first())
+    }
+
+    @Test
+    fun cm028_editorDraftSelectionAndFailureRestoreAfterViewModelRecreation() = runTest {
+        val repository = FakeCategoryRepository(categories()).apply {
+            saveResult = Result.failure(IllegalStateException("write failed"))
+        }
+        val savedStateHandle = SavedStateHandle()
+        val viewModel = CategoryListViewModel(savedStateHandle, repository)
+        runCurrent()
+
+        viewModel.openEditor("b")
+        runCurrent()
+        viewModel.setEditorName("Restored draft")
+        viewModel.setEditorColor(15)
+        viewModel.setEditorIcon("Laptop")
+        viewModel.saveEditor()
+        runCurrent()
+
+        val recreated = CategoryListViewModel(savedStateHandle, repository)
+        runCurrent()
+        with(requireNotNull(recreated.uiState.value.editor)) {
+            assertEquals("b", categoryId)
+            assertEquals("Restored draft", name)
+            assertEquals(15, colorIndex)
+            assertEquals("Laptop", iconName)
+            assertEquals(R.string.error_category_save_failed, errorMessageRes)
+            assertTrue(isDirty)
+            assertFalse(isSaving)
+        }
+
+        recreated.closeEditor()
+        val afterDiscard = CategoryListViewModel(savedStateHandle, repository)
+        runCurrent()
+        assertEquals(null, afterDiscard.uiState.value.editor)
+    }
+
+    @Test
+    fun edgeAutoScrollUsesDirectionAndStopsInsideSafeArea() {
+        assertEquals(
+            -12f,
+            categoryAutoScrollDelta(40f, 0f, 800f, 64f, 12f),
+        )
+        assertEquals(
+            0f,
+            categoryAutoScrollDelta(400f, 0f, 800f, 64f, 12f),
+        )
+        assertEquals(
+            12f,
+            categoryAutoScrollDelta(760f, 0f, 800f, 64f, 12f),
+        )
     }
 
     @Test

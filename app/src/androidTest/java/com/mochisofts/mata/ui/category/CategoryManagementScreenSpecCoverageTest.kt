@@ -1,6 +1,7 @@
 package com.mochisofts.mata.ui.category
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -8,6 +9,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
@@ -15,6 +17,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -362,6 +365,109 @@ class CategoryManagementScreenSpecCoverageTest {
     }
 
     @Test
+    fun cm019_addScrollsToHighlightedTailAndEditKeepsTheListPosition() {
+        val initial = (1..30).map { index ->
+            Category(
+                id = "category-$index",
+                name = "Category $index",
+                colorIndex = index % CategoryColorOptions.size,
+                iconName = "Category",
+                sortOrder = index - 1,
+            )
+        }
+        val repository = setScreen(initial)
+        composeRule.onNodeWithTag(CATEGORY_LIST_TEST_TAG)
+            .performScrollToNode(hasTestTag(CATEGORY_ROW_TEST_TAG_PREFIX + "category-20"))
+        composeRule.onNodeWithText("Category 20").assertIsDisplayed().performClick()
+        composeRule.onNode(hasSetTextAction()).performTextClearance()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Updated category 20")
+        composeRule.onNodeWithText(text(R.string.action_save)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            repository.snapshot.any { it.id == "category-20" && it.name == "Updated category 20" }
+        }
+        composeRule.onNodeWithText("Updated category 20").assertIsDisplayed()
+        composeRule.onNodeWithText("Category 1").assertIsNotDisplayed()
+        composeRule.onNodeWithText(text(R.string.category_updated_message)).assertIsDisplayed()
+
+        composeRule.mainClock.advanceTimeBy(5_000)
+        composeRule.onNodeWithTag(CATEGORY_ADD_FAB_TEST_TAG).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("New tail category")
+        composeRule.onNodeWithText(text(R.string.action_save)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 8_000) {
+            composeRule.onAllNodesWithText("New tail category").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("New tail category").assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + "new")
+            .assert(SemanticsMatcher.expectValue(CategoryNewlyAddedKey, true))
+        composeRule.onNodeWithText(text(R.string.category_added_message)).assertIsDisplayed()
+        composeRule.runOnIdle {
+            assertEquals("new", repository.snapshot.last().id)
+        }
+    }
+
+    @Test
+    fun cm028_recreationRestoresListDraftPickerSearchAndClosesNormalDialog() {
+        val initial = (1..30).map { index ->
+            Category(
+                id = "restore-$index",
+                name = "Restore $index",
+                colorIndex = index % CategoryColorOptions.size,
+                iconName = "Category",
+                sortOrder = index - 1,
+            )
+        }
+        val repository = CategoryScreenTestRepository(initial)
+        val savedStateHandle = SavedStateHandle()
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            val viewModel = remember {
+                CategoryListViewModel(savedStateHandle, repository)
+            }
+            MataTheme(useDynamicColor = false) {
+                CategoryListScreen(onDestination = {}, viewModel = viewModel)
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Restore 1").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(CATEGORY_LIST_TEST_TAG)
+            .performScrollToNode(hasTestTag(CATEGORY_ROW_TEST_TAG_PREFIX + "restore-25"))
+        composeRule.onNodeWithText("Restore 25").assertIsDisplayed().performClick()
+        composeRule.onNode(hasSetTextAction()).performTextClearance()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Restored draft")
+        composeRule.onNode(SemanticsMatcher.expectValue(CategoryColorIdKey, "gray"))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CATEGORY_ICON_SEARCH_TEST_TAG).performTextInput("Laptop")
+        composeRule.onNodeWithTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + "Laptop").assertIsDisplayed()
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeRule.onNodeWithTag(CATEGORY_ICON_PICKER_TEST_TAG).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction() and hasText("Laptop")).assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + "Laptop").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        composeRule.onNode(hasSetTextAction() and hasText("Restored draft")).assertIsDisplayed()
+        composeRule.onNode(SemanticsMatcher.expectValue(CategoryColorIdKey, "gray"))
+            .performScrollTo()
+            .assertIsSelected()
+
+        composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(text(R.string.dialog_discard_changes_title)).assertIsDisplayed()
+        restorationTester.emulateSavedInstanceStateRestore()
+        composeRule.onNodeWithText(text(R.string.dialog_discard_changes_title)).assertDoesNotExist()
+        composeRule.onNode(hasSetTextAction() and hasText("Restored draft")).assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(text(R.string.action_discard)).performClick()
+        composeRule.onNodeWithText("Restore 25").assertIsDisplayed()
+        composeRule.onNodeWithText("Restore 1").assertIsNotDisplayed()
+    }
+
+    @Test
     fun cmd03_nameChangesPreviewImmediatelyAndInvalidDraftRemainsEditable() {
         setScreen(emptyList())
         composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
@@ -448,7 +554,11 @@ private class CategoryScreenTestRepository(initialCategories: List<Category>) : 
             iconName = iconName,
             sortOrder = existing?.sortOrder ?: categories.value.size,
         )
-        categories.value = categories.value.filterNot { it.id == savedId } + saved
+        categories.value = if (existing == null) {
+            categories.value + saved
+        } else {
+            categories.value.map { category -> if (category.id == savedId) saved else category }
+        }
         return Result.success(savedId)
     }
 
