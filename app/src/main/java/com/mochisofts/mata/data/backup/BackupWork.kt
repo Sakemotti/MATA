@@ -3,6 +3,9 @@ package com.mochisofts.mata.data.backup
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
+import android.system.ErrnoException
+import android.system.OsConstants
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -119,7 +122,8 @@ class BackupCoordinator @Inject constructor(
     private fun start(uri: Uri, type: BackupOperationType): Boolean {
         val operationId = UUID.randomUUID().toString()
         takeUriPermission(uri, type)
-        if (!store.start(operationId, type, uri.toString())) {
+        val outputName = if (type == BackupOperationType.CREATE) displayName(uri) else null
+        if (!store.start(operationId, type, uri.toString(), outputName)) {
             releaseUri(uri.toString())
             return false
         }
@@ -130,6 +134,22 @@ class BackupCoordinator @Inject constructor(
         enqueue(operationId, type)
         return true
     }
+
+    private fun displayName(uri: Uri): String? = runCatching {
+        context.contentResolver.query(
+            uri,
+            arrayOf(OpenableColumns.DISPLAY_NAME),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            cursor.takeIf { it.moveToFirst() }?.getString(0)
+        }
+    }.getOrNull()?.takeIf(String::isNotBlank)
+        ?: uri.lastPathSegment
+            ?.substringAfterLast('/')
+            ?.substringAfterLast(':')
+            ?.takeIf(String::isNotBlank)
 
     private fun enqueue(operationId: String, type: BackupOperationType): UUID {
         val request = OneTimeWorkRequestBuilder<BackupWorker>()
@@ -265,21 +285,14 @@ class BackupWorker(
         error: Exception,
     ) {
         val uri = store.uri()?.let(Uri::parse)
-        var errorCode = when (error) {
-            is BackupFormatException -> error.code
-            is FileNotFoundException, is SecurityException -> BackupErrorCode.STORAGE_UNAVAILABLE
-            else -> if (type == BackupOperationType.RESTORE) {
-                BackupErrorCode.RESTORE_ROLLED_BACK
-            } else {
-                BackupErrorCode.INTERNAL
-            }
-        }
-        if (type == BackupOperationType.CREATE && uri != null) {
-            val deleted = runCatching {
+        val incompleteOutputRemains = if (type == BackupOperationType.CREATE && uri != null) {
+            !runCatching {
                 applicationContext.contentResolver.delete(uri, null, null) > 0
             }.getOrDefault(false)
-            if (!deleted) errorCode = BackupErrorCode.INCOMPLETE_FILE_REMAINS
+        } else {
+            false
         }
+        val errorCode = backupFailureCode(type, error, incompleteOutputRemains)
         files.deleteAll()
         uri?.let(::releaseUri)
         store.fail(errorCode)
@@ -302,6 +315,31 @@ class BackupWorker(
         }
     }
 }
+
+internal fun backupFailureCode(
+    type: BackupOperationType,
+    error: Exception,
+    incompleteOutputRemains: Boolean,
+): BackupErrorCode {
+    if (type == BackupOperationType.CREATE && incompleteOutputRemains) {
+        return BackupErrorCode.INCOMPLETE_FILE_REMAINS
+    }
+    return when {
+        error is BackupFormatException -> error.code
+        error is FileNotFoundException || error is SecurityException ->
+            BackupErrorCode.STORAGE_UNAVAILABLE
+        error.causedByNoSpaceLeft() -> BackupErrorCode.NOT_ENOUGH_SPACE
+        type == BackupOperationType.RESTORE -> BackupErrorCode.RESTORE_ROLLED_BACK
+        else -> BackupErrorCode.INTERNAL
+    }
+}
+
+private fun Throwable.causedByNoSpaceLeft(): Boolean =
+    generateSequence(this as Throwable?) { it.cause }.any { cause ->
+        (cause is ErrnoException && cause.errno == OsConstants.ENOSPC) ||
+            cause.message?.contains("ENOSPC", ignoreCase = true) == true ||
+            cause.message?.contains("No space left", ignoreCase = true) == true
+    }
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)

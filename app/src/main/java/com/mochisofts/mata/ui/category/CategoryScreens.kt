@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -33,14 +32,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -67,6 +71,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -74,6 +79,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -81,6 +87,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
@@ -97,6 +104,8 @@ import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
+import com.mochisofts.mata.core.designsystem.CategoryColorOptions
+import com.mochisofts.mata.core.designsystem.CategoryIconOption
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
@@ -109,7 +118,10 @@ import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
 import com.mochisofts.mata.core.designsystem.mataCardColor
 import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.Category
+import java.text.Normalizer
+import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,6 +129,34 @@ import kotlinx.coroutines.launch
 fun CategoryListScreen(
     onDestination: (MataDestination) -> Unit,
     viewModel: CategoryListViewModel = hiltViewModel(),
+) {
+    CategoryListScreenContent(
+        onDestination = onDestination,
+        viewModel = viewModel,
+        dragTestController = null,
+    )
+}
+
+@Composable
+@androidx.annotation.VisibleForTesting
+internal fun CategoryListScreenForTest(
+    onDestination: (MataDestination) -> Unit,
+    viewModel: CategoryListViewModel,
+    dragTestController: CategoryDragTestController,
+) {
+    CategoryListScreenContent(
+        onDestination = onDestination,
+        viewModel = viewModel,
+        dragTestController = dragTestController,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryListScreenContent(
+    onDestination: (MataDestination) -> Unit,
+    viewModel: CategoryListViewModel,
+    dragTestController: CategoryDragTestController?,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -135,6 +175,8 @@ fun CategoryListScreen(
     var showWideDeleteDialog by remember { mutableStateOf(false) }
     var pendingEditorAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var useTwoPaneLayout by remember { mutableStateOf(false) }
+    var highlightedCategoryId by rememberSaveable { mutableStateOf<String?>(null) }
+    var highlightUntilEpochMillis by rememberSaveable { mutableStateOf(0L) }
 
     fun runAfterDiscardCheck(action: () -> Unit) {
         if (state.editor?.isSaving == true) return
@@ -152,11 +194,13 @@ fun CategoryListScreen(
 
     fun updateAutoScroll(draggedCenter: Float) {
         val layoutInfo = listState.layoutInfo
-        autoScrollDelta = when {
-            draggedCenter < layoutInfo.viewportStartOffset + edgeThreshold -> -autoScrollStep
-            draggedCenter > layoutInfo.viewportEndOffset - edgeThreshold -> autoScrollStep
-            else -> 0f
-        }
+        autoScrollDelta = categoryAutoScrollDelta(
+            draggedCenter = draggedCenter,
+            viewportStart = layoutInfo.viewportStartOffset.toFloat(),
+            viewportEnd = layoutInfo.viewportEndOffset.toFloat(),
+            edgeThreshold = edgeThreshold,
+            autoScrollStep = autoScrollStep,
+        )
     }
 
     fun moveDraggedCategory(categoryId: String) {
@@ -164,12 +208,21 @@ fun CategoryListScreen(
         val draggedItem = layoutInfo.visibleItemsInfo.firstOrNull { it.key == categoryId } ?: return
         val draggedTop = draggedItem.offset + draggedOffset
         val draggedCenter = draggedTop + draggedItem.size / 2f
-        val targetItem = layoutInfo.visibleItemsInfo.firstOrNull { item ->
+        val visibleCategoryItems = layoutInfo.visibleItemsInfo.filter { item ->
             item.key is String &&
                 item.key != categoryId &&
-                state.categories.any { it.id == item.key } &&
-                draggedCenter >= item.offset &&
-                draggedCenter <= item.offset + item.size
+                state.categories.any { it.id == item.key }
+        }
+        val targetItem = visibleCategoryItems.firstOrNull { item ->
+            draggedCenter >= item.offset && draggedCenter <= item.offset + item.size
+        } ?: when {
+            draggedCenter < (visibleCategoryItems.firstOrNull()?.offset ?: Int.MIN_VALUE) -> {
+                visibleCategoryItems.firstOrNull()
+            }
+            draggedCenter > (
+                visibleCategoryItems.lastOrNull()?.let { it.offset + it.size } ?: Int.MAX_VALUE
+            ) -> visibleCategoryItems.lastOrNull()
+            else -> null
         }
         if (targetItem != null &&
             viewModel.moveReorderingCategory(categoryId, targetItem.key as String)
@@ -177,6 +230,46 @@ fun CategoryListScreen(
             draggedOffset = draggedTop - targetItem.offset
         }
         updateAutoScroll(draggedCenter)
+    }
+
+    fun startDrag(category: Category) {
+        if (viewModel.startReordering()) {
+            draggedCategoryId = category.id
+            draggedOffset = 0f
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
+    fun dragCategory(category: Category, delta: Float) {
+        draggedOffset += delta
+        moveDraggedCategory(category.id)
+    }
+
+    fun finishDrag(category: Category) {
+        autoScrollDelta = 0f
+        draggedCategoryId = null
+        draggedOffset = 0f
+        viewModel.finishReordering(category.id)
+    }
+
+    fun cancelDrag() {
+        autoScrollDelta = 0f
+        draggedCategoryId = null
+        draggedOffset = 0f
+        viewModel.cancelReordering()
+    }
+
+    SideEffect {
+        dragTestController?.bind(
+            onStart = { id -> state.categories.firstOrNull { it.id == id }?.let(::startDrag) },
+            onDrag = { id, delta ->
+                state.categories.firstOrNull { it.id == id }?.let { dragCategory(it, delta) }
+            },
+            onFinish = { id -> state.categories.firstOrNull { it.id == id }?.let(::finishDrag) },
+            scrollPosition = {
+                listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+            },
+        )
     }
 
     LaunchedEffect(viewModel, resources) {
@@ -194,6 +287,15 @@ fun CategoryListScreen(
                 }
                 is CategoryListEffect.CategorySaved -> {
                     if (!useTwoPaneLayout) viewModel.closeEditor()
+                    if (effect.isNew) {
+                        highlightedCategoryId = effect.id
+                        highlightUntilEpochMillis = System.currentTimeMillis() + CATEGORY_HIGHLIGHT_DURATION_MILLIS
+                        val updated = viewModel.uiState.first { current ->
+                            current.categories.any { it.id == effect.id }
+                        }
+                        val index = updated.categories.indexOfFirst { it.id == effect.id }
+                        if (index >= 0) listState.animateScrollToItem(index)
+                    }
                     snackbarHostState.showSnackbar(
                         resources.getString(
                             if (effect.isNew) {
@@ -214,6 +316,14 @@ fun CategoryListScreen(
                 }
             }
         }
+    }
+
+    LaunchedEffect(highlightedCategoryId, highlightUntilEpochMillis) {
+        if (highlightedCategoryId == null) return@LaunchedEffect
+        val remaining = highlightUntilEpochMillis - System.currentTimeMillis()
+        if (remaining > 0) delay(remaining)
+        highlightedCategoryId = null
+        highlightUntilEpochMillis = 0L
     }
 
     LaunchedEffect(draggedCategoryId, autoScrollDelta) {
@@ -332,34 +442,17 @@ fun CategoryListScreen(
                     listState = listState,
                     draggedCategoryId = draggedCategoryId,
                     draggedOffset = draggedOffset,
+                    highlightedCategoryId = highlightedCategoryId,
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onAdd = { runAfterDiscardCheck(viewModel::openNewEditor) },
                     onEdit = { id -> runAfterDiscardCheck { viewModel.openEditor(id) } },
+                    onDelete = viewModel::requestDelete,
                     onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
                     onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
-                    onDragStart = { category ->
-                        if (viewModel.startReordering()) {
-                            draggedCategoryId = category.id
-                            draggedOffset = 0f
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-                    },
-                    onDrag = { category, delta ->
-                        draggedOffset += delta
-                        moveDraggedCategory(category.id)
-                    },
-                    onDragEnd = { category ->
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.finishReordering(category.id)
-                    },
-                    onDragCancel = {
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.cancelReordering()
-                    },
+                    onDragStart = ::startDrag,
+                    onDrag = ::dragCategory,
+                    onDragEnd = ::finishDrag,
+                    onDragCancel = ::cancelDrag,
                     onCloseEditor = ::requestCloseEditor,
                     viewModel = viewModel,
                 )
@@ -369,34 +462,17 @@ fun CategoryListScreen(
                     listState = listState,
                     draggedCategoryId = draggedCategoryId,
                     draggedOffset = draggedOffset,
+                    highlightedCategoryId = highlightedCategoryId,
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onAdd = viewModel::openNewEditor,
                     onEdit = viewModel::openEditor,
+                    onDelete = viewModel::requestDelete,
                     onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
                     onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
-                    onDragStart = { category ->
-                        if (viewModel.startReordering()) {
-                            draggedCategoryId = category.id
-                            draggedOffset = 0f
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-                    },
-                    onDrag = { category, delta ->
-                        draggedOffset += delta
-                        moveDraggedCategory(category.id)
-                    },
-                    onDragEnd = { category ->
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.finishReordering(category.id)
-                    },
-                    onDragCancel = {
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.cancelReordering()
-                    },
+                    onDragStart = ::startDrag,
+                    onDrag = ::dragCategory,
+                    onDragEnd = ::finishDrag,
+                    onDragCancel = ::cancelDrag,
                     onRetry = viewModel::retryLoad,
                 )
             }
@@ -451,12 +527,56 @@ fun CategoryListScreen(
             },
         )
     }
+    state.deletion?.let { deletion ->
+        CategoryDeleteDialog(
+            state = deletion,
+            onConfirm = viewModel::confirmDelete,
+            onDismiss = viewModel::cancelDelete,
+        )
+    }
+}
+
+@androidx.annotation.VisibleForTesting
+internal class CategoryDragTestController {
+    private var onStart: ((String) -> Unit)? = null
+    private var onDrag: ((String, Float) -> Unit)? = null
+    private var onFinish: ((String) -> Unit)? = null
+    private var scrollPosition: (() -> Pair<Int, Int>)? = null
+
+    fun bind(
+        onStart: (String) -> Unit,
+        onDrag: (String, Float) -> Unit,
+        onFinish: (String) -> Unit,
+        scrollPosition: () -> Pair<Int, Int>,
+    ) {
+        this.onStart = onStart
+        this.onDrag = onDrag
+        this.onFinish = onFinish
+        this.scrollPosition = scrollPosition
+    }
+
+    fun start(categoryId: String) = requireNotNull(onStart)(categoryId)
+    fun dragBy(categoryId: String, delta: Float) = requireNotNull(onDrag)(categoryId, delta)
+    fun finish(categoryId: String) = requireNotNull(onFinish)(categoryId)
+    fun currentScrollPosition(): Pair<Int, Int> = requireNotNull(scrollPosition)()
 }
 
 internal data class CategoryPaneWidths(
     val listWidthDp: Float,
     val editorWidthDp: Float,
 )
+
+internal fun categoryAutoScrollDelta(
+    draggedCenter: Float,
+    viewportStart: Float,
+    viewportEnd: Float,
+    edgeThreshold: Float,
+    autoScrollStep: Float,
+): Float = when {
+    draggedCenter < viewportStart + edgeThreshold -> -autoScrollStep
+    draggedCenter > viewportEnd - edgeThreshold -> autoScrollStep
+    else -> 0f
+}
 
 internal fun categoryPaneWidths(availableWidthDp: Float): CategoryPaneWidths {
     val gap = 24f
@@ -475,9 +595,11 @@ private fun CategoryTwoPaneContent(
     listState: androidx.compose.foundation.lazy.LazyListState,
     draggedCategoryId: String?,
     draggedOffset: Float,
+    highlightedCategoryId: String?,
     modifier: Modifier,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
+    onDelete: (String) -> Unit,
     onMoveUp: (String) -> Boolean,
     onMoveDown: (String) -> Boolean,
     onDragStart: (Category) -> Unit,
@@ -504,9 +626,11 @@ private fun CategoryTwoPaneContent(
                 listState = listState,
                 draggedCategoryId = draggedCategoryId,
                 draggedOffset = draggedOffset,
+                highlightedCategoryId = highlightedCategoryId,
                 modifier = Modifier.fillMaxSize(),
                 onAdd = onAdd,
                 onEdit = onEdit,
+                onDelete = onDelete,
                 onMoveUp = onMoveUp,
                 onMoveDown = onMoveDown,
                 onDragStart = onDragStart,
@@ -556,9 +680,11 @@ private fun CategoryListContent(
     listState: androidx.compose.foundation.lazy.LazyListState,
     draggedCategoryId: String?,
     draggedOffset: Float,
+    highlightedCategoryId: String?,
     modifier: Modifier,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
+    onDelete: (String) -> Unit,
     onMoveUp: (String) -> Boolean,
     onMoveDown: (String) -> Boolean,
     onDragStart: (Category) -> Unit,
@@ -568,7 +694,9 @@ private fun CategoryListContent(
     onRetry: () -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier.mataPageKeyScroll(listState),
+        modifier = modifier
+            .testTag(CATEGORY_LIST_TEST_TAG)
+            .mataPageKeyScroll(listState),
         state = listState,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             start = MataCardLayout.PageHorizontalPadding,
@@ -619,10 +747,13 @@ private fun CategoryListContent(
                         index = index,
                         total = state.categories.size,
                         selected = state.editor?.categoryId == category.id,
+                        highlighted = highlightedCategoryId == category.id,
                         isDragging = isDragging,
                         draggedOffset = if (isDragging) draggedOffset else 0f,
                         reorderEnabled = !state.isOrderSaving,
+                        operationEnabled = state.deletion == null,
                         onClick = { onEdit(category.id) },
+                        onDelete = { onDelete(category.id) },
                         onMoveUp = { onMoveUp(category.id) },
                         onMoveDown = { onMoveDown(category.id) },
                         onDragStart = { onDragStart(category) },
@@ -639,7 +770,24 @@ private fun CategoryListContent(
 
 internal const val CATEGORY_ADD_FAB_TEST_TAG = "category_add_fab"
 internal const val CATEGORY_EMPTY_ADD_TEST_TAG = "category_empty_add"
+internal const val CATEGORY_LIST_TEST_TAG = "category_list"
+internal const val CATEGORY_ROW_TEST_TAG_PREFIX = "category_row_"
+internal const val CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX = "category_reorder_handle_"
+internal const val CATEGORY_ACTIONS_TEST_TAG_PREFIX = "category_actions_"
+internal const val CATEGORY_DELETE_DIALOG_TEST_TAG = "category_delete_dialog"
+internal const val CATEGORY_HIGHLIGHT_DURATION_MILLIS = 2_500L
 internal const val CATEGORY_ICON_LIST_TEST_TAG = "category_icon_list"
+internal const val CATEGORY_ICON_PICKER_TEST_TAG = "category_icon_picker"
+internal const val CATEGORY_ICON_SEARCH_TEST_TAG = "category_icon_search"
+internal const val CATEGORY_ICON_RESULTS_TEST_TAG = "category_icon_results"
+internal const val CATEGORY_ICON_OPTION_TEST_TAG_PREFIX = "category_icon_option_"
+internal const val CATEGORY_ICON_GROUP_TEST_TAG_PREFIX = "category_icon_group_"
+
+internal val CategoryColorIdKey = SemanticsPropertyKey<String>("CategoryColorId")
+internal val CategoryColorArgbKey = SemanticsPropertyKey<Long>("CategoryColorArgb")
+internal val CategoryIconIdKey = SemanticsPropertyKey<String>("CategoryIconId")
+internal val CategoryIconLabelKey = SemanticsPropertyKey<String>("CategoryIconLabel")
+internal val CategoryNewlyAddedKey = SemanticsPropertyKey<Boolean>("CategoryNewlyAdded")
 
 @Composable
 private fun CategoryListRow(
@@ -647,10 +795,13 @@ private fun CategoryListRow(
     index: Int,
     total: Int,
     selected: Boolean,
+    highlighted: Boolean,
     isDragging: Boolean,
     draggedOffset: Float,
     reorderEnabled: Boolean,
+    operationEnabled: Boolean,
     onClick: () -> Unit,
+    onDelete: () -> Unit,
     onMoveUp: () -> Boolean,
     onMoveDown: () -> Boolean,
     onDragStart: () -> Unit,
@@ -658,6 +809,7 @@ private fun CategoryListRow(
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
+    var showActions by remember { mutableStateOf(false) }
     val categoryColor = mataCategoryColor(category.colorIndex)
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 6.dp else 0.dp,
@@ -688,6 +840,8 @@ private fun CategoryListRow(
 
     Surface(
         modifier = Modifier
+            .testTag(CATEGORY_ROW_TEST_TAG_PREFIX + category.id)
+            .semantics { this[CategoryNewlyAddedKey] = highlighted }
             .zIndex(if (isDragging) 1f else 0f)
             .graphicsLayer {
                 translationY = draggedOffset
@@ -702,10 +856,10 @@ private fun CategoryListRow(
         Column {
             ListItem(
             colors = ListItemDefaults.colors(
-                containerColor = if (selected) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    Color.Transparent
+                containerColor = when {
+                    highlighted -> MaterialTheme.colorScheme.tertiaryContainer
+                    selected -> MaterialTheme.colorScheme.secondaryContainer
+                    else -> Color.Transparent
                 },
             ),
             leadingContent = {
@@ -713,7 +867,11 @@ private fun CategoryListRow(
                     Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(categoryColor.copy(alpha = 0.14f)),
+                        .background(categoryColor.copy(alpha = 0.14f))
+                        .semantics {
+                            this[CategoryColorIdKey] = CategoryColorOptions[category.colorIndex].id
+                            this[CategoryIconIdKey] = category.iconName
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -727,33 +885,66 @@ private fun CategoryListRow(
                 Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
             },
             trailingContent = {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .semantics {
-                            contentDescription = reorderLabel
-                            customActions = accessibilityActions
-                        }
-                        .mataClickablePointer(reorderEnabled)
-                        .pointerInput(category.id, reorderEnabled) {
-                            if (!reorderEnabled) return@pointerInput
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { onDragStart() },
-                                onDragEnd = onDragEnd,
-                                onDragCancel = onDragCancel,
-                            ) { change, dragAmount ->
-                                change.consume()
-                                onDrag(dragAmount.y)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX + category.id)
+                            .semantics {
+                                contentDescription = reorderLabel
+                                customActions = accessibilityActions
                             }
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Outlined.DragHandle, contentDescription = null)
+                            .mataClickablePointer(reorderEnabled)
+                            .pointerInput(category.id, reorderEnabled) {
+                                if (!reorderEnabled) return@pointerInput
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { onDragStart() },
+                                    onDragEnd = onDragEnd,
+                                    onDragCancel = onDragCancel,
+                                ) { change, dragAmount ->
+                                    change.consume()
+                                    onDrag(dragAmount.y)
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Outlined.DragHandle, contentDescription = null)
+                    }
+                    Box {
+                        IconButton(
+                            onClick = { showActions = true },
+                            enabled = operationEnabled,
+                            modifier = Modifier.testTag(CATEGORY_ACTIONS_TEST_TAG_PREFIX + category.id),
+                        ) {
+                            Icon(
+                                Icons.Outlined.MoreVert,
+                                contentDescription = stringResource(
+                                    R.string.content_description_category_actions,
+                                    category.name,
+                                ),
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showActions,
+                            onDismissRequest = { showActions = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_delete)) },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Delete, contentDescription = null)
+                                },
+                                onClick = {
+                                    showActions = false
+                                    onDelete()
+                                },
+                            )
+                        }
+                    }
                 }
             },
                 modifier = Modifier
-                    .mataClickablePointer(enabled = !isDragging)
-                    .clickable(enabled = !isDragging, onClick = onClick)
+                    .mataClickablePointer(enabled = !isDragging && operationEnabled)
+                    .clickable(enabled = !isDragging && operationEnabled, onClick = onClick)
                     .semantics {
                         this.selected = selected
                         stateDescription = positionLabel
@@ -766,30 +957,125 @@ private fun CategoryListRow(
     }
 }
 
+@Composable
+private fun CategoryDeleteDialog(
+    state: CategoryDeletionUiState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val categoryColor = mataCategoryColor(state.category.colorIndex)
+    val iconLabel = stringResource(
+        CategoryIconOptions.firstOrNull { it.id == state.category.iconName }?.labelRes
+            ?: R.string.category_icon_category,
+    )
+    AlertDialog(
+        modifier = Modifier.testTag(CATEGORY_DELETE_DIALOG_TEST_TAG),
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_delete_category_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.semantics {
+                        this[CategoryColorIdKey] = CategoryColorOptions[state.category.colorIndex].id
+                        this[CategoryIconIdKey] = state.category.iconName
+                    },
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(categoryColor.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            categoryIcon(state.category.iconName),
+                            contentDescription = iconLabel,
+                            tint = categoryColor,
+                        )
+                    }
+                    Text(state.category.name, style = MaterialTheme.typography.titleMedium)
+                }
+                val counts = state.counts
+                if (counts == null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                        Text(stringResource(R.string.category_delete_loading))
+                    }
+                } else {
+                    Text(stringResource(R.string.category_delete_active_count, counts.active))
+                    Text(stringResource(R.string.category_delete_archived_count, counts.archived))
+                    Text(stringResource(R.string.category_delete_move_message))
+                    Text(stringResource(R.string.category_delete_irreversible_message))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = state.counts != null && !state.isDeleting,
+            ) {
+                if (state.isDeleting) {
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(stringResource(R.string.action_delete))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isDeleting) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryEditorScreen(
     onBack: () -> Unit,
-    onSaved: (Boolean) -> Unit,
+    onSaved: (String, Boolean) -> Unit,
+    onDeleted: () -> Unit,
     viewModel: CategoryEditorViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val categoryColors = MaterialTheme.mataColors.categoryColors
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showIconPicker by rememberSaveable(state.categoryId) { mutableStateOf(false) }
+    var iconSearchQuery by rememberSaveable(state.categoryId) { mutableStateOf("") }
 
     fun requestBack() {
         if (state.isDirty) showDiscardDialog = true else onBack()
     }
-    BackHandler(onBack = ::requestBack)
+    BackHandler(enabled = !showIconPicker, onBack = ::requestBack)
+    BackHandler(enabled = showIconPicker) { showIconPicker = false }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is CategoryEditorEffect.Saved -> onSaved(effect.isNew)
-                CategoryEditorEffect.Deleted -> onSaved(false)
+                is CategoryEditorEffect.Saved -> onSaved(effect.id, effect.isNew)
+                CategoryEditorEffect.Deleted -> onDeleted()
             }
         }
+    }
+
+    if (showIconPicker) {
+        CategoryIconPicker(
+            selectedIconId = state.iconName,
+            searchQuery = iconSearchQuery,
+            onSearchQueryChange = { iconSearchQuery = it },
+            onBack = { showIconPicker = false },
+            onSelect = { iconId ->
+                viewModel.setIcon(iconId)
+                showIconPicker = false
+            },
+        )
+        return
     }
 
     Scaffold(
@@ -874,6 +1160,7 @@ fun CategoryEditorScreen(
                                 ColorOption(
                                     color = color,
                                     contentColor = MaterialTheme.mataColors.onCategoryColors[index],
+                                    colorId = CategoryColorOptions[index].id,
                                     label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { viewModel.setColor(index) },
@@ -883,35 +1170,14 @@ fun CategoryEditorScreen(
                     }
                 }
                 Text(stringResource(R.string.category_icon_label), style = MaterialTheme.typography.titleMedium)
-                LazyRow(
-                    modifier = Modifier
-                        .focusGroup()
-                        .testTag(CATEGORY_ICON_LIST_TEST_TAG),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(CategoryIconOptions, key = { it.id }) { option ->
-                        val label = stringResource(option.labelRes)
-                        OutlinedCard(
-                            onClick = { viewModel.setIcon(option.id) },
-                            modifier = Modifier
-                                .mataClickablePointer()
-                                .semantics { selected = state.iconName == option.id },
-                            border = if (state.iconName == option.id) {
-                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                            } else {
-                                CardDefaults.outlinedCardBorder()
-                            },
-                        ) {
-                            Column(
-                                Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Icon(option.imageVector, contentDescription = null)
-                                Text(label, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-                }
+                CategoryIconField(
+                    selectedIconId = state.iconName,
+                    enabled = !state.isSaving,
+                    onClick = {
+                        iconSearchQuery = ""
+                        showIconPicker = true
+                    },
+                )
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -967,7 +1233,24 @@ private fun CategoryEditorScaffold(
     showTopBar: Boolean = true,
 ) {
     var showDeleteDialog by remember(state.categoryId) { mutableStateOf(false) }
+    var showIconPicker by rememberSaveable(state.categoryId) { mutableStateOf(false) }
+    var iconSearchQuery by rememberSaveable(state.categoryId) { mutableStateOf("") }
     val categoryColors = MaterialTheme.mataColors.categoryColors
+
+    BackHandler(enabled = showIconPicker) { showIconPicker = false }
+    if (showIconPicker) {
+        CategoryIconPicker(
+            selectedIconId = state.iconName,
+            searchQuery = iconSearchQuery,
+            onSearchQueryChange = { iconSearchQuery = it },
+            onBack = { showIconPicker = false },
+            onSelect = { iconId ->
+                onIconChange(iconId)
+                showIconPicker = false
+            },
+        )
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -1059,6 +1342,7 @@ private fun CategoryEditorScaffold(
                                 ColorOption(
                                     color = color,
                                     contentColor = MaterialTheme.mataColors.onCategoryColors[index],
+                                    colorId = CategoryColorOptions[index].id,
                                     label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { onColorChange(index) },
@@ -1071,35 +1355,14 @@ private fun CategoryEditorScaffold(
                     stringResource(R.string.category_icon_label),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                LazyRow(
-                    modifier = Modifier
-                        .focusGroup()
-                        .testTag(CATEGORY_ICON_LIST_TEST_TAG),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(CategoryIconOptions, key = { it.id }) { option ->
-                        val label = stringResource(option.labelRes)
-                        OutlinedCard(
-                            onClick = { onIconChange(option.id) },
-                            modifier = Modifier
-                                .mataClickablePointer()
-                                .semantics { selected = state.iconName == option.id },
-                            border = if (state.iconName == option.id) {
-                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                            } else {
-                                CardDefaults.outlinedCardBorder()
-                            },
-                        ) {
-                            Column(
-                                Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Icon(option.imageVector, contentDescription = null)
-                                Text(label, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-                }
+                CategoryIconField(
+                    selectedIconId = state.iconName,
+                    enabled = !state.isSaving,
+                    onClick = {
+                        iconSearchQuery = ""
+                        showIconPicker = true
+                    },
+                )
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -1128,6 +1391,212 @@ private fun CategoryEditorScaffold(
 }
 
 @Composable
+private fun CategoryIconField(
+    selectedIconId: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val option = CategoryIconOptions.firstOrNull { it.id == selectedIconId }
+        ?: CategoryIconOptions.first { it.id == "Category" }
+    val label = stringResource(option.labelRes)
+    val selectedDescription = stringResource(R.string.category_icon_selected_format, label)
+    OutlinedCard(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(CATEGORY_ICON_LIST_TEST_TAG)
+            .mataClickablePointer(enabled)
+            .semantics {
+                selected = true
+                stateDescription = selectedDescription
+                this[CategoryIconIdKey] = option.id
+            },
+    ) {
+        ListItem(
+            leadingContent = {
+                Icon(option.imageVector, contentDescription = label)
+            },
+            headlineContent = { Text(label) },
+            supportingContent = { Text(stringResource(R.string.category_icon_picker_title)) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryIconPicker(
+    selectedIconId: String,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onBack: () -> Unit,
+    onSelect: (String) -> Unit,
+) {
+    val resources = LocalResources.current
+    val localizedIcons = CategoryIconOptions.map { option ->
+        LocalizedCategoryIcon(
+            option = option,
+            label = resources.getString(option.labelRes),
+            group = resources.getString(option.groupRes),
+            keywords = resources.getString(option.keywordsRes),
+        )
+    }
+    val normalizedQuery = normalizeCategoryIconSearch(searchQuery)
+    val listState = rememberLazyListState()
+    val filteredIcons = if (normalizedQuery.isBlank()) {
+        localizedIcons
+    } else {
+        localizedIcons.filter { icon ->
+            normalizeCategoryIconSearch(
+                listOf(icon.label, icon.group, icon.keywords, icon.option.id).joinToString(" "),
+            ).contains(normalizedQuery)
+        }
+    }
+    LaunchedEffect(normalizedQuery) {
+        listState.scrollToItem(0)
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize().testTag(CATEGORY_ICON_PICKER_TEST_TAG),
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.category_icon_picker_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
+                    },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        },
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .testTag(CATEGORY_ICON_SEARCH_TEST_TAG),
+                singleLine = true,
+                label = { Text(stringResource(R.string.category_icon_search_hint)) },
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                Icons.Outlined.Close,
+                                contentDescription = stringResource(R.string.category_icon_clear_search),
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().testTag(CATEGORY_ICON_RESULTS_TEST_TAG),
+                state = listState,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 24.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (filteredIcons.isEmpty()) {
+                    item(key = "empty") {
+                        Box(
+                            Modifier.fillParentMaxSize().padding(32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(stringResource(R.string.category_icon_no_results))
+                        }
+                    }
+                } else if (normalizedQuery.isBlank()) {
+                    filteredIcons.groupBy { it.option.groupRes }.forEach { (groupRes, icons) ->
+                        item(key = "group_$groupRes") {
+                            Text(
+                                stringResource(groupRes),
+                                modifier = Modifier
+                                    .padding(top = 12.dp, start = 4.dp)
+                                    .testTag(CATEGORY_ICON_GROUP_TEST_TAG_PREFIX + groupRes),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
+                        items(icons, key = { it.option.id }) { icon ->
+                            CategoryIconPickerRow(icon, selectedIconId, onSelect)
+                        }
+                    }
+                } else {
+                    items(filteredIcons, key = { it.option.id }) { icon ->
+                        CategoryIconPickerRow(icon, selectedIconId, onSelect)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryIconPickerRow(
+    icon: LocalizedCategoryIcon,
+    selectedIconId: String,
+    onSelect: (String) -> Unit,
+) {
+    val isSelected = selectedIconId == icon.option.id
+    OutlinedCard(
+        onClick = { onSelect(icon.option.id) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + icon.option.id)
+            .mataClickablePointer()
+            .semantics {
+                selected = isSelected
+                this[CategoryIconIdKey] = icon.option.id
+                this[CategoryIconLabelKey] = icon.label
+            },
+        border = if (isSelected) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            CardDefaults.outlinedCardBorder()
+        },
+    ) {
+        ListItem(
+            leadingContent = {
+                Icon(icon.option.imageVector, contentDescription = icon.label)
+            },
+            headlineContent = { Text(icon.label) },
+            supportingContent = { Text(icon.group) },
+            trailingContent = {
+                if (isSelected) {
+                    Icon(Icons.Outlined.Check, contentDescription = null)
+                }
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+private data class LocalizedCategoryIcon(
+    val option: CategoryIconOption,
+    val label: String,
+    val group: String,
+    val keywords: String,
+)
+
+internal fun normalizeCategoryIconSearch(value: String): String =
+    Normalizer.normalize(value, Normalizer.Form.NFKC)
+        .lowercase(Locale.JAPANESE)
+        .trim()
+
+@Composable
 private fun CategoryPreview(state: CategoryEditorUiState) {
     val categoryColor = mataCategoryColor(state.colorIndex)
     Card(Modifier.fillMaxWidth()) {
@@ -1150,6 +1619,7 @@ private fun CategoryPreview(state: CategoryEditorUiState) {
 private fun ColorOption(
     color: Color,
     contentColor: Color,
+    colorId: String,
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -1161,6 +1631,8 @@ private fun ColorOption(
             .semantics {
                 contentDescription = label
                 this.selected = selected
+                this[CategoryColorIdKey] = colorId
+                this[CategoryColorArgbKey] = color.toArgb().toLong() and 0xffffffffL
             },
         border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else color),
     ) {

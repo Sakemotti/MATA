@@ -65,13 +65,44 @@ fun MataBannerAd(
                 BuildConfig.ADMOB_BANNER_AD_UNIT_ID != DEBUG_BANNER_AD_UNIT_ID
         }
     }
+    MataBannerAdLayout(
+        runtimeState = runtimeState,
+        isForeground = isForeground,
+        isScreenVisible = isScreenVisible,
+        isImeVisible = isImeVisible,
+        hasOverlay = hasOverlay,
+        hasValidConfiguration = validConfiguration && !isPreview,
+        modifier = modifier,
+        applyBottomSafeInset = applyBottomSafeInset,
+        bannerHost = { widthDp, consentRevision, bottomSafeInset ->
+            BannerAdHost(
+                widthDp = widthDp,
+                consentRevision = consentRevision,
+                applyBottomSafeInset = bottomSafeInset,
+            )
+        },
+    )
+}
+
+@Composable
+internal fun MataBannerAdLayout(
+    runtimeState: AdsRuntimeState,
+    isForeground: Boolean,
+    isScreenVisible: Boolean,
+    isImeVisible: Boolean,
+    hasOverlay: Boolean,
+    hasValidConfiguration: Boolean,
+    modifier: Modifier = Modifier,
+    applyBottomSafeInset: Boolean = false,
+    bannerHost: @Composable (widthDp: Int, consentRevision: Long, applyBottomSafeInset: Boolean) -> Unit,
+) {
     val decision = BannerDisplayConditions(
         runtimeAllowsAds = runtimeState.canLoadBanner,
         isForeground = isForeground,
         isScreenVisible = isScreenVisible,
         isImeVisible = isImeVisible,
         hasOverlay = hasOverlay,
-        hasValidConfiguration = validConfiguration && !isPreview,
+        hasValidConfiguration = hasValidConfiguration,
     ).evaluate()
     val canLoad = decision == BannerDisplayDecision.SHOW
 
@@ -90,11 +121,7 @@ fun MataBannerAd(
         }
         if (canLoad && stableWidth > 0) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                BannerAdHost(
-                    widthDp = stableWidth,
-                    consentRevision = runtimeState.consentRevision,
-                    applyBottomSafeInset = applyBottomSafeInset,
-                )
+                bannerHost(stableWidth, runtimeState.consentRevision, applyBottomSafeInset)
             }
         }
     }
@@ -112,12 +139,12 @@ private fun BannerAdHost(
     val adSize = remember(activity, widthDp) {
         AdSize.getLargeAnchoredAdaptiveBannerAdSize(activity, widthDp)
     }
-    val adView = remember(activity, widthDp, consentRevision) { AdView(activity) }
+    val adView = rememberDisposableResource(
+        key = Triple(activity, widthDp, consentRevision),
+        create = { AdView(activity) },
+        dispose = AdView::destroy,
+    )
     var loadState by remember(adView) { mutableStateOf(BannerLoadState.LOADING) }
-
-    DisposableEffect(adView) {
-        onDispose { adView.destroy() }
-    }
     LaunchedEffect(adView, adSize) {
         loadState = BannerLoadState.LOADING
         val request = BannerAdRequest.Builder(BuildConfig.ADMOB_BANNER_AD_UNIT_ID, adSize).build()
@@ -144,12 +171,35 @@ private fun BannerAdHost(
     }
     AndroidView(
         factory = { adView },
-        modifier = if (!loadState.reservesSpace) {
-            Modifier.size(0.dp)
-        } else {
-            loadedModifier.width(adSize.width.dp).height(adSize.height.dp)
-        },
+        modifier = loadedModifier.bannerAdSize(
+            loadState = loadState,
+            widthDp = adSize.width,
+            heightDp = adSize.height,
+        ),
     )
+}
+
+internal fun Modifier.bannerAdSize(
+    loadState: BannerLoadState,
+    widthDp: Int,
+    heightDp: Int,
+): Modifier = if (!loadState.reservesSpace) {
+    Modifier.size(0.dp)
+} else {
+    width(widthDp.dp).height(heightDp.dp)
+}
+
+@Composable
+internal fun <T : Any> rememberDisposableResource(
+    key: Any?,
+    create: () -> T,
+    dispose: (T) -> Unit,
+): T {
+    val resource = remember(key) { create() }
+    DisposableEffect(resource) {
+        onDispose { dispose(resource) }
+    }
+    return resource
 }
 
 internal enum class BannerLoadState {

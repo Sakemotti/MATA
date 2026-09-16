@@ -1,6 +1,8 @@
 package com.mochisofts.mata.data.backup
 
 import android.content.Context
+import android.system.ErrnoException
+import android.system.OsConstants
 import androidx.room.withTransaction
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -11,6 +13,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.WorkManager
+import com.mochisofts.mata.R
 import com.mochisofts.mata.core.backup.BackupCounts
 import com.mochisofts.mata.core.backup.BackupErrorCode
 import com.mochisofts.mata.core.backup.BackupOperationPhase
@@ -38,11 +41,14 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryReconciliationResult
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.ui.settings.errorFormatArgs
+import com.mochisofts.mata.ui.settings.errorMessage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.DayOfWeek
@@ -69,6 +75,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -239,6 +246,55 @@ class BackupSpecCoverageTest {
             "holidays-jp",
             "temporary-operation",
         ).forEach { excluded -> assertFalse(excluded, serialized.contains(excluded)) }
+    }
+
+    @Test
+    fun std06_adsConsentChangesNeverAlterTheUserDataBackupPayload() = runBlocking {
+        seedAllUserData()
+        val beforeConsentChange = zipEntries(writeArchive()).getValue(DATA_ENTRY)
+
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("ump_consent_state")] = "denied"
+            preferences[stringPreferencesKey("ad_runtime_state")] = "cannot-request-ads"
+        }
+        val afterDenied = zipEntries(writeArchive()).getValue(DATA_ENTRY)
+
+        dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("ump_consent_state")] = "granted"
+            preferences[stringPreferencesKey("ad_runtime_state")] = "can-request-ads"
+        }
+        val afterGranted = zipEntries(writeArchive()).getValue(DATA_ENTRY)
+
+        assertArrayEquals(beforeConsentChange, afterDenied)
+        assertArrayEquals(beforeConsentChange, afterGranted)
+        val payload = afterGranted.toString(Charsets.UTF_8)
+        assertFalse(payload.contains("ump_consent_state"))
+        assertFalse(payload.contains("ad_runtime_state"))
+        assertEquals(
+            TODO_ID,
+            singleObject(parseObject(afterGranted), "todos").getValue("id").jsonPrimitive.content,
+        )
+    }
+
+    @Test
+    fun dat010_backupIsReadableWithoutAKeyAndWarnsAboutPersonalDataAndSafeStorage() = runBlocking {
+        seedAllUserData()
+
+        val archive = writeArchive()
+        assertEquals('P'.code.toByte(), archive[0])
+        assertEquals('K'.code.toByte(), archive[1])
+        val entries = zipEntries(archive)
+        val payload = entries.getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+        assertTrue(payload.contains("週に一度のTODO"))
+        assertTrue(payload.contains("バックアップ対象"))
+        assertTrue(payload.contains("生活"))
+        assertTrue(parseObject(entries.getValue(DATA_ENTRY)).containsKey("todos"))
+
+        val warning = context.getString(R.string.backup_warning_message)
+        assertTrue(warning.contains("個人情報"))
+        assertTrue(warning.contains("暗号化されません"))
+        assertTrue(warning.contains("安全な保存先"))
+        assertTrue(warning.contains("適切に管理"))
     }
 
     @Test
@@ -558,6 +614,71 @@ class BackupSpecCoverageTest {
         assertEquals(BackupErrorCode.STORAGE_UNAVAILABLE, reloadedRestoreStore.state.value.errorCode)
         assertFalse(restoreFiles.directory.exists())
         assertEquals(expected, backedUpState())
+    }
+
+    @Test
+    fun st021_interruptedWriteCleansStagingAndNamesAnUndeletableOutput() = runBlocking {
+        seedAllUserData()
+        val expectedUserData = backedUpState()
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME).result.get()
+        val operationId = UUID.randomUUID().toString()
+        val outputName = "MATA_backup_interrupted.mata-backup"
+        val files = operationFiles(context, operationId)
+        val store = BackupOperationStore(context)
+        store.clear()
+        assertTrue(
+            store.start(
+                operationId = operationId,
+                type = BackupOperationType.CREATE,
+                uri = "content://com.mochisofts.mata.test/$outputName",
+                outputName = outputName,
+            ),
+        )
+        files.directory.mkdirs()
+        files.data.writeText("partial backup content")
+
+        BackupCoordinator(context, BackupOperationStore(context), clock)
+            .recoverInterruptedOperation()
+
+        val failure = BackupOperationStore(context).state.value
+        assertEquals(BackupOperationStatus.FAILED, failure.status)
+        assertEquals(BackupErrorCode.INCOMPLETE_FILE_REMAINS, failure.errorCode)
+        assertEquals(outputName, failure.outputName)
+        assertEquals(R.string.backup_incomplete_file_remains_named, failure.errorMessage())
+        assertEquals(listOf(outputName), failure.errorFormatArgs())
+        assertFalse(files.directory.exists())
+        assertEquals(expectedUserData, backedUpState())
+        val guidance = context.getString(
+            R.string.backup_incomplete_file_remains_named,
+            failure.outputName,
+        )
+        assertTrue(guidance.contains(outputName))
+        assertTrue(guidance.contains("削除"))
+        assertTrue(guidance.contains("もう一度"))
+        assertEquals(
+            BackupErrorCode.NOT_ENOUGH_SPACE,
+            backupFailureCode(
+                BackupOperationType.CREATE,
+                IOException(ErrnoException("write", OsConstants.ENOSPC)),
+                incompleteOutputRemains = false,
+            ),
+        )
+        assertEquals(
+            BackupErrorCode.STORAGE_UNAVAILABLE,
+            backupFailureCode(
+                BackupOperationType.CREATE,
+                java.io.FileNotFoundException("injected I/O failure"),
+                incompleteOutputRemains = false,
+            ),
+        )
+        assertEquals(
+            BackupErrorCode.INCOMPLETE_FILE_REMAINS,
+            backupFailureCode(
+                BackupOperationType.CREATE,
+                IOException(ErrnoException("write", OsConstants.ENOSPC)),
+                incompleteOutputRemains = true,
+            ),
+        )
     }
 
     @Test

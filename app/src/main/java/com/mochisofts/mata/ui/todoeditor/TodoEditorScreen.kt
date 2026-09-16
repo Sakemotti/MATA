@@ -52,6 +52,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,9 +66,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -87,6 +94,7 @@ import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.RecurrenceDayFilter
+import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
@@ -110,6 +118,7 @@ private enum class DatePickerTarget {
 @Composable
 fun TodoEditorScreen(
     onBack: () -> Unit,
+    onAddCategory: () -> Unit = {},
     onSaved: (Boolean) -> Unit,
     onNotFound: () -> Unit,
     viewModel: TodoEditorViewModel = hiltViewModel(),
@@ -122,6 +131,11 @@ fun TodoEditorScreen(
     var showRecurrenceSheet by remember { mutableStateOf(false) }
     var showNotificationPermissionRationale by remember { mutableStateOf(false) }
     var showPastNotificationWarning by remember { mutableStateOf(false) }
+    var initialFocusRequested by rememberSaveable { mutableStateOf(false) }
+    val titleFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val selectedCategoryRemovedMessage = stringResource(R.string.todo_editor_selected_category_removed)
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -138,6 +152,14 @@ fun TodoEditorScreen(
         viewModel.refreshNotificationStatus()
     }
 
+    LaunchedEffect(state.isLoading, state.isNew) {
+        if (!state.isLoading && state.isNew && !initialFocusRequested) {
+            titleFocusRequester.requestFocus()
+            keyboardController?.show()
+            initialFocusRequested = true
+        }
+    }
+
     fun requestBack() {
         if (state.isDirty) showDiscardDialog = true else onBack()
     }
@@ -152,6 +174,9 @@ fun TodoEditorScreen(
                 TodoEditorEffect.ExplainNotificationPermission -> {
                     showNotificationPermissionRationale = true
                 }
+                TodoEditorEffect.SelectedCategoryRemoved -> {
+                    snackbarHostState.showSnackbar(selectedCategoryRemovedMessage)
+                }
                 TodoEditorEffect.NotFound -> onNotFound()
             }
         }
@@ -160,6 +185,7 @@ fun TodoEditorScreen(
     val pageColor = MaterialTheme.mataPageColor
     Scaffold(
         containerColor = pageColor,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Column {
                 TopAppBar(
@@ -243,7 +269,10 @@ fun TodoEditorScreen(
                     value = state.title,
                     onValueChange = viewModel::setTitle,
                     shape = MataCardLayout.InputShape,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(titleFocusRequester)
+                        .testTag(TODO_EDITOR_TITLE_TAG),
                     label = { Text(stringResource(R.string.todo_editor_title_label)) },
                     singleLine = true,
                     supportingText = {
@@ -265,7 +294,11 @@ fun TodoEditorScreen(
                     isError = state.description.length > 1000,
                     colors = state.categoryInputColors(),
                 )
-                CategorySelector(state, viewModel::setCategory)
+                CategorySelector(
+                    state = state,
+                    onSelect = viewModel::setCategory,
+                    onAddCategory = onAddCategory,
+                )
                 }
 
                 MataSectionCard(
@@ -615,7 +648,11 @@ private fun DateField(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Unit) {
+private fun CategorySelector(
+    state: TodoEditorUiState,
+    onSelect: (String?) -> Unit,
+    onAddCategory: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     val selectedName = state.categories.firstOrNull { it.id == state.categoryId }?.name
         ?: stringResource(R.string.label_uncategorized)
@@ -637,13 +674,24 @@ private fun CategorySelector(state: TodoEditorUiState, onSelect: (String?) -> Un
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.label_uncategorized)) },
                 onClick = { onSelect(null); expanded = false },
+                modifier = Modifier.testTag(TODO_EDITOR_UNCATEGORIZED_MENU_TAG),
             )
             state.categories.forEach { category ->
                 DropdownMenuItem(
                     text = { Text(category.name) },
                     onClick = { onSelect(category.id); expanded = false },
+                    modifier = Modifier.testTag(todoEditorCategoryMenuTag(category.id)),
                 )
             }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_add_category)) },
+                onClick = {
+                    expanded = false
+                    onAddCategory()
+                },
+                modifier = Modifier.testTag(TODO_EDITOR_ADD_CATEGORY_TAG),
+            )
         }
     }
 }
@@ -939,13 +987,22 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         if (period == null) {
             Text(stringResource(R.string.todo_editor_no_upcoming_dates))
         } else {
+            val progress = RecurrenceProgress(
+                period = period,
+                completedCount = state.completedLogicalDates.count { date ->
+                    date in period.startDate..period.endDate
+                },
+            )
             Text(
                 stringResource(
                     R.string.todo_editor_count_preview_format,
                     period.startDate.toJapaneseDate(),
                     period.endDate.toJapaneseDate(),
                     period.requiredCount,
+                    progress.completedCount,
+                    progress.remainingCount,
                 ),
+                modifier = Modifier.testTag(TODO_EDITOR_COUNT_PREVIEW_TAG),
             )
         }
         if (state.recurrenceRule.usesHolidayData()) {
@@ -960,7 +1017,12 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         if (dates.isEmpty()) {
             Text(stringResource(R.string.todo_editor_no_upcoming_dates))
         } else {
-            dates.forEach { date -> Text(date.toJapaneseDate()) }
+            dates.forEachIndexed { index, date ->
+                Text(
+                    date.toJapaneseDate(),
+                    modifier = Modifier.testTag(todoEditorFixedPreviewTag(index)),
+                )
+            }
         }
         if (state.recurrenceRule.usesHolidayData()) {
             val previewYears = (dates.map { it.year } + previewFrom.year).toSet()
@@ -1106,3 +1168,10 @@ private fun weekdayLabel(day: DayOfWeek): String = stringResource(
 private fun LocalDate.toJapaneseDate(): String = format(
     DateTimeFormatter.ofPattern(stringResource(R.string.date_pattern_full), Locale.JAPANESE),
 )
+
+internal const val TODO_EDITOR_UNCATEGORIZED_MENU_TAG = "todo-editor-category-uncategorized"
+internal const val TODO_EDITOR_ADD_CATEGORY_TAG = "todo-editor-category-add"
+internal const val TODO_EDITOR_TITLE_TAG = "todo-editor-title"
+internal const val TODO_EDITOR_COUNT_PREVIEW_TAG = "todo-editor-count-preview"
+internal fun todoEditorCategoryMenuTag(categoryId: String) = "todo-editor-category-$categoryId"
+internal fun todoEditorFixedPreviewTag(index: Int) = "todo-editor-fixed-preview-$index"
