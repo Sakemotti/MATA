@@ -9,8 +9,13 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -32,6 +37,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.espresso.Espresso.pressBack
 import androidx.lifecycle.Lifecycle
@@ -690,6 +697,91 @@ class SettingsScreenSpecCoverageTest {
     }
 
     @Test
+    fun st045_maximumFontAndCompactDisplayKeepEverySettingAndActionReachable() {
+        val adsConsentRepository = SettingsScreenTestAdsConsentRepository(
+            initialState = AdsRuntimeState(privacyOptionsRequired = true),
+        )
+        val notificationScheduler = SettingsScreenTestNotificationScheduler(
+            initialNotificationCount = 1,
+            initialSystemState = NotificationSystemState(
+                canPostNotifications = true,
+                runtimePermissionRelevant = true,
+                runtimePermissionGranted = true,
+                exactAlarmRelevant = true,
+                canScheduleExactAlarms = true,
+            ),
+        )
+        val repository = setScreen(
+            adsConsentRepository = adsConsentRepository,
+            notificationScheduler = notificationScheduler,
+            maximumFontCompactDisplay = true,
+        )
+
+        listOf(
+            R.string.settings_section_general,
+            R.string.settings_end_hour_title,
+            R.string.settings_end_hour_description,
+            R.string.day_boundary_midnight,
+            R.string.settings_week_start_title,
+            R.string.settings_week_start_description,
+            R.string.settings_section_display,
+            R.string.settings_show_completed_title,
+            R.string.settings_show_completed_description,
+            R.string.settings_theme_title,
+            R.string.settings_theme_description,
+            R.string.settings_section_notifications,
+            R.string.settings_notification_permission_title,
+            R.string.settings_notification_permission_description,
+            R.string.settings_exact_alarm_title,
+            R.string.settings_exact_alarm_description,
+            R.string.settings_section_data,
+            R.string.backup_create_title,
+            R.string.backup_create_value,
+            R.string.backup_create_description,
+            R.string.backup_restore_title,
+            R.string.backup_restore_value,
+            R.string.backup_restore_description,
+            R.string.settings_section_app_info,
+            R.string.settings_app_name_title,
+            R.string.settings_version_title,
+            R.string.settings_licenses_title,
+            R.string.settings_privacy_policy_title,
+            R.string.settings_ads_privacy_options_title,
+            R.string.settings_ads_privacy_options_value,
+            R.string.settings_ads_privacy_options_description,
+            R.string.settings_terms_title,
+        ).forEach { resourceId ->
+            composeRule.onNodeWithText(text(resourceId))
+                .performScrollTo()
+                .assertIsDisplayed()
+        }
+
+        val completedSwitch = composeRule.onNode(
+            SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch) and
+                hasAnyDescendant(hasText(text(R.string.settings_show_completed_title))),
+            useUnmergedTree = true,
+        )
+        completedSwitch.performScrollTo().assertIsDisplayed().assertIsOff().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.showCompleted.value }
+        completedSwitch.assertIsOn()
+
+        composeRule.onNodeWithText(text(R.string.backup_create_title))
+            .performScrollTo()
+            .performClick()
+        composeRule.onNodeWithText(text(R.string.backup_warning_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.backup_warning_message)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_cancel)).performClick()
+
+        composeRule.onNodeWithText(text(R.string.settings_ads_privacy_options_title))
+            .performScrollTo()
+            .assertIsEnabled()
+            .performClick()
+        composeRule.runOnIdle {
+            assertEquals(1, adsConsentRepository.showPrivacyOptionsCalls)
+        }
+    }
+
+    @Test
     fun st025_restoreConfirmationShowsMetadataCountsAndIrreversibleWarning() {
         val backupGateway = SettingsScreenTestBackupGateway(restoreConfirmationState())
         setScreen(backupGateway = backupGateway)
@@ -748,6 +840,7 @@ class SettingsScreenSpecCoverageTest {
         systemSettingsIntentLauncher: ((Intent) -> Unit)? = null,
         lifecycleOwner: LifecycleOwner? = null,
         onViewModelCreated: (SettingsViewModel) -> Unit = {},
+        maximumFontCompactDisplay: Boolean = false,
     ): SettingsScreenTestRepository {
         val repository = SettingsScreenTestRepository(showCompleted)
         val viewModel = SettingsViewModel(
@@ -759,7 +852,7 @@ class SettingsScreenSpecCoverageTest {
         onViewModelCreated(viewModel)
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
-                val content: @Composable () -> Unit = {
+                val screen: @Composable () -> Unit = {
                     SettingsScreen(
                         onDestination = onDestination,
                         onOpenSourceLicenses = {},
@@ -770,12 +863,26 @@ class SettingsScreenSpecCoverageTest {
                         viewModel = viewModel,
                     )
                 }
-                if (lifecycleOwner == null) {
-                    content()
-                } else {
-                    CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
-                        content()
+                val lifecycleContent: @Composable () -> Unit = {
+                    if (lifecycleOwner == null) {
+                        screen()
+                    } else {
+                        CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
+                            screen()
+                        }
                     }
+                }
+                if (maximumFontCompactDisplay) {
+                    val baseDensity = LocalDensity.current
+                    CompositionLocalProvider(
+                        LocalDensity provides Density(baseDensity.density, fontScale = 2f),
+                    ) {
+                        Box(Modifier.width(320.dp).height(640.dp)) {
+                            lifecycleContent()
+                        }
+                    }
+                } else {
+                    lifecycleContent()
                 }
             }
         }

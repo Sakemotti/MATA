@@ -284,6 +284,7 @@ ST-012	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsSche
 ST-024	app/src/test/java/com/mochisofts/mata/ui/settings/SettingsViewModelTest.kt	st024_invalidAndUnsupportedRestoresReportReasonsWithoutChangingSettings	:app:testDebugUnitTest
 ST-027	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st027_successfulRestoreIsAcknowledgedAndReturnsToTodoList	:app:connectedDebugAndroidTest
 ST-040	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st040_legalLinksOpenApprovedUrlsAndFailureKeepsSettingsVisible	:app:connectedDebugAndroidTest
+ST-045	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st045_maximumFontAndCompactDisplayKeepEverySettingAndActionReachable	:app:connectedDebugAndroidTest
 ST-D06	app/src/androidTest/java/com/mochisofts/mata/data/backup/BackupSpecCoverageTest.kt	std06_adsConsentChangesNeverAlterTheUserDataBackupPayload	:app:connectedDebugAndroidTest
 ST-007	app/src/androidTest/java/com/mochisofts/mata/data/repository/SettingsScheduleSpecCoverageTest.kt	st007_endHourChangeRecalculatesEveryCategoryScheduleOrderAndNotification	:app:connectedDebugAndroidTest
 ST-008	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st008_invalidNotificationImpactCanBeCancelledOrConfirmedBeforeChanging	:app:connectedDebugAndroidTest
