@@ -35,6 +35,7 @@ import com.mochisofts.mata.domain.model.occursOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.CategoryTodoCounts
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
@@ -58,6 +59,7 @@ import kotlinx.coroutines.withContext
 class RoomCategoryRepository @Inject constructor(
     private val database: MataDatabase,
     private val categoryDao: CategoryDao,
+    private val todoDao: TodoDao,
     private val clock: Clock,
     private val notificationScheduler: NotificationScheduler,
     private val widgetUpdater: WidgetUpdater,
@@ -66,6 +68,13 @@ class RoomCategoryRepository @Inject constructor(
         categoryDao.observeAll().map { entities -> entities.map(CategoryEntity::toDomain) }
 
     override suspend fun getCategory(id: String): Category? = categoryDao.findById(id)?.toDomain()
+
+    override suspend fun getTodoCounts(id: String): CategoryTodoCounts = database.withTransaction {
+        CategoryTodoCounts(
+            active = todoDao.countActiveByCategory(id),
+            archived = todoDao.countArchivedByCategory(id),
+        )
+    }
 
     override suspend fun saveCategory(
         id: String?,

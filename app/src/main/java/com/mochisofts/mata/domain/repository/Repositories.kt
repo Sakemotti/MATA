@@ -35,7 +35,13 @@ interface CategoryRepository {
     ): Result<String>
     suspend fun reorderCategories(orderedIds: List<String>): Result<Unit>
     suspend fun deleteCategory(id: String): Result<Unit>
+    suspend fun getTodoCounts(id: String): CategoryTodoCounts = CategoryTodoCounts()
 }
+
+data class CategoryTodoCounts(
+    val active: Int = 0,
+    val archived: Int = 0,
+)
 
 interface TodoRepository {
     fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>>

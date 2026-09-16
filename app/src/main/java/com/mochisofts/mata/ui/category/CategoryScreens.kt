@@ -36,12 +36,15 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -375,6 +378,7 @@ fun CategoryListScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onAdd = { runAfterDiscardCheck(viewModel::openNewEditor) },
                     onEdit = { id -> runAfterDiscardCheck { viewModel.openEditor(id) } },
+                    onDelete = viewModel::requestDelete,
                     onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
                     onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
                     onDragStart = { category ->
@@ -413,6 +417,7 @@ fun CategoryListScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onAdd = viewModel::openNewEditor,
                     onEdit = viewModel::openEditor,
+                    onDelete = viewModel::requestDelete,
                     onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
                     onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
                     onDragStart = { category ->
@@ -492,6 +497,13 @@ fun CategoryListScreen(
             },
         )
     }
+    state.deletion?.let { deletion ->
+        CategoryDeleteDialog(
+            state = deletion,
+            onConfirm = viewModel::confirmDelete,
+            onDismiss = viewModel::cancelDelete,
+        )
+    }
 }
 
 internal data class CategoryPaneWidths(
@@ -532,6 +544,7 @@ private fun CategoryTwoPaneContent(
     modifier: Modifier,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
+    onDelete: (String) -> Unit,
     onMoveUp: (String) -> Boolean,
     onMoveDown: (String) -> Boolean,
     onDragStart: (Category) -> Unit,
@@ -562,6 +575,7 @@ private fun CategoryTwoPaneContent(
                 modifier = Modifier.fillMaxSize(),
                 onAdd = onAdd,
                 onEdit = onEdit,
+                onDelete = onDelete,
                 onMoveUp = onMoveUp,
                 onMoveDown = onMoveDown,
                 onDragStart = onDragStart,
@@ -615,6 +629,7 @@ private fun CategoryListContent(
     modifier: Modifier,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
+    onDelete: (String) -> Unit,
     onMoveUp: (String) -> Boolean,
     onMoveDown: (String) -> Boolean,
     onDragStart: (Category) -> Unit,
@@ -681,7 +696,9 @@ private fun CategoryListContent(
                         isDragging = isDragging,
                         draggedOffset = if (isDragging) draggedOffset else 0f,
                         reorderEnabled = !state.isOrderSaving,
+                        operationEnabled = state.deletion == null,
                         onClick = { onEdit(category.id) },
+                        onDelete = { onDelete(category.id) },
                         onMoveUp = { onMoveUp(category.id) },
                         onMoveDown = { onMoveDown(category.id) },
                         onDragStart = { onDragStart(category) },
@@ -701,6 +718,8 @@ internal const val CATEGORY_EMPTY_ADD_TEST_TAG = "category_empty_add"
 internal const val CATEGORY_LIST_TEST_TAG = "category_list"
 internal const val CATEGORY_ROW_TEST_TAG_PREFIX = "category_row_"
 internal const val CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX = "category_reorder_handle_"
+internal const val CATEGORY_ACTIONS_TEST_TAG_PREFIX = "category_actions_"
+internal const val CATEGORY_DELETE_DIALOG_TEST_TAG = "category_delete_dialog"
 internal const val CATEGORY_HIGHLIGHT_DURATION_MILLIS = 2_500L
 internal const val CATEGORY_ICON_LIST_TEST_TAG = "category_icon_list"
 internal const val CATEGORY_ICON_PICKER_TEST_TAG = "category_icon_picker"
@@ -725,7 +744,9 @@ private fun CategoryListRow(
     isDragging: Boolean,
     draggedOffset: Float,
     reorderEnabled: Boolean,
+    operationEnabled: Boolean,
     onClick: () -> Unit,
+    onDelete: () -> Unit,
     onMoveUp: () -> Boolean,
     onMoveDown: () -> Boolean,
     onDragStart: () -> Unit,
@@ -733,6 +754,7 @@ private fun CategoryListRow(
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
+    var showActions by remember { mutableStateOf(false) }
     val categoryColor = mataCategoryColor(category.colorIndex)
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 6.dp else 0.dp,
@@ -790,7 +812,11 @@ private fun CategoryListRow(
                     Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(categoryColor.copy(alpha = 0.14f)),
+                        .background(categoryColor.copy(alpha = 0.14f))
+                        .semantics {
+                            this[CategoryColorIdKey] = CategoryColorOptions[category.colorIndex].id
+                            this[CategoryIconIdKey] = category.iconName
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -804,34 +830,66 @@ private fun CategoryListRow(
                 Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
             },
             trailingContent = {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .testTag(CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX + category.id)
-                        .semantics {
-                            contentDescription = reorderLabel
-                            customActions = accessibilityActions
-                        }
-                        .mataClickablePointer(reorderEnabled)
-                        .pointerInput(category.id, reorderEnabled) {
-                            if (!reorderEnabled) return@pointerInput
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { onDragStart() },
-                                onDragEnd = onDragEnd,
-                                onDragCancel = onDragCancel,
-                            ) { change, dragAmount ->
-                                change.consume()
-                                onDrag(dragAmount.y)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag(CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX + category.id)
+                            .semantics {
+                                contentDescription = reorderLabel
+                                customActions = accessibilityActions
                             }
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Outlined.DragHandle, contentDescription = null)
+                            .mataClickablePointer(reorderEnabled)
+                            .pointerInput(category.id, reorderEnabled) {
+                                if (!reorderEnabled) return@pointerInput
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { onDragStart() },
+                                    onDragEnd = onDragEnd,
+                                    onDragCancel = onDragCancel,
+                                ) { change, dragAmount ->
+                                    change.consume()
+                                    onDrag(dragAmount.y)
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Outlined.DragHandle, contentDescription = null)
+                    }
+                    Box {
+                        IconButton(
+                            onClick = { showActions = true },
+                            enabled = operationEnabled,
+                            modifier = Modifier.testTag(CATEGORY_ACTIONS_TEST_TAG_PREFIX + category.id),
+                        ) {
+                            Icon(
+                                Icons.Outlined.MoreVert,
+                                contentDescription = stringResource(
+                                    R.string.content_description_category_actions,
+                                    category.name,
+                                ),
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showActions,
+                            onDismissRequest = { showActions = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_delete)) },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Delete, contentDescription = null)
+                                },
+                                onClick = {
+                                    showActions = false
+                                    onDelete()
+                                },
+                            )
+                        }
+                    }
                 }
             },
                 modifier = Modifier
-                    .mataClickablePointer(enabled = !isDragging)
-                    .clickable(enabled = !isDragging, onClick = onClick)
+                    .mataClickablePointer(enabled = !isDragging && operationEnabled)
+                    .clickable(enabled = !isDragging && operationEnabled, onClick = onClick)
                     .semantics {
                         this.selected = selected
                         stateDescription = positionLabel
@@ -842,6 +900,83 @@ private fun CategoryListRow(
             }
         }
     }
+}
+
+@Composable
+private fun CategoryDeleteDialog(
+    state: CategoryDeletionUiState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val categoryColor = mataCategoryColor(state.category.colorIndex)
+    val iconLabel = stringResource(
+        CategoryIconOptions.firstOrNull { it.id == state.category.iconName }?.labelRes
+            ?: R.string.category_icon_category,
+    )
+    AlertDialog(
+        modifier = Modifier.testTag(CATEGORY_DELETE_DIALOG_TEST_TAG),
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_delete_category_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.semantics {
+                        this[CategoryColorIdKey] = CategoryColorOptions[state.category.colorIndex].id
+                        this[CategoryIconIdKey] = state.category.iconName
+                    },
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(categoryColor.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            categoryIcon(state.category.iconName),
+                            contentDescription = iconLabel,
+                            tint = categoryColor,
+                        )
+                    }
+                    Text(state.category.name, style = MaterialTheme.typography.titleMedium)
+                }
+                val counts = state.counts
+                if (counts == null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                        Text(stringResource(R.string.category_delete_loading))
+                    }
+                } else {
+                    Text(stringResource(R.string.category_delete_active_count, counts.active))
+                    Text(stringResource(R.string.category_delete_archived_count, counts.archived))
+                    Text(stringResource(R.string.category_delete_move_message))
+                    Text(stringResource(R.string.category_delete_irreversible_message))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = state.counts != null && !state.isDeleting,
+            ) {
+                if (state.isDeleting) {
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(stringResource(R.string.action_delete))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isDeleting) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

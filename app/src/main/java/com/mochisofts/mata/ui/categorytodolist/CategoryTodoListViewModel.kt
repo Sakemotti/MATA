@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -101,6 +102,14 @@ class CategoryTodoListViewModel @Inject constructor(
         ).map<CategoryTodoListUiState, CategoryTodoLoadState>(CategoryTodoLoadState::Data)
             .onStart { emit(CategoryTodoLoadState.Loading) }
             .catch { emit(CategoryTodoLoadState.Error) }
+            .onEach { state ->
+                if (state is CategoryTodoLoadState.Data &&
+                    selectedCategoryId.value != null &&
+                    state.value.selectedCategoryId == null
+                ) {
+                    savedStateHandle[SELECTED_CATEGORY_ID_KEY] = null
+                }
+            }
     }.map { state ->
         when (state) {
             CategoryTodoLoadState.Loading -> CategoryTodoListUiState(isLoading = true)

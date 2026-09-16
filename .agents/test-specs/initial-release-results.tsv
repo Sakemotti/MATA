@@ -257,7 +257,7 @@ CH-D06	P1	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #
 CH-D07	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・実行履歴と期間結果の詳細レイアウト、スクロール、固定閉じる、システム戻るを確認
 CM-001	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・ドロワー遷移、全画面表示、選択状態を確認
 CM-002	P0	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・ユーザーカテゴリだけが管理対象になることを確認
-CM-003	P1	category-management.md	未実施	-	-	-	-	-
+CM-003	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm003・行のアイコン、色、名前、並べ替えハンドル、削除メニューを確認
 CM-004	P2	category-management.md	未実施	-	-	-	-	-
 CM-005	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空状態ボタンとFABが同じ新規フォームを開くことを確認
 CM-006	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・選択カテゴリの名前、色、アイコンを編集フォームへ読み込むことを確認
@@ -276,10 +276,10 @@ CM-018	P0	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows
 CM-019	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm019・追加後の末尾移動と強調、編集後の一覧位置維持、成功通知を確認
 CM-020	P0	category-management.md	未実施	-	-	-	-	-
 CM-021	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm021・connectedDebugAndroidTest成功
-CM-022	P0	category-management.md	未実施	-	-	-	-	-
+CM-022	P0	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm022・カテゴリ情報、通常・アーカイブ件数、未設定への移動、不可逆性を確認
 CM-023	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm023・connectedDebugAndroidTest成功
 CM-024	P0	category-management.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#cm024・CI run 34031589568成功
-CM-025	P1	category-management.md	未実施	-	-	-	-	-
+CM-025	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#cm025・削除カテゴリのタブ除去とカテゴリ未設定への切替を確認
 CM-026	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・削除成功通知と取り消し非提供を確認
 CM-027	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・変更時だけ破棄確認し継続・破棄が仕様どおりであることを確認
 CM-028	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm028とCategoryListViewModelTest#cm028・一覧位置、下書き、色、アイコン、エラー、検索画面を復元し通常ダイアログを閉じることを確認

@@ -9,6 +9,7 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.CategoryEditorRoute
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.CategoryTodoCounts
 import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -30,6 +31,13 @@ data class CategoryListUiState(
     val isReordering: Boolean = false,
     val isOrderSaving: Boolean = false,
     val editor: CategoryEditorUiState? = null,
+    val deletion: CategoryDeletionUiState? = null,
+)
+
+data class CategoryDeletionUiState(
+    val category: Category,
+    val counts: CategoryTodoCounts? = null,
+    val isDeleting: Boolean = false,
 )
 
 sealed interface CategoryListEffect {
@@ -251,6 +259,69 @@ class CategoryListViewModel @Inject constructor(
                             errorMessageRes = R.string.error_category_delete_failed,
                         )
                     }
+                }
+        }
+    }
+
+    fun requestDelete(categoryId: String) {
+        val state = _uiState.value
+        if (state.isReordering || state.isOrderSaving || state.deletion != null) return
+        val category = state.categories.firstOrNull { it.id == categoryId } ?: return
+        _uiState.update { it.copy(deletion = CategoryDeletionUiState(category = category)) }
+        viewModelScope.launch {
+            runCatching { repository.getTodoCounts(categoryId) }
+                .onSuccess { counts ->
+                    _uiState.update { current ->
+                        val deletion = current.deletion
+                        if (deletion?.category?.id == categoryId) {
+                            current.copy(deletion = deletion.copy(counts = counts))
+                        } else {
+                            current
+                        }
+                    }
+                }
+                .onFailure {
+                    _uiState.update { current ->
+                        if (current.deletion?.category?.id == categoryId) {
+                            current.copy(deletion = null)
+                        } else {
+                            current
+                        }
+                    }
+                    effectsChannel.send(
+                        CategoryListEffect.Message(R.string.error_category_delete_preview_failed),
+                    )
+                }
+        }
+    }
+
+    fun cancelDelete() {
+        _uiState.update { state ->
+            if (state.deletion?.isDeleting == true) state else state.copy(deletion = null)
+        }
+    }
+
+    fun confirmDelete() {
+        val deletion = _uiState.value.deletion ?: return
+        if (deletion.counts == null || deletion.isDeleting) return
+        val categoryId = deletion.category.id
+        _uiState.update { state ->
+            state.copy(deletion = state.deletion?.copy(isDeleting = true))
+        }
+        viewModelScope.launch {
+            repository.deleteCategory(categoryId)
+                .onSuccess {
+                    if (_uiState.value.editor?.categoryId == categoryId) closeEditor()
+                    _uiState.update { it.copy(deletion = null) }
+                    effectsChannel.send(CategoryListEffect.CategoryDeleted)
+                }
+                .onFailure {
+                    _uiState.update { state ->
+                        state.copy(deletion = state.deletion?.copy(isDeleting = false))
+                    }
+                    effectsChannel.send(
+                        CategoryListEffect.Message(R.string.error_category_delete_failed),
+                    )
                 }
         }
     }

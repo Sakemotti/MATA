@@ -307,6 +307,28 @@ class CategoryTodoListScreenTest {
         composeRule.onNodeWithText("削除カテゴリの古いTODO").assertDoesNotExist()
     }
 
+    @Test
+    fun cm025_deletingSelectedCategoryRemovesTabAndSelectsUncategorized() {
+        val deleted = category("cm025-deleted", "削除するカテゴリ", 0)
+        val repositories = repositories(
+            categories = listOf(deleted),
+            todos = listOf(
+                todo("cm025-uncategorized", "移動先のTODO", null),
+                todo("cm025-old", "削除前カテゴリのTODO", deleted.id),
+            ),
+        )
+        setScreen(repositories)
+        selectCategory(deleted)
+        composeRule.onNodeWithText("削除前カテゴリのTODO").assertIsDisplayed()
+
+        repositories.categoryRepository.categories.value = emptyList()
+        waitForText("移動先のTODO")
+
+        composeRule.onNodeWithText("削除するカテゴリ").assertDoesNotExist()
+        composeRule.onNodeWithText(uncategorizedLabel()).assertIsSelected()
+        composeRule.onNodeWithText("削除前カテゴリのTODO").assertDoesNotExist()
+    }
+
     private fun setScreen(
         repositories: TestRepositories,
         onEditTodo: (String) -> Unit = {},
