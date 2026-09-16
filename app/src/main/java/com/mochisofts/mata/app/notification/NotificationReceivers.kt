@@ -97,7 +97,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
             try {
                 when (intent.action) {
                     ACTION_COMPLETE -> complete(todoId, date, notificationId)
-                    ACTION_UNDO -> presenter.cancel(todoId, date, notificationId)
                     ACTION_DISMISS -> {
                         notificationScheduler.reconcileTodo(todoId)
                         presenter.refreshGroupSummary()
@@ -129,7 +128,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_COMPLETE = "com.mochisofts.mata.action.COMPLETE_FROM_NOTIFICATION"
-        const val ACTION_UNDO = "com.mochisofts.mata.action.UNDO_FROM_NOTIFICATION"
         const val ACTION_DISMISS = "com.mochisofts.mata.action.DISMISS_NOTIFICATION"
         const val EXTRA_TODO_ID = "todo_id"
         const val EXTRA_LOGICAL_DATE = "logical_date"

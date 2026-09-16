@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
@@ -39,6 +41,9 @@ enum class MataStatusType {
     IN_PROGRESS,
     FUTURE,
 }
+
+val MataStatusTypeSemanticsKey = SemanticsPropertyKey<MataStatusType>("MataStatusType")
+private var SemanticsPropertyReceiver.mataStatusType by MataStatusTypeSemanticsKey
 
 object MataTodoListItemDefaults {
     val LeadingSlotWidth = 48.dp
@@ -98,7 +103,9 @@ fun MataStatusLabel(
 ) {
     val colors = statusLabelColors(type)
     Surface(
-        modifier = modifier.semantics(mergeDescendants = true) { },
+        modifier = modifier.semantics(mergeDescendants = true) {
+            mataStatusType = type
+        },
         shape = MaterialTheme.shapes.small,
         color = colors.container,
         contentColor = colors.content,

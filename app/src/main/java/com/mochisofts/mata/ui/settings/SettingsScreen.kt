@@ -103,6 +103,9 @@ fun SettingsScreen(
     onDestination: (MataDestination) -> Unit,
     onOpenSourceLicenses: () -> Unit,
     onRestoreCompleted: () -> Unit = { onDestination(MataDestination.TODOS) },
+    legalDocumentOpener: (Context, String, String) -> Boolean = ::openLegalDocument,
+    createBackupTargetRequester: ((String) -> Unit)? = null,
+    systemSettingsIntentLauncher: ((Intent) -> Unit)? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -129,6 +132,9 @@ fun SettingsScreen(
     ) {
         viewModel.refreshNotificationStatus()
     }
+    val launchSystemSettings: (Intent) -> Unit = { intent ->
+        systemSettingsIntentLauncher?.invoke(intent) ?: systemSettingsLauncher.launch(intent)
+    }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshNotificationStatus()
@@ -138,7 +144,9 @@ fun SettingsScreen(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is SettingsEffect.Message -> {
-                    snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
+                    snackbarHostState.showSnackbar(
+                        resources.getString(effect.messageRes, *effect.formatArgs.toTypedArray()),
+                    )
                 }
                 SettingsEffect.RestoreCompleted -> {
                     Toast.makeText(context, R.string.backup_restore_success, Toast.LENGTH_SHORT).show()
@@ -297,7 +305,7 @@ fun SettingsScreen(
                             isSaving = false,
                             enabled = settingsEnabled,
                             onClick = {
-                                systemSettingsLauncher.launch(
+                                launchSystemSettings(
                                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                                         .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
                                 )
@@ -325,7 +333,7 @@ fun SettingsScreen(
                                 enabled = settingsEnabled && state.notificationCount > 0,
                                 onClick = {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                        systemSettingsLauncher.launch(
+                                        launchSystemSettings(
                                             Intent(
                                                 Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                                                 Uri.parse("package:${context.packageName}"),
@@ -397,7 +405,8 @@ fun SettingsScreen(
                             isSaving = false,
                             enabled = true,
                             onClick = {
-                                if (!openLegalDocument(
+                                if (
+                                    !legalDocumentOpener(
                                         context,
                                         BuildConfig.PRIVACY_POLICY_URL,
                                         PRIVACY_POLICY_PATH,
@@ -435,7 +444,8 @@ fun SettingsScreen(
                             isSaving = false,
                             enabled = true,
                             onClick = {
-                                if (!openLegalDocument(
+                                if (
+                                    !legalDocumentOpener(
                                         context,
                                         BuildConfig.TERMS_URL,
                                         TERMS_PATH,
@@ -505,7 +515,9 @@ fun SettingsScreen(
                 TextButton(
                     onClick = {
                         showBackupWarning = false
-                        createDocumentLauncher.launch(viewModel.suggestedBackupFileName())
+                        val suggestedName = viewModel.suggestedBackupFileName()
+                        createBackupTargetRequester?.invoke(suggestedName)
+                            ?: createDocumentLauncher.launch(suggestedName)
                     },
                 ) {
                     Text(stringResource(R.string.action_continue))
@@ -513,6 +525,31 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showBackupWarning = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+    state.pendingEndHourChange?.let { pending ->
+        AlertDialog(
+            onDismissRequest = viewModel::cancelEndHourChange,
+            title = { Text(stringResource(R.string.settings_end_hour_impact_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.settings_end_hour_impact_message,
+                        pending.impact.todoCount,
+                        pending.impact.notificationCount,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmEndHourChange) {
+                    Text(stringResource(R.string.action_change))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::cancelEndHourChange) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

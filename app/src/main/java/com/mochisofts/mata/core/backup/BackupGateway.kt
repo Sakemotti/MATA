@@ -76,6 +76,7 @@ data class BackupOperationState(
     val progress: Int? = null,
     val summary: BackupSummary? = null,
     val errorCode: BackupErrorCode? = null,
+    val outputName: String? = null,
 ) {
     val blocksDataChanges: Boolean
         get() = status == BackupOperationStatus.RUNNING ||

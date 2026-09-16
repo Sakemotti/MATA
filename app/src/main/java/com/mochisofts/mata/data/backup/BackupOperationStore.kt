@@ -25,7 +25,12 @@ class BackupOperationStore @Inject constructor(
     val state: StateFlow<BackupOperationState> = mutableState.asStateFlow()
 
     @Synchronized
-    fun start(operationId: String, type: BackupOperationType, uri: String): Boolean {
+    fun start(
+        operationId: String,
+        type: BackupOperationType,
+        uri: String,
+        outputName: String? = null,
+    ): Boolean {
         if (mutableState.value.blocksDataChanges) return false
         preferences.edit()
             .clear()
@@ -34,6 +39,9 @@ class BackupOperationStore @Inject constructor(
             .putString(KEY_STATUS, BackupOperationStatus.RUNNING.name)
             .putString(KEY_PHASE, BackupOperationPhase.PREPARING.name)
             .putString(KEY_URI, uri)
+            .apply {
+                if (outputName == null) remove(KEY_OUTPUT_NAME) else putString(KEY_OUTPUT_NAME, outputName)
+            }
             .commit()
         publish()
         return true
@@ -81,6 +89,7 @@ class BackupOperationStore @Inject constructor(
             .putString(KEY_PHASE, BackupOperationPhase.NONE.name)
             .remove(KEY_PROGRESS)
             .remove(KEY_URI)
+            .remove(KEY_OUTPUT_NAME)
             .commit()
         publish()
     }
@@ -148,6 +157,7 @@ class BackupOperationStore @Inject constructor(
             progress = preferences.takeIf { it.contains(KEY_PROGRESS) }?.getInt(KEY_PROGRESS, 0),
             summary = summary,
             errorCode = enumValueOrNull(preferences.getString(KEY_ERROR, null)),
+            outputName = preferences.getString(KEY_OUTPUT_NAME, null),
         )
     }
 
@@ -183,6 +193,7 @@ class BackupOperationStore @Inject constructor(
         const val KEY_PROGRESS = "progress"
         const val KEY_URI = "uri"
         const val KEY_ERROR = "error"
+        const val KEY_OUTPUT_NAME = "output_name"
         const val KEY_BACKUP_ID = "backup_id"
         const val KEY_BACKUP_CREATED_AT = "backup_created_at"
         const val KEY_APP_VERSION_NAME = "app_version_name"

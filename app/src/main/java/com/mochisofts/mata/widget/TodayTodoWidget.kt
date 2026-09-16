@@ -418,7 +418,7 @@ private fun StatusText(text: String, color: ColorProvider) {
     )
 }
 
-private fun todoListIntent(
+internal fun todoListIntent(
     context: Context,
     selectedDate: String,
     mode: String,

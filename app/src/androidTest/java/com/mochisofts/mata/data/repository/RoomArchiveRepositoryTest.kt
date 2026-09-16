@@ -461,6 +461,47 @@ class RoomArchiveRepositoryTest {
     }
 
     @Test
+    fun at020_restoreRespectsFutureStartAndPastEndInCategoryOccurrences() = runBlocking {
+        val futureStart = date.plusDays(3)
+        val future = insertArchivedTodo(
+            todoId = "future-start",
+            startDate = futureStart,
+            includeBaseHistory = false,
+        )
+        val pastEnd = date.minusDays(1)
+        val ended = insertArchivedTodo(
+            todoId = "past-ended",
+            startDate = date.minusDays(20),
+            endDate = pastEnd,
+            includeBaseHistory = false,
+        )
+
+        repository.restore(future.todo.id).getOrThrow()
+        repository.restore(ended.todo.id).getOrThrow()
+
+        val restoredFuture = requireNotNull(todoRepository.getTodo(future.todo.id))
+        val restoredEnded = requireNotNull(todoRepository.getTodo(ended.todo.id))
+        assertNull(restoredFuture.archivedAt)
+        assertNull(restoredEnded.archivedAt)
+        assertEquals(listOf(futureStart, futureStart.plusDays(1)), restoredFuture.nextOccurrences(date, 2))
+        assertTrue(restoredEnded.nextOccurrences(date, 2).isEmpty())
+        assertEquals(pastEnd, restoredEnded.endDate)
+        assertTrue(
+            todoRepository.observeOccurrences(date).first().none { occurrence ->
+                occurrence.todo.id == future.todo.id || occurrence.todo.id == ended.todo.id
+            },
+        )
+        assertEquals(
+            listOf(future.todo.id),
+            todoRepository.observeOccurrences(futureStart).first()
+                .filter { occurrence ->
+                    occurrence.todo.id == future.todo.id || occurrence.todo.id == ended.todo.id
+                }
+                .map { occurrence -> occurrence.todo.id },
+        )
+    }
+
+    @Test
     fun at031_archiveListAndHistoryUseStableBoundedPages() = runBlocking {
         val encoded = RecurrenceRuleJson.encode(RecurrenceRule.daily())
         repeat(120) { index ->
@@ -575,6 +616,38 @@ class RoomArchiveRepositoryTest {
         assertEquals(true, before.summaries[periodDisplayDate]?.hasAchievedPeriod)
 
         todoRepository.deleteTodo(values.todo.id).getOrThrow()
+
+        assertTrue(historyRepository.observeDay(executionDate).first().entries.isEmpty())
+        assertTrue(historyRepository.observeDay(periodDisplayDate).first().periodResults.isEmpty())
+        val after = historyRepository.observeMonth(date.minusDays(20), date).first()
+        assertNull(after.summaries[executionDate])
+        assertNull(after.summaries[periodDisplayDate])
+    }
+
+    @Test
+    fun at030_archiveDeleteRemovesHistoryPeriodResultsAndCalendarSummaries() = runBlocking {
+        val values = insertArchivedTodo(todoId = "archive-calendar-delete")
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val historyRepository = RoomHistoryRepository(
+            database = database,
+            todoDao = database.todoDao(),
+            categoryDao = database.categoryDao(),
+            executionDao = database.todoExecutionDao(),
+            periodResultDao = database.periodResultDao(),
+            runtimeStateDao = database.todoRuntimeStateDao(),
+            todoRepository = todoRepository,
+            settingsRepository = settings,
+            notificationScheduler = scheduler,
+            widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+            clock = clock,
+        )
+        val executionDate = date.minusDays(15)
+        val periodDisplayDate = date.minusDays(8)
+        val before = historyRepository.observeMonth(date.minusDays(20), date).first()
+        assertEquals(1, before.summaries[executionDate]?.completedCount)
+        assertEquals(true, before.summaries[periodDisplayDate]?.hasAchievedPeriod)
+
+        repository.deletePermanently(values.todo.id).getOrThrow()
 
         assertTrue(historyRepository.observeDay(executionDate).first().entries.isEmpty())
         assertTrue(historyRepository.observeDay(periodDisplayDate).first().periodResults.isEmpty())

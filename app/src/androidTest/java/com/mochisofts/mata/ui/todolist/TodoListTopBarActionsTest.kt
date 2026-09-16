@@ -98,6 +98,44 @@ class TodoListTopBarActionsTest {
         composeRule.onNodeWithText(noDeadline).assertIsDisplayed()
     }
 
+    @Test
+    fun tld04_missingDeadlineSortsAtDayEndButRendersAsNotConfigured() {
+        val date = LocalDate.of(2026, 9, 9)
+        val morning = occurrence(id = "morning", date = date, dueMinutes = 8 * 60)
+        val afterMidnight = occurrence(id = "after-midnight", date = date, dueMinutes = 2 * 60)
+        val missing = occurrence(id = "missing", date = date, dueMinutes = null)
+
+        val groups = buildTodoOccurrenceGroups(
+            occurrences = listOf(missing, afterMidnight, morning),
+            dayEndHour = 4,
+        )
+        assertEquals(
+            listOf("morning", "after-midnight", "missing"),
+            groups.single().occurrences.map { it.todo.id },
+        )
+
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                TodoOccurrenceRow(
+                    occurrence = missing,
+                    canComplete = true,
+                    showActions = false,
+                    onComplete = {},
+                    onSkip = {},
+                    onArchive = {},
+                    onDelete = {},
+                    onOpen = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation()
+                .targetContext
+                .getString(R.string.todo_due_none),
+        ).assertIsDisplayed()
+    }
+
     private fun occurrence(
         id: String,
         date: LocalDate,

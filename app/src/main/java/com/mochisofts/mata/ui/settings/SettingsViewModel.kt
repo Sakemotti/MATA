@@ -9,6 +9,7 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.repository.NotificationChangeImpact
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.core.ads.AdsConsentRepository
@@ -58,12 +59,21 @@ data class SettingsUiState(
         canScheduleExactAlarms = true,
     ),
     val savingSetting: SavingSetting? = null,
+    val pendingEndHourChange: PendingEndHourChange? = null,
     val backupOperation: BackupOperationState = BackupOperationState(),
     val adsRuntime: AdsRuntimeState = AdsRuntimeState(),
 )
 
+data class PendingEndHourChange(
+    val newEndHour: Int,
+    val impact: NotificationChangeImpact,
+)
+
 sealed interface SettingsEffect {
-    data class Message(@StringRes val messageRes: Int) : SettingsEffect
+    data class Message(
+        @StringRes val messageRes: Int,
+        val formatArgs: List<Any> = emptyList(),
+    ) : SettingsEffect
     data object RestoreCompleted : SettingsEffect
 }
 
@@ -115,7 +125,12 @@ class SettingsViewModel @Inject constructor(
                             gateway.acknowledgeResult()
                         }
                         BackupOperationStatus.FAILED -> {
-                            effectsChannel.send(SettingsEffect.Message(operation.errorMessage()))
+                            effectsChannel.send(
+                                SettingsEffect.Message(
+                                    operation.errorMessage(),
+                                    operation.errorFormatArgs(),
+                                ),
+                            )
                             gateway.acknowledgeResult()
                         }
                         else -> Unit
@@ -127,8 +142,63 @@ class SettingsViewModel @Inject constructor(
 
     fun retry() = load()
 
-    fun setEndHour(value: Int) = save(SavingSetting.END_HOUR) {
-        repository.setDayEndHour(value)
+    fun setEndHour(value: Int) {
+        if (value !in 0..23 || value == _uiState.value.endHour) return
+        if (_uiState.value.savingSetting != null || _uiState.value.pendingEndHourChange != null) return
+        _uiState.update { it.copy(savingSetting = SavingSetting.END_HOUR) }
+        viewModelScope.launch {
+            runCatching { notificationScheduler.previewDayEndHourChange(value) }
+                .onSuccess { impact ->
+                    if (impact.notificationCount > 0) {
+                        _uiState.update {
+                            it.copy(
+                                savingSetting = null,
+                                pendingEndHourChange = PendingEndHourChange(value, impact),
+                            )
+                        }
+                    } else {
+                        persistEndHour(value, suppressedNotificationCount = 0)
+                    }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(savingSetting = null) }
+                    effectsChannel.send(SettingsEffect.Message(R.string.settings_save_error))
+                }
+        }
+    }
+
+    fun confirmEndHourChange() {
+        val pending = _uiState.value.pendingEndHourChange ?: return
+        if (_uiState.value.savingSetting != null) return
+        _uiState.update {
+            it.copy(
+                savingSetting = SavingSetting.END_HOUR,
+                pendingEndHourChange = null,
+            )
+        }
+        viewModelScope.launch {
+            runCatching {
+                notificationScheduler.previewDayEndHourChange(pending.newEndHour)
+            }.onSuccess { refreshedImpact ->
+                persistEndHour(
+                    pending.newEndHour,
+                    refreshedImpact.notificationCount,
+                )
+            }.onFailure {
+                _uiState.update {
+                    it.copy(
+                        savingSetting = null,
+                        pendingEndHourChange = pending,
+                    )
+                }
+                effectsChannel.send(SettingsEffect.Message(R.string.settings_save_error))
+            }
+        }
+    }
+
+    fun cancelEndHourChange() {
+        if (_uiState.value.savingSetting != null) return
+        _uiState.update { it.copy(pendingEndHourChange = null) }
     }
 
     fun setWeekStart(value: DayOfWeek) = save(SavingSetting.WEEK_START) {
@@ -264,6 +334,30 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private suspend fun persistEndHour(value: Int, suppressedNotificationCount: Int) {
+        val previousValue = _uiState.value.endHour
+        runCatching {
+            repository.setDayEndHour(value)
+            notificationScheduler.reconcileAll()
+        }.onFailure {
+            runCatching {
+                repository.setDayEndHour(previousValue)
+                notificationScheduler.reconcileAll()
+            }
+            effectsChannel.send(SettingsEffect.Message(R.string.settings_save_error))
+        }.onSuccess {
+            if (suppressedNotificationCount > 0) {
+                effectsChannel.send(
+                    SettingsEffect.Message(
+                        R.string.settings_invalid_notifications_suppressed,
+                        listOf(suppressedNotificationCount),
+                    ),
+                )
+            }
+        }
+        _uiState.update { state -> state.copy(savingSetting = null) }
+    }
+
     private data class SettingsSnapshot(
         val endHour: Int,
         val weekStart: DayOfWeek,
@@ -273,12 +367,23 @@ class SettingsViewModel @Inject constructor(
 }
 
 @StringRes
-private fun BackupOperationState.errorMessage(): Int = when (errorCode) {
+internal fun BackupOperationState.errorMessage(): Int = when (errorCode) {
     BackupErrorCode.INVALID_FILE -> R.string.backup_invalid_file
     BackupErrorCode.UNSUPPORTED_VERSION -> R.string.backup_unsupported_version
     BackupErrorCode.STORAGE_UNAVAILABLE -> R.string.backup_storage_error
     BackupErrorCode.NOT_ENOUGH_SPACE -> R.string.backup_not_enough_space
-    BackupErrorCode.INCOMPLETE_FILE_REMAINS -> R.string.backup_incomplete_file_remains
+    BackupErrorCode.INCOMPLETE_FILE_REMAINS -> if (outputName.isNullOrBlank()) {
+        R.string.backup_incomplete_file_remains
+    } else {
+        R.string.backup_incomplete_file_remains_named
+    }
     BackupErrorCode.RESTORE_ROLLED_BACK -> R.string.backup_restore_rolled_back
     BackupErrorCode.INTERNAL, null -> R.string.backup_operation_error
 }
+
+internal fun BackupOperationState.errorFormatArgs(): List<Any> =
+    if (errorCode == BackupErrorCode.INCOMPLETE_FILE_REMAINS) {
+        outputName?.takeIf(String::isNotBlank)?.let(::listOf).orEmpty()
+    } else {
+        emptyList()
+    }
