@@ -351,7 +351,7 @@ ST-009	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI 
 ST-010	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st010・CI run 33863729049成功
 ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st011・CI run 33863729049成功
 ST-012	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#st012・設定とTODO一覧が初期非表示の同一値を共有し、双方の変更と再生成へ即時反映することを確認
-ST-013	P1	settings.md	未実施	-	-	-	-	-
+ST-013	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st013・3テーマの選択即時反映と端末追従だけがOSテーマ変更へ追従する判定を確認
 ST-014	P1	settings.md	未実施	-	-	-	-	-
 ST-015	P1	settings.md	未実施	-	-	-	-	-
 ST-016	P2	settings.md	未実施	-	-	-	-	-
