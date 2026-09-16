@@ -63,6 +63,8 @@ data class ArchiveListUiState(
     @StringRes val detailLoadErrorRes: Int? = null,
 )
 
+internal data class ArchiveScrollPosition(val index: Int = 0, val offset: Int = 0)
+
 sealed interface ArchiveListEffect {
     data class Message(@StringRes val messageRes: Int) : ArchiveListEffect
 }
@@ -75,6 +77,16 @@ class ArchiveListViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val backupGateway: BackupGateway? = null,
 ) : ViewModel() {
+    internal val listScrollPosition: ArchiveScrollPosition
+        get() = ArchiveScrollPosition(
+            index = savedStateHandle[KEY_LIST_INDEX] ?: 0,
+            offset = savedStateHandle[KEY_LIST_OFFSET] ?: 0,
+        )
+    internal val detailScrollPosition: ArchiveScrollPosition
+        get() = ArchiveScrollPosition(
+            index = savedStateHandle[KEY_DETAIL_INDEX] ?: 0,
+            offset = savedStateHandle[KEY_DETAIL_OFFSET] ?: 0,
+        )
     private val searchActive = savedStateHandle.getStateFlow(KEY_SEARCH_ACTIVE, false)
     private val searchQuery = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
     private val effectiveSearchQuery = searchQuery
@@ -208,6 +220,7 @@ class ArchiveListViewModel @Inject constructor(
     }
 
     fun openDetail(todoId: String) {
+        if (selectedTodoId.value != todoId) updateDetailScrollPosition(0, 0)
         savedStateHandle[KEY_SELECTED_TODO_ID] = todoId
     }
 
@@ -223,6 +236,16 @@ class ArchiveListViewModel @Inject constructor(
                     effectsChannel.send(ArchiveListEffect.Message(R.string.archive_sort_save_error))
                 }
         }
+    }
+
+    internal fun updateListScrollPosition(index: Int, offset: Int) {
+        savedStateHandle[KEY_LIST_INDEX] = index
+        savedStateHandle[KEY_LIST_OFFSET] = offset
+    }
+
+    internal fun updateDetailScrollPosition(index: Int, offset: Int) {
+        savedStateHandle[KEY_DETAIL_INDEX] = index
+        savedStateHandle[KEY_DETAIL_OFFSET] = offset
     }
 
     fun requestAction(todoId: String, action: ArchiveAction) {
@@ -330,6 +353,10 @@ class ArchiveListViewModel @Inject constructor(
         const val KEY_ACTION_TARGET = "archive_action_target"
         const val KEY_ACTION = "archive_action"
         const val KEY_SELECTED_TODO_ID = "archive_selected_todo_id"
+        const val KEY_LIST_INDEX = "archive_list_index"
+        const val KEY_LIST_OFFSET = "archive_list_offset"
+        const val KEY_DETAIL_INDEX = "archive_detail_index"
+        const val KEY_DETAIL_OFFSET = "archive_detail_offset"
         const val SEARCH_DEBOUNCE_MILLIS = 300L
     }
 }
