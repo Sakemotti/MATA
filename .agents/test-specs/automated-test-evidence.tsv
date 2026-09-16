@@ -157,11 +157,15 @@ CH-017	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomHistoryR
 AT-006	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at006_emptyAndSearchEmptyStatesAreDistinctAndSearchCanBeCleared	:app:connectedDebugAndroidTest
 AT-008	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at008_rowOpensReadOnlyThreeCardFullScreenDetailWithCloseAction	:app:connectedDebugAndroidTest
 AT-009	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at009_listMenuAndDetailExposeRestoreAndPermanentDeleteWithoutGestures	:app:connectedDebugAndroidTest
+AT-012	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at012_largeMixedHistoryPagesNewestFirstAndOpensReadOnlySnapshots	:app:connectedDebugAndroidTest
 AT-013	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at013_historyModalIsReadOnlyEvenWhenSnapshotActionCanBeUndone	:app:connectedDebugAndroidTest
 AT-015	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at015_restorePreviewWarnsWhenNoFutureOccurrenceExists	:app:connectedDebugAndroidTest
 AT-022	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at022_restorePreviewExplainsUnavailableNotificationsWithoutDiscardingThem	:app:connectedDebugAndroidTest
+AT-024	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at024_listAndDetailRestoreKeepSearchAndSortAndReturnToList	:app:connectedDebugAndroidTest
 AT-025	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at025_successfulRestoreStaysOnListAndOffersNoUndoOrAutomaticEdit	:app:connectedDebugAndroidTest
 AT-027	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at027_permanentDeleteDialogUsesExplicitButtonsWithoutTitleInput	:app:connectedDebugAndroidTest
+AT-034	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at034_reopeningClearsSearchAndPositionButRestoresOnlySortOrder	:app:connectedDebugAndroidTest
+AT-035	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at035_returnFromDetailKeepsSearchSortLoadedPagesAndListPosition	:app:connectedDebugAndroidTest
 TE-003	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te003_titleAndDescriptionBoundariesControlSaveAvailability	:app:testDebugUnitTest
 TE-007	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te007_newTodoUsesCurrentLogicalDateAndRejectsEarlierDate	:app:testDebugUnitTest
 TE-009	app/src/test/java/com/mochisofts/mata/ui/todoeditor/TodoEditorViewModelTest.kt	te009_allRecurrenceTypesAcceptOnlyTheirValidBoundaries	:app:testDebugUnitTest
