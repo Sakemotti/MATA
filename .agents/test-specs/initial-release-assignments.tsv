@@ -106,7 +106,7 @@ DAT-005	P1	app-core.md	INT	DEV_AUTO	DEV	データ保全
 DAT-006	P0	app-core.md	INT	DEV_AUTO	DEV	データ保全
 DAT-007	P0	app-core.md	INT	DEV_AUTO	DEV	データ保全
 DAT-008	P0	app-core.md	INT	DEV_AUTO	DEV	データ保全
-DAT-009	P1	app-core.md	MANUAL	RELEASE_OWNER	OWNER	データ保全
+DAT-009	P1	app-core.md	INT/AUTO	DEV_AUTO	DEV	データ保全
 DAT-010	P1	app-core.md	INT/AUTO	DEV_AUTO	DEV	データ保全
 REL-001	P0	app-core.md	UNIT	RELEASE_OWNER	OWNER	リリース
 REL-002	P0	app-core.md	MANUAL	RELEASE_OWNER	OWNER	リリース

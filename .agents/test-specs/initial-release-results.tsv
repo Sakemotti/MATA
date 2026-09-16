@@ -106,7 +106,7 @@ DAT-005	P1	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	Dat
 DAT-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat006・CI run 33929968497成功
 DAT-007	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat007・CI run 33929968497成功
 DAT-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#dat008・CI run 33929968497成功
-DAT-009	P1	app-core.md	未実施	-	-	-	-	-
+DAT-009	P1	app-core.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	RoomDataProtectionSpecCoverageTest#dat009・保存領域削除後の全データ表、初期設定、カテゴリ未設定への復帰とBenchmark版pm clear後の再起動・画面表示を確認
 DAT-010	P1	app-core.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	BackupSpecCoverageTest#dat010・connectedDebugAndroidTest成功
 REL-001	P0	app-core.md	合格	2026-09-03	AUTO	1	ローカルJDK 17・GitHub Actions Ubuntu	ローカルJUnit XML 134件成功・main CI https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-002	P0	app-core.md	合格	2026-09-06	OWNER	1	JUnit・Room試験一覧・CI run 34033551344	論理日・繰り返し・期限・履歴の正常/境界/異常を56件の専用テストで確認
