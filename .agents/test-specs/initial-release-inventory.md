@@ -31,7 +31,7 @@
 
 リリース必須のP0/P1は405件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。
 
-2026年9月16日時点では、項目単位の証跡が揃ったP0を244件、P1を142件`合格`、P0/P1の残り19件を`未実施`として登録した。P2を含む全423件では389件が合格、34件が未実施である。今回はアーカイブ画面の一時再生成、最大フォント・コンパクト表示、履歴追加取得中の固定操作、長文履歴詳細と2種類の終了操作を追加合格とした。
+2026年9月16日時点では、項目単位の証跡が揃ったP0を244件、P1を147件`合格`、P0/P1の残り14件を`未実施`として登録した。P2を含む全423件では394件が合格、29件が未実施である。今回はカテゴリ管理の16色固定パレット、テーマ別色トーン、用途別Material Icons選択・正規化検索、色・アイコン仕様表照合を追加合格とした。
 
 ## 3. 自動検査の証跡
 
@@ -72,6 +72,7 @@
 | カテゴリ管理の並び替え・名称・履歴整合性 | ドロップ保存と再表示、一覧・タブへの順序反映、名称の境界値・正規化・表記保持、編集・削除後の現在参照と確定済み履歴スナップショットを専用テスト6件で検証 | 2026年9月12日のローカル`:app:testDebugUnitTest`とPR CIのAPI 30`:app:connectedDebugAndroidTest`成功 | `CM-007`、`CM-010`、`CM-012`、`CM-013`、`CM-021`、`CM-023` |
 | カテゴリ管理の基本表示・遷移 | ドロワーからの全画面遷移と選択状態、カテゴリ未設定の除外、空状態とFABからの追加、既存値の編集読込、フォーム構成、新規既定値を専用Compose UI test 6件で検証 | [PR #203 CI run 34756112549](https://github.com/Sakemotti/MATA/actions/runs/34756112549)のAPI 30`:app:connectedDebugAndroidTest`成功 | `CM-001`、`CM-002`、`CM-005`、`CM-006`、`CM-011`、`CM-D01` |
 | カテゴリ管理の操作・破棄 | TalkBack用カスタム並べ替え、削除成功通知と取り消し非提供、変更時だけの破棄確認、名称プレビューと無効入力継続を専用Compose UI test 4件で検証 | [PR #204 CI run 34758657480](https://github.com/Sakemotti/MATA/actions/runs/34758657480)のAPI 30`:app:connectedDebugAndroidTest`成功 | `CM-009`、`CM-026`、`CM-027`、`CM-D03` |
+| カテゴリ管理の色・アイコンカタログ | 16色の固定ID・日本語名・基準色・テーマ別トーンと選択状態、全47 Material IconsのID・用途別表示・日本語名・正規化検索・カスタム入力非提供を専用Compose UI test 5件で検証 | 2026年9月16日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `CM-014`〜`CM-016`、`CM-D04`、`CM-D05` |
 | 設定画面の基本表示・選択 | セクション順、設定行種別、終了時刻24候補、週開始7候補、バックアップ警告、広告・購入UI非表示、アプリ情報、Debug表記を専用Compose UI test 9件で検証 | [PR #205 CI run 34762842700](https://github.com/Sakemotti/MATA/actions/runs/34762842700)のAPI 30`:app:connectedDebugAndroidTest`成功 | `ST-002`、`ST-003`、`ST-005`、`ST-009`、`ST-022`、`ST-030`、`ST-031`、`ST-037`、`ST-038` |
 | 設定画面のUMPプライバシーオプション | UMP要求有無による行表示、アプリ情報内の配置、フォーム起動、同意変更時の既存広告破棄と再評価、エラー時の画面維持を専用Compose UI test 5件で検証 | 2026年9月15日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-032`〜`ST-036` |
 | 設定画面のナビゲーション・論理日説明・復元確認 | 設定の選択状態、他画面への重複導線なし、終了時刻別の説明、復元対象の内訳と不可逆警告、開始前後の取消可否を専用Compose UI test 5件で検証 | 2026年9月15日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-001`、`ST-006`、`ST-017`、`ST-025`、`ST-D04` |
@@ -86,7 +87,7 @@
 | 設定変更時の再計算・履歴不変 | 週開始曜日変更後の現在期間・必要数・完了数・残数の即時再計算と、終了時刻・週開始曜日変更後の確定済み履歴・期間スナップショット不変を専用instrumented test 2件で検証 | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-010`、`ST-011` |
 | バックアップ形式・内容・事前検証 | 全種ユーザーデータ、除外対象、復元前の形式・ハッシュ・構造・型・範囲・参照・互換性検証、ファイル名、ZIP内部メタデータを専用instrumented test 5件で検証 | [PR #126 CI run 33867709111](https://github.com/Sakemotti/MATA/actions/runs/33867709111)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-019`、`ST-020`、`ST-023`、`ST-D02`、`ST-D03` |
 
-[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト317件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
+[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト322件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 

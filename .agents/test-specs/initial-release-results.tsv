@@ -268,9 +268,9 @@ CM-010	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryT
 CM-011	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・プレビュー、名前、色、アイコンと終了時刻入力なしを確認
 CM-012	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm012・connectedDebugAndroidTest成功
 CM-013	P1	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm013・connectedDebugAndroidTest成功
-CM-014	P1	category-management.md	未実施	-	-	-	-	-
-CM-015	P1	category-management.md	未実施	-	-	-	-	-
-CM-016	P1	category-management.md	未実施	-	-	-	-	-
+CM-014	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm014・16色の表示、名称、選択状態を確認
+CM-015	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm015・テーマ別トーン変更と保存色ID不変を確認
+CM-016	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm016・用途別表示と名前、グループ、正規化キーワード検索を確認
 CM-017	P2	category-management.md	未実施	-	-	-	-	-
 CM-018	P0	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryEditorViewModelTest#cm018・testDebugUnitTest成功
 CM-019	P1	category-management.md	未実施	-	-	-	-	-
@@ -289,8 +289,8 @@ CM-031	P2	category-management.md	未実施	-	-	-	-	-
 CM-D01	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空名、固定緑色、カテゴリアイコンと終了時刻入力なしを確認
 CM-D02	P2	category-management.md	未実施	-	-	-	-	-
 CM-D03	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・即時プレビュー、空名、エラー継続、操作非提供を確認
-CM-D04	P1	category-management.md	未実施	-	-	-	-	-
-CM-D05	P1	category-management.md	未実施	-	-	-	-	-
+CM-D04	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cmd04・16色の固定ID、日本語名、基準色を照合
+CM-D05	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cmd05・全47 Material Icons IDと日本語名、カスタム入力なしを照合
 CM-D06	P2	category-management.md	未実施	-	-	-	-	-
 AT-001	P1	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at001・connectedDebugAndroidTest成功、設定側の重複導線なしはST-017でも確認
 AT-002	P0	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at002・connectedDebugAndroidTest成功
