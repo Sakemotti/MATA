@@ -181,6 +181,7 @@ class SettingsScheduleSpecCoverageTest {
         val categoryRepository = RoomCategoryRepository(
             database = database,
             categoryDao = database.categoryDao(),
+            todoDao = database.todoDao(),
             clock = clock,
             notificationScheduler = NoOpSettingsNotificationScheduler(),
             widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),

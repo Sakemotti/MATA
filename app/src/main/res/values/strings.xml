@@ -393,6 +393,7 @@
     <string name="action_add_category">カテゴリを追加</string>
     <string name="category_empty_message">カテゴリを追加してTODOを整理しましょう</string>
     <string name="category_reorder_handle">%1$sを並べ替え</string>
+    <string name="content_description_category_actions">%1$sの操作</string>
     <string name="category_move_up">上へ移動</string>
     <string name="category_move_down">下へ移動</string>
     <string name="category_list_position">%1$d件中%2$d番目</string>
@@ -410,11 +411,17 @@
     <string name="dialog_discard_changes_message">入力した内容は保存されません。</string>
     <string name="dialog_delete_category_title">カテゴリを削除しますか？</string>
     <string name="dialog_delete_category_message">所属するTODOはカテゴリ未設定へ移動します。この操作は元に戻せません。</string>
+    <string name="category_delete_active_count">通常TODO：%1$d件</string>
+    <string name="category_delete_archived_count">アーカイブ済みTODO：%1$d件</string>
+    <string name="category_delete_move_message">所属するTODOはカテゴリ未設定へ移動します。</string>
+    <string name="category_delete_irreversible_message">カテゴリ自体は元に戻せません。</string>
+    <string name="category_delete_loading">所属するTODOの件数を確認しています</string>
 
     <string name="category_two_pane_placeholder">カテゴリを選択するか、新しいカテゴリを追加してください</string>
     <string name="category_added_message">カテゴリを追加しました</string>
     <string name="category_updated_message">カテゴリを更新しました</string>
     <string name="category_deleted_message">カテゴリを削除しました</string>
+    <string name="error_category_delete_preview_failed">カテゴリの削除情報を確認できませんでした</string>
 
     <!-- Category icon names -->
     <string name="category_icon_category">カテゴリ</string>

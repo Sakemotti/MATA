@@ -37,6 +37,7 @@ import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.repository.CategoryRepository
+import com.mochisofts.mata.domain.repository.CategoryTodoCounts
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
@@ -74,6 +75,59 @@ class CategoryManagementScreenSpecCoverageTest {
         composeRule.onNodeWithText("日常").assertIsDisplayed()
         composeRule.onNodeWithText("ゲーム").assertIsDisplayed()
         composeRule.onNodeWithText("カテゴリ未設定").assertDoesNotExist()
+    }
+
+    @Test
+    fun cm003_userCategoryRowIdentifiesIconColorNameReorderHandleAndDeleteMenu() {
+        setScreen(categories())
+
+        composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + "daily").assertIsDisplayed()
+        composeRule.onNodeWithText("日常").assertIsDisplayed()
+        composeRule.onNode(SemanticsMatcher.expectValue(CategoryColorIdKey, "green"))
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(CategoryIconIdKey, "Home"))
+        composeRule.onNodeWithTag(
+            CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX + "daily",
+            useUnmergedTree = true,
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag(
+            CATEGORY_ACTIONS_TEST_TAG_PREFIX + "daily",
+            useUnmergedTree = true,
+        )
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onAllNodesWithText(text(R.string.action_delete)).assertCountEquals(1)
+    }
+
+    @Test
+    fun cm022_deleteDialogShowsCategoryTodoCountsMoveAndIrreversibleWarning() {
+        val repository = setScreen(
+            initialCategories = categories(),
+            todoCounts = mapOf("daily" to CategoryTodoCounts(active = 2, archived = 1)),
+        )
+
+        composeRule.onNodeWithTag(
+            CATEGORY_ACTIONS_TEST_TAG_PREFIX + "daily",
+            useUnmergedTree = true,
+        ).performClick()
+        composeRule.onNodeWithText(text(R.string.action_delete)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(
+                text(R.string.category_delete_active_count, 2),
+            ).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(CATEGORY_DELETE_DIALOG_TEST_TAG).assertIsDisplayed()
+        composeRule.onAllNodesWithText("日常").assertCountEquals(2)
+        composeRule.onNodeWithText(text(R.string.category_delete_active_count, 2)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.category_delete_archived_count, 1)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.category_delete_move_message)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.category_delete_irreversible_message)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_delete)).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            repository.snapshot.map(Category::id) == listOf("game")
+        }
+        composeRule.onNodeWithText(text(R.string.category_deleted_message)).assertIsDisplayed()
     }
 
     @Test
@@ -491,8 +545,9 @@ class CategoryManagementScreenSpecCoverageTest {
         initialCategories: List<Category>,
         onDestination: (MataDestination) -> Unit = {},
         appTheme: AppTheme = AppTheme.SYSTEM,
+        todoCounts: Map<String, CategoryTodoCounts> = emptyMap(),
     ): CategoryScreenTestRepository {
-        val repository = CategoryScreenTestRepository(initialCategories)
+        val repository = CategoryScreenTestRepository(initialCategories, todoCounts)
         val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
         composeRule.setContent {
             MataTheme(appTheme = appTheme, useDynamicColor = false) {
@@ -529,7 +584,10 @@ class CategoryManagementScreenSpecCoverageTest {
         SemanticsMatcher("${key.name} is defined") { it.config.contains(key) }
 }
 
-private class CategoryScreenTestRepository(initialCategories: List<Category>) : CategoryRepository {
+private class CategoryScreenTestRepository(
+    initialCategories: List<Category>,
+    private val todoCounts: Map<String, CategoryTodoCounts> = emptyMap(),
+) : CategoryRepository {
     private val categories = MutableStateFlow(initialCategories)
     val snapshot: List<Category>
         get() = categories.value
@@ -538,6 +596,9 @@ private class CategoryScreenTestRepository(initialCategories: List<Category>) : 
 
     override suspend fun getCategory(id: String): Category? =
         categories.value.firstOrNull { it.id == id }
+
+    override suspend fun getTodoCounts(id: String): CategoryTodoCounts =
+        todoCounts[id] ?: CategoryTodoCounts()
 
     override suspend fun saveCategory(
         id: String?,

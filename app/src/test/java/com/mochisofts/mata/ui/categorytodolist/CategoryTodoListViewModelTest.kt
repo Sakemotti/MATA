@@ -246,6 +246,44 @@ class CategoryTodoListViewModelTest {
         assertNull(state.items.single().todayState)
     }
 
+    @Test
+    fun deletedSelectionFallbackIsPersistedAndDoesNotReselectAReintroducedId() = runTest {
+        val selected = category(id = "selected", sortOrder = 0)
+        val categoryRepository = CategoryTodoListTestCategoryRepository().apply {
+            categories.value = listOf(selected)
+        }
+        val todoRepository = CategoryTodoListTestTodoRepository().apply {
+            todos.value = listOf(todo(id = "uncategorized", categoryId = null, createdAt = 1))
+        }
+        val savedStateHandle = SavedStateHandle(
+            mapOf("category_todo_list_selected_category_id" to selected.id),
+        )
+        val viewModel = CategoryTodoListViewModel(
+            savedStateHandle = savedStateHandle,
+            todoRepository = todoRepository,
+            categoryRepository = categoryRepository,
+            clock = Clock.fixed(
+                LocalDate.of(2026, 9, 6).atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
+                ZoneId.of("Asia/Tokyo"),
+            ),
+            adsConsentRepository = CategoryTodoListTestAdsRepository(),
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+        assertEquals(selected.id, viewModel.uiState.value.selectedCategoryId)
+
+        categoryRepository.categories.value = emptyList()
+        runCurrent()
+        assertNull(viewModel.uiState.value.selectedCategoryId)
+        assertNull(savedStateHandle.get<String>("category_todo_list_selected_category_id"))
+
+        categoryRepository.categories.value = listOf(selected)
+        runCurrent()
+        assertNull(viewModel.uiState.value.selectedCategoryId)
+    }
+
     private fun category(id: String, sortOrder: Int) = Category(
         id = id,
         name = id,

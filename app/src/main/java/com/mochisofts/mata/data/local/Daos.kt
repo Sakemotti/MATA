@@ -123,6 +123,12 @@ interface TodoDao {
     @Query("SELECT * FROM todos ORDER BY createdAt ASC")
     fun observeAll(): Flow<List<TodoEntity>>
 
+    @Query("SELECT COUNT(*) FROM todos WHERE categoryId = :categoryId AND archivedAt IS NULL")
+    suspend fun countActiveByCategory(categoryId: String): Int
+
+    @Query("SELECT COUNT(*) FROM todos WHERE categoryId = :categoryId AND archivedAt IS NOT NULL")
+    suspend fun countArchivedByCategory(categoryId: String): Int
+
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun findById(id: String): TodoEntity?
 

@@ -65,6 +65,7 @@ class RoomDataProtectionSpecCoverageTest {
         categoryRepository = RoomCategoryRepository(
             database = database,
             categoryDao = database.categoryDao(),
+            todoDao = database.todoDao(),
             clock = TEST_CLOCK,
             notificationScheduler = DataProtectionNotificationScheduler(),
             widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
