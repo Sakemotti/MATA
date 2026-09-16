@@ -24,6 +24,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.core.navigation.todoEditorSavedMessageRes
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
@@ -164,6 +165,61 @@ class TodoEditorScreenSpecCoverageTest {
             assertEquals("入力途中のTODO", viewModel.uiState.value.title)
             assertEquals("カテゴリ画面との往復後も保持", viewModel.uiState.value.description)
             assertEquals(category.id, viewModel.uiState.value.categoryId)
+        }
+    }
+
+    @Test
+    fun cm020_categoryCreateSaveSelectsNewCategoryWhileDiscardKeepsOriginalDraft() {
+        val original = Category("selected", "変更前", 2, "Home", 0)
+        val created = Category("created", "新規カテゴリ", 4, "Work", 1)
+        val savedStateHandle = SavedStateHandle(
+            mapOf("todoId" to null, "initialDate" to null),
+        )
+        val categoryRepository = TodoEditorTestCategoryRepository(listOf(original))
+        val viewModel = TodoEditorViewModel(
+            savedStateHandle = savedStateHandle,
+            todoRepository = TodoEditorTestTodoRepository(null, emptyList()),
+            categoryRepository = categoryRepository,
+            settingsRepository = TodoEditorTestSettingsRepository(),
+            notificationScheduler = TodoEditorTestNotificationScheduler(),
+            holidayRepository = TodoEditorTestHolidayRepository(),
+            clock = FIXED_CLOCK,
+        )
+        var categoryEditorOpenCount = 0
+        setScreen(
+            displayedViewModel = mutableStateOf(viewModel),
+            onAddCategory = { categoryEditorOpenCount += 1 },
+        )
+        waitForText(text(R.string.todo_editor_add_title))
+
+        composeRule.runOnIdle {
+            viewModel.setTitle("入力途中のTODO")
+            viewModel.setDescription("カテゴリ画面との往復後も保持")
+            viewModel.setCategory(original.id)
+        }
+        composeRule.onNode(hasText(original.name) and hasClickAction()).performClick()
+        composeRule.onNodeWithTag(TODO_EDITOR_ADD_CATEGORY_TAG).performClick()
+
+        // カテゴリ編集を破棄した場合は結果を返さないため、元の選択と下書きを維持する。
+        composeRule.runOnIdle {
+            assertEquals(1, categoryEditorOpenCount)
+            assertEquals("入力途中のTODO", viewModel.uiState.value.title)
+            assertEquals("カテゴリ画面との往復後も保持", viewModel.uiState.value.description)
+            assertEquals(original.id, viewModel.uiState.value.categoryId)
+
+            // 保存時だけ新規カテゴリと結果IDが到着する。
+            categoryRepository.replace(listOf(original, created))
+            savedStateHandle[TODO_EDITOR_CATEGORY_RESULT_KEY] = created.id
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            viewModel.uiState.value.categoryId == created.id
+        }
+
+        composeRule.runOnIdle {
+            assertEquals("入力途中のTODO", viewModel.uiState.value.title)
+            assertEquals("カテゴリ画面との往復後も保持", viewModel.uiState.value.description)
+            assertEquals(created.id, viewModel.uiState.value.categoryId)
+            assertEquals(null, savedStateHandle.get<String>(TODO_EDITOR_CATEGORY_RESULT_KEY))
         }
     }
 
@@ -486,6 +542,10 @@ private class TodoEditorTestCategoryRepository(
     categories: List<Category>,
 ) : CategoryRepository {
     private val state = MutableStateFlow(categories)
+    fun replace(categories: List<Category>) {
+        state.value = categories
+    }
+
     override fun observeCategories(): Flow<List<Category>> = state
     override suspend fun getCategory(id: String): Category? = state.value.firstOrNull { it.id == id }
     override suspend fun saveCategory(
