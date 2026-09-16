@@ -378,6 +378,63 @@ class CategoryManagementScreenSpecCoverageTest {
     }
 
     @Test
+    fun cm008_draggingAtListEdgeAutoScrollsAndSavesDroppedOrder() {
+        val initial = (1..30).map { index ->
+            Category(
+                id = "drag-$index",
+                name = "Drag $index",
+                colorIndex = index % CategoryColorOptions.size,
+                iconName = "Category",
+                sortOrder = index - 1,
+            )
+        }
+        val repository = CategoryScreenTestRepository(initial)
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
+        val dragController = CategoryDragTestController()
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                CategoryListScreenForTest(
+                    onDestination = {},
+                    viewModel = viewModel,
+                    dragTestController = dragController,
+                )
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Drag 1").fetchSemanticsNodes().isNotEmpty()
+        }
+        val listBounds = composeRule.onNodeWithTag(CATEGORY_LIST_TEST_TAG)
+            .fetchSemanticsNode().boundsInRoot
+        val rowBounds = composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + "drag-1")
+            .fetchSemanticsNode().boundsInRoot
+        val dragDelta = listBounds.bottom - rowBounds.center.y - 8f
+
+        composeRule.runOnIdle {
+            dragController.start("drag-1")
+            dragController.dragBy("drag-1", dragDelta)
+        }
+        composeRule.waitUntil(timeoutMillis = 8_000) {
+            dragController.currentScrollPosition().let { (index, offset) ->
+                index > 0 || offset > 0
+            }
+        }
+        composeRule.runOnIdle { dragController.finish("drag-1") }
+
+        composeRule.waitUntil(timeoutMillis = 8_000) {
+            repository.snapshot.indexOfFirst { it.id == "drag-1" } > 0
+        }
+        var savedPosition = 0
+        composeRule.runOnIdle {
+            val order = repository.snapshot.map(Category::id)
+            savedPosition = order.indexOf("drag-1") + 1
+            assertTrue("drag-1 was not reordered", savedPosition > 1)
+            assertEquals((1..30).map { "drag-$it" }.toSet(), order.toSet())
+        }
+        composeRule.onNodeWithText(text(R.string.category_reorder_saved, 30, savedPosition))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun cm026_deleteSuccessShowsMessageWithoutUndo() {
         val repository = setScreen(categories())
 

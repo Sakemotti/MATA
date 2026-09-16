@@ -130,6 +130,34 @@ fun CategoryListScreen(
     onDestination: (MataDestination) -> Unit,
     viewModel: CategoryListViewModel = hiltViewModel(),
 ) {
+    CategoryListScreenContent(
+        onDestination = onDestination,
+        viewModel = viewModel,
+        dragTestController = null,
+    )
+}
+
+@Composable
+@androidx.annotation.VisibleForTesting
+internal fun CategoryListScreenForTest(
+    onDestination: (MataDestination) -> Unit,
+    viewModel: CategoryListViewModel,
+    dragTestController: CategoryDragTestController,
+) {
+    CategoryListScreenContent(
+        onDestination = onDestination,
+        viewModel = viewModel,
+        dragTestController = dragTestController,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryListScreenContent(
+    onDestination: (MataDestination) -> Unit,
+    viewModel: CategoryListViewModel,
+    dragTestController: CategoryDragTestController?,
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -202,6 +230,46 @@ fun CategoryListScreen(
             draggedOffset = draggedTop - targetItem.offset
         }
         updateAutoScroll(draggedCenter)
+    }
+
+    fun startDrag(category: Category) {
+        if (viewModel.startReordering()) {
+            draggedCategoryId = category.id
+            draggedOffset = 0f
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
+    fun dragCategory(category: Category, delta: Float) {
+        draggedOffset += delta
+        moveDraggedCategory(category.id)
+    }
+
+    fun finishDrag(category: Category) {
+        autoScrollDelta = 0f
+        draggedCategoryId = null
+        draggedOffset = 0f
+        viewModel.finishReordering(category.id)
+    }
+
+    fun cancelDrag() {
+        autoScrollDelta = 0f
+        draggedCategoryId = null
+        draggedOffset = 0f
+        viewModel.cancelReordering()
+    }
+
+    SideEffect {
+        dragTestController?.bind(
+            onStart = { id -> state.categories.firstOrNull { it.id == id }?.let(::startDrag) },
+            onDrag = { id, delta ->
+                state.categories.firstOrNull { it.id == id }?.let { dragCategory(it, delta) }
+            },
+            onFinish = { id -> state.categories.firstOrNull { it.id == id }?.let(::finishDrag) },
+            scrollPosition = {
+                listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+            },
+        )
     }
 
     LaunchedEffect(viewModel, resources) {
@@ -381,29 +449,10 @@ fun CategoryListScreen(
                     onDelete = viewModel::requestDelete,
                     onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
                     onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
-                    onDragStart = { category ->
-                        if (viewModel.startReordering()) {
-                            draggedCategoryId = category.id
-                            draggedOffset = 0f
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-                    },
-                    onDrag = { category, delta ->
-                        draggedOffset += delta
-                        moveDraggedCategory(category.id)
-                    },
-                    onDragEnd = { category ->
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.finishReordering(category.id)
-                    },
-                    onDragCancel = {
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.cancelReordering()
-                    },
+                    onDragStart = ::startDrag,
+                    onDrag = ::dragCategory,
+                    onDragEnd = ::finishDrag,
+                    onDragCancel = ::cancelDrag,
                     onCloseEditor = ::requestCloseEditor,
                     viewModel = viewModel,
                 )
@@ -420,29 +469,10 @@ fun CategoryListScreen(
                     onDelete = viewModel::requestDelete,
                     onMoveUp = { id -> viewModel.moveCategoryOneStep(id, -1) },
                     onMoveDown = { id -> viewModel.moveCategoryOneStep(id, 1) },
-                    onDragStart = { category ->
-                        if (viewModel.startReordering()) {
-                            draggedCategoryId = category.id
-                            draggedOffset = 0f
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-                    },
-                    onDrag = { category, delta ->
-                        draggedOffset += delta
-                        moveDraggedCategory(category.id)
-                    },
-                    onDragEnd = { category ->
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.finishReordering(category.id)
-                    },
-                    onDragCancel = {
-                        autoScrollDelta = 0f
-                        draggedCategoryId = null
-                        draggedOffset = 0f
-                        viewModel.cancelReordering()
-                    },
+                    onDragStart = ::startDrag,
+                    onDrag = ::dragCategory,
+                    onDragEnd = ::finishDrag,
+                    onDragCancel = ::cancelDrag,
                     onRetry = viewModel::retryLoad,
                 )
             }
@@ -504,6 +534,31 @@ fun CategoryListScreen(
             onDismiss = viewModel::cancelDelete,
         )
     }
+}
+
+@androidx.annotation.VisibleForTesting
+internal class CategoryDragTestController {
+    private var onStart: ((String) -> Unit)? = null
+    private var onDrag: ((String, Float) -> Unit)? = null
+    private var onFinish: ((String) -> Unit)? = null
+    private var scrollPosition: (() -> Pair<Int, Int>)? = null
+
+    fun bind(
+        onStart: (String) -> Unit,
+        onDrag: (String, Float) -> Unit,
+        onFinish: (String) -> Unit,
+        scrollPosition: () -> Pair<Int, Int>,
+    ) {
+        this.onStart = onStart
+        this.onDrag = onDrag
+        this.onFinish = onFinish
+        this.scrollPosition = scrollPosition
+    }
+
+    fun start(categoryId: String) = requireNotNull(onStart)(categoryId)
+    fun dragBy(categoryId: String, delta: Float) = requireNotNull(onDrag)(categoryId, delta)
+    fun finish(categoryId: String) = requireNotNull(onFinish)(categoryId)
+    fun currentScrollPosition(): Pair<Int, Int> = requireNotNull(scrollPosition)()
 }
 
 internal data class CategoryPaneWidths(

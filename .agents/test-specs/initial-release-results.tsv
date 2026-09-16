@@ -262,7 +262,7 @@ CM-004	P2	category-management.md	未実施	-	-	-	-	-
 CM-005	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空状態ボタンとFABが同じ新規フォームを開くことを確認
 CM-006	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・選択カテゴリの名前、色、アイコンを編集フォームへ読み込むことを確認
 CM-007	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryListViewModelTest#cm007・testDebugUnitTest成功
-CM-008	P1	category-management.md	未実施	-	-	-	-	-
+CM-008	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm008・一覧端ドラッグ中の実スクロールとドロップ順保存を確認
 CM-009	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・カスタム移動操作の1位置移動と端の無効方向非提供を確認
 CM-010	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryTodoListViewModelTest#cm010・testDebugUnitTest成功
 CM-011	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・プレビュー、名前、色、アイコンと終了時刻入力なしを確認

@@ -262,7 +262,7 @@ CM-004	P2	category-management.md	UI/MANUAL	RELEASE_OWNER	OWNER	カテゴリ管�
 CM-005	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-006	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-007	P0	category-management.md	UI/INT/UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管理
-CM-008	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-008	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-009	P1	category-management.md	MANUAL/UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-010	P0	category-management.md	INT/UI/UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-011	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
