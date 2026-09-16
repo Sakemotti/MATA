@@ -1,17 +1,17 @@
 id	priority	specFile	result	executedAt	testerId	versionCode	environment	evidence
 APP-001	P0	app-core.md	合格	2026-09-09	OWNER	3	Android Emulator API 26 / Release相当版	CT-ENV-26・新規インストール、起動、主要画面と基本操作を確認
-APP-002	P0	app-core.md	未実施	-	-	-	-	-
+APP-002	P0	app-core.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	AppCoreConfigurationSpecCoverageTest#app002・Debug/Benchmark APKのID・表示名検査、同一端末へのインストール・起動成功
 APP-003	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・主要画面、ダイアログ、通知、ウィジェットの日本語表示を確認
 APP-004	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・ライト／ダークテーマで主要画面の表示一貫性を確認
 APP-005	P0	app-core.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#app005・CI run 34032419660成功
 APP-006	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・アカウント登録、クラウド同期、複数端末同期の入口がないことを確認
-APP-007	P1	app-core.md	未実施	-	-	-	-	-
+APP-007	P1	app-core.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#app007・connectedDebugAndroidTest成功
 APP-008	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・優先度、チェックリスト、一時停止・再開がないことを確認
 APP-009	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・アプリ独自のPIN、生体認証ロックがないことを確認
 APP-010	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・カテゴリ登録からTODO完了、カレンダー履歴確認までの基本E2Eを確認
 APP-011	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・ドロワーから全主要画面へ移動できることを確認
 APP-012	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・同一画面選択と画面往復時の選択状態、戻る操作を確認
-APP-013	P0	app-core.md	未実施	-	-	-	-	-
+APP-013	P0	app-core.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	AppCoreConfigurationSpecCoverageTest#app013・testDebugUnitTest成功
 DAY-001	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day001・testDebugUnitTest成功
 DAY-002	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day002・testDebugUnitTest成功
 DAY-003	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleTestSpecCoverageTest#day003・testDebugUnitTest成功
@@ -58,10 +58,10 @@ RPT-029	P0	app-core.md	合格	2026-09-04	AUTO	1	Gradle 9.7.1 / Windows	ScheduleT
 RPT-030	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#rpt030・CI run 33925067768成功
 RPT-031	P0	app-core.md	合格	2026-09-13	AUTO	5	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#rpt031・testDebugUnitTest成功
 STA-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta001・CI run 33927632450成功
-STA-002	P0	app-core.md	未実施	-	-	-	-	-
+STA-002	P0	app-core.md	合格	2026-09-15	AUTO	5	Local Gradle / JDK 21	AppCoreConfigurationSpecCoverageTest#sta002・testDebugUnitTest成功
 STA-003	P0	app-core.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#sta003・connectedDebugAndroidTest成功
 STA-004	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta004・CI run 33927632450成功
-STA-005	P0	app-core.md	未実施	-	-	-	-	-
+STA-005	P0	app-core.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	RoomTodoStateSpecCoverageTest#sta005・connectedDebugAndroidTest成功
 STA-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta006・CI run 33927632450成功
 STA-007	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta007・CI run 33927632450成功
 STA-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#sta008・CI run 33927632450成功
@@ -99,15 +99,15 @@ WGT-012	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (
 WGT-013	P0	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Androidホーム画面	CT-002・操作ダイアログ表示後に別経路で状態変更しても重複・無効な履歴を作らないことを確認
 WGT-014	P1	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / Google Play Closed testing / 機内モード	CT-003・CT-006・実広告の配置と、機内モードで広告が表示されず強制終了せず操作を継続できることを確認
 DAT-001	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat001・CI run 33929968497成功
-DAT-002	P0	app-core.md	未実施	-	-	-	-	-
+DAT-002	P0	app-core.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	AppCoreConfigurationSpecCoverageTest#dat002・testDebugUnitTest成功
 DAT-003	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	HolidayHttpRequestPrivacyTest#dat003・CI run 33929968497成功
-DAT-004	P1	app-core.md	未実施	-	-	-	-	-
+DAT-004	P1	app-core.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	AppCoreConfigurationSpecCoverageTest#dat004・testDebugUnitTest成功
 DAT-005	P1	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	DataProtectionConfigurationSpecCoverageTest#dat005・CI run 33929968497成功
 DAT-006	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat006・CI run 33929968497成功
 DAT-007	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#dat007・CI run 33929968497成功
 DAT-008	P0	app-core.md	合格	2026-09-05	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#dat008・CI run 33929968497成功
-DAT-009	P1	app-core.md	未実施	-	-	-	-	-
-DAT-010	P1	app-core.md	未実施	-	-	-	-	-
+DAT-009	P1	app-core.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	RoomDataProtectionSpecCoverageTest#dat009・保存領域削除後の全データ表、初期設定、カテゴリ未設定への復帰とBenchmark版pm clear後の再起動・画面表示を確認
+DAT-010	P1	app-core.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	BackupSpecCoverageTest#dat010・connectedDebugAndroidTest成功
 REL-001	P0	app-core.md	合格	2026-09-03	AUTO	1	ローカルJDK 17・GitHub Actions Ubuntu	ローカルJUnit XML 134件成功・main CI https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-002	P0	app-core.md	合格	2026-09-06	OWNER	1	JUnit・Room試験一覧・CI run 34033551344	論理日・繰り返し・期限・履歴の正常/境界/異常を56件の専用テストで確認
 REL-003	P0	app-core.md	合格	2026-09-06	OWNER	1	ローカルJDK 17・PR CI API 30	主要9画面ViewModelの直接テスト32件で読み込み・成功・空・エラー・再試行・二重操作防止を確認
@@ -117,7 +117,7 @@ REL-006	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	assembleDe
 REL-007	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	対象commit e57ababdのmain CI成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-008	P1	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37)	CT-ENV-VISUAL・ライト、ダーク、端末追従、最大フォント、最大表示サイズで主要11画面を確認
 REL-009	P1	app-core.md	合格	2026-09-07	OWNER	1	Release SBOM・Manifest・実装・Google公式資料・公開法的ページ	外部SDK、権限、収集共有、UMP、ストア掲載および有料機能の差異0件
-REL-010	P0	app-core.md	未実施	-	-	-	-	-
+REL-010	P0	app-core.md	合格	2026-09-16	OWNER	5	項目別結果TSV・GitHub Issues・Closed testing台帳	REL-010自身を除くP0/P1 404件が全合格、P2不合格・保留・対象外0件、未解決Issue 0件を確認。試験ゲートは合格、本番公開はClosed testing期間・Production access等の外部ゲート待ち
 REL-011	P1	app-core.md	合格	2026-09-07	OWNER	1	AGP 9.3.2・主要ソース・PR CI	内蔵Kotlin・Compose・Material 3・単一画面Activity・Coroutines・java.timeを静的確認
 REL-012	P1	app-core.md	合格	2026-09-07	OWNER	1	レイヤー静的検査・PR CI	domain禁止依存0件・data→ui 0件・ui→app/data 0件・画面の直接データアクセス0件
 REL-013	P1	app-core.md	合格	2026-09-07	OWNER	1	domain/UI静的検査・JUnit	業務計算をdomainへ分離・不変UiState 9個・StateFlowとイベント経路を確認
@@ -135,59 +135,59 @@ REL-024	P0	app-core.md	合格	2026-09-03	AUTO+USER	1	署名済みAAB・Play Cons
 REL-025	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	Release SBOM生成と成果物検証成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-026	P0	app-core.md	合格	2026-09-04	AUTO	1	Node.js 18.13.0 / Windows	release-artifact-verifier.test.mjsの正常系・改変検出7ケース成功
 REL-027	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions API 30 x86_64	instrumented test 34件成功 https://github.com/Sakemotti/MATA/actions/runs/33750730765
-TL-001	P0	todo-list.md	未実施	-	-	-	-	-
-TL-002	P0	todo-list.md	未実施	-	-	-	-	-
-TL-003	P0	todo-list.md	未実施	-	-	-	-	-
-TL-004	P1	todo-list.md	未実施	-	-	-	-	-
+TL-001	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl001・PR #212 CI run 34799349988成功
+TL-002	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListViewModelTest#tl002・PR #211 CI run 34793793877成功
+TL-003	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#tl003とTODO行表示試験・PR #212 CI run 34799349988成功
+TL-004	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl004・PR #213 CI run 34808229109成功
 TL-005	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl005_pastDateShowsEveryStateWithoutMutationControlsAndOpensReadOnlyDetail・PR CI成功
 TL-006	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl006_futureDateAllowsOpeningEditorButNotCompletionOrSkip・PR CI成功
-TL-007	P1	todo-list.md	未実施	-	-	-	-	-
+TL-007	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl007・PR #213 CI run 34808229109成功
 TL-008	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListGroupingTest#tl008・testDebugUnitTest成功
 TL-009	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListGroupingTest#tl009・testDebugUnitTest成功
-TL-010	P1	todo-list.md	未実施	-	-	-	-	-
+TL-010	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl010・PR #213 CI run 34808229109成功
 TL-011	P0	todo-list.md	合格	2026-09-09	AUTO	3	API 34 x86_64 emulator	TodoListTopBarActionsTest#tl011・connectedDebugAndroidTest成功
-TL-012	P1	todo-list.md	未実施	-	-	-	-	-
+TL-012	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl012・PR #213 CI run 34808229109成功
 TL-013	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl013_completionImmediatelyUpdatesListAndShowsNoUndoAction・PR CI成功
 TL-014	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl014_completedCheckboxIsReadOnlyAndDoesNotChangeProgress・PR CI成功
 TL-015	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl015_skipImmediatelyRemovesRowAndShowsNoUndoAction・PR CI成功
-TL-016	P0	todo-list.md	未実施	-	-	-	-	-
+TL-016	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#tl016・PR #212 CI run 34799349988成功
 TL-017	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl017_archiveAndDeleteExplainScopeBeforeIrreversibleAction・PR CI成功
-TL-018	P1	todo-list.md	未実施	-	-	-	-	-
-TL-019	P1	todo-list.md	未実施	-	-	-	-	-
+TL-018	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tl018・PR #212 CI run 34799349988成功
+TL-019	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	TodoListScreenSpecCoverageTest#tl019_addUsesCurrentLogicalDateOrDisplayedFutureDate・connectedDebugAndroidTest成功
 TL-020	P0	todo-list.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	TodoListScreenSpecCoverageTest#tl020_pastDateNeverOffersTodoCreationEvenWhenEmpty・PR CI成功
-TL-021	P1	todo-list.md	未実施	-	-	-	-	-
-TL-022	P1	todo-list.md	未実施	-	-	-	-	-
-TL-023	P1	todo-list.md	未実施	-	-	-	-	-
+TL-021	P1	todo-list.md	合格	2026-09-14	AUTO	5	Gradle 9.7.1 / GitHub Actions	TodoListViewModelTest#tl021・PR #212 CI run 34799349988成功
+TL-022	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	TodoListScreenSpecCoverageTest#tl022_dateCompletedVisibilityAndScrollRestoreWithSavedInstanceState・connectedDebugAndroidTest成功
+TL-023	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	TodoListScreenSpecCoverageTest#tl023_consentPendingAndFailedAdLeaveNoEmptyBannerSpace・connectedDebugAndroidTest成功
 TL-024	P1	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListViewModelTest#tl024・testDebugUnitTest成功
 TL-025	P1	todo-list.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・TODO一覧の情報、状態、操作を読み上げ順に操作できることを確認
-TL-026	P0	todo-list.md	未実施	-	-	-	-	-
-TL-027	P0	todo-list.md	未実施	-	-	-	-	-
-TL-028	P1	todo-list.md	未実施	-	-	-	-	-
-TL-029	P1	todo-list.md	未実施	-	-	-	-	-
-TL-030	P1	todo-list.md	未実施	-	-	-	-	-
+TL-026	P0	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions / Gradle 9.7.1	TodoListViewModelTest#tl026・PR #211 CI run 34793793877成功
+TL-027	P0	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#tl027_settingsImmediatelyRecalculateVisibleCurrentAndFutureTodoState・connectedDebugAndroidTest成功
+TL-028	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	MataBannerAdSpecCoverageTest#tl028_consentRevisionReplacesAndConsentLossDisposesBannerResource・connectedDebugAndroidTest成功
+TL-029	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	MataTodoListItemTest#tl029・PR #211 CI run 34793793877成功
+TL-030	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	MataBannerAdSpecCoverageTest#tl030_loadingAndLoadedBannerKeepReservedLayoutWhileTopActionChanges・connectedDebugAndroidTest成功
 TL-031	P0	todo-list.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoListContentFlowTest#tl031・testDebugUnitTest成功
 TL-032	P0	todo-list.md	合格	2026-09-09	AUTO	3	API 34 x86_64 emulator	MataTodoListItemTest#tl032・connectedDebugAndroidTest成功
 TL-D01	P2	todo-list.md	未実施	-	-	-	-	-
 TL-D02	P2	todo-list.md	未実施	-	-	-	-	-
 TL-D03	P2	todo-list.md	未実施	-	-	-	-	-
-TL-D04	P1	todo-list.md	未実施	-	-	-	-	-
+TL-D04	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListTopBarActionsTest#tld04・PR #211 CI run 34793793877成功
 TL-D05	P2	todo-list.md	未実施	-	-	-	-	-
-TL-D06	P1	todo-list.md	未実施	-	-	-	-	-
-TL-D07	P1	todo-list.md	未実施	-	-	-	-	-
-TE-001	P0	todo-editor.md	未実施	-	-	-	-	-
-TE-002	P1	todo-editor.md	未実施	-	-	-	-	-
+TL-D06	P1	todo-list.md	合格	2026-09-14	AUTO	5	GitHub Actions API 30 x86_64	TodoListScreenSpecCoverageTest#tld06・PR #211 CI run 34793793877成功
+TL-D07	P1	todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	TodoListScreenSpecCoverageTest#tld07_longPastDetailShowsAllFieldsAndDismissesWithEverySupportedAction・connectedDebugAndroidTest成功
+TE-001	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te001・connectedDebugAndroidTest成功
+TE-002	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te002・connectedDebugAndroidTest成功
 TE-003	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te003・testDebugUnitTest成功
-TE-004	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-005	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-004	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te004・connectedDebugAndroidTest成功
+TE-005	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te005・connectedDebugAndroidTest成功
 TE-006	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te006・testDebugUnitTest成功
 TE-007	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te007・testDebugUnitTest成功
-TE-008	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-008	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te008・connectedDebugAndroidTest成功
 TE-009	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te009・testDebugUnitTest成功
-TE-010	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-010	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local JDK 21 / JVM	TodoEditorViewModelTest#te010・testDebugUnitTest成功
 TE-011	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoRecurrenceSpecCoverageTest#te011・CI run 34029287328成功
 TE-012	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te012・testDebugUnitTest成功
-TE-013	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-014	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-013	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te013・connectedDebugAndroidTest成功
+TE-014	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local JDK 21 / JVM	TodoScheduleCalculatorTest#te014・testDebugUnitTest成功
 TE-015	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalculatorTest#te015・testDebugUnitTest成功
 TE-016	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te016・testDebugUnitTest成功
 TE-017	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te017・testDebugUnitTest成功
@@ -197,18 +197,18 @@ TE-020	P1	todo-editor.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86
 TE-021	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#te021・CI run 34029287328成功
 TE-022	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te022・CI run 34029287328成功
 TE-023	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#te023・CI run 34029287328成功
-TE-024	P0	todo-editor.md	未実施	-	-	-	-	-
+TE-024	P0	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te024・connectedDebugAndroidTest成功
 TE-025	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te025・testDebugUnitTest成功
-TE-026	P1	todo-editor.md	未実施	-	-	-	-	-
-TE-027	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-026	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te026・connectedDebugAndroidTest成功
+TE-027	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te027・connectedDebugAndroidTest成功
 TE-028	P0	todo-editor.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	TodoEditorViewModelTest#te028・testDebugUnitTest成功
-TE-029	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-029	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#te029・connectedDebugAndroidTest成功
 TE-030	P1	todo-editor.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・全入力、選択、エラー、保存、戻るを色だけに依存せず操作できることを確認
 TE-031	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te031・testDebugUnitTest成功
 TE-032	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te032・testDebugUnitTest成功
 TE-033	P1	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#te033・testDebugUnitTest成功
 TE-D01	P2	todo-editor.md	未実施	-	-	-	-	-
-TE-D02	P1	todo-editor.md	未実施	-	-	-	-	-
+TE-D02	P1	todo-editor.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#ted02・connectedDebugAndroidTest成功
 TE-D03	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoEditorViewModelTest#ted03・testDebugUnitTest成功
 TE-D04	P0	todo-editor.md	合格	2026-09-12	AUTO	4	Local JDK 21	TodoScheduleCalculatorTest#ted04・testDebugUnitTest成功
 TE-D05	P0	todo-editor.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomTodoStateSpecCoverageTest#ted05・CI run 34029287328成功
@@ -220,7 +220,7 @@ CH-004	P1	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHist
 CH-005	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Local JDK 21	CalendarHistoryViewModelTest#ch005_futureDatesAndMonthsCannotBeSelected・testDebugUnitTest成功
 CH-006	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch006・testDebugUnitTest成功
 CH-007	P1	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	CalendarGridDatesTest#ch007・testDebugUnitTest成功
-CH-008	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-008	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#ch008・ライト、ダーク、Dynamic Colorで選択日文字の4.5:1以上のコントラスト、現在日枠、選択中・今日の意味を確認
 CH-009	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#ch009・testDebugUnitTest成功
 CH-010	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch010・CI run 34557570307成功
 CH-011	P0	calendar-history.md	合格	2026-09-11	AUTO	3	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch011・CI run 34557570307成功
@@ -244,154 +244,154 @@ CH-028	P0	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	Ca
 CH-029	P1	calendar-history.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomHistoryRepositoryTest#ch029・CI run 34030219484成功
 CH-030	P1	calendar-history.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CalendarHistoryViewModelTest#ch030・testDebugUnitTest成功
 CH-031	P0	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・履歴更新、週開始曜日変更、明示更新で表示月日を再読込することを確認
-CH-032	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-032	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#ch032・一時再生成で過去月、日、一覧位置、詳細、取り消し表示を保持し、新規ViewModelは今日へ戻ることを確認
 CH-033	P2	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・検索、絞り込み、共有、出力、FAB、広告を表示しないことを確認
 CH-034	P1	calendar-history.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・日付、履歴状態、期間結果、操作可否を識別して操作できることを確認
-CH-035	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-035	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#ch035・320dp幅、fontScale 2.0で月移動、日付、集計、全状態履歴、取り消し操作へ到達できることを確認
 CH-D01	P2	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・月カレンダーを固定しサマリーと履歴だけがスクロールすることを確認
 CH-D02	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・当月で翌月ボタンと未来方向スワイプが無効になることを確認
-CH-D03	P1	calendar-history.md	未実施	-	-	-	-	-
+CH-D03	P1	calendar-history.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CalendarHistoryScreenSpecCoverageTest#chd03・月外日を弱く表示し、未来日はdisabled semanticsで色以外にも操作不能を伝えることを確認
 CH-D04	P0	calendar-history.md	合格	2026-09-11	AUTO	3	Gradle 9.7.1 / Windows	HistoryModelsTest#chd04・testDebugUnitTest成功
 CH-D05	P0	calendar-history.md	合格	2026-09-13	AUTO	5	Android Emulator API 30 x86_64	RoomHistoryRepositoryTest#chd05・CI run 34751041027成功
 CH-D06	P1	calendar-history.md	合格	2026-09-13	AUTO	5	JVM / GitHub Actions	PR #202 CI run 34753189344・再生成した画面が月、日付、位置を保持せず当日に戻ることを確認
 CH-D07	P1	calendar-history.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #202 CI run 34753189344・実行履歴と期間結果の詳細レイアウト、スクロール、固定閉じる、システム戻るを確認
 CM-001	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・ドロワー遷移、全画面表示、選択状態を確認
 CM-002	P0	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・ユーザーカテゴリだけが管理対象になることを確認
-CM-003	P1	category-management.md	未実施	-	-	-	-	-
+CM-003	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm003・行のアイコン、色、名前、並べ替えハンドル、削除メニューを確認
 CM-004	P2	category-management.md	未実施	-	-	-	-	-
 CM-005	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空状態ボタンとFABが同じ新規フォームを開くことを確認
 CM-006	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・選択カテゴリの名前、色、アイコンを編集フォームへ読み込むことを確認
 CM-007	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryListViewModelTest#cm007・testDebugUnitTest成功
-CM-008	P1	category-management.md	未実施	-	-	-	-	-
+CM-008	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm008・一覧端ドラッグ中の実スクロールとドロップ順保存を確認
 CM-009	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・カスタム移動操作の1位置移動と端の無効方向非提供を確認
 CM-010	P0	category-management.md	合格	2026-09-12	AUTO	4	Local JDK 21	CategoryTodoListViewModelTest#cm010・testDebugUnitTest成功
 CM-011	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・プレビュー、名前、色、アイコンと終了時刻入力なしを確認
 CM-012	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm012・connectedDebugAndroidTest成功
 CM-013	P1	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm013・connectedDebugAndroidTest成功
-CM-014	P1	category-management.md	未実施	-	-	-	-	-
-CM-015	P1	category-management.md	未実施	-	-	-	-	-
-CM-016	P1	category-management.md	未実施	-	-	-	-	-
+CM-014	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm014・16色の表示、名称、選択状態を確認
+CM-015	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm015・テーマ別トーン変更と保存色ID不変を確認
+CM-016	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm016・用途別表示と名前、グループ、正規化キーワード検索を確認
 CM-017	P2	category-management.md	未実施	-	-	-	-	-
 CM-018	P0	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryEditorViewModelTest#cm018・testDebugUnitTest成功
-CM-019	P1	category-management.md	未実施	-	-	-	-	-
-CM-020	P0	category-management.md	未実施	-	-	-	-	-
+CM-019	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm019・追加後の末尾移動と強調、編集後の一覧位置維持、成功通知を確認
+CM-020	P0	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	TodoEditorScreenSpecCoverageTest#cm020・カテゴリ追加の保存／破棄後もTODO下書きを維持し、保存時だけ新カテゴリを選択
 CM-021	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm021・connectedDebugAndroidTest成功
-CM-022	P0	category-management.md	未実施	-	-	-	-	-
+CM-022	P0	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm022・カテゴリ情報、通常・アーカイブ件数、未設定への移動、不可逆性を確認
 CM-023	P0	category-management.md	合格	2026-09-12	AUTO	4	CI Android Emulator API 30 x86_64	RoomCategoryRepositoryTest#cm023・connectedDebugAndroidTest成功
 CM-024	P0	category-management.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#cm024・CI run 34031589568成功
-CM-025	P1	category-management.md	未実施	-	-	-	-	-
+CM-025	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#cm025・削除カテゴリのタブ除去とカテゴリ未設定への切替を確認
 CM-026	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・削除成功通知と取り消し非提供を確認
 CM-027	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・変更時だけ破棄確認し継続・破棄が仕様どおりであることを確認
-CM-028	P1	category-management.md	未実施	-	-	-	-	-
+CM-028	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cm028とCategoryListViewModelTest#cm028・一覧位置、下書き、色、アイコン、エラー、検索画面を復元し通常ダイアログを閉じることを確認
 CM-029	P1	category-management.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	CategoryListViewModelTest#cm029・testDebugUnitTest成功
 CM-030	P1	category-management.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・カテゴリ名、色、アイコン、選択、順序、エラーを識別して操作できることを確認
 CM-031	P2	category-management.md	未実施	-	-	-	-	-
 CM-D01	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #203 CI run 34756112549・空名、固定緑色、カテゴリアイコンと終了時刻入力なしを確認
 CM-D02	P2	category-management.md	未実施	-	-	-	-	-
 CM-D03	P1	category-management.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #204 CI run 34758657480・即時プレビュー、空名、エラー継続、操作非提供を確認
-CM-D04	P1	category-management.md	未実施	-	-	-	-	-
-CM-D05	P1	category-management.md	未実施	-	-	-	-	-
+CM-D04	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cmd04・16色の固定ID、日本語名、基準色を照合
+CM-D05	P1	category-management.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	CategoryManagementScreenSpecCoverageTest#cmd05・全47 Material Icons IDと日本語名、カスタム入力なしを照合
 CM-D06	P2	category-management.md	未実施	-	-	-	-	-
-AT-001	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-001	P1	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at001・connectedDebugAndroidTest成功、設定側の重複導線なしはST-017でも確認
 AT-002	P0	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at002・connectedDebugAndroidTest成功
-AT-003	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-003	P1	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at003・connectedDebugAndroidTest成功
 AT-004	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at004・connectedDebugAndroidTest成功
 AT-005	P1	archived-todos.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	ArchiveListViewModelTest#at005・testDebugUnitTest成功
 AT-006	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at006・connectedDebugAndroidTest成功
-AT-007	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-007	P1	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at007・connectedDebugAndroidTest成功
 AT-008	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at008・connectedDebugAndroidTest成功
 AT-009	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at009・connectedDebugAndroidTest成功
-AT-010	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-010	P1	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at010・connectedDebugAndroidTest成功
 AT-011	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at011・connectedDebugAndroidTest成功
-AT-012	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-012	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at012_largeMixedHistoryPagesNewestFirstAndOpensReadOnlySnapshots・connectedDebugAndroidTest成功
 AT-013	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at013・connectedDebugAndroidTest成功
-AT-014	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-014	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at014・connectedDebugAndroidTest成功
 AT-015	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at015・RoomArchiveRepositoryTest#pastEndedTodoRestore・connectedDebugAndroidTest成功
 AT-016	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at016・connectedDebugAndroidTest成功
 AT-017	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at017・connectedDebugAndroidTest成功
 AT-018	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at018・CI run 34027426978成功
 AT-019	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at019・CI run 34027426978成功
-AT-020	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-020	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at020・connectedDebugAndroidTest成功
 AT-021	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	NotificationSchedulerTestSpecCoverageTest#at021・CI run 34027426978成功
 AT-022	P0	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at022・RoomArchiveRepositoryTest#unavailableNotificationsRemainConfigured・connectedDebugAndroidTest成功
 AT-023	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at023・connectedDebugAndroidTest成功
-AT-024	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-024	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at024_listAndDetailRestoreKeepSearchAndSortAndReturnToList・connectedDebugAndroidTest成功
 AT-025	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at025・connectedDebugAndroidTest成功
-AT-026	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-026	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at026・connectedDebugAndroidTest成功
 AT-027	P1	archived-todos.md	合格	2026-09-12	AUTO	4	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at027・connectedDebugAndroidTest成功
 AT-028	P0	archived-todos.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at028・connectedDebugAndroidTest成功
 AT-029	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at029・connectedDebugAndroidTest成功
-AT-030	P0	archived-todos.md	未実施	-	-	-	-	-
+AT-030	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#at030・connectedDebugAndroidTest成功
 AT-031	P1	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#at031・CI run 34027426978成功
-AT-032	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-033	P0	archived-todos.md	未実施	-	-	-	-	-
-AT-034	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-035	P1	archived-todos.md	未実施	-	-	-	-	-
-AT-036	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-032	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at032・connectedDebugAndroidTest成功
+AT-033	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at033・connectedDebugAndroidTest成功
+AT-034	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at034_reopeningClearsSearchAndPositionButRestoresOnlySortOrder・connectedDebugAndroidTest成功
+AT-035	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at035_returnFromDetailKeepsSearchSortLoadedPagesAndListPosition・connectedDebugAndroidTest成功
+AT-036	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at036_savedInstanceRestoresSearchPositionsDialogsAndDoesNotDuplicateRunningAction・connectedDebugAndroidTest成功
 AT-037	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	ArchiveListViewModelTest#at037・testDebugUnitTest成功
 AT-038	P2	archived-todos.md	未実施	-	-	-	-	-
 AT-039	P1	archived-todos.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・検索、TODO行、詳細、履歴、復元、削除確認を識別して操作できることを確認
-AT-040	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-040	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at040_maximumFontAndCompactDisplayKeepDetailHistoryAndFixedActionsReachable・connectedDebugAndroidTest成功
 AT-D01	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#atd01・connectedDebugAndroidTest成功
 AT-D02	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#atd02・connectedDebugAndroidTest成功
-AT-D03	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D03	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#atd03_fixedActionsStayAvailableWhileAdditionalHistoryPagesLoad・connectedDebugAndroidTest成功
 AT-D04	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#atd04・connectedDebugAndroidTest成功
 AT-D05	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd05・CI run 34027426978成功
 AT-D06	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd06・CI run 34027426978成功
-AT-D07	P1	archived-todos.md	未実施	-	-	-	-	-
-ST-001	P1	settings.md	未実施	-	-	-	-	-
+AT-D07	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#atd07_fullExecutionAndPeriodSnapshotsUseScrollableReadOnlyDetailAndBothClosePaths・connectedDebugAndroidTest成功
+ST-001	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st001・設定画面のドロワー選択状態と別画面への遷移通知を確認
 ST-002	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・一般、表示、通知、データ管理、アプリ情報の表示順を確認
 ST-003	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・値選択、スイッチ、遷移、処理開始、静的表示の操作種別を確認
 ST-004	P2	settings.md	未実施	-	-	-	-	-
 ST-005	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・0:00〜23:00の24候補と選択保存を確認
-ST-006	P1	settings.md	未実施	-	-	-	-	-
-ST-007	P0	settings.md	未実施	-	-	-	-	-
-ST-008	P0	settings.md	未実施	-	-	-	-	-
+ST-006	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st006・0時、4時、12時で全TODO適用の案内と論理日境界説明が動的に変わることを確認
+ST-007	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#st007・カテゴリ未設定と複数カテゴリを含む対象日、期限順、通知日時と無効通知抑止の再計算を確認
+ST-008	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st008・影響TODO/通知件数を事前表示し、取消時は維持、続行時は再検証後に保存・抑止・件数案内することを確認
 ST-009	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・全7曜日の候補と選択保存を確認
 ST-010	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st010・CI run 33863729049成功
 ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsScheduleSpecCoverageTest#st011・CI run 33863729049成功
-ST-012	P1	settings.md	未実施	-	-	-	-	-
-ST-013	P1	settings.md	未実施	-	-	-	-	-
-ST-014	P1	settings.md	未実施	-	-	-	-	-
-ST-015	P1	settings.md	未実施	-	-	-	-	-
+ST-012	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#st012・設定とTODO一覧が初期非表示の同一値を共有し、双方の変更と再生成へ即時反映することを確認
+ST-013	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st013・3テーマの選択即時反映と端末追従だけがOSテーマ変更へ追従する判定を確認
+ST-014	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st014・許可/拒否表示、Android通知設定Intent、復帰時の状態再取得と通知再構成を確認
+ST-015	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st015・対象外非表示、未許可/許可表示、正確なアラーム設定Intent、復帰時再取得を確認
 ST-016	P2	settings.md	未実施	-	-	-	-	-
-ST-017	P1	settings.md	未実施	-	-	-	-	-
-ST-018	P0	settings.md	未実施	-	-	-	-	-
+ST-017	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st017・設定本文に他の主要画面への重複導線が表示されないことを確認
+ST-018	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st018・ACTION_CREATE_DOCUMENT、MIME、候補名、広範ストレージ権限なし、取消の無通知を確認
 ST-019	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st019・CI run 33867709111成功
 ST-020	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st020・CI run 33867709111成功
-ST-021	P0	settings.md	未実施	-	-	-	-	-
+ST-021	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	BackupSpecCoverageTest#st021・容量不足/I/O/中断を分類し、一時データを除去して削除不能な出力名と対処を案内することを確認
 ST-022	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・作成前の個人情報、非暗号化、安全保管の警告を確認
 ST-023	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st023・CI run 33867709111成功
-ST-024	P0	settings.md	未実施	-	-	-	-	-
-ST-025	P0	settings.md	未実施	-	-	-	-	-
+ST-024	P0	settings.md	合格	2026-09-15	AUTO	5	Gradle 9.7.1 / Windows	SettingsViewModelTest#st024・無効形式と未対応形式の理由を区別し、現在の設定値を変更しないことを確認
+ST-025	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st025・復元確認に作成情報、対象件数、全置換・取消不可・非暗号化警告が揃うことを確認
 ST-026	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st026・CI run 33871324075成功
-ST-027	P0	settings.md	未実施	-	-	-	-	-
+ST-027	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st027・復元成功を確定して結果を一度だけ消費し、TODO一覧へ戻るコールバックを通知することを確認
 ST-028	P0	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・バックグラウンド移行とプロセス再生成後も処理状態へ復帰し二重実行しないことを確認
 ST-029	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#st029・CI run 33871324075成功
 ST-030	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・独立広告セクションと掲載位置固定行がないことを確認
 ST-031	P0	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・有料商品、価格、購入、広告削除UIがないことを確認
-ST-032	P1	settings.md	未実施	-	-	-	-	-
-ST-033	P0	settings.md	未実施	-	-	-	-	-
-ST-034	P0	settings.md	未実施	-	-	-	-	-
-ST-035	P0	settings.md	未実施	-	-	-	-	-
-ST-036	P1	settings.md	未実施	-	-	-	-	-
+ST-032	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st032・UMPが要求しない場合にプライバシーオプション行を表示しないことを確認
+ST-033	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st033・要求時にアプリ情報内の規約リンク間へプライバシーオプション行を表示することを確認
+ST-034	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st034・プライバシーオプション行からUMPフォーム起動を1回要求することを確認
+ST-035	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	MataBannerAdSpecCoverageTest#st035・フォーム表示時に既存広告を破棄し、更新後のcanRequestAdsと同意revisionで再評価することを確認
+ST-036	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st036・UMPエラーを表示して設定画面と基本設定値を維持することを確認
 ST-037	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・必須アプリ情報とWebサイト、問合せ非表示を確認
 ST-038	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・Debug版の識別可能なバージョン表記を確認
 ST-039	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	OpenSourceLicensesTest#st039・testDebugUnitTest成功
-ST-040	P1	settings.md	未実施	-	-	-	-	-
+ST-040	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st040・承認済みの規約URLを外部遷移へ渡し、不正URLを拒否してブラウザ失敗時は設定内にエラー表示することを確認
 ST-041	P0	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st041・testDebugUnitTest成功
 ST-042	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st042・testDebugUnitTest成功
 ST-043	P1	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・回転とプロセス再生成後に対象状態を復元し二重実行しないことを確認
 ST-044	P1	settings.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・設定名、値、状態、進捗、エラー、破壊的影響を識別して操作できることを確認
-ST-045	P1	settings.md	未実施	-	-	-	-	-
+ST-045	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st045・フォント倍率200%・320×640dpで全設定の内容、説明、現在値、スイッチ、バックアップ、復元、広告プライバシー設定へ到達・操作できることを確認
 ST-D01	P2	settings.md	未実施	-	-	-	-	-
 ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std02・CI run 33867709111成功
 ST-D03	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std03・CI run 33867709111成功
-ST-D04	P0	settings.md	未実施	-	-	-	-	-
+ST-D04	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#std04・文字入力なしで確認を中止でき、復元開始後は取消操作と戻る操作で閉じないことを確認
 ST-D05	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std05・CI run 33871324075成功
-ST-D06	P0	settings.md	未実施	-	-	-	-	-
+ST-D06	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	BackupSpecCoverageTest#std06・UMP同意と広告状態の変更前後でTODO等のバックアップペイロードが完全一致することを確認
 ST-D07	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	SettingsBuildConfigurationSpecCoverageTest#std07・CI run 33875902463成功
-CTL-001	P0	category-todo-list.md	未実施	-	-	-	-	-
+CTL-001	P0	category-todo-list.md	合格	2026-09-14	AUTO	5	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl001_drawerAndWidgetCategoryHeaderOpenIndependentSelectedList・connectedDebugAndroidTest成功
 CTL-002	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl002・connectedDebugAndroidTest成功
 CTL-003	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl003・connectedDebugAndroidTest成功
 CTL-004	P0	category-todo-list.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	CategoryTodoListScreenTest#ctl004・connectedDebugAndroidTest成功

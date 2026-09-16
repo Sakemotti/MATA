@@ -15,6 +15,7 @@ import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.domain.repository.CategoryTodoCounts
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -43,6 +44,7 @@ class RoomCategoryRepositoryTest {
         repository = RoomCategoryRepository(
             database = database,
             categoryDao = database.categoryDao(),
+            todoDao = database.todoDao(),
             clock = Clock.fixed(
                 Instant.parse("2026-08-17T00:00:00Z"),
                 ZoneId.of("Asia/Tokyo"),
@@ -156,6 +158,11 @@ class RoomCategoryRepositoryTest {
         database.todoDao().upsert(activeTodo)
         database.todoDao().upsert(archivedTodo)
         insertExecution("active-history", activeTodo, originalCategory)
+
+        assertEquals(
+            CategoryTodoCounts(active = 1, archived = 1),
+            repository.getTodoCounts(originalCategory.id),
+        )
 
         repository.deleteCategory(originalCategory.id).getOrThrow()
 

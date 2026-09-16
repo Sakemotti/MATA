@@ -113,31 +113,12 @@ class WidgetUpdater @Inject constructor(
         )
     }
 
-    fun scheduleUndoExpiry(appWidgetId: Int, expiresAt: Long) {
-        val delay = (expiresAt - System.currentTimeMillis()).coerceAtLeast(0)
-        val request = OneTimeWorkRequest.Builder(WidgetUndoExpiryWorker::class.java)
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-            .setInputData(workDataOf(INPUT_APP_WIDGET_ID to appWidgetId))
-            .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            undoWorkName(appWidgetId),
-            ExistingWorkPolicy.REPLACE,
-            request,
-        )
-    }
-
-    fun cancelUndoExpiry(appWidgetId: Int) {
-        WorkManager.getInstance(context).cancelUniqueWork(undoWorkName(appWidgetId))
-    }
-
     fun ensureScheduledIfWidgetsExist() {
         if (activeAppWidgetIds(context).isNotEmpty()) {
             startPeriodic()
             requestUpdate()
         }
     }
-
-    private fun undoWorkName(appWidgetId: Int) = "widget-undo-expiry-$appWidgetId"
 
     companion object {
         const val UPDATE_WORK_NAME = "widget-update"
@@ -164,31 +145,6 @@ class WidgetRefreshWorker(
 
     private companion object {
         const val MAX_RETRY_INDEX = 3
-    }
-}
-
-class WidgetUndoExpiryWorker(
-    appContext: Context,
-    workerParameters: WorkerParameters,
-) : CoroutineWorker(appContext, workerParameters) {
-    override suspend fun doWork(): Result {
-        val appWidgetId = inputData.getInt(INPUT_APP_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return Result.failure()
-        val dependencies = widgetEntryPoint(applicationContext)
-        val dao = dependencies.widgetStateDao()
-        val state = dao.find(appWidgetId) ?: return Result.success()
-        val expiresAt = state.undoExpiresAt ?: return Result.success()
-        val now = dependencies.clock().millis()
-        if (expiresAt > now) {
-            dependencies.widgetUpdater().scheduleUndoExpiry(appWidgetId, expiresAt)
-            return Result.success()
-        }
-        dao.upsert(state.withoutUndo(now))
-        runCatching {
-            val glanceId = GlanceAppWidgetManager(applicationContext).getGlanceIdBy(appWidgetId)
-            TodayTodoWidget().update(applicationContext, glanceId)
-        }
-        return Result.success()
     }
 }
 
@@ -430,18 +386,10 @@ interface WidgetEntryPoint {
     fun refreshCoordinator(): WidgetRefreshCoordinator
     fun widgetStateDao(): WidgetInstanceStateDao
     fun widgetUpdater(): WidgetUpdater
-    fun clock(): Clock
 }
 
 internal fun widgetEntryPoint(context: Context): WidgetEntryPoint =
     EntryPointAccessors.fromApplication(context.applicationContext, WidgetEntryPoint::class.java)
-
-internal fun WidgetInstanceStateEntity.withoutUndo(now: Long) = copy(
-    undoOperationId = null,
-    undoTodoTitle = null,
-    undoExpiresAt = null,
-    updatedAt = now,
-)
 
 internal fun activeAppWidgetIds(context: Context): IntArray = AppWidgetManager.getInstance(context)
     .getAppWidgetIds(ComponentName(context, TodayTodoWidgetReceiver::class.java))
@@ -456,4 +404,3 @@ const val ERROR_GLANCE_UPDATE = "widget_glance_update"
 const val ERROR_COMPLETE = "widget_complete"
 const val ACTION_WIDGET_REFRESH = "com.mochisofts.mata.action.WIDGET_REFRESH"
 private const val INPUT_PERIODIC = "periodic"
-private const val INPUT_APP_WIDGET_ID = "app_widget_id"

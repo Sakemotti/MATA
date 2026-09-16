@@ -1,5 +1,6 @@
 package com.mochisofts.mata.ui.calendar
 
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,6 +65,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -131,6 +133,7 @@ import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.json.JSONObject
 
 internal sealed interface HistoryDialogItem {
     data class Execution(val value: HistoryEntry) : HistoryDialogItem
@@ -494,7 +497,14 @@ private fun CalendarDayCell(
     val inMonth = YearMonth.from(date) == displayedMonth
     val stateLabel = summary?.state?.label()
     val semanticsLabel = buildString {
-        append(date.format(DateTimeFormatter.ofPattern(stringResource(R.string.date_pattern_full))))
+        append(
+            date.format(
+                DateTimeFormatter.ofPattern(
+                    stringResource(R.string.date_pattern_full),
+                    Locale.JAPANESE,
+                ),
+            ),
+        )
         if (selected) append(stringResource(R.string.calendar_history_selected_suffix))
         if (current) append(stringResource(R.string.calendar_history_today_suffix))
         summary?.let {
@@ -518,7 +528,7 @@ private fun CalendarDayCell(
             .padding(2.dp)
             .border(if (current) 1.5.dp else 0.dp, borderColor, CircleShape)
             .background(background, CircleShape)
-            .alpha(if (inMonth && enabled) 1f else 0.48f)
+            .alpha(calendarDayAlpha(inMonth = inMonth, enabled = enabled))
             .semantics {
                 contentDescription = semanticsLabel
                 this.selected = selected
@@ -554,6 +564,9 @@ private fun CalendarDayCell(
 
 internal fun calendarDayTextColor(selected: Boolean, colorScheme: ColorScheme): Color =
     if (selected) colorScheme.onPrimaryContainer else Color.Unspecified
+
+internal fun calendarDayAlpha(inMonth: Boolean, enabled: Boolean): Float =
+    if (inMonth && enabled) 1f else 0.48f
 
 @Composable
 private fun DayHistoryArea(
@@ -1086,6 +1099,11 @@ internal fun CalendarHistoryEffectHandler(
     val completionUndoneMessage = stringResource(R.string.calendar_history_completion_undone)
     val skipUndoneMessage = stringResource(R.string.calendar_history_skip_undone)
     val undoLabel = stringResource(R.string.action_undo)
+    var pendingUndoJson by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingUndoExpiresAtMillis by rememberSaveable { mutableLongStateOf(0L) }
+    val pendingUndo = remember(pendingUndoJson) {
+        pendingUndoJson?.toHistoryActionUndoTokenOrNull()
+    }
 
     LaunchedEffect(effects, resources, completionUndoneMessage, skipUndoneMessage, undoLabel) {
         effects.collect { effect ->
@@ -1094,26 +1112,89 @@ internal fun CalendarHistoryEffectHandler(
                     snackbarHostState.showSnackbar(resources.getString(effect.messageRes))
                 }
                 is CalendarHistoryEffect.ActionUndone -> {
-                    val result = withTimeoutOrNull(undoWindowMillis) {
-                        snackbarHostState.showSnackbar(
-                            message = if (effect.token.state == TodoState.SKIPPED) {
-                                skipUndoneMessage
-                            } else {
-                                completionUndoneMessage
-                            },
-                            actionLabel = undoLabel,
-                            withDismissAction = true,
-                            duration = SnackbarDuration.Indefinite,
-                        )
-                    }
-                    if (result == SnackbarResult.ActionPerformed) {
-                        onRestoreAction(effect.token)
-                    }
+                    pendingUndoJson = effect.token.toSavedStateJson()
+                    pendingUndoExpiresAtMillis = SystemClock.elapsedRealtime() + undoWindowMillis
                 }
             }
         }
     }
+
+    LaunchedEffect(
+        pendingUndoJson,
+        pendingUndo,
+        pendingUndoExpiresAtMillis,
+        snackbarHostState,
+        completionUndoneMessage,
+        skipUndoneMessage,
+        undoLabel,
+        undoWindowMillis,
+    ) {
+        val token = pendingUndo ?: run {
+            if (pendingUndoJson != null) pendingUndoJson = null
+            return@LaunchedEffect
+        }
+        val remainingMillis = pendingUndoExpiresAtMillis - SystemClock.elapsedRealtime()
+        if (remainingMillis <= 0L) {
+            pendingUndoJson = null
+            pendingUndoExpiresAtMillis = 0L
+            return@LaunchedEffect
+        }
+        val result = withTimeoutOrNull(remainingMillis) {
+            snackbarHostState.showSnackbar(
+                message = if (token.state == TodoState.SKIPPED) {
+                    skipUndoneMessage
+                } else {
+                    completionUndoneMessage
+                },
+                actionLabel = undoLabel,
+                withDismissAction = true,
+                duration = SnackbarDuration.Indefinite,
+            )
+        }
+        pendingUndoJson = null
+        pendingUndoExpiresAtMillis = 0L
+        if (result == SnackbarResult.ActionPerformed) {
+            onRestoreAction(token)
+        }
+    }
 }
+
+private fun HistoryActionUndoToken.toSavedStateJson(): String = JSONObject()
+    .put("id", id)
+    .put("operationId", operationId)
+    .put("todoId", todoId)
+    .put("logicalDate", logicalDate.toString())
+    .put("state", state.name)
+    .put("actedAt", actedAt)
+    .put("finalizedAt", finalizedAt)
+    .put("definitionRevision", definitionRevision)
+    .put("snapshotVersion", snapshotVersion)
+    .put("snapshotJson", snapshotJson)
+    .put("scheduledLogicalDate", scheduledLogicalDate.toString())
+    .put("resolvedLogicalDate", resolvedLogicalDate?.toString() ?: JSONObject.NULL)
+    .toString()
+
+private fun String.toHistoryActionUndoTokenOrNull(): HistoryActionUndoToken? = runCatching {
+    val json = JSONObject(this)
+    HistoryActionUndoToken(
+        id = json.getString("id"),
+        operationId = json.getString("operationId"),
+        todoId = json.getString("todoId"),
+        logicalDate = LocalDate.parse(json.getString("logicalDate")),
+        state = TodoState.valueOf(json.getString("state")),
+        actedAt = json.getLong("actedAt"),
+        finalizedAt = json.getLong("finalizedAt"),
+        definitionRevision = json.getInt("definitionRevision"),
+        snapshotVersion = json.getInt("snapshotVersion"),
+        snapshotJson = json.getString("snapshotJson"),
+        scheduledLogicalDate = LocalDate.parse(json.getString("scheduledLogicalDate")),
+        resolvedLogicalDate = if (json.isNull("resolvedLogicalDate")) {
+            null
+        } else {
+            LocalDate.parse(json.getString("resolvedLogicalDate"))
+        },
+    )
+}.getOrNull()
 
 internal const val CALENDAR_HISTORY_UNDO_WINDOW_MILLIS = 5_000L
 

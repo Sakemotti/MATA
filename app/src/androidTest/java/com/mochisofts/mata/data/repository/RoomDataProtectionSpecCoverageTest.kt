@@ -25,6 +25,7 @@ import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
+import com.mochisofts.mata.ui.categorytodolist.buildCategoryTodoListUiState
 import java.io.File
 import java.net.UnknownHostException
 import java.time.Clock
@@ -65,6 +66,7 @@ class RoomDataProtectionSpecCoverageTest {
         categoryRepository = RoomCategoryRepository(
             database = database,
             categoryDao = database.categoryDao(),
+            todoDao = database.todoDao(),
             clock = TEST_CLOCK,
             notificationScheduler = DataProtectionNotificationScheduler(),
             widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
@@ -128,6 +130,90 @@ class RoomDataProtectionSpecCoverageTest {
         } finally {
             writingDatabase?.close()
             reopenedDatabase?.close()
+            scopes.forEach { scope -> scope.coroutineContext[Job]?.cancelAndJoin() }
+            assertTrue(context.deleteDatabase(databaseName) || !context.getDatabasePath(databaseName).exists())
+            assertTrue(dataStoreFile.delete() || !dataStoreFile.exists())
+        }
+    }
+
+    @Test
+    fun dat009_removedApplicationStorageReopensWithUncategorizedDefaultsOnly() = runBlocking {
+        val databaseName = "data-reset-${System.nanoTime()}.db"
+        val dataStoreFile = File(context.cacheDir, "$databaseName.preferences_pb")
+        val scopes = mutableListOf<CoroutineScope>()
+        var seededDatabase: MataDatabase? = null
+        var freshDatabase: MataDatabase? = null
+        context.deleteDatabase(databaseName)
+        dataStoreFile.delete()
+
+        try {
+            seededDatabase = persistentDatabase(databaseName)
+            val seededSettings = DataStoreSettingsRepository(
+                newDataStore(dataStoreFile, scopes),
+                DataMutationGate(),
+            )
+            val category = categoryEntity("removed-category", 0)
+            val todo = todoEntity("removed-todo", category.id, archivedAt = null)
+            seededDatabase.categoryDao().upsert(category)
+            seededDatabase.todoDao().upsert(todo)
+            seededDatabase.todoExecutionDao().insert(executionEntity(todo.id, 1))
+            seededSettings.setDayEndHour(5)
+            seededSettings.setWeekStart(DayOfWeek.SUNDAY)
+            seededSettings.setShowCompleted(true)
+            seededSettings.setTodoListMode("CATEGORY")
+            seededSettings.setTheme(AppTheme.DARK)
+            seededSettings.setNotificationPermissionRequested(true)
+            seededSettings.setArchiveSortOrder(ArchiveSortOrder.OLDEST)
+
+            seededDatabase.close()
+            seededDatabase = null
+            scopes.single().coroutineContext[Job]?.cancelAndJoin()
+            assertTrue(context.deleteDatabase(databaseName))
+            assertTrue(dataStoreFile.delete())
+
+            freshDatabase = persistentDatabase(databaseName)
+            val freshSettings = DataStoreSettingsRepository(
+                newDataStore(dataStoreFile, scopes),
+                DataMutationGate(),
+            )
+            val freshCategoryRepository = RoomCategoryRepository(
+                database = freshDatabase,
+                categoryDao = freshDatabase.categoryDao(),
+                todoDao = freshDatabase.todoDao(),
+                clock = TEST_CLOCK,
+                notificationScheduler = DataProtectionNotificationScheduler(),
+                widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+            )
+
+            APPLICATION_DATA_TABLES.forEach { table ->
+                freshDatabase.openHelper.readableDatabase
+                    .query("SELECT COUNT(*) FROM $table")
+                    .use { cursor ->
+                        assertTrue(cursor.moveToFirst())
+                        assertEquals("Expected $table to be empty", 0, cursor.getInt(0))
+                    }
+            }
+            val categories = freshCategoryRepository.observeCategories().first()
+            assertTrue(categories.isEmpty())
+            val initialCategoryState = buildCategoryTodoListUiState(
+                categories = categories,
+                todos = emptyList(),
+                todayOccurrences = emptyList(),
+                requestedCategoryId = category.id,
+            )
+            assertNull(initialCategoryState.selectedCategoryId)
+            assertTrue(initialCategoryState.categories.isEmpty())
+            assertTrue(initialCategoryState.items.isEmpty())
+            assertEquals(0, freshSettings.dayEndHour.first())
+            assertEquals(DayOfWeek.MONDAY, freshSettings.weekStart.first())
+            assertFalse(freshSettings.showCompleted.first())
+            assertEquals("DATE", freshSettings.todoListMode.first())
+            assertEquals(AppTheme.SYSTEM, freshSettings.theme.first())
+            assertFalse(freshSettings.notificationPermissionRequested.first())
+            assertEquals(ArchiveSortOrder.NEWEST, freshSettings.archiveSortOrder.first())
+        } finally {
+            seededDatabase?.close()
+            freshDatabase?.close()
             scopes.forEach { scope -> scope.coroutineContext[Job]?.cancelAndJoin() }
             assertTrue(context.deleteDatabase(databaseName) || !context.getDatabasePath(databaseName).exists())
             assertTrue(dataStoreFile.delete() || !dataStoreFile.exists())
@@ -404,6 +490,19 @@ class RoomDataProtectionSpecCoverageTest {
 
     private companion object {
         const val PAGE_SIZE = 50
+        val APPLICATION_DATA_TABLES = listOf(
+            "categories",
+            "todos",
+            "todo_executions",
+            "period_results",
+            "todo_runtime_states",
+            "todo_notifications",
+            "scheduled_notifications",
+            "holidays",
+            "holiday_fetch_states",
+            "holiday_update_states",
+            "widget_instance_states",
+        )
         val TEST_CLOCK: Clock = Clock.fixed(
             Instant.parse("2026-09-05T03:00:00Z"),
             ZoneId.of("Asia/Tokyo"),

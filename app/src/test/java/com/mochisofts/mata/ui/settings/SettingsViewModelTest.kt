@@ -1,8 +1,15 @@
 package com.mochisofts.mata.ui.settings
 
 import android.app.Activity
+import android.net.Uri
 import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.backup.BackupErrorCode
+import com.mochisofts.mata.core.backup.BackupGateway
+import com.mochisofts.mata.core.backup.BackupOperationPhase
+import com.mochisofts.mata.core.backup.BackupOperationState
+import com.mochisofts.mata.core.backup.BackupOperationStatus
+import com.mochisofts.mata.core.backup.BackupOperationType
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
@@ -69,6 +76,37 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun st024_invalidAndUnsupportedRestoresReportReasonsWithoutChangingSettings() = runTest {
+        val repository = FakeSettingsRepository()
+        val backupGateway = FakeBackupGateway()
+        val viewModel = SettingsViewModel(
+            repository = repository,
+            notificationScheduler = FakeNotificationScheduler(),
+            backupGateway = backupGateway,
+            adsConsentRepository = FakeAdsConsentRepository(),
+        )
+        runCurrent()
+        val settingsBefore = viewModel.uiState.value.settingsSnapshot()
+
+        backupGateway.fail(BackupErrorCode.INVALID_FILE, operationId = "invalid")
+        runCurrent()
+        assertEquals(
+            R.string.backup_invalid_file,
+            (viewModel.effects.first() as SettingsEffect.Message).messageRes,
+        )
+
+        backupGateway.fail(BackupErrorCode.UNSUPPORTED_VERSION, operationId = "unsupported")
+        runCurrent()
+        assertEquals(
+            R.string.backup_unsupported_version,
+            (viewModel.effects.first() as SettingsEffect.Message).messageRes,
+        )
+
+        assertEquals(settingsBefore, viewModel.uiState.value.settingsSnapshot())
+        assertEquals(2, backupGateway.acknowledgeCalls)
+    }
+
+    @Test
     fun valuesLoadAndSuccessfulChangesAreReflected() = runTest {
         val repository = FakeSettingsRepository()
         val viewModel = SettingsViewModel(
@@ -93,9 +131,10 @@ class SettingsViewModelTest {
     @Test
     fun st041_autoSaveIsSilentOnSuccessAndRevertsOnlyFailedSetting() = runTest {
         val repository = FakeSettingsRepository()
+        val scheduler = FakeNotificationScheduler()
         val viewModel = SettingsViewModel(
             repository,
-            FakeNotificationScheduler(),
+            scheduler,
             adsConsentRepository = FakeAdsConsentRepository(),
         )
 
@@ -106,6 +145,17 @@ class SettingsViewModelTest {
 
         repository.failNextSave = true
         viewModel.setEndHour(8)
+        runCurrent()
+
+        assertEquals(4, viewModel.uiState.value.endHour)
+        assertNull(viewModel.uiState.value.savingSetting)
+        assertEquals(
+            R.string.settings_save_error,
+            (viewModel.effects.first() as SettingsEffect.Message).messageRes,
+        )
+
+        scheduler.failNextReconcile = true
+        viewModel.setEndHour(12)
         runCurrent()
 
         assertEquals(4, viewModel.uiState.value.endHour)
@@ -197,6 +247,7 @@ class SettingsViewModelTest {
 
     private class FakeNotificationScheduler : NotificationScheduler {
         override val notificationCount: Flow<Int> = MutableStateFlow(0)
+        var failNextReconcile = false
 
         override fun systemState() = NotificationSystemState(
             canPostNotifications = true,
@@ -207,8 +258,40 @@ class SettingsViewModelTest {
         )
 
         override suspend fun reconcileTodo(todoId: String) = Unit
-        override suspend fun reconcileAll() = Unit
+        override suspend fun reconcileAll() {
+            if (failNextReconcile) {
+                failNextReconcile = false
+                error("reconciliation failed")
+            }
+        }
         override suspend fun cancelTodo(todoId: String) = Unit
+    }
+
+    private class FakeBackupGateway : BackupGateway {
+        val runtimeState = MutableStateFlow(BackupOperationState())
+        var acknowledgeCalls = 0
+
+        override val state: StateFlow<BackupOperationState> = runtimeState
+
+        fun fail(errorCode: BackupErrorCode, operationId: String) {
+            runtimeState.value = BackupOperationState(
+                operationId = operationId,
+                type = BackupOperationType.RESTORE_VALIDATION,
+                status = BackupOperationStatus.FAILED,
+                phase = BackupOperationPhase.VALIDATING,
+                errorCode = errorCode,
+            )
+        }
+
+        override fun suggestedFileName() = "MATA_backup_test.mata-backup"
+        override fun startCreate(uri: Uri) = true
+        override fun startRestoreValidation(uri: Uri) = true
+        override fun confirmRestore() = true
+        override fun cancelRestoreConfirmation() = Unit
+        override fun acknowledgeResult() {
+            acknowledgeCalls += 1
+        }
+        override suspend fun recoverInterruptedOperation() = Unit
     }
 
     private class FakeAdsConsentRepository : AdsConsentRepository {
@@ -270,3 +353,10 @@ class SettingsViewModelTest {
         override suspend fun cancelTodo(todoId: String) = Unit
     }
 }
+
+private fun SettingsUiState.settingsSnapshot() = listOf(
+    endHour,
+    weekStart,
+    showCompleted,
+    theme,
+)
