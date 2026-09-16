@@ -31,7 +31,7 @@
 
 リリース必須のP0/P1は405件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。
 
-2026年9月16日時点では、項目単位の証跡が揃ったP0を246件、P1を152件`合格`、P0/P1の残り7件を`未実施`として登録した。P2を含む全423件では401件が合格、22件が未実施である。今回は多数カテゴリの一覧端ドラッグで実スクロールが発生し、移動後の順序が欠落なく保存される経路を追加合格とした。
+2026年9月16日時点では、項目単位の証跡が揃ったP0を247件、P1を152件`合格`、P0/P1の残り6件を`未実施`として登録した。P2を含む全423件では402件が合格、21件が未実施である。今回はDebug版とRelease相当版の識別子・表示名を専用テストで固定し、API 34 x86_64エミュレーターへの同時インストールと双方の起動に成功することを確認した。
 
 ## 3. 自動検査の証跡
 
@@ -45,6 +45,7 @@
 | リポジトリ検査 | 秘密情報・署名ファイル検査、法的サイト検証、Play掲載情報検証が成功 | main CI run 33751810640 | `REL-015`と`REL-018`の自動検査部分 |
 | リリース準備検査 | ドラフト検証成功 | 2026-09-04に`node tools/release/verify-readiness.mjs`を実行 | `REL-019` |
 | Upload Key設定ガード | 秘密値の一部設定、相対パス、リポジトリ内ファイル、署名必須フラグなし、Configuration Cache有効化の5異常系を拒否し、例外へ架空の秘密値を含めないことを確認 | 2026-09-04に`:app:verifyUploadSigningGuards`を実行 | `REL-023` |
+| Debug・Release相当版の共存 | Debug APKが`com.mochisofts.mata.debug`・「MATA Dev」、Release相当のBenchmark APKが`com.mochisofts.mata`・「MATA」であることを成果物から検査し、同一端末への同時インストール後に双方のMainActivityを起動 | 2026年9月16日のローカル`testDebugUnitTest`、`assembleDebug`、`assembleBenchmark`およびAPI 34 x86_64エミュレーターで成功 | `APP-002` |
 | 署名済みAAB | Upload KeyのSHA-256が成果物とPlay Consoleで一致 | [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md) | `REL-024` |
 | versionCode 2公開候補 | クリーンなmainからUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md) | `REL-021` |
 | versionCode 3公開候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
@@ -90,7 +91,7 @@
 | 設定変更時の再計算・履歴不変 | 週開始曜日変更後の現在期間・必要数・完了数・残数の即時再計算と、終了時刻・週開始曜日変更後の確定済み履歴・期間スナップショット不変を専用instrumented test 2件で検証 | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-010`、`ST-011` |
 | バックアップ形式・内容・事前検証 | 全種ユーザーデータ、除外対象、復元前の形式・ハッシュ・構造・型・範囲・参照・互換性検証、ファイル名、ZIP内部メタデータを専用instrumented test 5件で検証 | [PR #126 CI run 33867709111](https://github.com/Sakemotti/MATA/actions/runs/33867709111)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-019`、`ST-020`、`ST-023`、`ST-D02`、`ST-D03` |
 
-[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト329件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
+[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト330件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 

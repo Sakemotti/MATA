@@ -1,6 +1,6 @@
 id	priority	specFile	type	lane	owner	testPack
 APP-001	P0	app-core.md	E2E/MANUAL	RELEASE_OWNER	OWNER	基本・互換性
-APP-002	P0	app-core.md	INT/MANUAL	RELEASE_OWNER	OWNER	基本・互換性
+APP-002	P0	app-core.md	UNIT/INT/AUTO	DEV_AUTO	DEV	基本・互換性
 APP-003	P1	app-core.md	UI/MANUAL	RELEASE_OWNER	OWNER	基本・互換性
 APP-004	P1	app-core.md	UI/MANUAL	RELEASE_OWNER	OWNER	基本・互換性
 APP-005	P0	app-core.md	INT	DEV_AUTO	DEV	基本・互換性

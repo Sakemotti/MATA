@@ -9,6 +9,28 @@ import org.junit.Test
 
 class AppCoreConfigurationSpecCoverageTest {
     @Test
+    fun app002_debugAndReleaseEquivalentHaveDistinctInstallIdentities() {
+        val build = source("build.gradle")
+        val defaultConfig = namedBlock(build, "defaultConfig")
+        val debug = namedBlock(build, "debug")
+        val benchmark = namedBlock(build, "benchmark")
+
+        assertTrue(
+            Regex("""applicationId\s+['\"]com\.mochisofts\.mata['\"]""")
+                .containsMatchIn(defaultConfig),
+        )
+        assertTrue(
+            Regex("""applicationIdSuffix\s+['\"]\.debug['\"]""")
+                .containsMatchIn(debug),
+        )
+        assertTrue(benchmark.contains("initWith buildTypes.release"))
+        assertTrue(benchmark.contains("signingConfig signingConfigs.debug"))
+        assertFalse(benchmark.contains("applicationIdSuffix"))
+        assertEquals("MATA", stringValue("src/main/res/values/strings.xml", "app_name"))
+        assertEquals("MATA Dev", stringValue("src/debug/res/values/strings.xml", "app_name"))
+    }
+
+    @Test
     fun app013_gradleDefinesTheReleaseAndDebugSdkIdentityContract() {
         val build = source("build.gradle")
 
@@ -138,6 +160,23 @@ class AppCoreConfigurationSpecCoverageTest {
     }
 
     private fun source(relativePath: String): String = locate(relativePath).readText()
+
+    private fun namedBlock(source: String, name: String): String {
+        val declaration = Regex("""(?m)^\s*${Regex.escape(name)}\s*\{""").find(source)
+        assertNotNull("Missing $name block", declaration)
+        val openingBrace = requireNotNull(declaration).range.last
+        var depth = 0
+        for (index in openingBrace until source.length) {
+            when (source[index]) {
+                '{' -> depth += 1
+                '}' -> {
+                    depth -= 1
+                    if (depth == 0) return source.substring(openingBrace + 1, index)
+                }
+            }
+        }
+        throw AssertionError("Unclosed $name block")
+    }
 
     private fun locate(relativePath: String): File {
         val workingDirectory = File(requireNotNull(System.getProperty("user.dir")))

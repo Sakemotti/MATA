@@ -8,7 +8,7 @@
 | ID | 優先度 | 推奨種別 | 条件・操作 | 期待結果 | 結果 | 証跡・備考 |
 | --- | --- | --- | --- | --- | --- | --- |
 | APP-001 | P0 | E2E/MANUAL | API 26端末へRelease相当ビルドを新規インストールして起動する | インストールと起動に成功し、主要画面を操作できる | 未実施 | |
-| APP-002 | P0 | INT/MANUAL | DebugとRelease相当の両方を同じ端末へインストールする | `com.mochisofts.mata.debug`の「MATA Dev」と`com.mochisofts.mata`の「MATA」が別アプリとして共存する | 未実施 | |
+| APP-002 | P0 | UNIT/INT/AUTO | DebugとRelease相当の両方を同じ端末へインストールする | `com.mochisofts.mata.debug`の「MATA Dev」と`com.mochisofts.mata`の「MATA」が別アプリとして共存する | 未実施 | |
 | APP-003 | P1 | UI/MANUAL | 全主要画面、ダイアログ、通知、ウィジェットを確認する | ユーザー向け文字列が日本語で表示される | 未実施 | |
 | APP-004 | P1 | UI/MANUAL | ライト・ダークテーマで全主要画面を表示する | Material Design 3を基調とした色、文字、コンポーネントが一貫する | 未実施 | |
 | APP-005 | P0 | INT | ネットワークを切断して既存TODO、カテゴリ、履歴、設定を操作する | 端末内データの基本操作を継続でき、アカウント認証を要求しない | 未実施 | |

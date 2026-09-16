@@ -1,6 +1,6 @@
 id	priority	specFile	result	executedAt	testerId	versionCode	environment	evidence
 APP-001	P0	app-core.md	合格	2026-09-09	OWNER	3	Android Emulator API 26 / Release相当版	CT-ENV-26・新規インストール、起動、主要画面と基本操作を確認
-APP-002	P0	app-core.md	未実施	-	-	-	-	-
+APP-002	P0	app-core.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	AppCoreConfigurationSpecCoverageTest#app002・Debug/Benchmark APKのID・表示名検査、同一端末へのインストール・起動成功
 APP-003	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・主要画面、ダイアログ、通知、ウィジェットの日本語表示を確認
 APP-004	P1	app-core.md	合格	2026-09-08	OWNER	2	PH-R2 / Pixel 9a / Android 17 (API 37) / Google Play Closed testing	CT-001・ライト／ダークテーマで主要画面の表示一貫性を確認
 APP-005	P0	app-core.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomDataProtectionSpecCoverageTest#app005・CI run 34032419660成功
