@@ -1,4 +1,5 @@
 id	testFile	testMethod	gradleTask
+APP-002	app/src/test/java/com/mochisofts/mata/security/AppCoreConfigurationSpecCoverageTest.kt	app002_debugAndReleaseEquivalentHaveDistinctInstallIdentities	:app:testDebugUnitTest
 DAY-001	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day001_midnightBoundaryMatchesCalendarDate	:app:testDebugUnitTest
 DAY-002	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day002_fourOClockBoundaryChangesAtExactlyFour	:app:testDebugUnitTest
 DAY-003	app/src/test/java/com/mochisofts/mata/domain/model/ScheduleTestSpecCoverageTest.kt	day003_twentyThreeOClockBoundaryChangesAtExactlyTwentyThree	:app:testDebugUnitTest
