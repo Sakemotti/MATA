@@ -105,6 +105,7 @@ fun SettingsScreen(
     onRestoreCompleted: () -> Unit = { onDestination(MataDestination.TODOS) },
     legalDocumentOpener: (Context, String, String) -> Boolean = ::openLegalDocument,
     createBackupTargetRequester: ((String) -> Unit)? = null,
+    systemSettingsIntentLauncher: ((Intent) -> Unit)? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -130,6 +131,9 @@ fun SettingsScreen(
         ActivityResultContracts.StartActivityForResult(),
     ) {
         viewModel.refreshNotificationStatus()
+    }
+    val launchSystemSettings: (Intent) -> Unit = { intent ->
+        systemSettingsIntentLauncher?.invoke(intent) ?: systemSettingsLauncher.launch(intent)
     }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -301,7 +305,7 @@ fun SettingsScreen(
                             isSaving = false,
                             enabled = settingsEnabled,
                             onClick = {
-                                systemSettingsLauncher.launch(
+                                launchSystemSettings(
                                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                                         .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
                                 )
@@ -329,7 +333,7 @@ fun SettingsScreen(
                                 enabled = settingsEnabled && state.notificationCount > 0,
                                 onClick = {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                        systemSettingsLauncher.launch(
+                                        launchSystemSettings(
                                             Intent(
                                                 Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                                                 Uri.parse("package:${context.packageName}"),

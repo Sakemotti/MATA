@@ -242,6 +242,7 @@ ST-003	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSp
 ST-005	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st005_endHourOffersEveryWholeHourAndPersistsSelection	:app:connectedDebugAndroidTest
 ST-009	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st009_weekStartOffersAllSevenDaysAndPersistsSelection	:app:connectedDebugAndroidTest
 ST-013	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st013_themeChoicesPersistImmediatelyAndOnlySystemFollowsDeviceTheme	:app:connectedDebugAndroidTest
+ST-014	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st014_notificationPermissionOpensAndroidSettingsAndRefreshesAfterReturn	:app:connectedDebugAndroidTest
 ST-022	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st022_backupCreationShowsPersonalDataAndStorageWarningFirst	:app:connectedDebugAndroidTest
 ST-030	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st030_settingsContainNoStandaloneAdvertisingSectionOrPlacementRow	:app:connectedDebugAndroidTest
 ST-031	app/src/androidTest/java/com/mochisofts/mata/ui/settings/SettingsScreenSpecCoverageTest.kt	st031_settingsContainNoPaidProductPricePurchaseOrAdRemovalControls	:app:connectedDebugAndroidTest

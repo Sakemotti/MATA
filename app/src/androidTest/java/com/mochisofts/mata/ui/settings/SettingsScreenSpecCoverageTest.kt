@@ -6,7 +6,10 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -29,6 +32,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.espresso.Espresso.pressBack
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mochisofts.mata.BuildConfig
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.ads.AdsConsentRepository
@@ -250,6 +257,61 @@ class SettingsScreenSpecCoverageTest {
             assertFalse(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = false))
             assertTrue(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = true))
         }
+    }
+
+    @Test
+    fun st014_notificationPermissionOpensAndroidSettingsAndRefreshesAfterReturn() {
+        val deniedState = NotificationSystemState(
+            canPostNotifications = false,
+            runtimePermissionRelevant = true,
+            runtimePermissionGranted = false,
+            exactAlarmRelevant = false,
+            canScheduleExactAlarms = true,
+        )
+        val scheduler = SettingsScreenTestNotificationScheduler(initialSystemState = deniedState)
+        val lifecycleOwner = SettingsScreenTestLifecycleOwner()
+        val launchedIntents = mutableListOf<Intent>()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            lifecycleOwner.moveTo(Lifecycle.State.RESUMED)
+        }
+        setScreen(
+            notificationScheduler = scheduler,
+            systemSettingsIntentLauncher = launchedIntents::add,
+            lifecycleOwner = lifecycleOwner,
+        )
+
+        composeRule.onNodeWithText(text(R.string.settings_notification_permission_title))
+            .performScrollTo()
+            .performClick()
+        composeRule.runOnIdle {
+            val intent = launchedIntents.single()
+            assertEquals(Settings.ACTION_APP_NOTIFICATION_SETTINGS, intent.action)
+            assertEquals(
+                InstrumentationRegistry.getInstrumentation().targetContext.packageName,
+                intent.getStringExtra(Settings.EXTRA_APP_PACKAGE),
+            )
+            assertFalse(scheduler.systemStateValue.canPostNotifications)
+        }
+        composeRule.onNodeWithText(text(R.string.settings_permission_not_granted))
+            .assertIsDisplayed()
+
+        val callsBeforeReturn = scheduler.systemStateCalls
+        val reconcilesBeforeReturn = scheduler.reconcileCalls
+        composeRule.runOnIdle {
+            lifecycleOwner.moveTo(Lifecycle.State.CREATED)
+            scheduler.systemStateValue = deniedState.copy(
+                canPostNotifications = true,
+                runtimePermissionGranted = true,
+            )
+            lifecycleOwner.moveTo(Lifecycle.State.RESUMED)
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            scheduler.systemStateCalls > callsBeforeReturn &&
+                scheduler.reconcileCalls > reconcilesBeforeReturn
+        }
+        composeRule.onNodeWithText(text(R.string.settings_permission_granted))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -597,6 +659,8 @@ class SettingsScreenSpecCoverageTest {
         notificationScheduler: SettingsScreenTestNotificationScheduler =
             SettingsScreenTestNotificationScheduler(),
         createBackupTargetRequester: ((String) -> Unit)? = null,
+        systemSettingsIntentLauncher: ((Intent) -> Unit)? = null,
+        lifecycleOwner: LifecycleOwner? = null,
         onViewModelCreated: (SettingsViewModel) -> Unit = {},
     ): SettingsScreenTestRepository {
         val repository = SettingsScreenTestRepository(showCompleted)
@@ -609,14 +673,24 @@ class SettingsScreenSpecCoverageTest {
         onViewModelCreated(viewModel)
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {
-                SettingsScreen(
-                    onDestination = onDestination,
-                    onOpenSourceLicenses = {},
-                    onRestoreCompleted = onRestoreCompleted,
-                    legalDocumentOpener = legalDocumentOpener,
-                    createBackupTargetRequester = createBackupTargetRequester,
-                    viewModel = viewModel,
-                )
+                val content: @Composable () -> Unit = {
+                    SettingsScreen(
+                        onDestination = onDestination,
+                        onOpenSourceLicenses = {},
+                        onRestoreCompleted = onRestoreCompleted,
+                        legalDocumentOpener = legalDocumentOpener,
+                        createBackupTargetRequester = createBackupTargetRequester,
+                        systemSettingsIntentLauncher = systemSettingsIntentLauncher,
+                        viewModel = viewModel,
+                    )
+                }
+                if (lifecycleOwner == null) {
+                    content()
+                } else {
+                    CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
+                        content()
+                    }
+                }
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -734,18 +808,24 @@ private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : Se
 
 private class SettingsScreenTestNotificationScheduler(
     private val endHourImpact: NotificationChangeImpact = NotificationChangeImpact(),
-) : NotificationScheduler {
-    override val notificationCount: Flow<Int> = MutableStateFlow(0)
-    val previewedEndHours = mutableListOf<Int>()
-    var reconcileCalls = 0
-
-    override fun systemState() = NotificationSystemState(
+    initialSystemState: NotificationSystemState = NotificationSystemState(
         canPostNotifications = true,
         runtimePermissionRelevant = false,
         runtimePermissionGranted = true,
         exactAlarmRelevant = false,
         canScheduleExactAlarms = true,
-    )
+    ),
+) : NotificationScheduler {
+    override val notificationCount: Flow<Int> = MutableStateFlow(0)
+    val previewedEndHours = mutableListOf<Int>()
+    var reconcileCalls = 0
+    var systemStateCalls = 0
+    var systemStateValue = initialSystemState
+
+    override fun systemState(): NotificationSystemState {
+        systemStateCalls += 1
+        return systemStateValue
+    }
 
     override suspend fun reconcileTodo(todoId: String) = Unit
     override suspend fun previewDayEndHourChange(newEndHour: Int): NotificationChangeImpact {
@@ -757,6 +837,15 @@ private class SettingsScreenTestNotificationScheduler(
         reconcileCalls += 1
     }
     override suspend fun cancelTodo(todoId: String) = Unit
+}
+
+private class SettingsScreenTestLifecycleOwner : LifecycleOwner {
+    private val registry = LifecycleRegistry(this)
+    override val lifecycle: Lifecycle = registry
+
+    fun moveTo(state: Lifecycle.State) {
+        registry.currentState = state
+    }
 }
 
 private class SettingsScreenTestBackupGateway(
