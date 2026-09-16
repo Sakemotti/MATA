@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -33,9 +32,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -67,6 +68,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -74,6 +76,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -81,6 +84,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
@@ -97,6 +101,8 @@ import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
 import com.mochisofts.mata.core.designsystem.CategoryColorNameResIds
+import com.mochisofts.mata.core.designsystem.CategoryColorOptions
+import com.mochisofts.mata.core.designsystem.CategoryIconOption
 import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
@@ -109,6 +115,8 @@ import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
 import com.mochisofts.mata.core.designsystem.mataCardColor
 import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.domain.model.Category
+import java.text.Normalizer
+import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -640,6 +648,16 @@ private fun CategoryListContent(
 internal const val CATEGORY_ADD_FAB_TEST_TAG = "category_add_fab"
 internal const val CATEGORY_EMPTY_ADD_TEST_TAG = "category_empty_add"
 internal const val CATEGORY_ICON_LIST_TEST_TAG = "category_icon_list"
+internal const val CATEGORY_ICON_PICKER_TEST_TAG = "category_icon_picker"
+internal const val CATEGORY_ICON_SEARCH_TEST_TAG = "category_icon_search"
+internal const val CATEGORY_ICON_RESULTS_TEST_TAG = "category_icon_results"
+internal const val CATEGORY_ICON_OPTION_TEST_TAG_PREFIX = "category_icon_option_"
+internal const val CATEGORY_ICON_GROUP_TEST_TAG_PREFIX = "category_icon_group_"
+
+internal val CategoryColorIdKey = SemanticsPropertyKey<String>("CategoryColorId")
+internal val CategoryColorArgbKey = SemanticsPropertyKey<Long>("CategoryColorArgb")
+internal val CategoryIconIdKey = SemanticsPropertyKey<String>("CategoryIconId")
+internal val CategoryIconLabelKey = SemanticsPropertyKey<String>("CategoryIconLabel")
 
 @Composable
 private fun CategoryListRow(
@@ -778,11 +796,14 @@ fun CategoryEditorScreen(
     val categoryColors = MaterialTheme.mataColors.categoryColors
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showIconPicker by rememberSaveable(state.categoryId) { mutableStateOf(false) }
+    var iconSearchQuery by rememberSaveable(state.categoryId) { mutableStateOf("") }
 
     fun requestBack() {
         if (state.isDirty) showDiscardDialog = true else onBack()
     }
-    BackHandler(onBack = ::requestBack)
+    BackHandler(enabled = !showIconPicker, onBack = ::requestBack)
+    BackHandler(enabled = showIconPicker) { showIconPicker = false }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
@@ -791,6 +812,20 @@ fun CategoryEditorScreen(
                 CategoryEditorEffect.Deleted -> onDeleted()
             }
         }
+    }
+
+    if (showIconPicker) {
+        CategoryIconPicker(
+            selectedIconId = state.iconName,
+            searchQuery = iconSearchQuery,
+            onSearchQueryChange = { iconSearchQuery = it },
+            onBack = { showIconPicker = false },
+            onSelect = { iconId ->
+                viewModel.setIcon(iconId)
+                showIconPicker = false
+            },
+        )
+        return
     }
 
     Scaffold(
@@ -875,6 +910,7 @@ fun CategoryEditorScreen(
                                 ColorOption(
                                     color = color,
                                     contentColor = MaterialTheme.mataColors.onCategoryColors[index],
+                                    colorId = CategoryColorOptions[index].id,
                                     label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { viewModel.setColor(index) },
@@ -884,35 +920,14 @@ fun CategoryEditorScreen(
                     }
                 }
                 Text(stringResource(R.string.category_icon_label), style = MaterialTheme.typography.titleMedium)
-                LazyRow(
-                    modifier = Modifier
-                        .focusGroup()
-                        .testTag(CATEGORY_ICON_LIST_TEST_TAG),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(CategoryIconOptions, key = { it.id }) { option ->
-                        val label = stringResource(option.labelRes)
-                        OutlinedCard(
-                            onClick = { viewModel.setIcon(option.id) },
-                            modifier = Modifier
-                                .mataClickablePointer()
-                                .semantics { selected = state.iconName == option.id },
-                            border = if (state.iconName == option.id) {
-                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                            } else {
-                                CardDefaults.outlinedCardBorder()
-                            },
-                        ) {
-                            Column(
-                                Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Icon(option.imageVector, contentDescription = null)
-                                Text(label, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-                }
+                CategoryIconField(
+                    selectedIconId = state.iconName,
+                    enabled = !state.isSaving,
+                    onClick = {
+                        iconSearchQuery = ""
+                        showIconPicker = true
+                    },
+                )
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -968,7 +983,24 @@ private fun CategoryEditorScaffold(
     showTopBar: Boolean = true,
 ) {
     var showDeleteDialog by remember(state.categoryId) { mutableStateOf(false) }
+    var showIconPicker by rememberSaveable(state.categoryId) { mutableStateOf(false) }
+    var iconSearchQuery by rememberSaveable(state.categoryId) { mutableStateOf("") }
     val categoryColors = MaterialTheme.mataColors.categoryColors
+
+    BackHandler(enabled = showIconPicker) { showIconPicker = false }
+    if (showIconPicker) {
+        CategoryIconPicker(
+            selectedIconId = state.iconName,
+            searchQuery = iconSearchQuery,
+            onSearchQueryChange = { iconSearchQuery = it },
+            onBack = { showIconPicker = false },
+            onSelect = { iconId ->
+                onIconChange(iconId)
+                showIconPicker = false
+            },
+        )
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -1060,6 +1092,7 @@ private fun CategoryEditorScaffold(
                                 ColorOption(
                                     color = color,
                                     contentColor = MaterialTheme.mataColors.onCategoryColors[index],
+                                    colorId = CategoryColorOptions[index].id,
                                     label = stringResource(CategoryColorNameResIds[index]),
                                     selected = state.colorIndex == index,
                                     onClick = { onColorChange(index) },
@@ -1072,35 +1105,14 @@ private fun CategoryEditorScaffold(
                     stringResource(R.string.category_icon_label),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                LazyRow(
-                    modifier = Modifier
-                        .focusGroup()
-                        .testTag(CATEGORY_ICON_LIST_TEST_TAG),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(CategoryIconOptions, key = { it.id }) { option ->
-                        val label = stringResource(option.labelRes)
-                        OutlinedCard(
-                            onClick = { onIconChange(option.id) },
-                            modifier = Modifier
-                                .mataClickablePointer()
-                                .semantics { selected = state.iconName == option.id },
-                            border = if (state.iconName == option.id) {
-                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                            } else {
-                                CardDefaults.outlinedCardBorder()
-                            },
-                        ) {
-                            Column(
-                                Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Icon(option.imageVector, contentDescription = null)
-                                Text(label, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-                }
+                CategoryIconField(
+                    selectedIconId = state.iconName,
+                    enabled = !state.isSaving,
+                    onClick = {
+                        iconSearchQuery = ""
+                        showIconPicker = true
+                    },
+                )
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -1129,6 +1141,212 @@ private fun CategoryEditorScaffold(
 }
 
 @Composable
+private fun CategoryIconField(
+    selectedIconId: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val option = CategoryIconOptions.firstOrNull { it.id == selectedIconId }
+        ?: CategoryIconOptions.first { it.id == "Category" }
+    val label = stringResource(option.labelRes)
+    val selectedDescription = stringResource(R.string.category_icon_selected_format, label)
+    OutlinedCard(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(CATEGORY_ICON_LIST_TEST_TAG)
+            .mataClickablePointer(enabled)
+            .semantics {
+                selected = true
+                stateDescription = selectedDescription
+                this[CategoryIconIdKey] = option.id
+            },
+    ) {
+        ListItem(
+            leadingContent = {
+                Icon(option.imageVector, contentDescription = label)
+            },
+            headlineContent = { Text(label) },
+            supportingContent = { Text(stringResource(R.string.category_icon_picker_title)) },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryIconPicker(
+    selectedIconId: String,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onBack: () -> Unit,
+    onSelect: (String) -> Unit,
+) {
+    val resources = LocalResources.current
+    val localizedIcons = CategoryIconOptions.map { option ->
+        LocalizedCategoryIcon(
+            option = option,
+            label = resources.getString(option.labelRes),
+            group = resources.getString(option.groupRes),
+            keywords = resources.getString(option.keywordsRes),
+        )
+    }
+    val normalizedQuery = normalizeCategoryIconSearch(searchQuery)
+    val listState = rememberLazyListState()
+    val filteredIcons = if (normalizedQuery.isBlank()) {
+        localizedIcons
+    } else {
+        localizedIcons.filter { icon ->
+            normalizeCategoryIconSearch(
+                listOf(icon.label, icon.group, icon.keywords, icon.option.id).joinToString(" "),
+            ).contains(normalizedQuery)
+        }
+    }
+    LaunchedEffect(normalizedQuery) {
+        listState.scrollToItem(0)
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize().testTag(CATEGORY_ICON_PICKER_TEST_TAG),
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.category_icon_picker_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
+                    },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        },
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .testTag(CATEGORY_ICON_SEARCH_TEST_TAG),
+                singleLine = true,
+                label = { Text(stringResource(R.string.category_icon_search_hint)) },
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                Icons.Outlined.Close,
+                                contentDescription = stringResource(R.string.category_icon_clear_search),
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().testTag(CATEGORY_ICON_RESULTS_TEST_TAG),
+                state = listState,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 24.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (filteredIcons.isEmpty()) {
+                    item(key = "empty") {
+                        Box(
+                            Modifier.fillParentMaxSize().padding(32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(stringResource(R.string.category_icon_no_results))
+                        }
+                    }
+                } else if (normalizedQuery.isBlank()) {
+                    filteredIcons.groupBy { it.option.groupRes }.forEach { (groupRes, icons) ->
+                        item(key = "group_$groupRes") {
+                            Text(
+                                stringResource(groupRes),
+                                modifier = Modifier
+                                    .padding(top = 12.dp, start = 4.dp)
+                                    .testTag(CATEGORY_ICON_GROUP_TEST_TAG_PREFIX + groupRes),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
+                        items(icons, key = { it.option.id }) { icon ->
+                            CategoryIconPickerRow(icon, selectedIconId, onSelect)
+                        }
+                    }
+                } else {
+                    items(filteredIcons, key = { it.option.id }) { icon ->
+                        CategoryIconPickerRow(icon, selectedIconId, onSelect)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryIconPickerRow(
+    icon: LocalizedCategoryIcon,
+    selectedIconId: String,
+    onSelect: (String) -> Unit,
+) {
+    val isSelected = selectedIconId == icon.option.id
+    OutlinedCard(
+        onClick = { onSelect(icon.option.id) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + icon.option.id)
+            .mataClickablePointer()
+            .semantics {
+                selected = isSelected
+                this[CategoryIconIdKey] = icon.option.id
+                this[CategoryIconLabelKey] = icon.label
+            },
+        border = if (isSelected) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            CardDefaults.outlinedCardBorder()
+        },
+    ) {
+        ListItem(
+            leadingContent = {
+                Icon(icon.option.imageVector, contentDescription = icon.label)
+            },
+            headlineContent = { Text(icon.label) },
+            supportingContent = { Text(icon.group) },
+            trailingContent = {
+                if (isSelected) {
+                    Icon(Icons.Outlined.Check, contentDescription = null)
+                }
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+private data class LocalizedCategoryIcon(
+    val option: CategoryIconOption,
+    val label: String,
+    val group: String,
+    val keywords: String,
+)
+
+internal fun normalizeCategoryIconSearch(value: String): String =
+    Normalizer.normalize(value, Normalizer.Form.NFKC)
+        .lowercase(Locale.JAPANESE)
+        .trim()
+
+@Composable
 private fun CategoryPreview(state: CategoryEditorUiState) {
     val categoryColor = mataCategoryColor(state.colorIndex)
     Card(Modifier.fillMaxWidth()) {
@@ -1151,6 +1369,7 @@ private fun CategoryPreview(state: CategoryEditorUiState) {
 private fun ColorOption(
     color: Color,
     contentColor: Color,
+    colorId: String,
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -1162,6 +1381,8 @@ private fun ColorOption(
             .semantics {
                 contentDescription = label
                 this.selected = selected
+                this[CategoryColorIdKey] = colorId
+                this[CategoryColorArgbKey] = color.toArgb().toLong() and 0xffffffffL
             },
         border = BorderStroke(if (selected) 3.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else color),
     ) {

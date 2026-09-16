@@ -268,9 +268,9 @@ CM-010	P0	category-management.md	INT/UI/UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管�
 CM-011	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-012	P0	category-management.md	UI/UNIT/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-013	P1	category-management.md	UNIT/UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
-CM-014	P1	category-management.md	UI/MANUAL	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-015	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-016	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-014	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
+CM-015	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
+CM-016	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-017	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-018	P0	category-management.md	UNIT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-019	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
@@ -289,8 +289,8 @@ CM-031	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-D01	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-D02	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 CM-D03	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
-CM-D04	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
-CM-D05	P1	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
+CM-D04	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
+CM-D05	P1	category-management.md	UI/INT/AUTO	DEV_AUTO	DEV	カテゴリ管理
 CM-D06	P2	category-management.md	UI	RELEASE_OWNER	OWNER	カテゴリ管理
 AT-001	P1	archived-todos.md	UI/INT/AUTO	DEV_AUTO	DEV	アーカイブ
 AT-002	P0	archived-todos.md	UI/INT/AUTO	DEV_AUTO	DEV	アーカイブ

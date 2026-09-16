@@ -1,13 +1,18 @@
 package com.mochisofts.mata.ui.category
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -22,14 +27,18 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
+import com.mochisofts.mata.core.designsystem.CategoryColorOptions
+import com.mochisofts.mata.core.designsystem.CategoryIconOptions
 import com.mochisofts.mata.core.designsystem.MataTheme
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
+import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -82,17 +91,17 @@ class CategoryManagementScreenSpecCoverageTest {
 
         composeRule.onNodeWithText("ゲーム").performClick()
         composeRule.onNodeWithText(text(R.string.category_editor_edit_title)).assertIsDisplayed()
-        composeRule.onAllNodesWithText("ゲーム").assertCountEquals(2)
+        composeRule.onNode(hasSetTextAction() and hasText("ゲーム")).assertIsDisplayed()
         composeRule.onNode(
             hasContentDescription(text(R.string.category_color_purple)) and
                 SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
         ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG)
-            .performScrollToNode(hasText(text(R.string.category_icon_game)))
-        composeRule.onNode(
-            hasText(text(R.string.category_icon_game)) and
-                SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
-        ).performScrollTo().assertIsDisplayed()
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assert(
+                SemanticsMatcher.expectValue(CategoryIconIdKey, "SportsEsports"),
+            )
     }
 
     @Test
@@ -110,6 +119,165 @@ class CategoryManagementScreenSpecCoverageTest {
     }
 
     @Test
+    fun cm014_fixedPaletteShowsAndSelectsExactlySixteenNamedColors() {
+        setScreen(emptyList())
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
+
+        composeRule.onAllNodes(defined(CategoryColorIdKey)).assertCountEquals(16)
+        CategoryColorOptions.forEach { option ->
+            val node = composeRule.onNode(
+                hasContentDescription(text(option.labelRes)) and
+                    SemanticsMatcher.expectValue(CategoryColorIdKey, option.id),
+            )
+            node.performScrollTo().performClick()
+            node.assertIsSelected()
+        }
+    }
+
+    @Test
+    fun cm015_savedColorIdSurvivesLightDarkAndDynamicPrimaryThemes() {
+        val repository = CategoryScreenTestRepository(categories())
+        val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
+        val theme = mutableStateOf(AppTheme.LIGHT)
+        val dynamicColor = mutableStateOf(false)
+        composeRule.setContent {
+            MataTheme(appTheme = theme.value, useDynamicColor = dynamicColor.value) {
+                CategoryListScreen(onDestination = {}, viewModel = viewModel)
+            }
+        }
+        composeRule.onNodeWithText("ゲーム").performClick()
+        val purple = composeRule.onNode(
+            SemanticsMatcher.expectValue(CategoryColorIdKey, "purple"),
+        )
+        purple.performScrollTo().assertIsSelected()
+        val lightArgb = purple.fetchSemanticsNode().config[CategoryColorArgbKey]
+
+        composeRule.runOnIdle { theme.value = AppTheme.DARK }
+        composeRule.waitForIdle()
+        val darkArgb = purple.fetchSemanticsNode().config[CategoryColorArgbKey]
+        assertNotEquals(lightArgb, darkArgb)
+        purple.assertIsSelected()
+
+        composeRule.runOnIdle {
+            theme.value = AppTheme.LIGHT
+            dynamicColor.value = true
+        }
+        composeRule.waitForIdle()
+        assertEquals(lightArgb, purple.fetchSemanticsNode().config[CategoryColorArgbKey])
+        composeRule.runOnIdle {
+            assertEquals(2, repository.snapshot.single { it.id == "game" }.colorIndex)
+        }
+    }
+
+    @Test
+    fun cm016_iconPickerGroupsAndNormalizesNameGroupAndKeywordSearch() {
+        setScreen(emptyList())
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG).performScrollTo().performClick()
+
+        composeRule.onNodeWithTag(CATEGORY_ICON_PICKER_TEST_TAG).assertIsDisplayed()
+        composeRule.onNodeWithTag(
+            CATEGORY_ICON_GROUP_TEST_TAG_PREFIX + R.string.category_icon_group_life,
+        ).assertIsDisplayed()
+        val search = composeRule.onNodeWithTag(CATEGORY_ICON_SEARCH_TEST_TAG)
+        search.performTextInput("ジョギング")
+        composeRule.onNodeWithTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + "DirectionsRun")
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + "FitnessCenter")
+            .assertDoesNotExist()
+
+        composeRule.onNodeWithContentDescription(text(R.string.category_icon_clear_search))
+            .performClick()
+        composeRule.onNodeWithTag(
+            CATEGORY_ICON_GROUP_TEST_TAG_PREFIX + R.string.category_icon_group_life,
+        ).assertIsDisplayed()
+        search.performTextInput("ＰＣ")
+        composeRule.onNodeWithTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + "Laptop")
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG)
+            .assert(SemanticsMatcher.expectValue(CategoryIconIdKey, "Laptop"))
+    }
+
+    @Test
+    fun cmd04_colorCatalogMatchesStableIdsJapaneseNamesAndBaseColors() {
+        assertEquals(
+            listOf(
+                "red", "pink", "purple", "indigo", "blue", "light_blue", "cyan", "teal",
+                "green", "light_green", "lime", "yellow", "orange", "deep_orange", "brown", "gray",
+            ),
+            CategoryColorOptions.map { it.id },
+        )
+        assertEquals(
+            listOf(
+                0xFFC62828, 0xFFAD1457, 0xFF6A1B9A, 0xFF283593,
+                0xFF1565C0, 0xFF0277BD, 0xFF00838F, 0xFF00796B,
+                0xFF2E7D32, 0xFF558B2F, 0xFF827717, 0xFFF9A825,
+                0xFFEF6C00, 0xFFD84315, 0xFF5D4037, 0xFF546E7A,
+            ),
+            CategoryColorOptions.map { it.baseArgb },
+        )
+        assertEquals(
+            listOf(
+                "赤", "ピンク", "紫", "藍", "青", "水色", "シアン", "青緑",
+                "緑", "黄緑", "ライム", "黄", "オレンジ", "濃いオレンジ", "茶", "グレー",
+            ),
+            CategoryColorOptions.map { text(it.labelRes) },
+        )
+
+        setScreen(emptyList(), appTheme = AppTheme.LIGHT)
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
+        composeRule.onAllNodes(defined(CategoryColorIdKey)).assertCountEquals(16)
+        CategoryColorOptions.forEach { option ->
+            val renderedColor = composeRule.onNode(
+                SemanticsMatcher.expectValue(CategoryColorIdKey, option.id),
+            ).fetchSemanticsNode().config[CategoryColorArgbKey]
+            assertEquals(option.baseArgb, renderedColor)
+        }
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(1)
+    }
+
+    @Test
+    fun cmd05_iconCatalogMatchesAllMaterialIdsAndJapaneseNamesWithoutCustomInput() {
+        val expected = listOf(
+            "Home" to "家", "Bed" to "ベッド", "WbSunny" to "朝",
+            "CleaningServices" to "掃除", "LocalLaundryService" to "洗濯", "DeleteSweep" to "片付け",
+            "ShoppingCart" to "カート", "ShoppingBag" to "買い物袋", "Storefront" to "店舗",
+            "Restaurant" to "食事", "Kitchen" to "キッチン", "LocalDining" to "料理",
+            "Favorite" to "健康", "HealthAndSafety" to "健康管理", "SelfImprovement" to "リラックス",
+            "FitnessCenter" to "筋力トレーニング", "DirectionsRun" to "ランニング", "SportsSoccer" to "球技",
+            "Medication" to "薬", "MedicalServices" to "病院", "Vaccines" to "予防接種",
+            "School" to "学校", "MenuBook" to "読書", "EditNote" to "ノート",
+            "Work" to "仕事", "BusinessCenter" to "業務", "Laptop" to "パソコン",
+            "SportsEsports" to "ゲーム", "Casino" to "ボードゲーム", "EmojiEvents" to "実績",
+            "Event" to "イベント", "Celebration" to "お祝い", "Flag" to "目標",
+            "Payments" to "支払い", "Savings" to "貯金", "AccountBalanceWallet" to "財布",
+            "DirectionsCar" to "車", "Train" to "電車", "Flight" to "飛行機",
+            "Person" to "個人", "Groups" to "グループ", "FamilyRestroom" to "家族",
+            "Pets" to "ペット",
+            "Category" to "カテゴリ", "Star" to "星", "CheckCircle" to "チェック", "MoreHoriz" to "その他",
+        )
+        assertEquals(expected, CategoryIconOptions.map { it.id to text(it.labelRes) })
+        assertEquals(CategoryIconOptions.size, CategoryIconOptions.map { it.id }.distinct().size)
+
+        setScreen(emptyList())
+        composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG).performScrollTo().performClick()
+        val results = composeRule.onNodeWithTag(CATEGORY_ICON_RESULTS_TEST_TAG)
+        expected.forEach { (id, label) ->
+            results.performScrollToNode(hasTestTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + id))
+            composeRule.onNodeWithTag(CATEGORY_ICON_OPTION_TEST_TAG_PREFIX + id)
+                .assertIsDisplayed()
+                .assert(SemanticsMatcher.expectValue(CategoryIconIdKey, id))
+                .assert(SemanticsMatcher.expectValue(CategoryIconLabelKey, label))
+        }
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(1)
+        composeRule.onNodeWithText("画像アップロード").assertDoesNotExist()
+        composeRule.onNodeWithText("絵文字").assertDoesNotExist()
+        composeRule.onNodeWithText("自由入力").assertDoesNotExist()
+    }
+
+    @Test
     fun cmd01_newEditorUsesSpecifiedDefaultsAndHasNoEndHourInput() {
         setScreen(emptyList())
         composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
@@ -119,10 +287,10 @@ class CategoryManagementScreenSpecCoverageTest {
             hasContentDescription(text(R.string.category_color_green)) and
                 SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
         ).performScrollTo().assertIsDisplayed()
-        composeRule.onNode(
-            hasText(text(R.string.category_icon_category)) and
-                SemanticsMatcher.expectValue(SemanticsProperties.Selected, true),
-        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG)
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(CategoryIconIdKey, "Category"))
         composeRule.onNodeWithText("終了時刻").assertDoesNotExist()
     }
 
@@ -216,11 +384,12 @@ class CategoryManagementScreenSpecCoverageTest {
     private fun setScreen(
         initialCategories: List<Category>,
         onDestination: (MataDestination) -> Unit = {},
+        appTheme: AppTheme = AppTheme.SYSTEM,
     ): CategoryScreenTestRepository {
         val repository = CategoryScreenTestRepository(initialCategories)
         val viewModel = CategoryListViewModel(SavedStateHandle(), repository)
         composeRule.setContent {
-            MataTheme(useDynamicColor = false) {
+            MataTheme(appTheme = appTheme, useDynamicColor = false) {
                 CategoryListScreen(onDestination = onDestination, viewModel = viewModel)
             }
         }
@@ -249,6 +418,9 @@ class CategoryManagementScreenSpecCoverageTest {
 
     private fun text(resId: Int, vararg formatArgs: Any): String =
         InstrumentationRegistry.getInstrumentation().targetContext.getString(resId, *formatArgs)
+
+    private fun <T> defined(key: SemanticsPropertyKey<T>) =
+        SemanticsMatcher("${key.name} is defined") { it.config.contains(key) }
 }
 
 private class CategoryScreenTestRepository(initialCategories: List<Category>) : CategoryRepository {
