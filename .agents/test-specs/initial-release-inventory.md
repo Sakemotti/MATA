@@ -31,7 +31,7 @@
 
 リリース必須のP0/P1は405件である。各項目書の`結果`列は再利用可能な原本として全件`未実施`のまま維持し、リリース候補ごとの実績は[項目別結果TSV](initial-release-results.tsv)へ記録する。
 
-2026年9月16日時点では、項目単位の証跡が揃ったP0を247件、P1を154件`合格`、P0/P1の残り4件を`未実施`として登録した。P2を含む全423件では404件が合格、19件が未実施である。今回は端末追従・ライト・ダークの全選択肢が即時保存され、固定テーマはOS設定から独立し、端末追従だけがOSテーマ変更へ追従する経路を追加合格とした。
+2026年9月16日時点では、項目単位の証跡が揃ったP0を247件、P1を155件`合格`、P0/P1の残り3件を`未実施`として登録した。P2を含む全423件では405件が合格、18件が未実施である。今回は通知権限の許可・拒否表示、Android通知設定への遷移契約、設定画面へ戻った際の状態再取得と通知再構成を追加合格とした。
 
 ## 3. 自動検査の証跡
 
@@ -48,6 +48,7 @@
 | Debug・Release相当版の共存 | Debug APKが`com.mochisofts.mata.debug`・「MATA Dev」、Release相当のBenchmark APKが`com.mochisofts.mata`・「MATA」であることを成果物から検査し、同一端末への同時インストール後に双方のMainActivityを起動 | 2026年9月16日のローカル`testDebugUnitTest`、`assembleDebug`、`assembleBenchmark`およびAPI 34 x86_64エミュレーターで成功 | `APP-002` |
 | アプリデータ消去後の初期状態 | 非初期のRoom全データとDataStore設定を持つ保存領域を削除して再生成し、全11データ表が空、カテゴリ未設定が選択状態、設定が`0:00`・月曜日・完了済み非表示・日付表示・端末テーマ・通知権限未要求・アーカイブ新しい順となることを検証。Benchmark版へ100件を投入した後の`pm clear`でも再起動、空表示、カテゴリ未設定、設定画面の初期値を確認 | 2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`とADB実データ消去確認で成功 | `DAT-009` |
 | テーマ選択と端末追従 | 設定画面に端末追従・ライト・ダークの3候補が表示され、各選択が即時保存・表示されることに加え、固定テーマはOS状態から独立し、端末追従だけがOSテーマ変更へ追従する判定を検証 | 2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-013` |
+| 通知権限表示と設定復帰 | 通知権限の拒否・許可状態を画面へ表示し、対象パッケージを指定したAndroid通知設定Intentを発行して、復帰時に最新状態の再取得と通知再構成を行うことを検証 | 2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-014` |
 | 署名済みAAB | Upload KeyのSHA-256が成果物とPlay Consoleで一致 | [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md) | `REL-024` |
 | versionCode 2公開候補 | クリーンなmainからUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md) | `REL-021` |
 | versionCode 3公開候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
@@ -80,6 +81,7 @@
 | カテゴリ管理の削除確認・選択反映 | カテゴリ行のアイコン・色・名前・並べ替え・削除操作、通常・アーカイブTODO件数と影響範囲、選択中カテゴリ削除後のタブ除去とカテゴリ未設定への切替を専用Compose UI test 3件で検証 | 2026年9月16日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `CM-003`、`CM-022`、`CM-025` |
 | TODO編集中のカテゴリ追加連携 | TODO下書きとカテゴリ選択を保持したままカテゴリ追加へ遷移し、破棄時は元の選択、保存時だけ新カテゴリを選択することを専用Compose UI test 1件で検証 | 2026年9月16日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `CM-020` |
 | 設定画面の基本表示・選択 | セクション順、設定行種別、終了時刻24候補、週開始7候補、3テーマの即時保存と端末追従判定、バックアップ警告、広告・購入UI非表示、アプリ情報、Debug表記を専用Compose UI test 10件で検証 | [PR #205 CI run 34762842700](https://github.com/Sakemotti/MATA/actions/runs/34762842700)と2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-002`、`ST-003`、`ST-005`、`ST-009`、`ST-013`、`ST-022`、`ST-030`、`ST-031`、`ST-037`、`ST-038` |
+| 設定画面の通知権限 | 許可・拒否の最新状態表示、対象アプリを指定したAndroid通知設定への遷移、設定画面へ戻った際の状態再取得と通知再構成を専用Compose UI test 1件で検証 | 2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-014` |
 | 設定画面のUMPプライバシーオプション | UMP要求有無による行表示、アプリ情報内の配置、フォーム起動、同意変更時の既存広告破棄と再評価、エラー時の画面維持を専用Compose UI test 5件で検証 | 2026年9月15日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-032`〜`ST-036` |
 | 設定画面のナビゲーション・論理日説明・復元確認 | 設定の選択状態、他画面への重複導線なし、終了時刻別の説明、復元対象の内訳と不可逆警告、開始前後の取消可否を専用Compose UI test 5件で検証 | 2026年9月15日のAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-001`、`ST-006`、`ST-017`、`ST-025`、`ST-D04` |
 | 設定画面の共有設定・復元結果・外部連携境界 | 完了済み表示の画面間共有、無効バックアップ理由、復元成功後の復帰、法的文書リンク、広告同意のバックアップ除外を専用unit/instrumented test 5件で検証 | 2026年9月15日のGradle unit testとAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-012`、`ST-024`、`ST-027`、`ST-040`、`ST-D06` |
@@ -93,7 +95,7 @@
 | 設定変更時の再計算・履歴不変 | 週開始曜日変更後の現在期間・必要数・完了数・残数の即時再計算と、終了時刻・週開始曜日変更後の確定済み履歴・期間スナップショット不変を専用instrumented test 2件で検証 | [PR #125 CI run 33863729049](https://github.com/Sakemotti/MATA/actions/runs/33863729049)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-010`、`ST-011` |
 | バックアップ形式・内容・事前検証 | 全種ユーザーデータ、除外対象、復元前の形式・ハッシュ・構造・型・範囲・参照・互換性検証、ファイル名、ZIP内部メタデータを専用instrumented test 5件で検証 | [PR #126 CI run 33867709111](https://github.com/Sakemotti/MATA/actions/runs/33867709111)のAPI 30`:app:connectedDebugAndroidTest`、`verify-automated-evidence.mjs` | `ST-019`、`ST-020`、`ST-023`、`ST-D02`、`ST-D03` |
 
-[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト332件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
+[自動試験証跡TSV](automated-test-evidence.tsv)へ登録した専用テスト333件は試験IDと1対1に関連付ける。それ以外の自動テスト名と試験IDは現状1対1で機械的に関連付けられていないため、対応領域の証跡として利用しても、関連する全項目を自動的に合格扱いにはしない。
 
 ## 4. 実機・Console・Web確認の証跡
 
