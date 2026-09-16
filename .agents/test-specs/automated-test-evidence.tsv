@@ -312,3 +312,7 @@ AT-026	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreen
 AT-030	app/src/androidTest/java/com/mochisofts/mata/data/repository/RoomArchiveRepositoryTest.kt	at030_archiveDeleteRemovesHistoryPeriodResultsAndCalendarSummaries	:app:connectedDebugAndroidTest
 AT-032	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at032_archiveActionsRejectBackupAndDuplicateOperationConflicts	:app:connectedDebugAndroidTest
 AT-033	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at033_externalChangesRefreshListSearchDetailSummaryAndHistory	:app:connectedDebugAndroidTest
+AT-036	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at036_savedInstanceRestoresSearchPositionsDialogsAndDoesNotDuplicateRunningAction	:app:connectedDebugAndroidTest
+AT-040	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	at040_maximumFontAndCompactDisplayKeepDetailHistoryAndFixedActionsReachable	:app:connectedDebugAndroidTest
+AT-D03	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	atd03_fixedActionsStayAvailableWhileAdditionalHistoryPagesLoad	:app:connectedDebugAndroidTest
+AT-D07	app/src/androidTest/java/com/mochisofts/mata/ui/archive/ArchiveListScreenTest.kt	atd07_fullExecutionAndPeriodSnapshotsUseScrollableReadOnlyDetailAndBothClosePaths	:app:connectedDebugAndroidTest

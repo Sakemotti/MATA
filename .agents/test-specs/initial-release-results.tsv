@@ -327,18 +327,18 @@ AT-032	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 
 AT-033	P0	archived-todos.md	合格	2026-09-15	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at033・connectedDebugAndroidTest成功
 AT-034	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at034_reopeningClearsSearchAndPositionButRestoresOnlySortOrder・connectedDebugAndroidTest成功
 AT-035	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at035_returnFromDetailKeepsSearchSortLoadedPagesAndListPosition・connectedDebugAndroidTest成功
-AT-036	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-036	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at036_savedInstanceRestoresSearchPositionsDialogsAndDoesNotDuplicateRunningAction・connectedDebugAndroidTest成功
 AT-037	P0	archived-todos.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	ArchiveListViewModelTest#at037・testDebugUnitTest成功
 AT-038	P2	archived-todos.md	未実施	-	-	-	-	-
 AT-039	P1	archived-todos.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・検索、TODO行、詳細、履歴、復元、削除確認を識別して操作できることを確認
-AT-040	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-040	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#at040_maximumFontAndCompactDisplayKeepDetailHistoryAndFixedActionsReachable・connectedDebugAndroidTest成功
 AT-D01	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#atd01・connectedDebugAndroidTest成功
 AT-D02	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#atd02・connectedDebugAndroidTest成功
-AT-D03	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D03	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#atd03_fixedActionsStayAvailableWhileAdditionalHistoryPagesLoad・connectedDebugAndroidTest成功
 AT-D04	P1	archived-todos.md	合格	2026-09-11	AUTO	4	Android Emulator API 34 x86_64	RoomArchiveRepositoryTest#atd04・connectedDebugAndroidTest成功
 AT-D05	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd05・CI run 34027426978成功
 AT-D06	P0	archived-todos.md	合格	2026-09-06	AUTO	1	GitHub Actions API 30 x86_64	RoomArchiveRepositoryTest#atd06・CI run 34027426978成功
-AT-D07	P1	archived-todos.md	未実施	-	-	-	-	-
+AT-D07	P1	archived-todos.md	合格	2026-09-16	AUTO	5	Local Android Emulator API 34 x86_64	ArchiveListScreenTest#atd07_fullExecutionAndPeriodSnapshotsUseScrollableReadOnlyDetailAndBothClosePaths・connectedDebugAndroidTest成功
 ST-001	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st001・設定画面のドロワー選択状態と別画面への遷移通知を確認
 ST-002	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・一般、表示、通知、データ管理、アプリ情報の表示順を確認
 ST-003	P1	settings.md	合格	2026-09-13	AUTO	5	GitHub Actions API 30	PR #205 CI run 34762842700・値選択、スイッチ、遷移、処理開始、静的表示の操作種別を確認
