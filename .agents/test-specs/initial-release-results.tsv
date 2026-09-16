@@ -353,7 +353,7 @@ ST-011	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	Sett
 ST-012	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScheduleSpecCoverageTest#st012・設定とTODO一覧が初期非表示の同一値を共有し、双方の変更と再生成へ即時反映することを確認
 ST-013	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st013・3テーマの選択即時反映と端末追従だけがOSテーマ変更へ追従する判定を確認
 ST-014	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st014・許可/拒否表示、Android通知設定Intent、復帰時の状態再取得と通知再構成を確認
-ST-015	P1	settings.md	未実施	-	-	-	-	-
+ST-015	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st015・対象外非表示、未許可/許可表示、正確なアラーム設定Intent、復帰時再取得を確認
 ST-016	P2	settings.md	未実施	-	-	-	-	-
 ST-017	P1	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st017・設定本文に他の主要画面への重複導線が表示されないことを確認
 ST-018	P0	settings.md	合格	2026-09-15	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st018・ACTION_CREATE_DOCUMENT、MIME、候補名、広範ストレージ権限なし、取消の無通知を確認
