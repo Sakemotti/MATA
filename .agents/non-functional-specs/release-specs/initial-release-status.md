@@ -1,8 +1,8 @@
 # 初回リリース進行記録
 
 - 対象: MATA `1.0.0 (5)`
-- 状態: versionCode 4をClosed testingへ登録済み・公開状態確認待ち／versionCode 5署名済み候補のアップロード待ち
-- 最終更新日: 2026-09-13
+- 状態: 全P0/P1 405件合格／Closed testing 14日間・Production access・Pre-launch report待ち
+- 最終更新日: 2026-09-16
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -40,6 +40,8 @@
 versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed testingへ登録済みであり、再アップロードできない。主要画面のカードレイアウトと読み取り専用詳細画面の改善を追加した現在候補が上表のversionCode `5`である。
 
 ## 3. リポジトリと自動検査
+
+2026年9月16日に`REL-010`の最終集計を行い、自身を除くP0/P1 404件の全合格、P2不合格・保留・対象外0件、GitHubの未解決Issue 0件を確認した。これによりP0/P1は405/405件合格となり、総合動作確認の試験ゲートは合格した。開いている5件のDependabot通常更新PRは既知不具合として扱わない。本番公開はClosed testing期間、Production access、Pre-launch reportおよび最終Console確認が完了するまで保留する。
 
 2026年9月13日にversionCode `5`について次を確認した。
 
@@ -91,7 +93,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 | アプリ設定から法的ページへの遷移 | 確認済み | DEVICE / USER |
 | AdMobとGoogle Playのアプリ連携 | 確認済み | CONSOLE / USER |
 | 実広告バナー表示 | 確認済み。本番広告のクリックは実施していない | DEVICE / USER |
-| Closed testing参加要件 | 12人以上が14日間連続してオプトイン | CONSOLE / USER |
+| Closed testing参加要件 | 必要人数を充足し、14日間の継続参加を確認中 | CONSOLE / USER |
 | ポリシーのステータス | `問題は見つかりませんでした` | CONSOLE / USER |
 | versionCode `2`のSDK関連警告 | なし | CONSOLE / USER |
 
@@ -156,7 +158,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 1. Closed testing要件を達成し、Production accessの承認を得る。
 2. 公開対象commit、versionName、versionCode、リリースノートおよびAABを最終確定する。
 3. 上表の`1.0.0 (5)`、ソースcommit、AAB SHA-256および保存済み成果物を再照合する。Google Play登録後にアプリまたは公開成果物を変更した場合はversionCodeを`6`以上へ上げ、クリーンな`main`から署名済み成果物を再生成して`node tools/release/verify-readiness.mjs --release`を成功させる。
-4. 全P0/P1試験、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
+4. 合格済みの全P0/P1試験を維持し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 5. 初期配布地域を日本としてProductionへ公開する。
 6. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
 7. 公開日、最終AAB SHA-256、リリースノート、正本・公開サイトのcommitおよびGitタグを記録する。
