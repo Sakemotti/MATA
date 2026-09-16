@@ -8,6 +8,7 @@ import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
+import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceRule
@@ -16,6 +17,7 @@ import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoOccurrence
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
@@ -47,6 +50,87 @@ import org.junit.Test
 class TodoListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun todoEditorResultIsConsumedOnceWithoutChangingTheListSelection() = runTest {
+        val savedStateHandle = SavedStateHandle()
+        val viewModel = createViewModel(TodoListTestRepository(), savedStateHandle)
+        val effect = async { viewModel.effects.first() }
+        runCurrent()
+
+        savedStateHandle[TODO_EDITOR_RESULT_KEY] = R.string.message_todo_added
+        runCurrent()
+
+        assertEquals(TodoListEffect.Message(R.string.message_todo_added), effect.await())
+        assertEquals(TODAY, viewModel.uiState.value.selectedDate)
+        assertEquals(null, savedStateHandle.get<Int>(TODO_EDITOR_RESULT_KEY))
+    }
+
+    @Test
+    fun tl002_newViewModelStartsTodayInsteadOfRestoringTransientSelection() = runTest {
+        val firstViewModel = createViewModel(TodoListTestRepository())
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            firstViewModel.uiState.collect()
+        }
+        runCurrent()
+        firstViewModel.selectDate(TODAY.minusDays(5))
+        runCurrent()
+        assertEquals(TODAY.minusDays(5), firstViewModel.uiState.value.selectedDate)
+
+        val relaunchedViewModel = createViewModel(TodoListTestRepository())
+
+        assertEquals(TODAY, relaunchedViewModel.uiState.value.selectedDate)
+        assertTrue(relaunchedViewModel.uiState.value.isToday)
+    }
+
+    @Test
+    fun tl021_timePassageWaitsForDefinedRefreshOrDateSelectionTriggers() = runTest {
+        val selection = TodoListDateSelection(
+            initialDate = TODAY,
+            followsTodayInitially = true,
+        )
+        var overdue = false
+        val emissions = mutableListOf<TodoListContent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            observeTodoListContent(
+                selectedDate = selection.requests,
+                occurrencesForDate = { date ->
+                    flowOf(
+                        listOf(
+                            occurrence("deadline").copy(
+                                logicalDate = date,
+                                scheduledLogicalDate = date,
+                                effectiveDueDate = date,
+                                isOverdue = overdue,
+                            ),
+                        ),
+                    )
+                },
+                todos = MutableStateFlow(emptyList()),
+                holidaySnapshot = MutableStateFlow(HolidaySnapshot()),
+            ).collect { emissions += it }
+        }
+        runCurrent()
+        assertEquals(1, emissions.size)
+        assertFalse(emissions.last().occurrences.single().isOverdue)
+
+        overdue = true
+        runCurrent()
+        assertEquals(1, emissions.size)
+
+        selection.refresh(TODAY)
+        runCurrent()
+        assertEquals(2, emissions.size)
+        assertTrue(emissions.last().occurrences.single().isOverdue)
+
+        selection.refresh(TODAY.plusDays(1))
+        runCurrent()
+        assertEquals(TODAY.plusDays(1), emissions.last().date)
+
+        selection.select(TODAY.plusDays(5))
+        runCurrent()
+        assertEquals(TODAY.plusDays(5), emissions.last().date)
+    }
 
     @Test
     fun tl024_loadingEmptyRetryAndFailedActionRemainDistinct() = runTest {
@@ -121,6 +205,56 @@ class TodoListViewModelTest {
     }
 
     @Test
+    fun tl026_categoryAddEditDeleteAndReorderReevaluateCurrentGroups() = runTest {
+        val alpha = category("alpha", "アルファ", colorIndex = 1, iconName = "Home", sortOrder = 0)
+        val beta = category("beta", "ベータ", colorIndex = 2, iconName = "SportsEsports", sortOrder = 1)
+        val repository = TodoListTestRepository().apply {
+            replaceOccurrences(occurrence("alpha-todo", alpha), occurrence("beta-todo", beta))
+        }
+        val viewModel = createViewModel(repository)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+        assertEquals(listOf("alpha", "beta"), viewModel.uiState.value.groups.map { it.category?.id })
+
+        val gamma = category("gamma", "ガンマ", colorIndex = 3, iconName = "Work", sortOrder = 0)
+        val reorderedBeta = beta.copy(sortOrder = 1)
+        val editedAlpha = alpha.copy(
+            name = "編集後アルファ",
+            colorIndex = 4,
+            iconName = "FitnessCenter",
+            sortOrder = 2,
+        )
+        repository.replaceOccurrences(
+            occurrence("alpha-todo", editedAlpha),
+            occurrence("beta-todo", reorderedBeta),
+            occurrence("gamma-todo", gamma),
+        )
+        runCurrent()
+
+        val editedGroups = viewModel.uiState.value.groups
+        assertEquals(listOf("gamma", "beta", "alpha"), editedGroups.map { it.category?.id })
+        assertEquals("編集後アルファ", editedGroups.last().category?.name)
+        assertEquals(4, editedGroups.last().category?.colorIndex)
+        assertEquals("FitnessCenter", editedGroups.last().category?.iconName)
+
+        repository.replaceOccurrences(
+            occurrence("alpha-todo", editedAlpha),
+            occurrence("beta-todo", null),
+            occurrence("gamma-todo", gamma),
+        )
+        runCurrent()
+
+        val deletedGroups = viewModel.uiState.value.groups
+        assertEquals(listOf(null, "gamma", "alpha"), deletedGroups.map { it.category?.id })
+        assertEquals(
+            listOf("beta-todo"),
+            deletedGroups.first().occurrences.map { it.todo.id },
+        )
+    }
+
+    @Test
     fun failedActionReportsErrorWithoutPublishingSuccess() = runTest {
         val repository = TodoListTestRepository().apply {
             completeResult = Result.failure(IllegalStateException("write failed"))
@@ -164,8 +298,11 @@ class TodoListViewModelTest {
         assertEquals(1, repository.skipCalls)
     }
 
-    private fun createViewModel(repository: TodoListTestRepository) = TodoListViewModel(
-        savedStateHandle = SavedStateHandle(),
+    private fun createViewModel(
+        repository: TodoListTestRepository,
+        savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    ) = TodoListViewModel(
+        savedStateHandle = savedStateHandle,
         todoRepository = repository,
         holidayRepository = TodoListTestHolidayRepository(),
         settingsRepository = TodoListTestSettingsRepository(),
@@ -176,13 +313,13 @@ class TodoListViewModelTest {
         adsConsentRepository = TodoListTestAdsRepository(),
     )
 
-    private fun occurrence(id: String): TodoOccurrence {
-        val date = LocalDate.of(2026, 9, 6)
+    private fun occurrence(id: String, category: Category? = null): TodoOccurrence {
+        val date = TODAY
         val todo = Todo(
             id = id,
             title = id,
             description = "",
-            categoryId = null,
+            categoryId = category?.id,
             startDate = date,
             endDate = null,
             recurrenceRule = RecurrenceRule.daily(),
@@ -191,7 +328,19 @@ class TodoListViewModelTest {
             archivedAt = null,
             createdAt = 1,
         )
-        return TodoOccurrence(todo, null, date, TodoState.PENDING)
+        return TodoOccurrence(todo, category, date, TodoState.PENDING)
+    }
+
+    private fun category(
+        id: String,
+        name: String,
+        colorIndex: Int,
+        iconName: String,
+        sortOrder: Int,
+    ) = Category(id, name, colorIndex, iconName, sortOrder)
+
+    private companion object {
+        val TODAY: LocalDate = LocalDate.of(2026, 9, 6)
     }
 }
 
@@ -204,6 +353,11 @@ private class TodoListTestRepository : TodoRepository {
     var skipCalls = 0
     var deleteCalls = 0
     var failLoad = false
+
+    fun replaceOccurrences(vararg values: TodoOccurrence) {
+        occurrences.value = values.toList()
+        todos.value = values.map(TodoOccurrence::todo)
+    }
 
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> = if (failLoad) {
         flow { error("load failed") }

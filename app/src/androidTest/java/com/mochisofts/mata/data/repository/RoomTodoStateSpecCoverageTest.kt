@@ -16,6 +16,7 @@ import com.mochisofts.mata.data.widget.WidgetSourceData
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.data.widget.buildWidgetDisplayModel
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.NotificationUnit
@@ -123,6 +124,53 @@ class RoomTodoStateSpecCoverageTest {
         assertEquals(expectedNext, domainAfter.nextOccurrenceOnOrAfter(clock.date.plusDays(1)))
         clock.setDate(clock.date.plusDays(1))
         assertEquals(TodoState.PENDING, todoRepository.observeOccurrences(clock.date).first().single().state)
+    }
+
+    @Test
+    fun sta005_historyUndoOfSkipRestoresSummaryListNotificationAndWidgetState() = runBlocking {
+        val todo = todoEntity("undo-skip", dueMinutes = 18 * 60)
+        database.todoDao().upsert(todo)
+        database.todoNotificationDao().upsertAll(
+            listOf(
+                notificationEntity(
+                    todoId = todo.id,
+                    id = "undo-skip-at-deadline",
+                    relation = NotificationRelation.AT,
+                    amount = 0,
+                ),
+            ),
+        )
+
+        todoRepository.setSkipped(
+            todoId = todo.id,
+            logicalDate = clock.date,
+            skipped = true,
+            operationId = "skip-before-history-undo",
+        ).getOrThrow()
+
+        val skippedExecution = database.todoExecutionDao().findForTodo(todo.id).single()
+        val skippedDay = historyRepository().observeDay(clock.date).first()
+        assertEquals(0, skippedDay.summary.completedCount)
+        assertEquals(1, skippedDay.summary.plannedCount)
+        assertEquals(HistoryDayState.UNACHIEVED, skippedDay.summary.state)
+        assertEquals(TodoState.SKIPPED, skippedDay.entries.single().state)
+        assertEquals(TodoState.SKIPPED, todoRepository.observeOccurrences(clock.date).first().single().state)
+        assertEquals(0, widgetModel(todo, listOf(skippedExecution)).totalCount)
+
+        scheduler.reconciledTodoIds.clear()
+        historyRepository().undoAction(skippedExecution.id).getOrThrow()
+
+        assertTrue(database.todoExecutionDao().findForTodo(todo.id).isEmpty())
+        val restoredDay = historyRepository().observeDay(clock.date).first()
+        assertEquals(0, restoredDay.summary.completedCount)
+        assertEquals(1, restoredDay.summary.plannedCount)
+        assertEquals(HistoryDayState.IN_PROGRESS, restoredDay.summary.state)
+        assertEquals(TodoState.PENDING, restoredDay.entries.single().state)
+        assertFalse(restoredDay.entries.single().canUndoAction)
+        assertEquals(TodoState.PENDING, todoRepository.observeOccurrences(clock.date).first().single().state)
+        assertEquals(1, widgetModel(todo, emptyList()).totalCount)
+        assertEquals(listOf(todo.id), scheduler.reconciledTodoIds)
+        assertEquals(1, database.todoNotificationDao().findForTodo(todo.id).size)
     }
 
     @Test
@@ -863,6 +911,7 @@ private class StateTestNotificationScheduler(
 ) : NotificationScheduler {
     override val notificationCount = MutableStateFlow(0)
     val cancelledTodoIds = mutableListOf<String>()
+    val reconciledTodoIds = mutableListOf<String>()
 
     override fun systemState() = NotificationSystemState(
         canPostNotifications = true,
@@ -872,7 +921,9 @@ private class StateTestNotificationScheduler(
         canScheduleExactAlarms = true,
     )
 
-    override suspend fun reconcileTodo(todoId: String) = Unit
+    override suspend fun reconcileTodo(todoId: String) {
+        reconciledTodoIds += todoId
+    }
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) {
         cancelledTodoIds += todoId

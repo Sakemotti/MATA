@@ -1,29 +1,53 @@
 package com.mochisofts.mata.data.repository
 
+import android.app.Activity
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mochisofts.mata.app.notification.NotificationPresenter
+import com.mochisofts.mata.core.notification.AlarmGateway
 import com.mochisofts.mata.core.observability.DiagnosticLogger
+import com.mochisofts.mata.core.ads.AdsConsentRepository
+import com.mochisofts.mata.data.backup.DataMutationGate
 import com.mochisofts.mata.data.local.CategoryEntity
 import com.mochisofts.mata.data.local.MataDatabase
 import com.mochisofts.mata.data.local.TodoEntity
 import com.mochisofts.mata.data.local.TodoExecutionEntity
+import com.mochisofts.mata.data.local.TodoNotificationEntity
+import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
+import com.mochisofts.mata.data.notification.NotificationSystemStateProvider
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AdsConsentEvent
+import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
+import com.mochisofts.mata.domain.model.NotificationRelation
+import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.deadlineAt
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.SettingsRepository
+import com.mochisofts.mata.ui.settings.SettingsViewModel
 import com.mochisofts.mata.ui.todolist.TodoListDateSelection
+import com.mochisofts.mata.ui.todolist.TodoListViewModel
+import java.io.File
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.cancelAndJoin
@@ -32,6 +56,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -39,6 +64,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SettingsScheduleSpecCoverageTest {
+    private lateinit var context: Context
     private lateinit var database: MataDatabase
     private lateinit var settings: MutableTestSettingsRepository
     private lateinit var todoRepository: RoomTodoRepository
@@ -47,7 +73,7 @@ class SettingsScheduleSpecCoverageTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        context = ApplicationProvider.getApplicationContext()
         clock = Clock.fixed(
             Instant.parse("2026-08-11T03:00:00Z"),
             ZoneId.of("Asia/Tokyo"),
@@ -155,6 +181,7 @@ class SettingsScheduleSpecCoverageTest {
         val categoryRepository = RoomCategoryRepository(
             database = database,
             categoryDao = database.categoryDao(),
+            todoDao = database.todoDao(),
             clock = clock,
             notificationScheduler = NoOpSettingsNotificationScheduler(),
             widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
@@ -350,6 +377,311 @@ class SettingsScheduleSpecCoverageTest {
     }
 
     @Test
+    fun st012_settingsAndTodoListShareCompletedVisibilityImmediately() = runBlocking {
+        val selectedDate = LocalDate.of(2026, 8, 11)
+        val dataStoreFile = File(
+            context.cacheDir,
+            "settings-shared-${System.nanoTime()}.preferences_pb",
+        )
+        val dataStoreScopes = mutableListOf<CoroutineScope>()
+        fun openSettingsRepository(): DataStoreSettingsRepository {
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            dataStoreScopes += scope
+            return DataStoreSettingsRepository(
+                PreferenceDataStoreFactory.create(
+                    scope = scope,
+                    produceFile = { dataStoreFile },
+                ),
+                DataMutationGate(),
+            )
+        }
+        dataStoreFile.delete()
+        val completed = dailyTodo(id = "shared-completed", categoryId = null, dueMinutes = null)
+        val pending = dailyTodo(id = "shared-pending", categoryId = null, dueMinutes = null)
+        database.todoDao().upsert(completed)
+        database.todoDao().upsert(pending)
+        database.todoExecutionDao().insert(
+            completedExecution(
+                id = "shared-completion",
+                todoId = completed.id,
+                logicalDate = selectedDate.toString(),
+                snapshotJson = "{}",
+            ),
+        )
+        try {
+            val persistentSettings = openSettingsRepository()
+            val persistentTodoRepository = RoomTodoRepository(
+                database = database,
+                todoDao = database.todoDao(),
+                categoryDao = database.categoryDao(),
+                executionDao = database.todoExecutionDao(),
+                notificationDao = database.todoNotificationDao(),
+                runtimeStateDao = database.todoRuntimeStateDao(),
+                settingsRepository = persistentSettings,
+                notificationScheduler = NoOpSettingsNotificationScheduler(),
+                widgetUpdater = WidgetUpdater(context, DiagnosticLogger()),
+                holidayRepository = TestHolidayRepository(),
+                clock = clock,
+            )
+            val settingsViewModel = SettingsViewModel(
+                repository = persistentSettings,
+                notificationScheduler = NoOpSettingsNotificationScheduler(),
+                adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+            )
+            val todoListViewModel = TodoListViewModel(
+                savedStateHandle = SavedStateHandle(),
+                todoRepository = persistentTodoRepository,
+                holidayRepository = TestHolidayRepository(),
+                settingsRepository = persistentSettings,
+                clock = clock,
+                adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+            )
+
+            val initiallyHidden = todoListViewModel.uiState.first { state ->
+                !state.isLoading && state.groups.isNotEmpty()
+            }
+            assertFalse(settingsViewModel.uiState.value.showCompleted)
+            assertFalse(initiallyHidden.showCompleted)
+            assertEquals(
+                listOf(pending.id),
+                initiallyHidden.groups.flatMap { it.occurrences }.map { it.todo.id },
+            )
+
+            settingsViewModel.setShowCompleted(true)
+            val shownFromSettings = todoListViewModel.uiState.first { state ->
+                state.showCompleted && state.groups.flatMap { it.occurrences }
+                    .any { it.todo.id == completed.id }
+            }
+            assertEquals(
+                setOf(completed.id, pending.id),
+                shownFromSettings.groups.flatMap { it.occurrences }.map { it.todo.id }.toSet(),
+            )
+            assertTrue(
+                settingsViewModel.uiState.first { !it.isLoading && it.showCompleted }.showCompleted,
+            )
+
+            todoListViewModel.setShowCompleted(false)
+            assertFalse(
+                settingsViewModel.uiState.first { !it.isLoading && !it.showCompleted }.showCompleted,
+            )
+
+            settingsViewModel.setShowCompleted(true)
+            settingsViewModel.uiState.first { state ->
+                state.showCompleted && state.savingSetting == null
+            }
+            dataStoreScopes.single().coroutineContext[Job]?.cancelAndJoin()
+
+            val reopenedSettings = openSettingsRepository()
+            val reopenedSettingsViewModel = SettingsViewModel(
+                repository = reopenedSettings,
+                notificationScheduler = NoOpSettingsNotificationScheduler(),
+                adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+            )
+            assertTrue(
+                reopenedSettingsViewModel.uiState.first { !it.isLoading }.showCompleted,
+            )
+        } finally {
+            dataStoreScopes.forEach { scope -> scope.coroutineContext[Job]?.cancelAndJoin() }
+            assertTrue(dataStoreFile.delete() || !dataStoreFile.exists())
+        }
+    }
+
+    @Test
+    fun st007_endHourChangeRecalculatesEveryCategoryScheduleOrderAndNotification() = runBlocking {
+        val home = category("settings-home", 0)
+        val game = category("settings-game", 1)
+        database.categoryDao().upsert(home)
+        database.categoryDao().upsert(game)
+        listOf(
+            dailyTodo("uncategorized", null, 14 * 60),
+            dailyTodo("home-early", home.id, 3 * 60),
+            dailyTodo("home-late", home.id, 15 * 60),
+            dailyTodo("home-notified", home.id, 12 * 60),
+            weekdayTodo("tuesday-only", home.id, DayOfWeek.TUESDAY, 6 * 60),
+            weekdayTodo("monday-only", game.id, DayOfWeek.MONDAY, 7 * 60),
+        ).forEach { database.todoDao().upsert(it) }
+        database.todoNotificationDao().upsertAll(
+            listOf(
+                TodoNotificationEntity(
+                    id = "end-hour-notification",
+                    todoId = "home-notified",
+                    relation = NotificationRelation.AFTER.code,
+                    amount = 2,
+                    unit = NotificationUnit.HOUR.code,
+                    sortOrder = 0,
+                    createdAt = 1,
+                    updatedAt = 1,
+                ),
+            ),
+        )
+        val alarmGateway = RecordingSettingsAlarmGateway()
+        val notificationScheduler = AndroidNotificationScheduler(
+            context = context,
+            todoDao = database.todoDao(),
+            executionDao = database.todoExecutionDao(),
+            notificationDao = database.todoNotificationDao(),
+            scheduledDao = database.scheduledNotificationDao(),
+            settingsRepository = settings,
+            holidayRepository = TestHolidayRepository(),
+            alarmGateway = alarmGateway,
+            presenter = NotificationPresenter(context),
+            systemStateProvider = GrantedSettingsNotificationStateProvider(),
+            clock = clock,
+        )
+        val viewModel = TodoListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            todoRepository = todoRepository,
+            holidayRepository = TestHolidayRepository(),
+            settingsRepository = settings,
+            clock = clock,
+            adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+        )
+
+        val before = viewModel.uiState.first { state ->
+            !state.isLoading && state.groups.sumOf { it.occurrences.size } == 5
+        }
+        assertEquals(
+            listOf(null, home.id),
+            before.groups.map { it.category?.id },
+        )
+        assertEquals(
+            listOf("home-early", "tuesday-only", "home-notified", "home-late"),
+            before.groups.single { it.category?.id == home.id }.occurrences.map { it.todo.id },
+        )
+        notificationScheduler.reconcileAll()
+        assertEquals(
+            AndroidNotificationScheduler.STATE_SCHEDULED,
+            database.scheduledNotificationDao().findForTodo("home-notified").single().state,
+        )
+        assertEquals(1, notificationScheduler.previewDayEndHourChange(13).todoCount)
+        assertEquals(1, notificationScheduler.previewDayEndHourChange(13).notificationCount)
+
+        settings.setDayEndHour(13)
+        notificationScheduler.reconcileAll()
+
+        val after = viewModel.uiState.first { state ->
+            state.newTodoDate == LocalDate.of(2026, 8, 10) &&
+                state.groups.sumOf { it.occurrences.size } == 5 &&
+                state.groups.any { it.category?.id == game.id }
+        }
+        assertEquals(
+            listOf(null, home.id, game.id),
+            after.groups.map { it.category?.id },
+        )
+        assertEquals(
+            listOf("home-late", "home-early", "home-notified"),
+            after.groups.single { it.category?.id == home.id }.occurrences.map { it.todo.id },
+        )
+        assertEquals(
+            listOf("monday-only"),
+            after.groups.single { it.category?.id == game.id }.occurrences.map { it.todo.id },
+        )
+        assertTrue(after.groups.flatMap { it.occurrences }.none { it.todo.id == "tuesday-only" })
+        assertEquals(
+            1,
+            database.todoNotificationDao().findForTodo("home-notified").size,
+        )
+        val suppressed = database.scheduledNotificationDao().findForTodo("home-notified").single()
+        assertEquals(AndroidNotificationScheduler.STATE_SUPPRESSED, suppressed.state)
+        assertEquals(
+            "${AndroidNotificationScheduler.FAILURE_INVALID_PREFIX}after_day_end",
+            suppressed.failureCode,
+        )
+        assertTrue(alarmGateway.cancelledKeys.isNotEmpty())
+    }
+
+    @Test
+    fun tl027_settingsImmediatelyRecalculateVisibleCurrentAndFutureTodoState() = runBlocking {
+        val selectedDate = LocalDate.of(2026, 8, 11)
+        val completed = dailyTodo(
+            id = "settings-completed",
+            categoryId = null,
+            dueMinutes = 11 * 60,
+        )
+        val weekly = todo(
+            id = "settings-weekly",
+            startDate = "2026-08-03",
+            requiredCount = 3,
+        )
+        database.todoDao().upsert(completed)
+        database.todoDao().upsert(weekly)
+        database.todoExecutionDao().insert(
+            completedExecution(
+                id = "settings-completion",
+                todoId = completed.id,
+                logicalDate = selectedDate.toString(),
+                snapshotJson = "{}",
+            ),
+        )
+        val viewModel = TodoListViewModel(
+            savedStateHandle = SavedStateHandle(),
+            todoRepository = todoRepository,
+            holidayRepository = TestHolidayRepository(),
+            settingsRepository = settings,
+            clock = clock,
+            adsConsentRepository = NoOpSettingsAdsConsentRepository(),
+        )
+
+        val hiddenCompleted = viewModel.uiState.first { state ->
+            !state.isLoading && state.selectedDate == selectedDate && state.groups.isNotEmpty()
+        }
+        assertEquals(false, hiddenCompleted.showCompleted)
+        assertEquals(
+            listOf(weekly.id),
+            hiddenCompleted.groups.flatMap { it.occurrences }.map { it.todo.id },
+        )
+
+        settings.setShowCompleted(true)
+        val shownCompleted = viewModel.uiState.first { state ->
+            state.showCompleted && state.groups.flatMap { it.occurrences }
+                .any { it.todo.id == completed.id }
+        }
+        assertEquals(
+            setOf(completed.id, weekly.id),
+            shownCompleted.groups.flatMap { it.occurrences }.map { it.todo.id }.toSet(),
+        )
+
+        settings.setDayEndHour(13)
+        val shiftedLogicalDay = viewModel.uiState.first { state ->
+            state.newTodoDate == selectedDate.minusDays(1) &&
+                state.groups.flatMap { it.occurrences }.isNotEmpty() &&
+                state.groups.flatMap { it.occurrences }
+                    .all { it.logicalDate == selectedDate.minusDays(1) }
+        }
+        assertEquals(13, settings.dayEndHour.value)
+        assertTrue(
+            shiftedLogicalDay.groups.flatMap { it.occurrences }
+                .first { it.todo.id == completed.id }
+                .isOverdue,
+        )
+
+        settings.setWeekStart(DayOfWeek.SUNDAY)
+        val currentSundayPeriod = viewModel.uiState.first { state ->
+            state.groups.flatMap { it.occurrences }
+                .firstOrNull { it.todo.id == weekly.id }
+                ?.progress?.period?.startDate == LocalDate.of(2026, 8, 9)
+        }
+        assertEquals(
+            LocalDate.of(2026, 8, 15),
+            currentSundayPeriod.groups.flatMap { it.occurrences }
+                .first { it.todo.id == weekly.id }.progress?.period?.endDate,
+        )
+
+        viewModel.selectDate(LocalDate.of(2026, 8, 12))
+        val futureSundayPeriod = viewModel.uiState.first { state ->
+            state.selectedDate == LocalDate.of(2026, 8, 12) &&
+                state.groups.flatMap { it.occurrences }
+                    .firstOrNull { it.todo.id == weekly.id }
+                    ?.progress?.period?.startDate == LocalDate.of(2026, 8, 9)
+        }
+        assertEquals(
+            LocalDate.of(2026, 8, 15),
+            futureSundayPeriod.groups.flatMap { it.occurrences }
+                .first { it.todo.id == weekly.id }.progress?.period?.endDate,
+        )
+    }
+
+    @Test
     fun st011_settingChangesNeverRewriteFinalizedHistoryOrPeriodSnapshot() = runBlocking {
         database.todoDao().upsert(
             todo(
@@ -517,6 +849,25 @@ class SettingsScheduleSpecCoverageTest {
         )
     }
 
+    private fun weekdayTodo(
+        id: String,
+        categoryId: String?,
+        weekday: DayOfWeek,
+        dueMinutes: Int,
+    ): TodoEntity {
+        val encoded = RecurrenceRuleJson.encode(
+            RecurrenceRule(
+                type = RecurrenceType.SELECTED_WEEKDAYS,
+                selectedWeekdays = setOf(weekday),
+            ),
+        )
+        return dailyTodo(id, categoryId, dueMinutes).copy(
+            recurrenceType = encoded.typeCode,
+            repeatParamsVersion = encoded.paramsVersion,
+            repeatParamsJson = encoded.paramsJson,
+        )
+    }
+
     private fun category(id: String, sortOrder: Int) = CategoryEntity(
         id = id,
         name = id,
@@ -579,4 +930,36 @@ private class NoOpSettingsNotificationScheduler : NotificationScheduler {
     override suspend fun reconcileTodo(todoId: String) = Unit
     override suspend fun reconcileAll() = Unit
     override suspend fun cancelTodo(todoId: String) = Unit
+}
+
+private class RecordingSettingsAlarmGateway : AlarmGateway {
+    val cancelledKeys = mutableListOf<String>()
+
+    override fun schedule(
+        candidateKey: String,
+        requestCode: Int,
+        triggerAtMillis: Long,
+        exact: Boolean,
+    ) = Unit
+
+    override fun cancel(candidateKey: String, requestCode: Int) {
+        cancelledKeys += candidateKey
+    }
+}
+
+private class GrantedSettingsNotificationStateProvider : NotificationSystemStateProvider {
+    override fun current() = NotificationSystemState(
+        canPostNotifications = true,
+        runtimePermissionRelevant = true,
+        runtimePermissionGranted = true,
+        exactAlarmRelevant = true,
+        canScheduleExactAlarms = true,
+    )
+}
+
+private class NoOpSettingsAdsConsentRepository : AdsConsentRepository {
+    override val state: StateFlow<AdsRuntimeState> = MutableStateFlow(AdsRuntimeState())
+    override val events: Flow<AdsConsentEvent> = MutableSharedFlow()
+    override fun gatherConsent(activity: Activity) = Unit
+    override fun showPrivacyOptions(activity: Activity) = Unit
 }
