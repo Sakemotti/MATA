@@ -383,7 +383,7 @@ ST-041	P0	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsVi
 ST-042	P1	settings.md	合格	2026-09-09	AUTO	3	Gradle 9.7.1 / Windows	SettingsViewModelTest#st042・testDebugUnitTest成功
 ST-043	P1	settings.md	合格	2026-09-09	OWNER	3	Dedicated Android Emulator / versionCode 3	CT-ENV-RECOVERY・回転とプロセス再生成後に対象状態を復元し二重実行しないことを確認
 ST-044	P1	settings.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37) / TalkBack	CT-ENV-TALKBACK・設定名、値、状態、進捗、エラー、破壊的影響を識別して操作できることを確認
-ST-045	P1	settings.md	未実施	-	-	-	-	-
+ST-045	P1	settings.md	合格	2026-09-16	AUTO	5	Android Emulator API 34 x86_64	SettingsScreenSpecCoverageTest#st045・フォント倍率200%・320×640dpで全設定の内容、説明、現在値、スイッチ、バックアップ、復元、広告プライバシー設定へ到達・操作できることを確認
 ST-D01	P2	settings.md	未実施	-	-	-	-	-
 ST-D02	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std02・CI run 33867709111成功
 ST-D03	P0	settings.md	合格	2026-09-04	AUTO	1	GitHub Actions API 30 x86_64	BackupSpecCoverageTest#std03・CI run 33867709111成功
