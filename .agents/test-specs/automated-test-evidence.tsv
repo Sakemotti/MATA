@@ -326,3 +326,4 @@ CM-028	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManageme
 CM-003	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm003_userCategoryRowIdentifiesIconColorNameReorderHandleAndDeleteMenu	:app:connectedDebugAndroidTest
 CM-022	app/src/androidTest/java/com/mochisofts/mata/ui/category/CategoryManagementScreenSpecCoverageTest.kt	cm022_deleteDialogShowsCategoryTodoCountsMoveAndIrreversibleWarning	:app:connectedDebugAndroidTest
 CM-025	app/src/androidTest/java/com/mochisofts/mata/ui/categorytodolist/CategoryTodoListScreenTest.kt	cm025_deletingSelectedCategoryRemovesTabAndSelectsUncategorized	:app:connectedDebugAndroidTest
+CM-020	app/src/androidTest/java/com/mochisofts/mata/ui/todoeditor/TodoEditorScreenSpecCoverageTest.kt	cm020_categoryCreateSaveSelectsNewCategoryWhileDiscardKeepsOriginalDraft	:app:connectedDebugAndroidTest
