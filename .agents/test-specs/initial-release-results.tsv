@@ -117,7 +117,7 @@ REL-006	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	assembleDe
 REL-007	P0	app-core.md	合格	2026-09-03	AUTO	1	GitHub Actions Ubuntu	対象commit e57ababdのmain CI成功 https://github.com/Sakemotti/MATA/actions/runs/33751810640
 REL-008	P1	app-core.md	合格	2026-09-09	OWNER	3	Pixel 9a / Android 17 (API 37)	CT-ENV-VISUAL・ライト、ダーク、端末追従、最大フォント、最大表示サイズで主要11画面を確認
 REL-009	P1	app-core.md	合格	2026-09-07	OWNER	1	Release SBOM・Manifest・実装・Google公式資料・公開法的ページ	外部SDK、権限、収集共有、UMP、ストア掲載および有料機能の差異0件
-REL-010	P0	app-core.md	未実施	-	-	-	-	-
+REL-010	P0	app-core.md	合格	2026-09-16	OWNER	5	項目別結果TSV・GitHub Issues・Closed testing台帳	REL-010自身を除くP0/P1 404件が全合格、P2不合格・保留・対象外0件、未解決Issue 0件を確認。試験ゲートは合格、本番公開はClosed testing期間・Production access等の外部ゲート待ち
 REL-011	P1	app-core.md	合格	2026-09-07	OWNER	1	AGP 9.3.2・主要ソース・PR CI	内蔵Kotlin・Compose・Material 3・単一画面Activity・Coroutines・java.timeを静的確認
 REL-012	P1	app-core.md	合格	2026-09-07	OWNER	1	レイヤー静的検査・PR CI	domain禁止依存0件・data→ui 0件・ui→app/data 0件・画面の直接データアクセス0件
 REL-013	P1	app-core.md	合格	2026-09-07	OWNER	1	domain/UI静的検査・JUnit	業務計算をdomainへ分離・不変UiState 9個・StateFlowとイベント経路を確認
