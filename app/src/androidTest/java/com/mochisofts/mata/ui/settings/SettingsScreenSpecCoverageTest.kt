@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -312,6 +314,90 @@ class SettingsScreenSpecCoverageTest {
         }
         composeRule.onNodeWithText(text(R.string.settings_permission_granted))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun st015_exactAlarmRowOnlyAppearsWhenRelevantAndRefreshesAfterSettingsReturn() {
+        val notRelevantState = NotificationSystemState(
+            canPostNotifications = true,
+            runtimePermissionRelevant = false,
+            runtimePermissionGranted = true,
+            exactAlarmRelevant = false,
+            canScheduleExactAlarms = true,
+        )
+        val scheduler = SettingsScreenTestNotificationScheduler(
+            initialNotificationCount = 1,
+            initialSystemState = notRelevantState,
+        )
+        val lifecycleOwner = SettingsScreenTestLifecycleOwner()
+        val launchedIntents = mutableListOf<Intent>()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            lifecycleOwner.moveTo(Lifecycle.State.RESUMED)
+        }
+        setScreen(
+            notificationScheduler = scheduler,
+            systemSettingsIntentLauncher = launchedIntents::add,
+            lifecycleOwner = lifecycleOwner,
+        )
+
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title))
+            .assertDoesNotExist()
+
+        val callsBeforeRelevant = scheduler.systemStateCalls
+        val reconcilesBeforeRelevant = scheduler.reconcileCalls
+        composeRule.runOnIdle {
+            lifecycleOwner.moveTo(Lifecycle.State.CREATED)
+            scheduler.systemStateValue = notRelevantState.copy(
+                exactAlarmRelevant = true,
+                canScheduleExactAlarms = false,
+            )
+            lifecycleOwner.moveTo(Lifecycle.State.RESUMED)
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            scheduler.systemStateCalls > callsBeforeRelevant &&
+                scheduler.reconcileCalls > reconcilesBeforeRelevant &&
+                composeRule.onAllNodesWithText(text(R.string.settings_exact_alarm_title))
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title))
+            .performScrollTo()
+            .assertIsEnabled()
+        composeRule.onNodeWithText(text(R.string.settings_permission_not_granted))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_fallback_description))
+            .assertIsDisplayed()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title)).performClick()
+            composeRule.runOnIdle {
+                val intent = launchedIntents.single()
+                assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, intent.action)
+                assertEquals(
+                    "package:${InstrumentationRegistry.getInstrumentation().targetContext.packageName}",
+                    intent.dataString,
+                )
+            }
+        } else {
+            composeRule.runOnIdle { assertTrue(launchedIntents.isEmpty()) }
+        }
+
+        val callsBeforeGrantedReturn = scheduler.systemStateCalls
+        val reconcilesBeforeGrantedReturn = scheduler.reconcileCalls
+        composeRule.runOnIdle {
+            lifecycleOwner.moveTo(Lifecycle.State.CREATED)
+            scheduler.systemStateValue = scheduler.systemStateValue.copy(
+                canScheduleExactAlarms = true,
+            )
+            lifecycleOwner.moveTo(Lifecycle.State.RESUMED)
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            scheduler.systemStateCalls > callsBeforeGrantedReturn &&
+                scheduler.reconcileCalls > reconcilesBeforeGrantedReturn
+        }
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_description))
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText(text(R.string.settings_permission_granted))
+            .assertCountEquals(2)
     }
 
     @Test
@@ -808,6 +894,7 @@ private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : Se
 
 private class SettingsScreenTestNotificationScheduler(
     private val endHourImpact: NotificationChangeImpact = NotificationChangeImpact(),
+    initialNotificationCount: Int = 0,
     initialSystemState: NotificationSystemState = NotificationSystemState(
         canPostNotifications = true,
         runtimePermissionRelevant = false,
@@ -816,7 +903,7 @@ private class SettingsScreenTestNotificationScheduler(
         canScheduleExactAlarms = true,
     ),
 ) : NotificationScheduler {
-    override val notificationCount: Flow<Int> = MutableStateFlow(0)
+    override val notificationCount: Flow<Int> = MutableStateFlow(initialNotificationCount)
     val previewedEndHours = mutableListOf<Int>()
     var reconcileCalls = 0
     var systemStateCalls = 0
