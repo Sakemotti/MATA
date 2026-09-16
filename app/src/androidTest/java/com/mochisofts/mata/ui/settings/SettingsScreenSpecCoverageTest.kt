@@ -42,6 +42,7 @@ import com.mochisofts.mata.core.backup.BackupOperationStatus
 import com.mochisofts.mata.core.backup.BackupOperationType
 import com.mochisofts.mata.core.backup.BackupSummary
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.mataUsesDarkTheme
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
@@ -231,6 +232,24 @@ class SettingsScreenSpecCoverageTest {
             repository.weekStart.value == DayOfWeek.SUNDAY
         }
         composeRule.onNodeWithText(text(R.string.weekday_sunday_full)).assertIsDisplayed()
+    }
+
+    @Test
+    fun st013_themeChoicesPersistImmediatelyAndOnlySystemFollowsDeviceTheme() {
+        val repository = setScreen()
+
+        selectTheme(repository, AppTheme.LIGHT, R.string.settings_theme_light)
+        selectTheme(repository, AppTheme.DARK, R.string.settings_theme_dark)
+        selectTheme(repository, AppTheme.SYSTEM, R.string.settings_theme_system)
+
+        composeRule.runOnIdle {
+            assertFalse(mataUsesDarkTheme(AppTheme.LIGHT, systemInDarkTheme = false))
+            assertFalse(mataUsesDarkTheme(AppTheme.LIGHT, systemInDarkTheme = true))
+            assertTrue(mataUsesDarkTheme(AppTheme.DARK, systemInDarkTheme = false))
+            assertTrue(mataUsesDarkTheme(AppTheme.DARK, systemInDarkTheme = true))
+            assertFalse(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = false))
+            assertTrue(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = true))
+        }
     }
 
     @Test
@@ -614,6 +633,29 @@ class SettingsScreenSpecCoverageTest {
         composeRule.onNodeWithText(text(R.string.hour_format, hour)).assertIsDisplayed()
     }
 
+    private fun selectTheme(
+        repository: SettingsScreenTestRepository,
+        theme: AppTheme,
+        labelResource: Int,
+    ) {
+        composeRule.onNodeWithText(text(R.string.settings_theme_title))
+            .performScrollTo()
+            .performClick()
+        listOf(
+            R.string.settings_theme_system,
+            R.string.settings_theme_light,
+            R.string.settings_theme_dark,
+        ).forEach { resourceId ->
+            selectionOption(text(resourceId)).assertIsDisplayed()
+        }
+        selectionOption(text(labelResource)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            repository.themeState.value == theme
+        }
+        composeRule.onNodeWithText(text(labelResource)).assertIsDisplayed()
+    }
+
     private fun restoreConfirmationState() = BackupOperationState(
         operationId = "restore-operation",
         type = BackupOperationType.RESTORE_VALIDATION,
@@ -657,7 +699,7 @@ private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : Se
     private val todoListModeState = MutableStateFlow("DATE")
     val endHour = MutableStateFlow(0)
     override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
-    private val themeState = MutableStateFlow(AppTheme.SYSTEM)
+    val themeState = MutableStateFlow(AppTheme.SYSTEM)
     private val permissionRequestedState = MutableStateFlow(false)
 
     override val todoListMode: Flow<String> = todoListModeState
