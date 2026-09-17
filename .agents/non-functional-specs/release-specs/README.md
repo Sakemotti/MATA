@@ -20,6 +20,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 | [Release事前検査仕様](release-preflight.md) | 設定、法的文書、ストア成果物、AABと証跡の統合検査 |
 | [初回リリース進行記録](initial-release-status.md) | `1.0.0 (5)`の公開候補、Console、実機確認、保留事項 |
+| [Production access申請回答案](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の申請文案 |
 
 ## 3. 基本方針
 
