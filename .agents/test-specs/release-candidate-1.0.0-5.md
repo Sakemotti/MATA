@@ -4,7 +4,7 @@
 - 実施日: 2026-09-13
 - 実施者: `OWNER` / `AUTO`
 - 判定: 合格
-- 公開承認: Closed testingへのアップロード待ち
+- 公開承認: Closed testingへ公開済み（2026-09-17、USER確認）
 - Closed testing引き渡し: [登録・更新確認手順](closed-testing-release-1.0.0-5.md)
 
 ## 1. 候補の識別
@@ -71,7 +71,7 @@ Release AABにはネイティブライブラリを含む。`SYMBOL_TABLE`を有�
 
 本書の合格は、Upload Key署名済み成果物が機械検証済みのClosed testing候補として一意に識別できたことを示す。本番公開の承認ではない。
 
-- versionCode `5`をClosed testingへアップロードし、Console上のversionName、versionCode、トラック、警告および公開状態を確認する。
+- versionCode `5`はClosed testingへ公開済みである。Console上の正確な公開日時と警告を確認して台帳へ追記する。
 - Google Play経由でversionCode `5`へ上書き更新し、既存データが保持されることを確認する。
 - カードレイアウトと読み取り専用詳細を実機のライト・ダークテーマと主要表示サイズで確認する。
 - 12人以上・14日間の継続参加、Production access申請および残りの公開ゲートを完了する。

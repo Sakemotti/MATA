@@ -1,7 +1,7 @@
 # MATA 1.0.0 (5) Closed testing登録・更新確認手順
 
 - 対象: `com.mochisofts.mata` / `1.0.0 (5)`
-- 状態: Upload Key署名済み候補生成済み／Closed testingへのアップロード待ち
+- 状態: Upload Key署名済み候補生成・Closed testing公開済み／更新後実機確認待ち
 - 作成日: 2026-09-13
 - 公開候補: [MATA 1.0.0 (5) 公開候補生成結果](release-candidate-1.0.0-5.md)
 - 実施結果: [初回Closed testing実施台帳](closed-testing-log.md)
@@ -41,8 +41,8 @@ Play Consoleへ次を登録する。内容は`fastlane/metadata/android/ja-JP/ch
 
 ## 4. Console公開後の確認
 
-- [ ] ProductionではなくClosed testingへ公開した。
-- [ ] versionName `1.0.0`、versionCode `5`だけが新しいリリースへ含まれる。
+- [x] ProductionではなくClosed testingへ公開した。
+- [x] versionName `1.0.0`、versionCode `5`を公開した。
 - [ ] 公開状態と公開日時を記録した。
 - [ ] 対象国・地域、テスター設定およびフィードバック先が維持されている。
 - [ ] 新規のエラーまたは警告がない。既知警告は内容を記録した。
@@ -74,7 +74,7 @@ Play Consoleへ次を登録する。内容は`fastlane/metadata/android/ja-JP/ch
 ## 6. 完了条件
 
 - [x] Upload Key署名済みversionCode 5 AABを生成し、公開候補検査に合格した。
-- [ ] versionCode 5をClosed testingへ公開した。
+- [x] versionCode 5をClosed testingへ公開した。
 - [ ] Console上の公開結果と警告を台帳へ転記した。
 - [ ] Google Play経由のversionCode 5への上書き更新が成功した。
 - [ ] 更新後のデータ、設定、通知およびウィジェットが維持された。
