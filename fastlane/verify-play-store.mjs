@@ -49,6 +49,28 @@ function extractBlockQuote(section) {
   return lines.join('\n').trimEnd();
 }
 
+function extractReleaseNotes(markdown) {
+  const section = extractSection(markdown, 4, 5);
+  const headings = [
+    ...section.matchAll(/^### 4\.\d+ versionCode `(\d+)`[^\n]*$/gm),
+  ];
+  if (headings.length === 0) {
+    throw new Error('Canonical release note subsections were not found.');
+  }
+
+  const notes = new Map();
+  for (const [index, heading] of headings.entries()) {
+    const versionCode = Number(heading[1]);
+    if (notes.has(versionCode)) {
+      throw new Error(`Duplicate canonical release notes for versionCode ${versionCode}.`);
+    }
+    const start = heading.index + heading[0].length;
+    const end = headings[index + 1]?.index ?? section.length;
+    notes.set(versionCode, extractBlockQuote(section.slice(start, end)));
+  }
+  return notes;
+}
+
 function codePointLength(value) {
   return [...value].length;
 }
@@ -137,12 +159,18 @@ verifyText(
   4000,
   'Full description',
 );
-verifyText(
-  resolve(metadataRoot, `changelogs/${releaseVersionCode}.txt`),
-  extractBlockQuote(extractSection(canonical, 4, 5)),
-  500,
-  `Release notes (versionCode ${releaseVersionCode})`,
-);
+const releaseNotes = extractReleaseNotes(canonical);
+if (!releaseNotes.has(releaseVersionCode)) {
+  fail(`Canonical release notes for configured versionCode ${releaseVersionCode} are missing.`);
+}
+for (const [versionCode, notes] of releaseNotes) {
+  verifyText(
+    resolve(metadataRoot, `changelogs/${versionCode}.txt`),
+    notes,
+    500,
+    `Release notes (versionCode ${versionCode})`,
+  );
+}
 
 if (manifest.locale !== 'ja-JP') {
   fail(`Unsupported locale in manifest: ${manifest.locale}`);

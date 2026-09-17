@@ -9,7 +9,7 @@ Google Play Consoleへ登録する日本語の掲載文と画像を、Fastlane S
 - metadata/android/ja-JP/title.txt
 - metadata/android/ja-JP/short_description.txt
 - metadata/android/ja-JP/full_description.txt
-- metadata/android/ja-JP/changelogs/1.txt
+- metadata/android/ja-JP/changelogs/<versionCode>.txt
 
 文字数と正本との一致は次のコマンドで確認します。
 

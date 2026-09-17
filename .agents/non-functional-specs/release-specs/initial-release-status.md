@@ -79,6 +79,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 | Play ConsoleのMATAアプリ作成 | 完了 | CONSOLE / USER |
 | App content | 未完了カードなし | CONSOLE / USER |
 | ストア掲載文・画像・連絡先・Webサイト | 登録済み | CONSOLE / USER |
+| 初回本番公開用文章 | 短い説明、詳細な説明、versionCode 6リリースノートを2026年9月17日に正本と`fastlane/metadata`へ確定。Play Console反映待ち | AUTO / USER |
 | Internal testing | `1.0.0 (1)`を公開し、参加URL経由でインストール済み | CONSOLE / DEVICE |
 | `1.0.0 (2)`Closed testing候補 | Closed testingへ公開し、versionCode 1からの上書き更新と主要実機試験に使用済み | AUTO / CONSOLE / DEVICE / USER |
 | `1.0.0 (3)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
