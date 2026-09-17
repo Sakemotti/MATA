@@ -11,6 +11,7 @@
 - 回帰試験実施票: [MATA 1.0.0 (6) 回帰試験実施票](version-6-regression-results.md)
 - 成果物台帳: [MATA 1.0.0 (6) 公開候補生成結果](release-candidate-1.0.0-6.md)
 - Production公開実行票: [MATA初回Production公開実行票](../non-functional-specs/release-specs/initial-production-runbook.md)
+- リリースブロッカー監査: [versionCode 6 リリースブロッカー監査票](../non-functional-specs/release-specs/version-6-blocker-audit.md)
 
 ## 1. 候補の位置付け
 
@@ -27,6 +28,7 @@
 - [ ] Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認した。
 - [ ] Closed testingの参加状況、自由操作、フィードバックおよび対応内容を台帳へ記録した。
 - [ ] 本番公開へ反映するIssueとPull Requestがすべてmainへ取り込まれ、S0・S1の未解決障害がない。
+- [ ] [リリースブロッカー監査票](../non-functional-specs/release-specs/version-6-blocker-audit.md)を候補生成直前のmainに対して再実行し、対象commitと結果を記録した。
 - [x] versionCode `5`の基準commitから2026年9月17日時点のmainまで、ソース、依存関係、法的文書およびストア掲載成果物の差分を棚卸しし、versionCode `6`の回帰範囲を確定した。本番公開用の掲載文とversionCode `6`リリースノートも同日に正本と`fastlane/metadata`へ確定済みである。候補生成直前に棚卸し対象commit以降の差分を再確認する。
 - [ ] Google PlayのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態に新しい公開ブロッカーがない。
 - [ ] 最新のmainがクリーンで、origin/mainと一致している。

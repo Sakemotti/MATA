@@ -10,6 +10,7 @@
 - Closed testing引き渡し: [MATA 1.0.0 (5) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-5.md)
 - Closed testing候補証跡: [MATA 1.0.0 (5) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-5.md)
 - 本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
+- リリースブロッカー監査: [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md)
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
 - versionCode 6実施記録: [回帰試験実施票](../../test-specs/version-6-regression-results.md)、[公開候補生成結果](../../test-specs/release-candidate-1.0.0-6.md)
 - Production access申請: [申請回答・実施票](production-access-application-draft.md)
@@ -45,6 +46,8 @@
 versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はClosed testingへ登録済みであり、再アップロードできない。主要画面のカードレイアウトと読み取り専用詳細画面の改善を追加した現在のClosed testing版が上表のversionCode `5`である。versionCode `5`はProductionへ昇格せず、Closed testing要件達成後にversionCode `6`を初回本番公開候補としてクリーンなmainから生成する。
 
 ## 3. リポジトリと自動検査
+
+2026年9月17日にversionCode `6`生成前の初回ブロッカー監査を行った。mainのcommit`3adc1623c9b2e6d890c7331b7ed118aca14719bd`はクリーンで`origin/main`と一致し、未解決Issue・Pull Requestは各0件、対象commitの[Android CI run 35235533436](https://github.com/Sakemotti/MATA/actions/runs/35235533436)と直近5件のmain CIは成功していた。Git管理下と作業ディレクトリに署名鍵・service credentialはなく、CI対象の秘密情報パターンにも該当はなかった。一方、GitHub標準のDependabot alerts、vulnerability alerts、code scanningおよびsecret scanningは無効または解析実績がなく、警告件数は判定不可である。既存CIのRepository security checksと週次Dependabot更新を維持し、候補生成直前に[監査票](version-6-blocker-audit.md)を再実行する。
 
 2026年9月16日に`REL-010`の最終集計を行い、自身を除くP0/P1 404件の全合格、P2不合格・保留・対象外0件、GitHubの未解決Issue 0件を確認した。これによりP0/P1は405/405件合格となり、総合動作確認の試験ゲートは合格した。同日時点で開いていたDependabot通常更新PR 5件は、2026年9月16日に全件CI成功後マージ済みである。本番公開はClosed testing期間、Production access、Pre-launch reportおよび最終Console確認が完了するまで保留する。
 
