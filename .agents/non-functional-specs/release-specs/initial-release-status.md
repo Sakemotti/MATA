@@ -122,6 +122,8 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 
 正本13ファイルと公開リポジトリmainの対応する13ファイルはGit blob SHAがすべて一致した。2026年9月7日06:50 JSTにモバイルUser-Agentでプライバシーポリシー、利用規約、外部送信公表および`app-ads.txt`を再取得し、全件HTTP 200かつ正本と同一であることを確認した。アプリ設定画面からのプライバシーポリシー・利用規約遷移は実機確認済みである。詳細は[法的サイト同期結果](../../test-specs/legal-site-sync-results.md)に記録する。
 
+2026年9月17日に本番公開前の再確認を行い、公開側mainが引き続き`ad26db4aed4f97eaed7d74d66bcc44d63d90fda2`、正本13ファイルとのblob一致が13/13であることを確認した。Mobile・Desktop User-Agentでトップ、法的4文書、`app-ads.txt`、CSS、robotsおよびsitemapの9公開物を取得し、全件HTTP 200、適切なContent-Type、正本とのSHA-256一致を確認した。HTTPからHTTPSへの301転送、Pagesの状態`built`、カスタムドメイン検証、HTTPS強制および証明書承認も確認済みであり、再同期は不要と判断した。
+
 ## 5. Closed testingと本番アクセス
 
 - 2026年9月7日にversionName `1.0.0`、versionCode `2`のAABをClosed testingへ公開した。
