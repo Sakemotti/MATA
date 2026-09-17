@@ -10,6 +10,7 @@
 - 差分・回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](version-6-delta-and-regression-plan.md)
 - 回帰試験実施票: [MATA 1.0.0 (6) 回帰試験実施票](version-6-regression-results.md)
 - 成果物台帳: [MATA 1.0.0 (6) 公開候補生成結果](release-candidate-1.0.0-6.md)
+- Production公開実行票: [MATA初回Production公開実行票](../non-functional-specs/release-specs/initial-production-runbook.md)
 
 ## 1. 候補の位置付け
 
