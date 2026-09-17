@@ -7,6 +7,7 @@
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 - 公開判定基準: [リリースチェックリスト](../non-functional-specs/release-specs/release-checklist.md)
 - 本番公開文案: [Google Playストア掲載文・画像仕様](../non-functional-specs/release-specs/store-listing-copy-and-assets.md)
+- 差分・回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](version-6-delta-and-regression-plan.md)
 
 ## 1. 候補の位置付け
 
@@ -23,7 +24,7 @@
 - [ ] Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認した。
 - [ ] Closed testingの参加状況、自由操作、フィードバックおよび対応内容を台帳へ記録した。
 - [ ] 本番公開へ反映するIssueとPull Requestがすべてmainへ取り込まれ、S0・S1の未解決障害がない。
-- [ ] versionCode `5`以降のソース、依存関係、法的文書およびストア掲載成果物の差分を確認した。本番公開用の掲載文とversionCode `6`リリースノートは2026年9月17日に正本と`fastlane/metadata`へ確定済みである。
+- [x] versionCode `5`の基準commitから2026年9月17日時点のmainまで、ソース、依存関係、法的文書およびストア掲載成果物の差分を棚卸しし、versionCode `6`の回帰範囲を確定した。本番公開用の掲載文とversionCode `6`リリースノートも同日に正本と`fastlane/metadata`へ確定済みである。候補生成直前に棚卸し対象commit以降の差分を再確認する。
 - [ ] Google PlayのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態に新しい公開ブロッカーがない。
 - [ ] 最新のmainがクリーンで、origin/mainと一致している。
 
