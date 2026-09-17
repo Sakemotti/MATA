@@ -1,14 +1,15 @@
 # 初回リリース進行記録
 
-- 対象: MATA `1.0.0 (5)`
-- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／14日間のうち8日間連続／Production access・Pre-launch report待ち
+- 対象: MATA初回公開（Closed testing版`1.0.0 (5)`／本番公開候補予定`1.0.0 (6)`）
+- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／14日間のうち8日間連続／versionCode 6未生成／Production access・Pre-launch report待ち
 - 最終更新日: 2026-09-17
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
 - Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
 - Closed testing引き渡し: [MATA 1.0.0 (5) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-5.md)
-- 公開候補証跡: [MATA 1.0.0 (5) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-5.md)
+- Closed testing候補証跡: [MATA 1.0.0 (5) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-5.md)
+- 本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
 
 ## 1. 記録方針
 
@@ -37,7 +38,7 @@
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
-versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はClosed testingへ登録済みであり、再アップロードできない。主要画面のカードレイアウトと読み取り専用詳細画面の改善を追加した現在のClosed testing版が上表のversionCode `5`である。
+versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はClosed testingへ登録済みであり、再アップロードできない。主要画面のカードレイアウトと読み取り専用詳細画面の改善を追加した現在のClosed testing版が上表のversionCode `5`である。versionCode `5`はProductionへ昇格せず、Closed testing要件達成後にversionCode `6`を初回本番公開候補としてクリーンなmainから生成する。
 
 ## 3. リポジトリと自動検査
 
@@ -79,11 +80,12 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 | App content | 未完了カードなし | CONSOLE / USER |
 | ストア掲載文・画像・連絡先・Webサイト | 登録済み | CONSOLE / USER |
 | Internal testing | `1.0.0 (1)`を公開し、参加URL経由でインストール済み | CONSOLE / DEVICE |
-| `1.0.0 (2)`公開候補 | Closed testingへ公開し、versionCode 1からの上書き更新と主要実機試験に使用済み | AUTO / CONSOLE / DEVICE / USER |
-| `1.0.0 (3)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
+| `1.0.0 (2)`Closed testing候補 | Closed testingへ公開し、versionCode 1からの上書き更新と主要実機試験に使用済み | AUTO / CONSOLE / DEVICE / USER |
+| `1.0.0 (3)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
 | versionCode `2`→`3`上書き更新 | Pixel 9a（Android 17 / API 37）で成功。既存データ、設定、通知、ウィジェットおよびバックアップに問題なし | DEVICE / USER |
-| `1.0.0 (4)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ登録済み、公開状態の確定待ち | AUTO / CONSOLE / USER |
-| `1.0.0 (5)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
+| `1.0.0 (4)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ登録後、versionCode 5へ更新済み | AUTO / CONSOLE / USER |
+| `1.0.0 (5)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み。Productionへは昇格しない | AUTO / CONSOLE / USER |
+| `1.0.0 (6)`本番公開候補 | Closed testingの14日間達成後にクリーンなmainから生成予定。現時点では未生成 | USER |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -146,7 +148,9 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 ### 6.2 次の実変更で確認する
 
 - versionCode `5`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格し、Closed testingへ公開済みである。Google Play経由の上書き更新、データ保持、カードレイアウトおよび読み取り専用詳細画面の結果は未確認のため、確認後に記録する。
-- versionCode `5`のAABをGoogle Playへ登録した後にアプリ、ビルド設定、法的本文またはPlay掲載成果物を変更する場合は、versionCodeを`6`以上へ上げて公開候補を再生成する。
+- versionCode `5`はClosed testing検証版として固定し、Productionへ昇格しない。
+- Play Consoleで14日間達成を確認した後、[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従ってversionCode `6`を設定し、署名済みAABと全証跡をクリーンなmainから新規生成する。
+- versionCode `6`をPlayへアップロードした後にAABへ影響する変更が生じた場合は、versionCode `7`以上で候補を再生成する。
 
 ### 6.3 外部状態待ち
 
@@ -156,10 +160,11 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 
 ## 7. 本番公開前後の残りゲート
 
-1. Closed testing要件を達成し、Production accessの承認を得る。
-2. 公開対象commit、versionName、versionCode、リリースノートおよびAABを最終確定する。
-3. 上表の`1.0.0 (5)`、ソースcommit、AAB SHA-256および保存済み成果物を再照合する。Google Play登録後にアプリまたは公開成果物を変更した場合はversionCodeを`6`以上へ上げ、クリーンな`main`から署名済み成果物を再生成して`node tools/release/verify-readiness.mjs --release`を成功させる。
-4. 合格済みの全P0/P1試験を維持し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
-5. 初期配布地域を日本としてProductionへ公開する。
-6. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
-7. 公開日、最終AAB SHA-256、リリースノート、正本・公開サイトのcommitおよびGitタグを記録する。
+1. Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認し、台帳を確定する。
+2. Production accessを申請する。審査待ちの間も、次の候補生成とローカル検証は進めてよい。
+3. [本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従い、versionName `1.0.0`、versionCode `6`、公開対象commit、リリースノートおよび署名済みAABを確定する。
+4. versionCode `6`で`node tools/release/verify-readiness.mjs --release`を成功させ、全P0/P1試験の維持、versionCode `5`からの更新、データ保持、新規インストールおよび差分回帰を確認する。
+5. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
+6. 初期配布地域を日本としてProductionへ公開する。
+7. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
+8. 公開日、最終AAB SHA-256、リリースノート、正本・公開サイトのcommitおよびGitタグを記録する。
