@@ -10,6 +10,7 @@
 - Closed testing引き渡し: [MATA 1.0.0 (5) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-5.md)
 - Closed testing候補証跡: [MATA 1.0.0 (5) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-5.md)
 - 本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
+- versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
 
 ## 1. 記録方針
 
@@ -43,6 +44,8 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 ## 3. リポジトリと自動検査
 
 2026年9月16日に`REL-010`の最終集計を行い、自身を除くP0/P1 404件の全合格、P2不合格・保留・対象外0件、GitHubの未解決Issue 0件を確認した。これによりP0/P1は405/405件合格となり、総合動作確認の試験ゲートは合格した。同日時点で開いていたDependabot通常更新PR 5件は、2026年9月16日に全件CI成功後マージ済みである。本番公開はClosed testing期間、Production access、Pre-launch reportおよび最終Console確認が完了するまで保留する。
+
+2026年9月17日に、Closed testingへ配布したversionCode `5`の基準commit`09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`からmainのcommit`32aa301d5beff208083a3c64ec3752a89b60903f`までを棚卸しした。136 commits、89 filesの差分に本番コード31ファイルとCompose、Navigation、Room、Kotlin serializationおよびBenchmarkの更新が含まれるため、versionCode `6`では全自動ゲートに加え、TODO編集、カテゴリ、アーカイブ、終了時刻設定、バックアップ、通知・ウィジェット、広告および全画面スモークの差分回帰を必須とした。DBスキーマ、Manifest、バックアップアーカイブ形式および`app/build.gradle`には差分がない。詳細は[差分棚卸し・回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)に記録する。
 
 2026年9月13日にversionCode `5`について次を確認した。
 
@@ -150,6 +153,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 
 - versionCode `5`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格し、Closed testingへ公開済みである。Google Play経由の上書き更新、データ保持、カードレイアウトおよび読み取り専用詳細画面の結果は未確認のため、確認後に記録する。
 - versionCode `5`はClosed testing検証版として固定し、Productionへ昇格しない。
+- versionCode `5`以降の差分棚卸しとversionCode `6`の回帰範囲は確定済みである。候補生成直前に棚卸し対象commit以降を再確認し、全自動ゲート、18件の実機回帰および7件のPlay登録後確認を実行する。
 - Play Consoleで14日間達成を確認した後、[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従ってversionCode `6`を設定し、署名済みAABと全証跡をクリーンなmainから新規生成する。
 - versionCode `6`をPlayへアップロードした後にAABへ影響する変更が生じた場合は、versionCode `7`以上で候補を再生成する。
 
