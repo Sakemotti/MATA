@@ -1,8 +1,8 @@
 # 初回リリース進行記録
 
 - 対象: MATA `1.0.0 (5)`
-- 状態: 全P0/P1 405件合格／Closed testing 14日間・Production access・Pre-launch report待ち
-- 最終更新日: 2026-09-16
+- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／14日間のうち8日間連続／Production access・Pre-launch report待ち
+- 最終更新日: 2026-09-17
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -28,7 +28,7 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `5`。Upload Key署名済み、Closed testingへのアップロード待ち | AUTO |
+| versionCode | `5`。Upload Key署名済み、Closed testingへ公開済み | AUTO / CONSOLE / USER |
 | ソースcommit | `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d` | AUTO |
 | AAB | `app/release/1.0.0-5/mata-1.0.0-5.aab`。Git除外対象 | AUTO |
 | AAB容量 | 12,673,373 bytes | AUTO |
@@ -37,11 +37,11 @@
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
-versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed testingへ登録済みであり、再アップロードできない。主要画面のカードレイアウトと読み取り専用詳細画面の改善を追加した現在候補が上表のversionCode `5`である。
+versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はClosed testingへ登録済みであり、再アップロードできない。主要画面のカードレイアウトと読み取り専用詳細画面の改善を追加した現在のClosed testing版が上表のversionCode `5`である。
 
 ## 3. リポジトリと自動検査
 
-2026年9月16日に`REL-010`の最終集計を行い、自身を除くP0/P1 404件の全合格、P2不合格・保留・対象外0件、GitHubの未解決Issue 0件を確認した。これによりP0/P1は405/405件合格となり、総合動作確認の試験ゲートは合格した。開いている5件のDependabot通常更新PRは既知不具合として扱わない。本番公開はClosed testing期間、Production access、Pre-launch reportおよび最終Console確認が完了するまで保留する。
+2026年9月16日に`REL-010`の最終集計を行い、自身を除くP0/P1 404件の全合格、P2不合格・保留・対象外0件、GitHubの未解決Issue 0件を確認した。これによりP0/P1は405/405件合格となり、総合動作確認の試験ゲートは合格した。同日時点で開いていたDependabot通常更新PR 5件は、2026年9月16日に全件CI成功後マージ済みである。本番公開はClosed testing期間、Production access、Pre-launch reportおよび最終Console確認が完了するまで保留する。
 
 2026年9月13日にversionCode `5`について次を確認した。
 
@@ -83,7 +83,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 | `1.0.0 (3)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
 | versionCode `2`→`3`上書き更新 | Pixel 9a（Android 17 / API 37）で成功。既存データ、設定、通知、ウィジェットおよびバックアップに問題なし | DEVICE / USER |
 | `1.0.0 (4)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ登録済み、公開状態の確定待ち | AUTO / CONSOLE / USER |
-| `1.0.0 (5)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへのアップロード待ち | AUTO |
+| `1.0.0 (5)`公開候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み | AUTO / CONSOLE / USER |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -93,7 +93,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 | アプリ設定から法的ページへの遷移 | 確認済み | DEVICE / USER |
 | AdMobとGoogle Playのアプリ連携 | 確認済み | CONSOLE / USER |
 | 実広告バナー表示 | 確認済み。本番広告のクリックは実施していない | DEVICE / USER |
-| Closed testing参加要件 | 必要人数を充足し、14日間の継続参加を確認中 | CONSOLE / USER |
+| Closed testing参加要件 | 12人がオプトイン継続中。2026年9月9日開始、9月23日達成予定。2026年9月17日時点で8日間連続 | CONSOLE / USER |
 | ポリシーのステータス | `問題は見つかりませんでした` | CONSOLE / USER |
 | versionCode `2`のSDK関連警告 | なし | CONSOLE / USER |
 
@@ -124,8 +124,9 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 - 同日にPixel 9a（Android 17 / API 37）でversionCode `2`から`3`へアンインストールせず更新し、既存データ、設定、通知、ウィジェット、バックアップおよび起動に問題がないことを確認した。
 - versionCode 3変更内容の個別再試験はPixel 9a（Android 17 / API 37）で完了した。不足環境の確認は[残実機・環境試験計画](../../test-specs/release-v3-device-verification-plan.md)に従って実施する。
 - versionCode `3`公開後もPre-launch report、SDK Indexおよびポリシー状態はversionCode `2`確認時から変わっていない。
-- versionCode `4`はClosed testingへ登録され、公開待ちになったことをUSERが確認した。公開日時、警告および上書き更新結果は公開後に確定する。
-- versionCode `5`は主要画面のカードレイアウト改善を含むUpload Key署名済み候補を生成し、Closed testingへのアップロード待ちである。
+- versionCode `4`はClosed testingへ登録後、versionCode `5`に更新された。versionCode `4`単独の正確な公開日時と警告は未記録である。
+- versionCode `5`は主要画面のカードレイアウト改善を含むUpload Key署名済み候補をClosed testingへ公開済みである。公開済み状態は2026年9月17日にUSERが確認した。正確な公開日時、警告および上書き更新結果は未確認である。
+- Closed testingの連続参加期間は2026年9月9日に開始し、2026年9月23日に14日間達成予定である。2026年9月17日時点のPlay Console表示は8日間連続である。
 - 対象アカウントの要件に従い、12人以上のテスターが14日間連続してオプトインした状態を維持する。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
 - 条件達成後、テスト方法、参加状況、フィードバック、修正内容を整理してProduction accessを申請する。
@@ -140,11 +141,11 @@ versionCode `1`はInternal testing、versionCode `2`、`3`および`4`はClosed 
 - 利用規約と外部送信に関する公表について必要な専門家確認
 - Data safety、UMP、SDK、実通信および公開法的文書の最終突合
 
-必要人数は2026年9月9日時点で充足しており、14日間の継続参加を依頼中である。開始日と達成予定日はPlay Consoleの表示を確認して台帳へ記録する。
+必要人数は2026年9月9日時点で充足しており、12人がオプトインを継続中である。Play Consoleでは2026年9月17時点で8日間連続と表示され、14日間の達成予定日は2026年9月23日である。
 
 ### 6.2 次の実変更で確認する
 
-- versionCode `5`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格済みである。Closed testingへ登録後、Google Play経由の上書き更新、データ保持、カードレイアウトおよび読み取り専用詳細画面を確認する。
+- versionCode `5`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格し、Closed testingへ公開済みである。Google Play経由の上書き更新、データ保持、カードレイアウトおよび読み取り専用詳細画面の結果は未確認のため、確認後に記録する。
 - versionCode `5`のAABをGoogle Playへ登録した後にアプリ、ビルド設定、法的本文またはPlay掲載成果物を変更する場合は、versionCodeを`6`以上へ上げて公開候補を再生成する。
 
 ### 6.3 外部状態待ち
