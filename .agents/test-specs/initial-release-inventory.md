@@ -1,8 +1,8 @@
 # 初回リリース試験棚卸し
 
-- 対象アプリ: MATA `1.0.0 (5)`
-- 対象ソースcommit: `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`
-- 最終更新日: 2026-09-16
+- 対象アプリ: MATA Closed testing版`1.0.0 (5)`／本番公開候補予定`1.0.0 (6)`
+- 現行試験基準ソースcommit: `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`（versionCode 5。versionCode 6生成時に更新する）
+- 最終更新日: 2026-09-17
 - 試験項目書: [MATA 総合動作確認項目書](README.md)
 - 項目別結果: [初回リリース試験結果](initial-release-results.tsv)
 - 実機実施計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
@@ -51,10 +51,11 @@
 | 通知権限表示と設定復帰 | 通知権限の拒否・許可状態を画面へ表示し、対象パッケージを指定したAndroid通知設定Intentを発行して、復帰時に最新状態の再取得と通知再構成を行うことを検証 | 2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-014` |
 | 正確なアラーム表示と設定復帰 | 対象外端末では設定行を表示せず、対象端末では未許可・許可状態とフォールバック説明を切り替え、対象パッケージの正確なアラーム設定Intent、復帰時の再取得と通知再構成を検証 | 2026年9月16日のローカルAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `ST-015` |
 | 署名済みAAB | Upload KeyのSHA-256が成果物とPlay Consoleで一致 | [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md) | `REL-024` |
-| versionCode 2公開候補 | クリーンなmainからUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md) | `REL-021` |
-| versionCode 3公開候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
-| versionCode 4公開候補 | commit `fe71e1579969d647e95170e47f2d036b19e5b657`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (4) 公開候補生成結果](release-candidate-1.0.0-4.md) | `REL-021` |
-| versionCode 5公開候補 | commit `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (5) 公開候補生成結果](release-candidate-1.0.0-5.md) | `REL-021` |
+| versionCode 2 Closed testing候補 | クリーンなmainからUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (2) 公開候補生成結果](release-candidate-1.0.0-2.md) | `REL-021` |
+| versionCode 3 Closed testing候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
+| versionCode 4 Closed testing候補 | commit `fe71e1579969d647e95170e47f2d036b19e5b657`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (4) 公開候補生成結果](release-candidate-1.0.0-4.md) | `REL-021` |
+| versionCode 5 Closed testing候補 | commit `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (5) 公開候補生成結果](release-candidate-1.0.0-5.md) | `REL-021` |
+| versionCode 6 本番公開候補 | Closed testingの14日間達成後にクリーンなmainから生成し、全Releaseゲートを再実行する予定 | [MATA 1.0.0 (6) 本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md) | `REL-021` |
 | versionCode 3期限日・繰り越し回帰 | 単発TODOの実行可能期間と期限、繰り越し状態の生成・解決・編集、通知候補、Room 7→8移行、バックアップ形式1〜4の互換性を専用テスト8件で検証 | 2026年9月9日にローカルJDK 21の全176件、API 34 x86_64エミュレータの全116件、および[PR #172のCI](https://github.com/Sakemotti/MATA/actions/runs/34317723204)が成功 | `DAY-015`、`DAY-016`、`STA-013`〜`STA-015`、`NTF-016`、`DAT-011`、`DAT-012` |
 | 制御異常系 | 一覧・フォーム・外部状態の読込失敗と再試行、空状態、操作失敗、検索・月切替の古い応答破棄、広告失敗時の空白非確保を専用テスト9件で検証 | 2026年9月9日のローカル`testDebugUnitTest`成功 | `TL-024`、`TE-D06`、`CH-027`、`CH-030`、`CM-029`、`CTL-008`、`AT-005`、`ST-039`、`ST-042` |
 | TODO一覧の中核表示 | カテゴリ順、実期限順、期限なし表示、高速な日付切替、完了ボタン位置を専用テスト5件で検証 | 2026年9月9日のローカル`testDebugUnitTest`とAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `TL-008`、`TL-009`、`TL-011`、`TL-031`、`TL-032` |

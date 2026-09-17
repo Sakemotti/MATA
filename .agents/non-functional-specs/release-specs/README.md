@@ -1,7 +1,7 @@
 # リリース・配布運用仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-09-13
+- 最終更新日: 2026-09-17
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[総合動作確認項目書](../../test-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[法的文書仕様](../legal-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)
 
 ## 1. 目的
@@ -19,7 +19,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [Google Play Data safety申告](data-safety-declaration.md) | 収集・共有データ、目的、削除、最終検証 |
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 | [Release事前検査仕様](release-preflight.md) | 設定、法的文書、ストア成果物、AABと証跡の統合検査 |
-| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (5)`の公開候補、Console、実機確認、保留事項 |
+| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (5)`のClosed testingと、`1.0.0 (6)`本番公開候補の計画、Console、実機確認、保留事項 |
 | [Production access申請回答案](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の申請文案 |
 
 ## 3. 基本方針
@@ -31,6 +31,13 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 5. データ移行、通知、広告同意、プライバシーに重大な未解決事項がある場合は公開しない。
 6. 初回公開前は内部・クローズドテストで検証し、更新は段階公開する。
 7. 公開後に問題があればロールアウトを停止し、versionCodeを上げた修正版を公開する。既存版へダウングレードしない。
+
+### 3.1 候補の呼称
+
+- `Closed testing候補`: Closed testingへ配布するため、署名とRelease事前検査に合格した成果物。本番公開の承認を意味しない。
+- `本番公開候補`: Closed testing完了後にProduction向けとして改めて固定し、全公開ゲートの対象とする成果物。
+- 初回公開ではversionCode `5`をClosed testing検証版、versionCode `6`を本番公開候補として扱い、versionCode `5`をProductionへ昇格しない。
+- versionCode `6`はClosed testing要件達成後にクリーンなmainから生成し、実績を[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)へ引き継ぐ。
 
 ## 4. 固定する公開値
 
