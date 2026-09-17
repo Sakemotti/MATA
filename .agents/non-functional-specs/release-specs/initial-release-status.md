@@ -11,6 +11,7 @@
 - Closed testing候補証跡: [MATA 1.0.0 (5) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-5.md)
 - 本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
+- versionCode 6実施記録: [回帰試験実施票](../../test-specs/version-6-regression-results.md)、[公開候補生成結果](../../test-specs/release-candidate-1.0.0-6.md)
 
 ## 1. 記録方針
 
@@ -154,6 +155,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - versionCode `5`では全自動ゲート、Upload Key署名および成果物ハッシュ検査に合格し、Closed testingへ公開済みである。Google Play経由の上書き更新、データ保持、カードレイアウトおよび読み取り専用詳細画面の結果は未確認のため、確認後に記録する。
 - versionCode `5`はClosed testing検証版として固定し、Productionへ昇格しない。
 - versionCode `5`以降の差分棚卸しとversionCode `6`の回帰範囲は確定済みである。候補生成直前に棚卸し対象commit以降を再確認し、全自動ゲート、18件の実機回帰および7件のPlay登録後確認を実行する。
+- versionCode `6`の更新前テストデータ、6つの実施セッション、全35件の結果欄およびAAB・署名・ハッシュ・CI・Consoleの成果物台帳を未実施状態で準備済みである。実際の候補生成後に確認できた値だけを記録する。
 - Play Consoleで14日間達成を確認した後、[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従ってversionCode `6`を設定し、署名済みAABと全証跡をクリーンなmainから新規生成する。
 - versionCode `6`をPlayへアップロードした後にAABへ影響する変更が生じた場合は、versionCode `7`以上で候補を再生成する。
 

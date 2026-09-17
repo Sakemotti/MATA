@@ -9,6 +9,7 @@
 - Closed testing台帳: [初回Closed testing実施台帳](closed-testing-log.md)
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](version-6-delta-and-regression-plan.md)
+- versionCode 6実施記録: [回帰試験実施票](version-6-regression-results.md)、[公開候補生成結果](release-candidate-1.0.0-6.md)
 
 ## 1. 判定
 
@@ -56,7 +57,7 @@
 | versionCode 3 Closed testing候補 | commit `307949e2068b1c56ff597c3730b05755b1f37e06`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (3) 公開候補生成結果](release-candidate-1.0.0-3.md) | `REL-021` |
 | versionCode 4 Closed testing候補 | commit `fe71e1579969d647e95170e47f2d036b19e5b657`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (4) 公開候補生成結果](release-candidate-1.0.0-4.md) | `REL-021` |
 | versionCode 5 Closed testing候補 | commit `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`からUpload Key署名済みAABと関連成果物を生成し、Releaseモードの全7検査が成功 | [MATA 1.0.0 (5) 公開候補生成結果](release-candidate-1.0.0-5.md) | `REL-021` |
-| versionCode 6 本番公開候補 | Closed testingの14日間達成後にクリーンなmainから生成し、全ReleaseゲートとversionCode 5以降の差分回帰を再実行する予定 | [MATA 1.0.0 (6) 本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md)、[差分棚卸し・回帰試験計画](version-6-delta-and-regression-plan.md) | `REL-021` |
+| versionCode 6 本番公開候補 | Closed testingの14日間達成後にクリーンなmainから生成し、全ReleaseゲートとversionCode 5以降の差分回帰を再実行する予定。実施票と成果物台帳は未実施状態で準備済み | [本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md)、[差分棚卸し・回帰試験計画](version-6-delta-and-regression-plan.md)、[回帰試験実施票](version-6-regression-results.md)、[公開候補生成結果](release-candidate-1.0.0-6.md) | `REL-021` |
 | versionCode 3期限日・繰り越し回帰 | 単発TODOの実行可能期間と期限、繰り越し状態の生成・解決・編集、通知候補、Room 7→8移行、バックアップ形式1〜4の互換性を専用テスト8件で検証 | 2026年9月9日にローカルJDK 21の全176件、API 34 x86_64エミュレータの全116件、および[PR #172のCI](https://github.com/Sakemotti/MATA/actions/runs/34317723204)が成功 | `DAY-015`、`DAY-016`、`STA-013`〜`STA-015`、`NTF-016`、`DAT-011`、`DAT-012` |
 | 制御異常系 | 一覧・フォーム・外部状態の読込失敗と再試行、空状態、操作失敗、検索・月切替の古い応答破棄、広告失敗時の空白非確保を専用テスト9件で検証 | 2026年9月9日のローカル`testDebugUnitTest`成功 | `TL-024`、`TE-D06`、`CH-027`、`CH-030`、`CM-029`、`CTL-008`、`AT-005`、`ST-039`、`ST-042` |
 | TODO一覧の中核表示 | カテゴリ順、実期限順、期限なし表示、高速な日付切替、完了ボタン位置を専用テスト5件で検証 | 2026年9月9日のローカル`testDebugUnitTest`とAPI 34 x86_64`:app:connectedDebugAndroidTest`成功 | `TL-008`、`TL-009`、`TL-011`、`TL-031`、`TL-032` |

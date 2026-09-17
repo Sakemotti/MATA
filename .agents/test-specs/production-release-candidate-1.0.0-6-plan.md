@@ -8,6 +8,8 @@
 - 公開判定基準: [リリースチェックリスト](../non-functional-specs/release-specs/release-checklist.md)
 - 本番公開文案: [Google Playストア掲載文・画像仕様](../non-functional-specs/release-specs/store-listing-copy-and-assets.md)
 - 差分・回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](version-6-delta-and-regression-plan.md)
+- 回帰試験実施票: [MATA 1.0.0 (6) 回帰試験実施票](version-6-regression-results.md)
+- 成果物台帳: [MATA 1.0.0 (6) 公開候補生成結果](release-candidate-1.0.0-6.md)
 
 ## 1. 候補の位置付け
 
@@ -39,7 +41,7 @@ Production accessは本番アップロード前の必須条件だが、審査待
 5. Upload Keyを使用できる安全なローカル環境で、クリーンなmainから署名済みRelease AABと関連成果物を生成する。
 6. `node tools/release/verify-readiness.mjs --release`を実行し、全検査を成功させる。
 7. AAB、R8 mapping、Manifest、SBOM、ライセンス一覧、検査結果、Git commit、容量、SHA-256およびUpload Key証明書SHA-256を同じversionCodeへ紐付けて保管する。
-8. 実績値を`release-candidate-1.0.0-6.md`へ記録し、計画値と実際の成果物を区別する。
+8. 実績値を[公開候補生成結果](release-candidate-1.0.0-6.md)へ、試験結果を[回帰試験実施票](version-6-regression-results.md)へ記録し、計画値と実際の成果物を区別する。
 
 ## 4. Productionへ登録する前の確認
 
