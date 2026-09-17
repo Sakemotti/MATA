@@ -13,6 +13,7 @@
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
 - versionCode 6実施記録: [回帰試験実施票](../../test-specs/version-6-regression-results.md)、[公開候補生成結果](../../test-specs/release-candidate-1.0.0-6.md)
 - Production access申請: [申請回答・実施票](production-access-application-draft.md)
+- Production公開: [初回Production公開実行票](initial-production-runbook.md)
 
 ## 1. 記録方針
 
@@ -163,6 +164,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 ### 6.3 外部状態待ち
 
 - Production access申請の8回答、文字数、申請当日の開始条件、Console入力記録および審査結果欄は提出準備済みである。Play Consoleが14日間達成を表示するまで送信しない。
+- 初回Production公開は段階公開、Managed publishingおよび前版への停止・切戻しを利用できないことを前提に、公開開始条件、Console登録、公開後1時間・6時間・24時間・72時間・7日間の監視、非公開化およびversionCode `7`以上の前方修正を実行票へ準備済みである。
 - versionCode `3`公開後もPre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`の表示から変わっていない。SDK関連警告はなく、ポリシー状態は`問題は見つかりませんでした`である。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 - AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
 - 本番広告を試験目的でクリックしない。
