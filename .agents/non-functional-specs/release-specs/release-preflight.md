@@ -40,6 +40,21 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 - 本モードの成功だけで公開承認とはせず、実機、Google Play Console、Pre-launch report、専門家確認および人的承認も完了させる。
 - 本モードは別のGitHub Pages公開リポジトリへのコピーやデプロイ結果を変更しない。成功後も正本側commitと公開側commitの対応、公開URLおよびアプリからの遷移を手動確認する。
 
+### 2.4 GitHubリリースゲート
+
+    node tools/release/verify-github-release-gates.mjs
+
+- GitHub CLIの認証済みセッションを使用し、GitHub APIをread-onlyで参照する。
+- ローカルがクリーンな`main`で、GitHub上の`main`と同じcommitであることを確認する。
+- 未解決IssueとPull Requestが0件であることを確認する。
+- branch protectionのstrict status checks、管理者適用、Pull Request必須、会話解決、force push・削除禁止を確認する。
+- 必須チェックがGitHub Actionsの`Test, lint, and build`とGitHub Advanced Securityの`CodeQL`に固定されていることを確認する。
+- Dependabot alerts・security updates、secret scanning・push protectionおよびCodeQL default setupの有効状態を確認する。
+- Dependabot、code scanningおよびsecret scanningのopen alertが0件であることを確認する。警告内容や秘密値は証跡へ保存しない。
+- 対象main commitのAndroid CIとCodeQLが完了・成功していることを確認する。
+- CodeQLのJava/Kotlin対象外はwarningとして記録し、通常Android CIを必須とした上でextractor対応後に再追加する。
+- GitHub設定、Issue、Pull Request、alertまたはworkflowを変更しない。
+
 ## 3. 証跡
 
 結果は`app/build/outputs/release-metadata/release-readiness.json`へ出力する。次を記録する。
@@ -48,6 +63,8 @@ Release候補の設定、法的文書、Google Play掲載成果物およびビ�
 - 各検査ID、合否および判断理由
 - Gitブランチとcommit
 - Release成果物のバージョンとハッシュ照合結果
+
+GitHubリリースゲートの結果は`app/build/outputs/release-metadata/github-release-gates.json`へ別途出力する。リポジトリ、Git commit、UTC検査日時、総合結果および各判定の合否・警告・理由だけを記録し、alert本文や秘密値は含めない。
 
 CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ライセンス、CycloneDX SBOMおよび最終Manifestと同じActions artifactへ保存する。
 
@@ -58,6 +75,7 @@ CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ラ
 - Git commit不一致またはハッシュ不一致では成果物を破棄し、クリーンな同一commitから再生成する。
 - Application ID、署名、権限、SDKまたは収集データの差異は公開を停止し、仕様・申告・実装を同時に見直す。
 - 本番公開候補モードの失敗項目は公開ブロッカーとしてリリース記録へ残す。
+- GitHubリリースゲートの失敗時は、保護設定を迂回せず、未解決作業、alert、CIまたは設定差分を解消して同じcommitで再検査する。
 
 ## 5. 検査ロジックの回帰試験
 
@@ -65,7 +83,11 @@ CI成果物モードのJSONは、AAB、Releaseメタデータ、R8 mapping、ラ
 
     node --test tools/release/release-artifact-verifier.test.mjs
 
+    node --test tools/release/github-release-gate.test.mjs
+
 正常な成果物一式を受理し、SBOMの内容、パス、ファイル有無、容量、SHA-256、必須componentおよび依存関係グラフの欠損・改変を、それぞれ対象名を含む理由で拒否できることを確認する。Pull Requestと`main`のCIではRepository security checksの一部として毎回実行する。
+
+GitHubリリースゲートの回帰試験では、正常な保護・警告なし・CI成功状態を受理し、branch・作業ツリー・remote commit、未解決Issue・Pull Request、保護設定、セキュリティ機能、open alertおよび必須workflowの欠落を拒否できることを確認する。外部GitHub APIは呼び出さず、架空のsnapshotだけを使用する。
 
 Upload Key設定の安全側失敗は次のコマンドで確認する。
 

@@ -54,6 +54,8 @@ CodeQLのJava/Kotlin失敗はアプリの通常ビルドエラーではなく、
 
 versionCode `6`へ変更する直前に、次をすべて再確認する。
 
+最初に`node tools/release/verify-github-release-gates.mjs`を実行し、JSON証跡を保存する。下記の外部Console項目とCodeQL対応状況を含め、機械判定だけで確定できない結果を追記する。
+
 - [ ] `main`を最新化し、作業ツリーがクリーンで`origin/main`と一致している。
 - [ ] 未解決IssueとPull Requestを取得し、S0・S1障害および本番へ反映予定の未マージ変更がない。
 - [ ] 対象main commitのAndroid CIが全ジョブ成功している。
