@@ -108,6 +108,7 @@ UI、Room、繰り返し計算、メモリ、バックグラウンド処理、�
 - DependabotでGradle依存関係とGitHub Actionsを週次確認し、Dependabot alertsとsecurity updatesを有効にする。
 - GitHub secret scanningとpush protectionを有効にし、CIの`Repository security checks`による署名素材・秘密情報検査と併用する。
 - CodeQL default setupでGitHub ActionsとJavaScript/TypeScriptをPull Request、main更新および週次に検査する。Java/KotlinはCodeQLが採用中のKotlin版を解析可能になった時点で対象へ追加する。それまでは通常CIの単体試験、Lint、ビルド、Manifest・アーキテクチャ検査を必須とする。
+- `main`のbranch protectionを有効にし、Pull Request、最新baseへの追従、`Test, lint, and build`と`CodeQL`の成功および会話解決をマージ条件とする。単独開発のため承認レビュー数は0とするが、管理者にも保護を適用し、直接push、force pushおよびbranch削除は行わない。
 
 バージョン、署名、成果物、Google Playトラック、段階公開および公開後監視は[リリース・配布運用仕様](non-functional-specs/release-specs/README.md)に従う。
 
