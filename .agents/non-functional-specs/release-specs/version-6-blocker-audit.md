@@ -31,6 +31,23 @@ versionCode `6`の生成開始前とProduction登録前に、GitHub上の未処�
 
 GitHub標準の4項目は無効または解析実績がないため、「警告0件」とは記録しない。現在のCIはPull Requestとmain更新時に署名素材、service credential、private key、GitHub tokenおよびGoogle API keyの代表的なパターンを拒否する。また、Dependabot通常更新PR 5件は2026年9月16日にCI成功後マージ済みである。以上から現時点のリリース停止要因にはしないが、GitHub標準機能を有効化するまでは可視性の不足として扱う。
 
+### 2.1 2026年9月18日のセキュリティ機能強化
+
+| 項目 | 設定・初回結果 | 判定 |
+| --- | --- | --- |
+| Dependabot alerts | vulnerability alertsを有効化。open alert 0件 | 合格 |
+| Dependabot security updates | 有効 | 合格 |
+| Secret scanning | 有効。open alert 0件 | 合格 |
+| Push protection | 有効 | 合格 |
+| Secret scanning追加機能 | non-provider patternsとvalidity checksは現在の利用条件では無効のまま | 制約記録済み |
+| CodeQL default setup | 有効。default query suite、remote threat model、standard runner、週次実行 | 合格 |
+| GitHub Actions解析 | [CodeQL run 35297369056](https://github.com/Sakemotti/MATA/actions/runs/35297369056)で成功 | 合格 |
+| JavaScript/TypeScript解析 | 同runで成功 | 合格 |
+| Java/Kotlin解析 | CodeQL 2.27.0がKotlin 2.4.20未対応のため失敗し、GitHubの自動調整で解析対象から除外 | 制約記録済み |
+| Code scanning open alert | 成功した解析対象について0件 | 合格 |
+
+CodeQLのJava/Kotlin失敗はアプリの通常ビルドエラーではなく、CodeQL extractorの対応版上限によるものである。通常のAndroid CIは単体試験、Lint、Debug・Release・Benchmarkビルド、Manifest、アーキテクチャおよびリリース成果物検査に成功している。KotlinをCodeQL対応のためだけにダウングレードせず、GitHub側がKotlin 2.4.20以降へ対応した時点でJava/Kotlin解析を再度追加する。
+
 ## 3. 候補生成直前の再監査
 
 versionCode `6`へ変更する直前に、次をすべて再確認する。
@@ -39,7 +56,8 @@ versionCode `6`へ変更する直前に、次をすべて再確認する。
 - [ ] 未解決IssueとPull Requestを取得し、S0・S1障害および本番へ反映予定の未マージ変更がない。
 - [ ] 対象main commitのAndroid CIが全ジョブ成功している。
 - [ ] Git管理下と作業ディレクトリに署名鍵、keystore、service credentialまたは秘密情報が混入していない。
-- [ ] Dependabot alerts、code scanning、secret scanningおよびvulnerability alertsの有効状態を再確認する。有効化されていない項目は「0件」と記録しない。
+- [ ] Dependabot alerts、security updates、code scanning、secret scanningおよびpush protectionの有効状態とopen alertを再確認する。有効化されていない項目は「0件」と記録しない。
+- [ ] CodeQLのJava/Kotlin対応版を確認し、Kotlin 2.4.20以降がサポートされた場合は解析対象へ再追加する。未対応の場合は通常CI成功と制約を再記録する。
 - [ ] Google Play ConsoleのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態に新規ブロッカーがない。
 - [ ] Closed testingの12人以上・14日間連続要件達成と、Production accessの状態を確認する。
 - [ ] 監査対象commit、確認日時、CI run、Issue・PR件数、Console結果を本書へ追記する。
@@ -57,4 +75,6 @@ versionCode `6`へ変更する直前に、次をすべて再確認する。
 
 ## 5. GitHub標準セキュリティ機能の扱い
 
-Dependabot alerts、vulnerability alerts、code scanningおよびsecret scanningの有効化は、現時点ではversionCode `6`生成の必須条件にしない。ただし、公開リポジトリに対する継続的な可視性を高めるため、リリース作業と分離した設定変更として実施を推奨する。設定変更後は、初回解析が完了して警告内容を確認するまで「警告なし」と判定しない。
+Dependabot alerts、security updates、secret scanning、push protectionおよびCodeQL default setupは有効状態を維持する。候補生成前とProduction登録前にopen alertを再取得し、重大または高重大度の未解決警告がある場合は公開判定を保留する。
+
+CodeQLはGitHub ActionsとJavaScript/TypeScriptを検査する。Java/KotlinはGitHubが提供するCodeQLの対応状況を定期確認し、Kotlin 2.4.20以降へ対応するまでは通常CIを必須検査として維持する。secret scanningのnon-provider patternsとvalidity checksは利用可能になった時点で有効化を再試行する。
