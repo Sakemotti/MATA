@@ -1,7 +1,7 @@
 # セキュリティ・プライバシーの検証・公開判定仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-09-18
 - 親仕様: [セキュリティ・プライバシー仕様](README.md)
 
 ## 1. 設計レビュー
@@ -18,9 +18,10 @@
 ## 2. 自動検査
 
 - Android LintとCompose LintをRelease設定で実行する。
-- 採用した依存関係脆弱性検査をCIで実行する。
+- Dependabot alerts、security updatesおよび週次version updatesで既知の依存関係脆弱性と更新を検出する。
 - Gradle Dependency VerificationをCIで強制する。
-- Secret Scannerで鍵、トークン、keystore、サービスアカウントJSONを検出する。
+- GitHub secret scanningとpush protectionを有効にし、CIのSecret Scannerで鍵、トークン、keystore、サービスアカウントJSONを重ねて検出する。
+- CodeQL default setupでGitHub ActionsとJavaScript/TypeScriptを解析する。Java/KotlinはCodeQLがプロジェクトのKotlin版をサポートするまで通常CIで検査し、候補生成前にCodeQL対応状況を再確認する。
 - 最終Manifestから権限、exported、backup、cleartext、Providerを機械的に検査する。
 - Release AABでDebuggable、テストコード、Debug URL、テスト広告IDの混入を検査する。
 - Room migration、バックアップ検証、Intent検証、PendingIntent重複防止を自動試験する。
