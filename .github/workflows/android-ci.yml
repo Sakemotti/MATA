@@ -95,8 +95,11 @@ jobs:
       - name: Verify Play Store metadata
         run: node fastlane/verify-play-store.mjs
 
-      - name: Verify Release artifact integrity checks
-        run: node --test tools/release/release-artifact-verifier.test.mjs
+      - name: Verify release tooling
+        run: >-
+          node --test
+          tools/release/release-artifact-verifier.test.mjs
+          tools/release/github-release-gate.test.mjs
 
       - name: Verify test specification evidence
         run: |
