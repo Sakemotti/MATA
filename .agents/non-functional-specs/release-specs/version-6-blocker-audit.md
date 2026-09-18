@@ -45,6 +45,8 @@ GitHub標準の4項目は無効または解析実績がないため、「警告0
 | JavaScript/TypeScript解析 | 同runで成功 | 合格 |
 | Java/Kotlin解析 | CodeQL 2.27.0がKotlin 2.4.20未対応のため失敗し、GitHubの自動調整で解析対象から除外 | 制約記録済み |
 | Code scanning open alert | 成功した解析対象について0件 | 合格 |
+| main branch protection | Pull Request、strict status checks、会話解決、管理者適用、force push・削除禁止を設定 | 合格 |
+| 必須チェック | `Test, lint, and build`と`CodeQL`を発行元GitHub App付きで固定 | 合格 |
 
 CodeQLのJava/Kotlin失敗はアプリの通常ビルドエラーではなく、CodeQL extractorの対応版上限によるものである。通常のAndroid CIは単体試験、Lint、Debug・Release・Benchmarkビルド、Manifest、アーキテクチャおよびリリース成果物検査に成功している。KotlinをCodeQL対応のためだけにダウングレードせず、GitHub側がKotlin 2.4.20以降へ対応した時点でJava/Kotlin解析を再度追加する。
 
@@ -55,6 +57,7 @@ versionCode `6`へ変更する直前に、次をすべて再確認する。
 - [ ] `main`を最新化し、作業ツリーがクリーンで`origin/main`と一致している。
 - [ ] 未解決IssueとPull Requestを取得し、S0・S1障害および本番へ反映予定の未マージ変更がない。
 - [ ] 対象main commitのAndroid CIが全ジョブ成功している。
+- [ ] mainのbranch protectionが有効で、`Test, lint, and build`と`CodeQL`が必須チェックになっている。
 - [ ] Git管理下と作業ディレクトリに署名鍵、keystore、service credentialまたは秘密情報が混入していない。
 - [ ] Dependabot alerts、security updates、code scanning、secret scanningおよびpush protectionの有効状態とopen alertを再確認する。有効化されていない項目は「0件」と記録しない。
 - [ ] CodeQLのJava/Kotlin対応版を確認し、Kotlin 2.4.20以降がサポートされた場合は解析対象へ再追加する。未対応の場合は通常CI成功と制約を再記録する。

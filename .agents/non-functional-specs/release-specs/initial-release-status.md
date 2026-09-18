@@ -51,6 +51,8 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 
 2026年9月18日にGitHub標準セキュリティ機能を強化した。Dependabot alerts、security updates、secret scanningおよびpush protectionを有効化し、初回取得時のopen alertはDependabot 0件、secret scanning 0件だった。CodeQL default setupではGitHub ActionsとJavaScript/TypeScriptの初回解析が成功し、open alertは0件だった。Java/Kotlin解析はGitHubが提供するCodeQL 2.27.0がKotlin 2.4.20未対応のため失敗し、GitHubの自動調整で対象から除外された。通常のAndroid CIは影響を受けておらず、この制約は[監査票](version-6-blocker-audit.md)に記録して候補生成直前に再確認する。
 
+同日に`main`のbranch protectionを有効化した。Pull Request、最新baseへの追従、`Test, lint, and build`と`CodeQL`の成功および会話解決を必須とし、管理者にも適用した。承認レビュー数は単独開発を継続できるよう0とし、force pushとbranch削除は禁止した。
+
 2026年9月16日に`REL-010`の最終集計を行い、自身を除くP0/P1 404件の全合格、P2不合格・保留・対象外0件、GitHubの未解決Issue 0件を確認した。これによりP0/P1は405/405件合格となり、総合動作確認の試験ゲートは合格した。同日時点で開いていたDependabot通常更新PR 5件は、2026年9月16日に全件CI成功後マージ済みである。本番公開はClosed testing期間、Production access、Pre-launch reportおよび最終Console確認が完了するまで保留する。
 
 2026年9月17日に、Closed testingへ配布したversionCode `5`の基準commit`09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`からmainのcommit`32aa301d5beff208083a3c64ec3752a89b60903f`までを棚卸しした。136 commits、89 filesの差分に本番コード31ファイルとCompose、Navigation、Room、Kotlin serializationおよびBenchmarkの更新が含まれるため、versionCode `6`では全自動ゲートに加え、TODO編集、カテゴリ、アーカイブ、終了時刻設定、バックアップ、通知・ウィジェット、広告および全画面スモークの差分回帰を必須とした。DBスキーマ、Manifest、バックアップアーカイブ形式および`app/build.gradle`には差分がない。詳細は[差分棚卸し・回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)に記録する。

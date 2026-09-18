@@ -26,6 +26,21 @@
 - Release AABでDebuggable、テストコード、Debug URL、テスト広告IDの混入を検査する。
 - Room migration、バックアップ検証、Intent検証、PendingIntent重複防止を自動試験する。
 
+### 2.1 リポジトリ保護
+
+`main`には次のbranch protectionを適用する。
+
+- Pull Requestを必須とし、単独開発のため承認レビュー数は0とする。
+- branchを最新の`main`へ追従させてからマージする。
+- GitHub Actionsが発行する`Test, lint, and build`を必須チェックとする。
+- GitHub Advanced Securityが発行する`CodeQL`を必須チェックとする。
+- 管理者にも保護を適用し、通常作業で保護を迂回しない。
+- 未解決のレビュー会話があるPull Requestをマージしない。
+- force pushと`main`の削除を禁止する。
+- 現在のmerge commit運用を維持するため、linear historyと署名commitは必須にしない。
+
+必須チェック名または発行元GitHub Appが変わった場合は、成功中のチェックを確認してbranch protectionを更新する。チェック待機を回避する目的で保護を一時無効化せず、workflow側の`pull_request`トリガー、チェック名および実行結果を修正する。緊急修正もbranchとPull Requestを作成し、同じ必須チェックを通す。
+
 ## 3. 動的検査
 
 - Proxyまたは端末のネットワーク検査で通信先と送信項目を確認する。
