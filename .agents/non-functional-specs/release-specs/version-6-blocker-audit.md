@@ -50,6 +50,24 @@ GitHub標準の4項目は無効または解析実績がないため、「警告0
 
 CodeQLのJava/Kotlin失敗はアプリの通常ビルドエラーではなく、CodeQL extractorの対応版上限によるものである。通常のAndroid CIは単体試験、Lint、Debug・Release・Benchmarkビルド、Manifest、アーキテクチャおよびリリース成果物検査に成功している。KotlinをCodeQL対応のためだけにダウングレードせず、GitHub側がKotlin 2.4.20以降へ対応した時点でJava/Kotlin解析を再度追加する。
 
+### 2.2 2026年9月18日の自動監査ベースライン
+
+GitHub設定の強化後、mainのcommit `0518c88483656b1406e9426ee8a006e5372b4549`で`node tools/release/verify-github-release-gates.mjs`を実行し、次の結果を得た。これは候補生成直前の最終監査ではなく、自動監査が実環境を正しく検査できることを確認したベースラインである。
+
+| 項目 | 結果 | 判定 |
+| --- | --- | --- |
+| 作業ツリー・リモート同期 | `main`はクリーンで`origin/main`と一致 | 合格 |
+| 未解決GitHub Issue・Pull Request | 各0件 | 合格 |
+| branch protection | Pull Request必須、strict status checks、管理者適用、会話解決必須、force push・削除禁止 | 合格 |
+| 必須チェック | `Test, lint, and build`と`CodeQL`をGitHub App付きで固定 | 合格 |
+| GitHubセキュリティ機能 | Dependabot alerts・security updates、secret scanning・push protection、CodeQL default setupが有効 | 合格 |
+| open alert | Dependabot、code scanning、secret scanningが各0件 | 合格 |
+| Android CI | [run 35300355328](https://github.com/Sakemotti/MATA/actions/runs/35300355328)が対象commitで成功 | 合格 |
+| CodeQL | [run 35300355344](https://github.com/Sakemotti/MATA/actions/runs/35300355344)が対象commitで成功 | 合格 |
+| Java/Kotlin解析 | CodeQL extractorがKotlin 2.4.20未対応 | 既知制約・通常CIで補完 |
+
+監査JSONは`app/build/outputs/release-metadata/github-release-gates.json`へ生成される。候補生成時には同じコマンドを再実行し、その時点のcommit、CI runおよび外部Console結果で本節を更新する。
+
 ## 3. 候補生成直前の再監査
 
 versionCode `6`へ変更する直前に、次をすべて再確認する。
