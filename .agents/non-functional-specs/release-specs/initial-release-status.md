@@ -1,8 +1,8 @@
 # 初回リリース進行記録
 
 - 対象: MATA初回公開（Closed testing版`1.0.0 (5)`／本番公開候補予定`1.0.0 (6)`）
-- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／14日間のうち8日間連続／versionCode 6未生成／Production access・Pre-launch report待ち
-- 最終更新日: 2026-09-17
+- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／12人以上・14日間達成／Production access申請済み・審査中／versionCode 6未生成／Pre-launch report待ち
+- 最終更新日: 2026-09-23
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -111,7 +111,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 | アプリ設定から法的ページへの遷移 | 確認済み | DEVICE / USER |
 | AdMobとGoogle Playのアプリ連携 | 確認済み | CONSOLE / USER |
 | 実広告バナー表示 | 確認済み。本番広告のクリックは実施していない | DEVICE / USER |
-| Closed testing参加要件 | 12人がオプトイン継続中。2026年9月9日開始、9月23日達成予定。2026年9月17日時点で8日間連続 | CONSOLE / USER |
+| Closed testing参加要件 | 2026年9月9日開始。2026年9月23日に12人以上・14日間連続の要件達成とProduction access申請可能状態を確認 | CONSOLE / USER |
 | ポリシーのステータス | `問題は見つかりませんでした` | CONSOLE / USER |
 | versionCode `2`のSDK関連警告 | なし | CONSOLE / USER |
 
@@ -146,22 +146,21 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - versionCode `3`公開後もPre-launch report、SDK Indexおよびポリシー状態はversionCode `2`確認時から変わっていない。
 - versionCode `4`はClosed testingへ登録後、versionCode `5`に更新された。versionCode `4`単独の正確な公開日時と警告は未記録である。
 - versionCode `5`は主要画面のカードレイアウト改善を含むUpload Key署名済み候補をClosed testingへ公開済みである。公開済み状態は2026年9月17日にUSERが確認した。正確な公開日時、警告および上書き更新結果は未確認である。
-- Closed testingの連続参加期間は2026年9月9日に開始し、2026年9月23日に14日間達成予定である。2026年9月17日時点のPlay Console表示は8日間連続である。
-- 対象アカウントの要件に従い、12人以上のテスターが14日間連続してオプトインした状態を維持する。
+- Closed testingの連続参加期間は2026年9月9日に開始し、2026年9月23日に12人以上・14日間連続の要件達成とProduction access申請可能状態を確認した。
+- 2026年9月23日にProduction accessを申請した。Play Consoleの状態は審査中であり、結果は未確定である。受付メールは同日時点で届いていない。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
-- 条件達成後、テスト方法、参加状況、フィードバック、修正内容を整理してProduction accessを申請する。
+- 審査中もClosed testingの参加設定とversionCode `5`の公開状態を維持する。
 
 ## 6. 未完了・保留
 
 ### 6.1 Closed testing中に完了する
 
-- テスターのオプトインおよび14日間の継続参加
 - テスターの端末・OS・利用期間・自由操作のフィードバックの記録
 - Google PlayのSDK Index、権限申告およびポリシー警告の最終確認
 - 利用規約と外部送信に関する公表について必要な専門家確認
 - Data safety、UMP、SDK、実通信および公開法的文書の最終突合
 
-必要人数は2026年9月9日時点で充足しており、12人がオプトインを継続中である。Play Consoleでは2026年9月17時点で8日間連続と表示され、14日間の達成予定日は2026年9月23日である。
+必要人数と継続期間は2026年9月23日に達成した。Production accessは同日に申請済みであり、現在は審査結果待ちである。
 
 ### 6.2 次の実変更で確認する
 
@@ -169,12 +168,12 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - versionCode `5`はClosed testing検証版として固定し、Productionへ昇格しない。
 - versionCode `5`以降の差分棚卸しとversionCode `6`の回帰範囲は確定済みである。候補生成直前に棚卸し対象commit以降を再確認し、全自動ゲート、18件の実機回帰および7件のPlay登録後確認を実行する。
 - versionCode `6`の更新前テストデータ、6つの実施セッション、全35件の結果欄およびAAB・署名・ハッシュ・CI・Consoleの成果物台帳を未実施状態で準備済みである。実際の候補生成後に確認できた値だけを記録する。
-- Play Consoleで14日間達成を確認した後、[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従ってversionCode `6`を設定し、署名済みAABと全証跡をクリーンなmainから新規生成する。
+- [本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従ってversionCode `6`を設定し、署名済みAABと全証跡をクリーンなmainから新規生成する。
 - versionCode `6`をPlayへアップロードした後にAABへ影響する変更が生じた場合は、versionCode `7`以上で候補を再生成する。
 
 ### 6.3 外部状態待ち
 
-- Production access申請の8回答、文字数、申請当日の開始条件、Console入力記録および審査結果欄は提出準備済みである。Play Consoleが14日間達成を表示するまで送信しない。
+- Production accessは2026年9月23日に申請済みである。Play Consoleには`お送りいただいた申請フォームを審査しています。最新情報はアカウント所有者にメールでお知らせします。通常、審査の所要時間は 7 日ほどですが、それ以上かかることもあります。`と表示され、受付メールは届いていない。承認まではProductionを利用できない。
 - 初回Production公開は段階公開、Managed publishingおよび前版への停止・切戻しを利用できないことを前提に、公開開始条件、Console登録、公開後1時間・6時間・24時間・72時間・7日間の監視、非公開化およびversionCode `7`以上の前方修正を実行票へ準備済みである。
 - versionCode `3`公開後もPre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`の表示から変わっていない。SDK関連警告はなく、ポリシー状態は`問題は見つかりませんでした`である。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 - AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
@@ -182,8 +181,8 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 
 ## 7. 本番公開前後の残りゲート
 
-1. Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認し、台帳を確定する。
-2. Production accessを申請する。審査待ちの間も、次の候補生成とローカル検証は進めてよい。
+1. `[完了]` Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認し、台帳を確定する。
+2. `[完了]` Production accessを申請する。審査待ちの間も、次の候補生成とローカル検証は進めてよい。
 3. [本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)に従い、versionName `1.0.0`、versionCode `6`、公開対象commit、リリースノートおよび署名済みAABを確定する。
 4. versionCode `6`で`node tools/release/verify-readiness.mjs --release`を成功させ、全P0/P1試験の維持、versionCode `5`からの更新、データ保持、新規インストールおよび差分回帰を確認する。
 5. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。

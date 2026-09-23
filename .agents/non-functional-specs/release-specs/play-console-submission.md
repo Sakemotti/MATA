@@ -113,7 +113,7 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 ## 8. 初回公開前ブロッカー
 
 - [x] Google Play個人デベロッパーアカウントの本人確認、連絡先メールおよび電話番号の確認を完了した。
-- [x] Play Consoleに表示される本番アクセス要件を確認し、Closed testの準備を開始した。テスト要件の達成とProduction access申請は未完了である。
+- [x] Play Consoleに表示される本番アクセス要件を確認し、2026年9月23日に12人以上・14日間のClosed test要件を達成した。
 - [x] `mochisofts.com`でプライバシーポリシー等3文書と`app-ads.txt`を公開し、2026年9月4日に各URLのHTTP 200を確認した。
 - [x] AdMobの正式なApp ID、バナー広告ユニットID、Publisher IDおよびUMPメッセージを設定した。
 - [x] 512pxストアアイコン、フィーチャーグラフィック、スマートフォン6枚、タブレット各4枚の画像を作成し、Play Consoleへ登録した。
@@ -122,7 +122,8 @@ Releaseのマージ済みManifestを正とする。現在の承認済み権限�
 - [x] Upload Keyをリポジトリ外に作成し、ローカルの署名済みAABと証明書SHA-256が一致することを確認した。
 - [x] Upload Keyのkeystoreと復旧情報を暗号化した安全な場所へバックアップした。
 - [x] Play App Signingを設定し、Play ConsoleのUpload Key証明書SHA-256と仕様書の値が一致することを確認した。
-- [ ] アカウント条件に該当する場合、12人・14日間のClosed testとProduction access申請を完了した。
+- [x] アカウント条件に該当する12人以上・14日間のClosed testを完了し、2026年9月23日にProduction accessを申請した。
+- [ ] Production accessが承認され、Productionトラックを利用できることを確認した。
 - [ ] Release AAB、Pre-launch report、全P0/P1試験、SDK Indexおよびポリシー状態が合格した。
 
 現在の外部設定と実機確認の詳細は[初回リリース進行記録](initial-release-status.md)を参照する。AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みであり、2026年9月9日に機内モードで広告読込失敗時も強制終了せず操作を継続できることを確認した。UMP同意状態、オフライン時の広告以外の外部通信、および各広告配置の条件別試験はClosed testingで引き続き実施する。
