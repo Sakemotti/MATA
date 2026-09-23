@@ -106,16 +106,22 @@ versionCode `6`へ変更する直前に、次をすべて再確認する。
 
 2026年9月23日にGitHub側の項目をcommit `0321c8b6e2be00ca5fa9b85852fce62b119a4dd6`へ再実行し、第2.3節へ記録した。外部Console項目の確認後、versionCode `6`の候補生成を開始する。
 
+### 3.1 2026年9月23日の候補生成結果
+
+外部Consoleに新しい公開ブロッカーがないことを確認後、[PR #266](https://github.com/Sakemotti/MATA/pull/266)でversionCode `6`を設定した。PRのAndroid CIとCodeQL、mainの[Android CI run 35816296254](https://github.com/Sakemotti/MATA/actions/runs/35816296254)および[CodeQL run 35816296273](https://github.com/Sakemotti/MATA/actions/runs/35816296273)はすべて成功した。
+
+mainのcommit `4bdb50bbef2f3ed15ebcb7e0a69199d53e5e6757`からUpload Key署名済み候補を生成し、`node tools/release/verify-readiness.mjs --release`の全7検査に成功した。AAB SHA-256は`59133b8f7707dc960e0808436c0c8e13faf12e06e71da7fd8fed0f6c55cde9a4`である。候補生成と自動試験10件は合格したが、実機回帰18件、Google Play登録後確認7件およびProduction access承認は未完了である。
+
 ## 4. Production登録前の最終監査
 
 署名済みversionCode `6`を生成した後、Productionへ登録する前に次を確認する。
 
-- [ ] 候補生成後に対象commitへ新しいバイナリ影響変更がない。
-- [ ] 署名済みAABと成果物台帳のSHA-256が一致する。
-- [ ] `node tools/release/verify-readiness.mjs --release`が全検査に成功する。
+- [x] 候補生成時点で対象commitへ新しいバイナリ影響変更がない。
+- [x] 署名済みAABと成果物台帳のSHA-256が一致する。
+- [x] `node tools/release/verify-readiness.mjs --release`が全7検査に成功する。
 - [ ] versionCode `6`回帰試験とGoogle Play経由の更新・新規インストール試験が合格する。
 - [ ] Pre-launch report、SDK Index、ポリシー、Data safety、権限およびAdMobに未解決の重大問題がない。
-- [ ] 未解決Issue・Pull Request、CIおよび秘密情報検査を再度確認し、最終結果を記録する。
+- [x] 候補生成時点の未解決Issue・Pull Request、CIおよび秘密情報検査を再度確認し、結果を記録した。Production登録直前にも再確認する。
 
 ## 5. GitHub標準セキュリティ機能の扱い
 

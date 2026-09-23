@@ -1,7 +1,7 @@
 # MATA 1.0.0 (6) 回帰試験実施票
 
 - 対象: `com.mochisofts.mata` / `1.0.0 (6)`
-- 状態: 未実施。versionCode `6`の候補生成後に記録する
+- 状態: 自動試験10/10件合格。実機回帰18件とGoogle Play登録後確認7件は未実施
 - 作成日: 2026-09-17
 - 差分・試験範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](version-6-delta-and-regression-plan.md)
 - 成果物台帳: [MATA 1.0.0 (6) 公開候補生成結果](release-candidate-1.0.0-6.md)
@@ -22,8 +22,8 @@
 | 項目 | 実績値 |
 | --- | --- |
 | versionName / versionCode | `1.0.0 (6)` |
-| 候補commit | 未確定 |
-| AAB SHA-256 | 未生成 |
+| 候補commit | `4bdb50bbef2f3ed15ebcb7e0a69199d53e5e6757` |
+| AAB SHA-256 | `59133b8f7707dc960e0808436c0c8e13faf12e06e71da7fd8fed0f6c55cde9a4` |
 | Internal testing公開日時 | 未実施 |
 | Productionへ使用するAABとの一致 | 未確認 |
 | 主実機 | Pixel 9a / Android 17 |
@@ -97,16 +97,16 @@
 
 | ID | 結果 | 実施日 | versionCode / 環境 | 証跡 |
 | --- | --- | --- | --- | --- |
-| `V6-AUTO-01` JVM単体試験 | 未実施 | - | - | - |
-| `V6-AUTO-02` Debug・Release Lint | 未実施 | - | - | - |
-| `V6-AUTO-03` Debug・Release・Benchmarkビルド | 未実施 | - | - | - |
-| `V6-AUTO-04` API 30端末UI試験 | 未実施 | - | - | - |
-| `V6-AUTO-05` P0/P1証跡検査 | 未実施 | - | - | - |
-| `V6-AUTO-06` Release準備検査 | 未実施 | - | - | - |
-| `V6-AUTO-07` セキュリティ・依存関係 | 未実施 | - | - | - |
-| `V6-AUTO-08` 性能 | 未実施 | - | - | - |
-| `V6-AUTO-09` ストア成果物 | 未実施 | - | - | - |
-| `V6-AUTO-10` 署名・成果物 | 未実施 | - | - | - |
+| `V6-AUTO-01` JVM単体試験 | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions・Windows 11 | [main Android CI 35816296254](https://github.com/Sakemotti/MATA/actions/runs/35816296254)、ローカルGradle |
+| `V6-AUTO-02` Debug・Release Lint | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions・Windows 11 | main Android CI 35816296254、ローカルGradle |
+| `V6-AUTO-03` Debug・Release・Benchmarkビルド | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions・Windows 11 | main Android CI 35816296254、署名済みRelease AAB生成成功 |
+| `V6-AUTO-04` API 30端末UI試験 | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions API 30 | [PR Android CI 35815319699](https://github.com/Sakemotti/MATA/actions/runs/35815319699) |
+| `V6-AUTO-05` P0/P1証跡検査 | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions | P0/P1 405/405件、DEV_AUTO証跡335件をmain Android CIで検証 |
+| `V6-AUTO-06` Release準備検査 | 合格 | 2026-09-23 | `1.0.0 (6)` / Windows 11 | `verify-readiness.mjs --release`全7検査成功 |
+| `V6-AUTO-07` セキュリティ・依存関係 | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions・Windows 11 | Repository security、依存ロック、SHA-256検証、SBOM 226 component成功 |
+| `V6-AUTO-08` 性能 | 合格 | 2026-09-23 | `1.0.0 (6)` / GitHub Actions | main Android CI 35816296254 Performance APK verification成功 |
+| `V6-AUTO-09` ストア成果物 | 合格 | 2026-09-23 | `1.0.0 (6)` / Windows 11 | Play Store release verification成功 |
+| `V6-AUTO-10` 署名・成果物 | 合格 | 2026-09-23 | `1.0.0 (6)` / Windows 11 | Upload Key署名、`publishable=true`、5成果物の容量・SHA-256一致 |
 
 ## 6. 実機回帰結果
 
@@ -149,16 +149,16 @@
 
 | 区分 | 合格 | 不合格 | 保留 | 対象外 | 未実施 | 必須件数 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 自動試験 | 0 | 0 | 0 | 0 | 10 | 10 |
+| 自動試験 | 10 | 0 | 0 | 0 | 0 | 10 |
 | 実機回帰 | 0 | 0 | 0 | 0 | 18 | 18 |
 | Google Play登録後 | 0 | 0 | 0 | 0 | 7 | 7 |
-| 合計 | 0 | 0 | 0 | 0 | 35 | 35 |
+| 合計 | 10 | 0 | 0 | 0 | 25 | 35 |
 
-- 総合判定: `未実施`
-- 判定日: `-`
-- 判定者: `-`
-- 未解決S0・S1 Issue: `未確認`
+- 総合判定: `自動試験合格・実機およびGoogle Play確認待ち`
+- 判定日: `2026-09-23`
+- 判定者: `AUTO`
+- 未解決S0・S1 Issue: `0件`
 - Production移行: `不可`
-- 備考: versionCode `6`候補生成後に実績値を記録する
+- 備考: 署名済み候補生成と自動試験は完了。実機回帰18件とGoogle Play登録後確認7件を実施する
 
 35件すべてが合格し、P0/P1 405/405件の合格、成果物台帳の完全性、未解決S0・S1がないことを確認した場合だけ、Production移行を`可`へ変更する。
