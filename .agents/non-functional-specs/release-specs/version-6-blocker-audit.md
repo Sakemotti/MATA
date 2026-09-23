@@ -68,6 +68,25 @@ GitHub設定の強化後、mainのcommit `0518c88483656b1406e9426ee8a006e5372b45
 
 監査JSONは`app/build/outputs/release-metadata/github-release-gates.json`へ生成される。候補生成時には同じコマンドを再実行し、その時点のcommit、CI runおよび外部Console結果で本節を更新する。
 
+### 2.3 2026年9月23日の候補生成前監査
+
+Closed testingの12人以上・14日間連続要件達成とProduction access申請後、依存関係のパッチ更新を取り込んだmainのcommit `0321c8b6e2be00ca5fa9b85852fce62b119a4dd6`で`node tools/release/verify-github-release-gates.mjs`を再実行した。
+
+| 項目 | 結果 | 判定 |
+| --- | --- | --- |
+| 作業ツリー・リモート同期 | `main`はクリーンで`origin/main`と一致 | 合格 |
+| 未解決GitHub Issue・Pull Request | 各0件 | 合格 |
+| branch protection | Pull Request必須、strict status checks、管理者適用、会話解決必須、force push・削除禁止 | 合格 |
+| 必須チェック | `Test, lint, and build`と`CodeQL`をGitHub App付きで固定 | 合格 |
+| GitHubセキュリティ機能 | Dependabot alerts・security updates、secret scanning・push protection、CodeQL default setupが有効 | 合格 |
+| open alert | Dependabot、code scanning、secret scanningが各0件 | 合格 |
+| Android CI | [run 35811832426](https://github.com/Sakemotti/MATA/actions/runs/35811832426)が対象commitで成功 | 合格 |
+| CodeQL | [run 35811832339](https://github.com/Sakemotti/MATA/actions/runs/35811832339)が対象commitで成功 | 合格 |
+| 依存関係 | AGP `9.4.1`、KSP `2.3.12`、Compose plugin `2.4.20`をロックおよび検証メタデータ付きで更新。置き換えたDependabot PR #259～#261はクローズ済み | 合格 |
+| Java/Kotlin解析 | CodeQL default setupの解析対象外。通常のAndroid CIで単体試験、Lint、Debug・Release・BenchmarkビルドおよびAPI 30 UI試験を補完 | 既知制約 |
+
+GitHub側の候補生成前ゲートは合格した。外部ConsoleのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態は機械判定の対象外であるため、versionCode `6`へ変更する直前にPlay ConsoleとAdMobで別途再確認する。
+
 ## 3. 候補生成直前の再監査
 
 versionCode `6`へ変更する直前に、次をすべて再確認する。
@@ -84,6 +103,8 @@ versionCode `6`へ変更する直前に、次をすべて再確認する。
 - [ ] Google Play ConsoleのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態に新規ブロッカーがない。
 - [ ] Closed testingの12人以上・14日間連続要件達成と、Production accessの状態を確認する。
 - [ ] 監査対象commit、確認日時、CI run、Issue・PR件数、Console結果を本書へ追記する。
+
+2026年9月23日にGitHub側の項目をcommit `0321c8b6e2be00ca5fa9b85852fce62b119a4dd6`へ再実行し、第2.3節へ記録した。外部Console項目の確認後、versionCode `6`の候補生成を開始する。
 
 ## 4. Production登録前の最終監査
 
