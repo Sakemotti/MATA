@@ -3,8 +3,8 @@
 - 対象アプリ: `com.mochisofts.mata`
 - 基準版: Closed testing公開済み `1.0.0 (5)`
 - 基準commit: `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`
-- 棚卸し対象commit: `32aa301d5beff208083a3c64ec3752a89b60903f`
-- 棚卸し日: 2026-09-17
+- 棚卸し対象commit: `cb3870d59fb7e399c23f5d8d9759d04dad770495`
+- 棚卸し日: 2026-09-23
 - 次回候補: `1.0.0 (6)`。本書作成時点では未生成
 - 上位計画: [MATA 1.0.0 (6) 本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md)
 
@@ -12,7 +12,7 @@
 
 Closed testingへ実際に配布したversionCode `5`のソースと、versionCode `6`の生成元になる現在のmainとの差分を棚卸しし、versionCode `6`で再実行する回帰試験を確定する。
 
-差分は136 commits、89 files、12,279 insertions、1,332 deletionsである。試験自動化と証跡更新が中心だが、本番コード31ファイルと主要依存関係にも変更がある。このため、versionCode `5`の試験結果だけを流用してProductionへ進めることはできない。versionCode `6`では次を必須とする。
+差分は164 commits、104 files、14,270 insertions、1,402 deletionsである。試験自動化と証跡更新が中心だが、本番コード31ファイルと主要依存関係にも変更がある。このため、versionCode `5`の試験結果だけを流用してProductionへ進めることはできない。versionCode `6`では次を必須とする。
 
 1. 全P0/P1 405件の合格状態を、最新ソースに対する全自動ゲートで維持する。
 2. 本書の変更領域に対応する実機回帰を、versionCode `6`の配布候補そのもので実施する。
@@ -26,12 +26,19 @@ Closed testingへ実際に配布したversionCode `5`のソースと、versionCo
 | アプリ本番コード・文字列 | 31 | 実機回帰が必要 |
 | JVM単体試験 | 8 | 自動試験の追加・強化 |
 | Android端末UI試験 | 19 | 自動試験の追加・強化 |
-| 試験仕様・証跡 | 18 | バイナリ影響なし |
-| その他の仕様・リリース文書 | 4 | 内容確認が必要。バイナリ影響は個別判定 |
+| 試験仕様・証跡 | 22 | バイナリ影響なし |
+| その他の仕様・リリース文書 | 11 | 内容確認が必要。バイナリ影響は個別判定 |
 | 依存関係・検証メタデータ | 4 | 全自動ゲートと横断スモークが必要 |
+| CI・リリース監査ツール | 4 | アプリへの同梱なし。CIと候補生成前監査で確認 |
 | Google Play掲載成果物 | 5 | Console転記前の突合が必要 |
 
 現在の試験台帳は423件で、P0 248件、P1 157件、P2 18件である。P0/P1は405/405件合格、P2は3件合格・15件未実施である。P2未実施15件は本書の差分による新規リスクではなく、従来どおり初回公開の必須ゲート外とする。
+
+### 2.1 2026年9月17日以降の再棚卸し
+
+前回の棚卸し対象commit `32aa301d5beff208083a3c64ec3752a89b60903f`から今回の対象commitまでには、28 commits、26 files、2,035 insertions、114 deletionsの差分がある。内訳はリリース・試験文書18ファイル、CI・リリース監査ツール4ファイル、依存関係・ロック・検証メタデータ4ファイルである。
+
+`app/src/main`、`app/src/test`、`app/src/androidTest`、Manifest、Room schemaおよびバックアップ形式には追加差分がない。バイナリへ影響する追加変更はAGP `9.4.1`、KSP `2.3.12`、Compose compiler plugin `2.4.20`へのパッチ更新であり、対応する依存ロックとSHA-256検証メタデータも同時に更新済みである。PRとmainのAndroid CIではJVM試験、Lint、Debug・Release・BenchmarkビルドおよびAPI 30 UI試験が成功したため、実機回帰項目の追加は不要と判断する。既定の全自動ゲートと全画面スモークは引き続き必須とする。
 
 ## 3. 本番コード・動作差分
 
@@ -53,9 +60,12 @@ Closed testingへ実際に配布したversionCode `5`のソースと、versionCo
 
 | 依存関係 | versionCode 5 | 現在 | 主な確認範囲 |
 | --- | --- | --- | --- |
+| Android Gradle Plugin | `9.4.0` | `9.4.1` | Debug・Release・Benchmarkビルド、署名、成果物メタデータ |
+| Compose compiler plugin | `2.4.10` | `2.4.20` | Compose全画面のビルド・描画・入力・状態復元 |
 | Compose BOM | `2026.08.00` | `2026.09.00` | 全画面描画、入力、ダイアログ、スクロール、状態復元 |
 | Navigation Compose | `2.10.0` | `2.10.1` | ハンバーガー、画面遷移、戻る、結果通知 |
 | Room | `2.8.4` | `2.8.5` | TODO・カテゴリ・履歴・アーカイブ・バックアップ後のデータ一致 |
+| KSP | `2.3.11` | `2.3.12` | Room・Hilt等のコード生成、全ビルド、既存DB読込 |
 | Kotlin serialization plugin | `2.4.10` | `2.4.20` | 画面ドラフトと既存シリアライズ処理 |
 | Benchmark | `1.5.0-rc02` | `1.5.0` | Benchmark成果物生成と性能ゲート |
 

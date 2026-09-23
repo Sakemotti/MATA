@@ -29,7 +29,7 @@
 - [x] Closed testingの参加状況、自由操作、フィードバックおよび対応内容を台帳へ記録した。
 - [x] 本番公開へ反映するIssueとPull Requestがすべてmainへ取り込まれ、S0・S1の未解決障害がない。2026年9月23日の監査時点で未解決Issue・Pull Requestは各0件だった。
 - [x] [リリースブロッカー監査票](../non-functional-specs/release-specs/version-6-blocker-audit.md)を候補生成前のmainに対して再実行し、対象commitと結果を記録した。対象は`0321c8b6e2be00ca5fa9b85852fce62b119a4dd6`である。
-- [x] versionCode `5`の基準commitから2026年9月17日時点のmainまで、ソース、依存関係、法的文書およびストア掲載成果物の差分を棚卸しし、versionCode `6`の回帰範囲を確定した。本番公開用の掲載文とversionCode `6`リリースノートも同日に正本と`fastlane/metadata`へ確定済みである。候補生成直前に棚卸し対象commit以降の差分を再確認する。
+- [x] versionCode `5`の基準commitから2026年9月23日のmain `cb3870d59fb7e399c23f5d8d9759d04dad770495`まで、ソース、依存関係、法的文書およびストア掲載成果物の差分を再棚卸しし、versionCode `6`の回帰範囲を確定した。本番公開用の掲載文とversionCode `6`リリースノートも正本と`fastlane/metadata`へ確定済みである。
 - [ ] Google PlayのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態に新しい公開ブロッカーがない。
 - [x] 2026年9月23日の監査時点でmainがクリーンで、origin/mainと一致している。
 

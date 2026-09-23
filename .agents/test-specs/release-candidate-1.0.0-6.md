@@ -1,7 +1,7 @@
 # MATA 1.0.0 (6) 公開候補生成結果
 
 - 試験ID: `REL-021`
-- 状態: 未生成。Closed testing要件達成後に実績を記録する
+- 状態: 未生成。Closed testing要件とGitHub側ゲートは達成済み。外部Console最終確認後に実績を記録する
 - 実施日: `-`
 - 実施者: `OWNER` / `AUTO`
 - 判定: `未実施`
