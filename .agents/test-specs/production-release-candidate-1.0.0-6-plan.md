@@ -1,7 +1,7 @@
 # MATA 1.0.0 (6) 本番公開候補生成計画
 
 - 対象: `com.mochisofts.mata` / `1.0.0 (6)`
-- 状態: 未生成。Closed testingの14日間達成後に生成する
+- 状態: 未生成。Closed testing要件とGitHub側の生成開始条件は達成済み。外部Consoleの最終確認後に生成する
 - 計画確定日: 2026-09-17
 - Closed testing基準版: `1.0.0 (5)`
 - リリース状況: [初回リリース進行記録](../non-functional-specs/release-specs/initial-release-status.md)
@@ -25,13 +25,13 @@
 
 次をすべて確認してからversionCode `6`の作業を開始する。
 
-- [ ] Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認した。
-- [ ] Closed testingの参加状況、自由操作、フィードバックおよび対応内容を台帳へ記録した。
-- [ ] 本番公開へ反映するIssueとPull Requestがすべてmainへ取り込まれ、S0・S1の未解決障害がない。
-- [ ] [リリースブロッカー監査票](../non-functional-specs/release-specs/version-6-blocker-audit.md)を候補生成直前のmainに対して再実行し、対象commitと結果を記録した。
+- [x] Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認した。2026年9月23日にProduction access申請可能状態となったことで確認した。
+- [x] Closed testingの参加状況、自由操作、フィードバックおよび対応内容を台帳へ記録した。
+- [x] 本番公開へ反映するIssueとPull Requestがすべてmainへ取り込まれ、S0・S1の未解決障害がない。2026年9月23日の監査時点で未解決Issue・Pull Requestは各0件だった。
+- [x] [リリースブロッカー監査票](../non-functional-specs/release-specs/version-6-blocker-audit.md)を候補生成前のmainに対して再実行し、対象commitと結果を記録した。対象は`0321c8b6e2be00ca5fa9b85852fce62b119a4dd6`である。
 - [x] versionCode `5`の基準commitから2026年9月17日時点のmainまで、ソース、依存関係、法的文書およびストア掲載成果物の差分を棚卸しし、versionCode `6`の回帰範囲を確定した。本番公開用の掲載文とversionCode `6`リリースノートも同日に正本と`fastlane/metadata`へ確定済みである。候補生成直前に棚卸し対象commit以降の差分を再確認する。
 - [ ] Google PlayのSDK Index、権限、Data safety、ポリシー状態およびAdMob状態に新しい公開ブロッカーがない。
-- [ ] 最新のmainがクリーンで、origin/mainと一致している。
+- [x] 2026年9月23日の監査時点でmainがクリーンで、origin/mainと一致している。
 
 Production accessは本番アップロード前の必須条件だが、審査待ちの間にversionCode `6`の候補生成とローカル検証を進めてもよい。
 
