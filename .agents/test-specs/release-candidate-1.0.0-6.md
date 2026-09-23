@@ -1,7 +1,7 @@
 # MATA 1.0.0 (6) 公開候補生成結果
 
 - 試験ID: `REL-021`
-- 状態: 未生成。Closed testing要件とGitHub側ゲートは達成済み。外部Console最終確認後に実績を記録する
+- 状態: versionCode `6`設定済み。署名済み成果物は未生成
 - 実施日: `-`
 - 実施者: `OWNER` / `AUTO`
 - 判定: `未実施`
@@ -17,7 +17,7 @@
 | --- | --- |
 | Application ID | `com.mochisofts.mata` |
 | versionName | `1.0.0` |
-| versionCode | `6`（未設定） |
+| versionCode | `6`（設定済み。成果物未生成） |
 | ソースcommit | 未確定 |
 | ソースブランチ | クリーンな`main`を使用予定 |
 | `origin/main`との一致 | 未確認 |
