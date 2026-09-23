@@ -1,7 +1,7 @@
 # MATA 総合動作確認項目書
 
 - 文書状態: 第2版
-- 最終更新日: 2026-09-17
+- 最終更新日: 2026-09-23
 - 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../functional-specs/monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../non-functional-specs/startup-specs/README.md)、[MATAデザインシステム仕様](../non-functional-specs/design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../non-functional-specs/adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../non-functional-specs/error-handling-specs/README.md)、[性能・省電力仕様](../non-functional-specs/performance-specs/README.md)、[セキュリティ・プライバシー仕様](../non-functional-specs/security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../non-functional-specs/observability-specs/README.md)、[リリース・配布運用仕様](../non-functional-specs/release-specs/README.md)、[実装アーキテクチャ・データアクセス仕様](../non-functional-specs/architecture-specs/README.md)
 
 ## 1. 目的
@@ -10,7 +10,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 画面仕様の受け入れ条件237件を1件ずつテストIDへ対応付ける。加えて、画面仕様本文の詳細確認41件と、画面単体の受け入れ条件だけでは確認しにくい論理日、繰り返し、祝日、通知、ウィジェット、端末内保存、プライバシー、ビルド品質の横断確認145件を定義する。実行結果を記録する項目は合計423件とする。
 
-初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、423件の項目別結果は[リリース別試験結果の管理](results-management.md)、自動試験との1対1対応は[自動試験証跡TSV](automated-test-evidence.tsv)、正式確認の実施区分は[初回リリース試験の実施区分](closed-testing-assignments.md)、未実施P0/P1を実機セッションへ分割した手順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)、versionCode 3固有機能と不足環境の優先確認には[残実機・環境試験計画](release-v3-device-verification-plan.md)、Closed testingの参加・自由操作・フィードバックは[初回Closed testing実施台帳](closed-testing-log.md)を使用する。現在のversionCode `5`の登録と上書き更新には[Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)、versionCode `4`以前の履歴には各版の旧手順、versionCode `5`以降の変更内容とversionCode `6`の回帰範囲には[差分棚卸し・回帰試験計画](version-6-delta-and-regression-plan.md)、実施結果には[versionCode 6回帰試験実施票](version-6-regression-results.md)、Closed testing完了後の候補生成には[本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md)と[versionCode 6成果物台帳](release-candidate-1.0.0-6.md)、テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。Closed testing参加者へ個別の試験項目は割り当てない。
+初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、423件の項目別結果は[リリース別試験結果の管理](results-management.md)、自動試験との1対1対応は[自動試験証跡TSV](automated-test-evidence.tsv)、正式確認の実施区分は[初回リリース試験の実施区分](closed-testing-assignments.md)、未実施P0/P1を実機セッションへ分割した手順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)、versionCode 3固有機能と不足環境の優先確認には[残実機・環境試験計画](release-v3-device-verification-plan.md)、Closed testingの参加・自由操作・フィードバックは[初回Closed testing実施台帳](closed-testing-log.md)を使用する。現在のversionCode `5`の登録と上書き更新には[Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)、versionCode `4`以前の履歴には各版の旧手順、versionCode `5`以降の変更内容とversionCode `6`の回帰範囲には[差分棚卸し・回帰試験計画](version-6-delta-and-regression-plan.md)、実施結果には[versionCode 6回帰試験実施票](version-6-regression-results.md)、Closed testing完了後の候補生成には[本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md)と[versionCode 6成果物台帳](release-candidate-1.0.0-6.md)、Google Play経由の候補登録と上書き更新には[versionCode 6 Internal testing登録・更新確認手順](internal-testing-release-1.0.0-6.md)、テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。Closed testing参加者へ個別の試験項目は割り当てない。
 
 ## 2. 正とする文書
 
