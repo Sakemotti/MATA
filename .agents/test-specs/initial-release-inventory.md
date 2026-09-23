@@ -13,7 +13,7 @@
 
 ## 1. 判定
 
-現時点では、全P0/P1 405件が合格し、P2の不合格・保留・対象外および未解決Issueが0件であるため、総合動作確認の試験ゲートは合格とする。一方、Closed testingの14日間継続、Production access、Pre-launch reportおよび最終Console確認は未完了のため、本番公開判定は`保留`とする。
+現時点では、全P0/P1 405件が合格し、P2の不合格・保留・対象外および未解決Issueが0件であるため、総合動作確認の試験ゲートは合格とする。Closed testingの12人以上・14日間継続要件は2026年9月23日に達成し、Production accessは同日に申請済みである。一方、Production access承認、Pre-launch reportおよび最終Console確認は未完了のため、本番公開判定は`保留`とする。
 
 これはアプリ試験の不合格ではなく、Google Play側の外部公開条件と最終証跡を待っている状態である。
 
