@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
+            val backgroundColor by viewModel.backgroundColor.collectAsStateWithLifecycle()
             val startupState by viewModel.startupState.collectAsStateWithLifecycle()
             val foldingFeatures by rememberFoldingFeatures(this)
             val darkTheme = mataUsesDarkTheme(theme)
@@ -115,7 +116,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
             CompositionLocalProvider(LocalMataFoldingFeatures provides foldingFeatures) {
-                MataTheme(appTheme = theme) {
+                MataTheme(appTheme = theme, backgroundColor = backgroundColor) {
                     when (startupState) {
                         StartupState.Initializing -> StartupLoadingScreen()
                         StartupState.Failed -> StartupErrorScreen(

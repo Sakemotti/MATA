@@ -19,6 +19,7 @@ import com.mochisofts.mata.data.repository.HistorySnapshotV1
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
 import com.mochisofts.mata.data.repository.CURRENT_REPEAT_PARAMS_VERSION
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
@@ -297,8 +298,16 @@ class BackupArchiveReader @Inject constructor() {
         expectName("theme")
         val themeCode = strictString()
         val theme = AppTheme.entries.firstOrNull { it.code == themeCode } ?: invalid("Invalid theme")
+        val backgroundColor = if (formatVersion >= 5) {
+            expectName("backgroundColor")
+            val backgroundColorCode = strictString()
+            AppBackgroundColor.entries.firstOrNull { it.code == backgroundColorCode }
+                ?: invalid("Invalid background color")
+        } else {
+            AppBackgroundColor.DEFAULT
+        }
         requireObjectEnd()
-        return BackupSettings(endHour, weekStart, showCompleted, theme)
+        return BackupSettings(endHour, weekStart, showCompleted, theme, backgroundColor)
     }
 
     private fun JsonReader.readCategory(

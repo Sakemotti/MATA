@@ -258,6 +258,15 @@
     <string name="settings_theme_system">端末設定に従う</string>
     <string name="settings_theme_light">ライト</string>
     <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_background_color_title">背景色</string>
+    <string name="settings_background_color_description">ライトテーマ時の画面背景色を選択します</string>
+    <string name="settings_background_color_default">標準</string>
+    <string name="settings_background_color_ivory">アイボリー</string>
+    <string name="settings_background_color_light_green">薄緑</string>
+    <string name="settings_background_color_light_blue">薄青</string>
+    <string name="settings_background_color_light_pink">薄桃</string>
+    <string name="settings_background_color_light_purple">薄紫</string>
+    <string name="settings_background_color_light_gray">ライトグレー</string>
     <string name="settings_notification_permission_title">通知権限</string>
     <string name="settings_notification_permission_description">Androidの通知設定を確認します</string>
     <string name="settings_exact_alarm_title">正確なアラーム</string>

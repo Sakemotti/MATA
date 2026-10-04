@@ -13,7 +13,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 
@@ -30,10 +32,12 @@ object MataCardLayout {
     val InputShape = RoundedCornerShape(16.dp)
 }
 
+internal val LocalMataPageColorOverride = staticCompositionLocalOf<Color?> { null }
+
 val MaterialTheme.mataPageColor
     @Composable
     @ReadOnlyComposable
-    get() = if (colorScheme.background.luminance() < 0.5f) {
+    get() = LocalMataPageColorOverride.current ?: if (colorScheme.background.luminance() < 0.5f) {
         colorScheme.surface
     } else {
         colorScheme.surfaceContainer

@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.NotificationScheduler
 import com.mochisofts.mata.domain.repository.HistoryReconciler
@@ -52,6 +53,14 @@ class MataAppViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = AppTheme.SYSTEM,
+        )
+
+    val backgroundColor: StateFlow<AppBackgroundColor> = settingsRepository.backgroundColor
+        .catch { emit(AppBackgroundColor.DEFAULT) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = AppBackgroundColor.DEFAULT,
         )
 
     internal suspend fun resolveExternalNavigation(

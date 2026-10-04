@@ -4,8 +4,10 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -16,6 +18,14 @@ class MataThemeTest {
         assertTrue(mataUsesDarkTheme(AppTheme.DARK, systemInDarkTheme = false))
         assertTrue(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = true))
         assertFalse(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = false))
+    }
+
+    @Test
+    fun lightBackgroundPaletteHasSixOverridesAndDefaultUsesThemeColor() {
+        assertEquals(null, AppBackgroundColor.DEFAULT.lightPageColor())
+        AppBackgroundColor.entries.drop(1).forEach { backgroundColor ->
+            assertNotNull(backgroundColor.lightPageColor())
+        }
     }
 
     @Test

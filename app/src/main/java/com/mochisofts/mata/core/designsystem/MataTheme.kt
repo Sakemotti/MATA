@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 
 internal val MataLightColors = lightColorScheme(
     primary = Color(0xFF386A20),
@@ -198,6 +199,7 @@ fun mataUsesDarkTheme(appTheme: AppTheme): Boolean =
 @Composable
 fun MataTheme(
     appTheme: AppTheme = AppTheme.SYSTEM,
+    backgroundColor: AppBackgroundColor = AppBackgroundColor.DEFAULT,
     useDynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
@@ -211,7 +213,11 @@ fun MataTheme(
         MataLightColors
     }
     val semanticColors = if (dark) MataDarkSemanticColors else MataLightSemanticColors
-    CompositionLocalProvider(LocalMataSemanticColors provides semanticColors) {
+    val pageColorOverride = if (dark) null else backgroundColor.lightPageColor()
+    CompositionLocalProvider(
+        LocalMataSemanticColors provides semanticColors,
+        LocalMataPageColorOverride provides pageColorOverride,
+    ) {
         MaterialTheme(
             colorScheme = colors,
             typography = MataTypography,
@@ -219,4 +225,14 @@ fun MataTheme(
             content = content,
         )
     }
+}
+
+internal fun AppBackgroundColor.lightPageColor(): Color? = when (this) {
+    AppBackgroundColor.DEFAULT -> null
+    AppBackgroundColor.IVORY -> Color(0xFFFFF8E7)
+    AppBackgroundColor.LIGHT_GREEN -> Color(0xFFEEF7E9)
+    AppBackgroundColor.LIGHT_BLUE -> Color(0xFFEDF4FF)
+    AppBackgroundColor.LIGHT_PINK -> Color(0xFFFFF0F3)
+    AppBackgroundColor.LIGHT_PURPLE -> Color(0xFFF5F0FF)
+    AppBackgroundColor.LIGHT_GRAY -> Color(0xFFF3F3F3)
 }
