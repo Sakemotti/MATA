@@ -65,6 +65,18 @@ class BackupArchiveReaderTest {
     }
 
     @Test
+    fun version4EmptyBackup_remainsAccepted() = runTest {
+        val data = EMPTY_DATA_V4.toByteArray(Charsets.UTF_8)
+        val backup = archive(data, sha256(data), formatVersion = 4, minimumReaderVersion = 4)
+        val output = temporaryDataFile()
+
+        val result = BackupArchiveReader().extractAndValidate(ByteArrayInputStream(backup), output)
+
+        assertEquals(4, result.manifest.formatVersion)
+        output.delete()
+    }
+
+    @Test
     fun mismatchedDigest_isRejectedBeforeRestore() = runTest {
         val data = EMPTY_DATA.toByteArray(Charsets.UTF_8)
         val backup = archive(data, "0".repeat(64))
@@ -110,7 +122,8 @@ class BackupArchiveReaderTest {
 
     private companion object {
         const val ENTRY_TIME = 1_700_000_000_000L
-        const val EMPTY_DATA = """{"formatVersion":4,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
+        const val EMPTY_DATA = """{"formatVersion":5,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system","backgroundColor":"default"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
+        const val EMPTY_DATA_V4 = """{"formatVersion":4,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
         const val EMPTY_DATA_V3 = """{"formatVersion":3,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
         const val EMPTY_DATA_V2 = """{"formatVersion":2,"settings":{"uncategorizedEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
         const val EMPTY_DATA_V1 = """{"formatVersion":1,"settings":{"uncategorizedEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""

@@ -131,7 +131,7 @@ node tools/release/verify-readiness.mjs --release
 | 判定項目 | 状態 |
 | --- | --- |
 | Closed testingの12人・14日間要件 | 2026年9月23日に達成済み |
-| Production access | 2026年9月23日に申請済み・審査中。承認待ち |
+| Production access | 2026年9月23日の初回申請は不承認。追加Closed testingとフィードバック対応後に再申請する |
 | versionCode 6自動ゲート10件 | 10/10件合格 |
 | versionCode 6実機回帰18件 | 未実施 |
 | versionCode 6 Play確認7件 | 未実施 |

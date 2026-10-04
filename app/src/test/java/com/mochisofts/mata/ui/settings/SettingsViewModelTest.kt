@@ -11,6 +11,7 @@ import com.mochisofts.mata.core.backup.BackupOperationState
 import com.mochisofts.mata.core.backup.BackupOperationStatus
 import com.mochisofts.mata.core.backup.BackupOperationType
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
@@ -120,11 +121,13 @@ class SettingsViewModelTest {
         viewModel.setWeekStart(DayOfWeek.SUNDAY)
         viewModel.setShowCompleted(true)
         viewModel.setTheme(AppTheme.DARK)
+        viewModel.setBackgroundColor(AppBackgroundColor.LIGHT_BLUE)
 
         assertEquals(4, viewModel.uiState.value.endHour)
         assertEquals(DayOfWeek.SUNDAY, viewModel.uiState.value.weekStart)
         assertEquals(true, viewModel.uiState.value.showCompleted)
         assertEquals(AppTheme.DARK, viewModel.uiState.value.theme)
+        assertEquals(AppBackgroundColor.LIGHT_BLUE, viewModel.uiState.value.backgroundColor)
         assertNull(viewModel.uiState.value.savingSetting)
     }
 
@@ -195,6 +198,7 @@ class SettingsViewModelTest {
         private val endHourState = MutableStateFlow(0)
         private val weekStartState = MutableStateFlow(DayOfWeek.MONDAY)
         private val themeState = MutableStateFlow(AppTheme.SYSTEM)
+        private val backgroundColorState = MutableStateFlow(AppBackgroundColor.DEFAULT)
         private val notificationPermissionRequestedState = MutableStateFlow(false)
 
         var failNextSave = false
@@ -204,6 +208,7 @@ class SettingsViewModelTest {
         override val dayEndHour: Flow<Int> = endHourState
         override val weekStart: Flow<DayOfWeek> = weekStartState
         override val theme: Flow<AppTheme> = themeState
+        override val backgroundColor: Flow<AppBackgroundColor> = backgroundColorState
         override val notificationPermissionRequested: Flow<Boolean> =
             notificationPermissionRequestedState
 
@@ -230,6 +235,11 @@ class SettingsViewModelTest {
         override suspend fun setTheme(value: AppTheme) {
             beforeSave()
             themeState.value = value
+        }
+
+        override suspend fun setBackgroundColor(value: AppBackgroundColor) {
+            beforeSave()
+            backgroundColorState.value = value
         }
 
         override suspend fun setNotificationPermissionRequested(value: Boolean) {

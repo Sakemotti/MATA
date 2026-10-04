@@ -12,6 +12,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,6 +89,9 @@ import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.mataPageColor
+import com.mochisofts.mata.core.designsystem.lightPageColor
+import com.mochisofts.mata.core.designsystem.mataUsesDarkTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.core.backup.BACKUP_MIME_TYPE
 import com.mochisofts.mata.core.backup.BackupOperationPhase
@@ -118,7 +124,13 @@ fun SettingsScreen(
     var showEndHourSheet by remember { mutableStateOf(false) }
     var showWeekStartSheet by remember { mutableStateOf(false) }
     var showThemeSheet by remember { mutableStateOf(false) }
+    var showBackgroundColorSheet by remember { mutableStateOf(false) }
     var showBackupWarning by remember { mutableStateOf(false) }
+    val darkTheme = mataUsesDarkTheme(state.theme)
+
+    LaunchedEffect(darkTheme) {
+        if (darkTheme) showBackgroundColorSheet = false
+    }
     val createDocumentLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE),
         viewModel::createTargetSelected,
@@ -272,6 +284,17 @@ fun SettingsScreen(
                             enabled = settingsEnabled,
                             onClick = { showThemeSheet = true },
                         )
+                        if (!darkTheme) {
+                            HorizontalDivider()
+                            SettingsValueRow(
+                                title = stringResource(R.string.settings_background_color_title),
+                                value = backgroundColorName(state.backgroundColor),
+                                description = stringResource(R.string.settings_background_color_description),
+                                isSaving = state.savingSetting == SavingSetting.BACKGROUND_COLOR,
+                                enabled = settingsEnabled,
+                                onClick = { showBackgroundColorSheet = true },
+                            )
+                        }
                         }
 
                         SettingsSectionCard(R.string.settings_section_notifications) {
@@ -504,6 +527,20 @@ fun SettingsScreen(
                 viewModel.setTheme(it)
             },
             onDismiss = { showThemeSheet = false },
+        )
+    }
+    if (showBackgroundColorSheet && !darkTheme) {
+        SelectionBottomSheet(
+            title = stringResource(R.string.settings_background_color_title),
+            options = AppBackgroundColor.entries,
+            selected = state.backgroundColor,
+            label = { backgroundColorName(it) },
+            leadingContent = { BackgroundColorSwatch(it) },
+            onSelect = {
+                showBackgroundColorSheet = false
+                viewModel.setBackgroundColor(it)
+            },
+            onDismiss = { showBackgroundColorSheet = false },
         )
     }
     if (showBackupWarning) {
@@ -768,6 +805,7 @@ private fun <T> SelectionBottomSheet(
     options: List<T>,
     selected: T,
     label: @Composable (T) -> String,
+    leadingContent: (@Composable (T) -> Unit)? = null,
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -790,6 +828,9 @@ private fun <T> SelectionBottomSheet(
             items(options) { option ->
                 val isSelected = option == selected
                 ListItem(
+                    leadingContent = leadingContent?.let { content ->
+                        { content(option) }
+                    },
                     headlineContent = { Text(label(option)) },
                     trailingContent = {
                         if (isSelected) Icon(Icons.Outlined.Check, contentDescription = null)
@@ -806,6 +847,17 @@ private fun <T> SelectionBottomSheet(
             }
         }
     }
+}
+
+@Composable
+private fun BackgroundColorSwatch(backgroundColor: AppBackgroundColor) {
+    val color = backgroundColor.lightPageColor() ?: MaterialTheme.colorScheme.surfaceContainer
+    Box(
+        Modifier
+            .size(32.dp)
+            .background(color, CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+    )
 }
 
 internal const val SETTINGS_SELECTION_OPTIONS_TEST_TAG = "settings_selection_options"
@@ -829,5 +881,18 @@ private fun themeName(theme: AppTheme): String = stringResource(
         AppTheme.SYSTEM -> R.string.settings_theme_system
         AppTheme.LIGHT -> R.string.settings_theme_light
         AppTheme.DARK -> R.string.settings_theme_dark
+    },
+)
+
+@Composable
+private fun backgroundColorName(backgroundColor: AppBackgroundColor): String = stringResource(
+    when (backgroundColor) {
+        AppBackgroundColor.DEFAULT -> R.string.settings_background_color_default
+        AppBackgroundColor.IVORY -> R.string.settings_background_color_ivory
+        AppBackgroundColor.LIGHT_GREEN -> R.string.settings_background_color_light_green
+        AppBackgroundColor.LIGHT_BLUE -> R.string.settings_background_color_light_blue
+        AppBackgroundColor.LIGHT_PINK -> R.string.settings_background_color_light_pink
+        AppBackgroundColor.LIGHT_PURPLE -> R.string.settings_background_color_light_purple
+        AppBackgroundColor.LIGHT_GRAY -> R.string.settings_background_color_light_gray
     },
 )

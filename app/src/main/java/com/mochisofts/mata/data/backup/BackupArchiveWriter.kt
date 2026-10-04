@@ -125,6 +125,7 @@ class BackupArchiveWriter @Inject constructor(
         writer.name("weekStartDay").value(settings.weekStartDay.backupCode())
         writer.name("showCompletedTodos").value(settings.showCompletedTodos)
         writer.name("theme").value(settings.theme.code)
+        writer.name("backgroundColor").value(settings.backgroundColor.code)
         writer.endObject()
 
         writer.name("categories").beginArray()
