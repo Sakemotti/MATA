@@ -172,7 +172,7 @@ Console上の選択肢表記が異なる場合は、この範囲を含む最も�
 | 内容 | ライトテーマでアプリの背景色を選択できるようにしてほしい |
 | 対応Issue | [#274 背景色設定の追加](https://github.com/Sakemotti/MATA/issues/274) |
 | 対応方針 | 固定7色から選択し、画面背景だけへ反映する。ダークテーマでは設定項目を表示せず、選択値は保持する |
-| 実装状態 | 実装・自動試験中 |
+| 実装状態 | PR #275で実装し、CI run 37208996185の単体試験、Lint、Release・Debug・PerformanceビルドおよびAPI 30実行試験に合格 |
 | 配布versionCode | 未配布。versionCode `6`の後にversionCode `7`以上でClosed testingへ配布する |
 | テスター再確認 | 未実施 |
 
