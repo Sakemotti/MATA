@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.NotificationSystemState
@@ -39,6 +40,7 @@ enum class SavingSetting {
     WEEK_START,
     SHOW_COMPLETED,
     THEME,
+    BACKGROUND_COLOR,
 }
 
 data class SettingsUiState(
@@ -48,6 +50,7 @@ data class SettingsUiState(
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val showCompleted: Boolean = false,
     val theme: AppTheme = AppTheme.SYSTEM,
+    val backgroundColor: AppBackgroundColor = AppBackgroundColor.DEFAULT,
     val notificationCount: Int = 0,
     val hasNotificationCountError: Boolean = false,
     val hasNotificationStatusError: Boolean = false,
@@ -213,6 +216,10 @@ class SettingsViewModel @Inject constructor(
         repository.setTheme(value)
     }
 
+    fun setBackgroundColor(value: AppBackgroundColor) = save(SavingSetting.BACKGROUND_COLOR) {
+        repository.setBackgroundColor(value)
+    }
+
     fun showPrivacyOptions(activity: Activity) {
         adsConsentRepository.showPrivacyOptions(activity)
     }
@@ -294,8 +301,9 @@ class SettingsViewModel @Inject constructor(
                 repository.weekStart,
                 repository.showCompleted,
                 repository.theme,
-            ) { endHour, weekStart, showCompleted, theme ->
-                SettingsSnapshot(endHour, weekStart, showCompleted, theme)
+                repository.backgroundColor,
+            ) { endHour, weekStart, showCompleted, theme, backgroundColor ->
+                SettingsSnapshot(endHour, weekStart, showCompleted, theme, backgroundColor)
             }.catch {
                 _uiState.update { state ->
                     state.copy(isLoading = false, hasLoadError = true)
@@ -309,6 +317,7 @@ class SettingsViewModel @Inject constructor(
                         weekStart = settings.weekStart,
                         showCompleted = settings.showCompleted,
                         theme = settings.theme,
+                        backgroundColor = settings.backgroundColor,
                     )
                 }
             }
@@ -363,6 +372,7 @@ class SettingsViewModel @Inject constructor(
         val weekStart: DayOfWeek,
         val showCompleted: Boolean,
         val theme: AppTheme,
+        val backgroundColor: AppBackgroundColor,
     )
 }
 

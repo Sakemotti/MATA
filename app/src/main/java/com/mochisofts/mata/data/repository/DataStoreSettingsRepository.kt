@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.data.backup.BackupSettings
@@ -45,6 +46,10 @@ class DataStoreSettingsRepository @Inject constructor(
         AppTheme.fromStoredValue(preferences[THEME])
     }
 
+    override val backgroundColor: Flow<AppBackgroundColor> = dataStore.data.map { preferences ->
+        AppBackgroundColor.fromStoredValue(preferences[BACKGROUND_COLOR])
+    }
+
     override val notificationPermissionRequested: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[NOTIFICATION_PERMISSION_REQUESTED] ?: false
     }
@@ -74,6 +79,10 @@ class DataStoreSettingsRepository @Inject constructor(
         mutationGate.withMutation { dataStore.edit { it[THEME] = value.code } }
     }
 
+    override suspend fun setBackgroundColor(value: AppBackgroundColor) {
+        mutationGate.withMutation { dataStore.edit { it[BACKGROUND_COLOR] = value.code } }
+    }
+
     override suspend fun setNotificationPermissionRequested(value: Boolean) {
         mutationGate.withMutation { dataStore.edit { it[NOTIFICATION_PERMISSION_REQUESTED] = value } }
     }
@@ -91,6 +100,7 @@ class DataStoreSettingsRepository @Inject constructor(
                 ?: DayOfWeek.MONDAY,
             showCompletedTodos = preferences[SHOW_COMPLETED] ?: false,
             theme = AppTheme.fromStoredValue(preferences[THEME]),
+            backgroundColor = AppBackgroundColor.fromStoredValue(preferences[BACKGROUND_COLOR]),
         )
     }
 
@@ -100,6 +110,7 @@ class DataStoreSettingsRepository @Inject constructor(
             preferences[WEEK_START] = settings.weekStartDay.name
             preferences[SHOW_COMPLETED] = settings.showCompletedTodos
             preferences[THEME] = settings.theme.code
+            preferences[BACKGROUND_COLOR] = settings.backgroundColor.code
         }
     }
 
@@ -109,6 +120,7 @@ class DataStoreSettingsRepository @Inject constructor(
         val DAY_END_HOUR = intPreferencesKey("uncategorized_end_hour")
         val WEEK_START = stringPreferencesKey("week_start")
         val THEME = stringPreferencesKey("theme")
+        val BACKGROUND_COLOR = stringPreferencesKey("background_color")
         val NOTIFICATION_PERMISSION_REQUESTED = booleanPreferencesKey("notification_permission_requested")
         val ARCHIVE_SORT_ORDER = stringPreferencesKey("archive_sort_order")
     }

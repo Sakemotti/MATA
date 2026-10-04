@@ -1,6 +1,7 @@
 package com.mochisofts.mata.domain.repository
 
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.ArchiveActionPreview
 import com.mochisofts.mata.domain.model.ArchiveHistorySummary
 import com.mochisofts.mata.domain.model.ArchiveSortOrder
@@ -86,6 +87,8 @@ interface SettingsRepository {
     val dayEndHour: Flow<Int>
     val weekStart: Flow<DayOfWeek>
     val theme: Flow<AppTheme>
+    val backgroundColor: Flow<AppBackgroundColor>
+        get() = kotlinx.coroutines.flow.flowOf(AppBackgroundColor.DEFAULT)
     val notificationPermissionRequested: Flow<Boolean>
     val archiveSortOrder: Flow<ArchiveSortOrder>
         get() = flowOf(ArchiveSortOrder.NEWEST)
@@ -94,6 +97,7 @@ interface SettingsRepository {
     suspend fun setDayEndHour(value: Int)
     suspend fun setWeekStart(value: DayOfWeek)
     suspend fun setTheme(value: AppTheme)
+    suspend fun setBackgroundColor(value: AppBackgroundColor) = Unit
     suspend fun setNotificationPermissionRequested(value: Boolean)
     suspend fun setArchiveSortOrder(value: ArchiveSortOrder) = Unit
 }

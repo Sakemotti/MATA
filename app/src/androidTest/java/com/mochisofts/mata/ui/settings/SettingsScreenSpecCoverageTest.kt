@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -63,6 +65,7 @@ import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.domain.model.AdsConsentEvent
 import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AppTheme
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.repository.NotificationChangeImpact
 import com.mochisofts.mata.domain.repository.NotificationScheduler
@@ -266,6 +269,43 @@ class SettingsScreenSpecCoverageTest {
             assertFalse(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = false))
             assertTrue(mataUsesDarkTheme(AppTheme.SYSTEM, systemInDarkTheme = true))
         }
+    }
+
+    @Test
+    fun st046_lightBackgroundPalettePersistsAndIsHiddenInDarkTheme() {
+        val repository = setScreen()
+
+        composeRule.onNodeWithText(text(R.string.settings_background_color_title))
+            .performScrollTo()
+            .performClick()
+        listOf(
+            R.string.settings_background_color_default,
+            R.string.settings_background_color_ivory,
+            R.string.settings_background_color_light_green,
+            R.string.settings_background_color_light_blue,
+            R.string.settings_background_color_light_pink,
+            R.string.settings_background_color_light_purple,
+            R.string.settings_background_color_light_gray,
+        ).forEach { resourceId ->
+            selectionOption(text(resourceId)).assertExists()
+        }
+        selectionOption(text(R.string.settings_background_color_light_blue)).performClick()
+
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            repository.backgroundColorState.value == AppBackgroundColor.LIGHT_BLUE
+        }
+        composeRule.onNodeWithText(text(R.string.settings_background_color_light_blue))
+            .assertIsDisplayed()
+
+        selectTheme(repository, AppTheme.DARK, R.string.settings_theme_dark)
+        composeRule.onNodeWithText(text(R.string.settings_background_color_title)).assertDoesNotExist()
+
+        selectTheme(repository, AppTheme.LIGHT, R.string.settings_theme_light)
+        composeRule.onNodeWithText(text(R.string.settings_background_color_title))
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_background_color_light_blue))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -851,7 +891,13 @@ class SettingsScreenSpecCoverageTest {
         )
         onViewModelCreated(viewModel)
         composeRule.setContent {
-            MataTheme(useDynamicColor = false) {
+            val appTheme by repository.themeState.collectAsState()
+            val backgroundColor by repository.backgroundColorState.collectAsState()
+            MataTheme(
+                appTheme = appTheme,
+                backgroundColor = backgroundColor,
+                useDynamicColor = false,
+            ) {
                 val screen: @Composable () -> Unit = {
                     SettingsScreen(
                         onDestination = onDestination,
@@ -967,11 +1013,13 @@ private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : Se
     val endHour = MutableStateFlow(0)
     override val weekStart = MutableStateFlow(DayOfWeek.MONDAY)
     val themeState = MutableStateFlow(AppTheme.SYSTEM)
+    val backgroundColorState = MutableStateFlow(AppBackgroundColor.DEFAULT)
     private val permissionRequestedState = MutableStateFlow(false)
 
     override val todoListMode: Flow<String> = todoListModeState
     override val dayEndHour: Flow<Int> = endHour
     override val theme: Flow<AppTheme> = themeState
+    override val backgroundColor: Flow<AppBackgroundColor> = backgroundColorState
     override val notificationPermissionRequested: Flow<Boolean> = permissionRequestedState
 
     override suspend fun setShowCompleted(value: Boolean) {
@@ -992,6 +1040,10 @@ private class SettingsScreenTestRepository(showCompletedInitially: Boolean) : Se
 
     override suspend fun setTheme(value: AppTheme) {
         themeState.emit(value)
+    }
+
+    override suspend fun setBackgroundColor(value: AppBackgroundColor) {
+        backgroundColorState.emit(value)
     }
 
     override suspend fun setNotificationPermissionRequested(value: Boolean) {

@@ -34,6 +34,7 @@ import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.data.repository.HistorySnapshotJson
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
 import com.mochisofts.mata.data.widget.WidgetUpdater
+import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
@@ -156,6 +157,7 @@ class BackupSpecCoverageTest {
         assertEquals(BackupCounts(2, 1, 1, 1, 1, 1), summary.manifest.counts)
         assertEquals(summary.manifest.counts, parsed.counts)
         assertEquals(summary.manifest.counts, sink.counts())
+        assertEquals(AppBackgroundColor.LIGHT_PURPLE, parsed.settings.backgroundColor)
         assertEquals(100, progress.last())
         assertTrue(progress.zipWithNext().all { (before, after) -> before <= after })
         assertTrue(summary.manifest.dataUncompressedBytes > 0)
@@ -235,7 +237,7 @@ class BackupSpecCoverageTest {
             root.keys,
         )
         assertEquals(
-            setOf("dayEndHour", "weekStartDay", "showCompletedTodos", "theme"),
+            setOf("dayEndHour", "weekStartDay", "showCompletedTodos", "theme", "backgroundColor"),
             settings.keys,
         )
         listOf(
@@ -508,6 +510,10 @@ class BackupSpecCoverageTest {
         restoreArchive(formatFourArchive)
 
         assertEquals(expectedFormatFour, backedUpState())
+        assertEquals(
+            AppBackgroundColor.LIGHT_PURPLE,
+            settingsRepository.backupSnapshot().backgroundColor,
+        )
         assertEquals("2026-08-10", database.todoDao().findById(V4_ONCE_TODO_ID)?.dueDate)
         assertEquals(true, database.todoDao().findById(V4_ONCE_TODO_ID)?.carryOverEnabled)
         val formatFourExecution = database.todoExecutionDao().findById(V4_EXECUTION_ID)
@@ -518,24 +524,50 @@ class BackupSpecCoverageTest {
             database.todoRuntimeStateDao().find(V4_PENDING_TODO_ID)?.pendingScheduledLogicalDate,
         )
 
-        (1..3).forEach { formatVersion ->
+        (1..4).forEach { formatVersion ->
             restoreArchive(downgradeArchive(formatFourArchive, formatVersion))
 
-            val legacyTodo = requireNotNull(database.todoDao().findById(V4_ONCE_TODO_ID))
-            assertNull("format $formatVersion", legacyTodo.dueDate)
-            assertFalse("format $formatVersion", legacyTodo.carryOverEnabled)
-            val legacyExecution = requireNotNull(database.todoExecutionDao().findById(V4_EXECUTION_ID))
-            assertEquals("format $formatVersion", legacyExecution.logicalDate, legacyExecution.scheduledLogicalDate)
-            assertEquals("format $formatVersion", legacyExecution.logicalDate, legacyExecution.resolvedLogicalDate)
-            assertNull(
+            assertEquals(
                 "format $formatVersion",
-                database.todoRuntimeStateDao().find(V4_PENDING_TODO_ID)?.pendingScheduledLogicalDate,
+                AppBackgroundColor.DEFAULT,
+                settingsRepository.backupSnapshot().backgroundColor,
             )
+            if (formatVersion <= 3) {
+                val legacyTodo = requireNotNull(database.todoDao().findById(V4_ONCE_TODO_ID))
+                assertNull("format $formatVersion", legacyTodo.dueDate)
+                assertFalse("format $formatVersion", legacyTodo.carryOverEnabled)
+                val legacyExecution = requireNotNull(database.todoExecutionDao().findById(V4_EXECUTION_ID))
+                assertEquals(
+                    "format $formatVersion",
+                    legacyExecution.logicalDate,
+                    legacyExecution.scheduledLogicalDate,
+                )
+                assertEquals(
+                    "format $formatVersion",
+                    legacyExecution.logicalDate,
+                    legacyExecution.resolvedLogicalDate,
+                )
+                assertNull(
+                    "format $formatVersion",
+                    database.todoRuntimeStateDao().find(V4_PENDING_TODO_ID)
+                        ?.pendingScheduledLogicalDate,
+                )
+            } else {
+                assertEquals("2026-08-10", database.todoDao().findById(V4_ONCE_TODO_ID)?.dueDate)
+                assertEquals(
+                    "2026-08-08",
+                    database.todoExecutionDao().findById(V4_EXECUTION_ID)?.scheduledLogicalDate,
+                )
+            }
         }
 
         val stateBeforeInvalidFiles = backedUpState()
         val validData = zipEntries(formatFourArchive).getValue(DATA_ENTRY).toString(Charsets.UTF_8)
         val invalidMutations = listOf(
+            "background color" to (
+                "\"backgroundColor\":\"light_purple\"" to
+                    "\"backgroundColor\":\"unknown\""
+                ),
             "due date" to (
                 "\"dueDate\":\"2026-08-10\"" to "\"dueDate\":\"2026-08-07\""
                 ),
@@ -733,6 +765,7 @@ class BackupSpecCoverageTest {
         settingsRepository.setWeekStart(DayOfWeek.SUNDAY)
         settingsRepository.setShowCompleted(true)
         settingsRepository.setTheme(AppTheme.DARK)
+        settingsRepository.setBackgroundColor(AppBackgroundColor.LIGHT_PURPLE)
         settingsRepository.setTodoListMode("CATEGORY")
         settingsRepository.setNotificationPermissionRequested(true)
 
@@ -954,15 +987,18 @@ class BackupSpecCoverageTest {
     }
 
     private fun downgradeArchive(archive: ByteArray, formatVersion: Int): ByteArray {
-        require(formatVersion in 1..3)
+        require(formatVersion in 1..4)
         val entries = zipEntries(archive)
         var data = entries.getValue(DATA_ENTRY).toString(Charsets.UTF_8)
             .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":$formatVersion")
-            .replace(Regex(",\"dueDate\":(?:null|\"[^\"]+\")"), "")
-            .replace(Regex(",\"carryOverEnabled\":(?:true|false)"), "")
-            .replace(Regex(",\"scheduledLogicalDate\":(?:null|\"[^\"]+\")"), "")
-            .replace(Regex(",\"resolvedLogicalDate\":(?:null|\"[^\"]+\")"), "")
-            .replace(Regex(",\"pendingScheduledLogicalDate\":(?:null|\"[^\"]+\")"), "")
+            .replace(Regex(",\"backgroundColor\":\"[^\"]+\""), "")
+        if (formatVersion < 4) {
+            data = data.replace(Regex(",\"dueDate\":(?:null|\"[^\"]+\")"), "")
+                .replace(Regex(",\"carryOverEnabled\":(?:true|false)"), "")
+                .replace(Regex(",\"scheduledLogicalDate\":(?:null|\"[^\"]+\")"), "")
+                .replace(Regex(",\"resolvedLogicalDate\":(?:null|\"[^\"]+\")"), "")
+                .replace(Regex(",\"pendingScheduledLogicalDate\":(?:null|\"[^\"]+\")"), "")
+        }
         if (formatVersion < 3) {
             data = data.replaceFirst("\"dayEndHour\":4", "\"uncategorizedEndHour\":4")
                 .replace(Regex("(\"iconKey\":\"[^\"]+\",\"sortOrder\":-?\\d+),(\"createdAt\")")) {

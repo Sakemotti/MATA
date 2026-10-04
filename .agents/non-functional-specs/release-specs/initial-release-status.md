@@ -1,8 +1,8 @@
 # 初回リリース進行記録
 
 - 対象: MATA初回公開（Closed testing版`1.0.0 (5)`／本番公開候補予定`1.0.0 (6)`）
-- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／12人以上・14日間達成／Production access申請済み・審査中／versionCode 6署名済み候補生成・自動検証済み／実機・Play確認待ち
-- 最終更新日: 2026-09-23
+- 状態: 全P0/P1 405件合格／versionCode 5 Closed testing公開済み／初回Production access申請は不承認／追加フィードバック対応中／versionCode 6署名済み候補生成・自動検証済み／Closed testing配布待ち
+- 最終更新日: 2026-10-04
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -151,9 +151,10 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - versionCode `4`はClosed testingへ登録後、versionCode `5`に更新された。versionCode `4`単独の正確な公開日時と警告は未記録である。
 - versionCode `5`は主要画面のカードレイアウト改善を含むUpload Key署名済み候補をClosed testingへ公開済みである。公開済み状態は2026年9月17日にUSERが確認した。正確な公開日時、警告および上書き更新結果は未確認である。
 - Closed testingの連続参加期間は2026年9月9日に開始し、2026年9月23日に12人以上・14日間連続の要件達成とProduction access申請可能状態を確認した。
-- 2026年9月23日にProduction accessを申請した。Play Consoleの状態は審査中であり、結果は未確定である。受付メールは同日時点で届いていない。
+- 2026年9月23日にProduction accessを申請し、2026年9月25日に不承認を確認した。理由は、テスターの関与およびフィードバックを更新へ反映した実績が不十分と判断されたことである。
+- 2026年9月29日にT13からチャットで背景色設定の改善要望を受け、Issue #274へ登録した。固定色パレット、ライトテーマ限定表示、永続化およびバックアップ互換性を実装・試験し、versionCode `7`以上のClosed testing更新版でテスターの再確認を受ける。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
-- 審査中もClosed testingの参加設定とversionCode `5`の公開状態を維持する。
+- 再申請まではClosed testingの参加設定と公開状態を維持し、フィードバック、Issue、更新版および再確認結果を関連付けて記録する。
 
 ## 6. 未完了・保留
 
@@ -164,7 +165,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - 利用規約と外部送信に関する公表について必要な専門家確認
 - Data safety、UMP、SDK、実通信および公開法的文書の最終突合
 
-必要人数と継続期間は2026年9月23日に達成した。Production accessは同日に申請済みであり、現在は審査結果待ちである。
+必要人数と継続期間は2026年9月23日に達成した。Production accessの初回申請は不承認となったため、追加Closed testingでテスター関与と更新版への反映・再確認の実績を積んでから再申請する。
 
 ### 6.2 次の実変更で確認する
 
@@ -174,10 +175,11 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - versionCode `6`の更新前テストデータ、6つの実施セッション、全35件の結果欄およびAAB・署名・ハッシュ・CI・Consoleの成果物台帳を準備済みである。生成済み成果物と自動試験10件には実績値を記録し、残り25件は未実施のまま維持する。
 - versionCode `6`の署名済みAABと自動証跡はクリーンなmainから生成済みである。次に[回帰試験実施票](../../test-specs/version-6-regression-results.md)の実機回帰18件とGoogle Play登録後確認7件を実施する。
 - versionCode `6`をPlayへアップロードした後にAABへ影響する変更が生じた場合は、versionCode `7`以上で候補を再生成する。
+- Issue #274の背景色設定はversionCode `6`の生成後に追加したため、versionCode `7`以上へ含める。Closed testing配布後にT13または別の参加者が確認するまで、フィードバック対応を完了扱いにしない。
 
 ### 6.3 外部状態待ち
 
-- Production accessは2026年9月23日に申請済みである。Play Consoleには`お送りいただいた申請フォームを審査しています。最新情報はアカウント所有者にメールでお知らせします。通常、審査の所要時間は 7 日ほどですが、それ以上かかることもあります。`と表示され、受付メールは届いていない。承認まではProductionを利用できない。
+- Production accessは2026年9月23日に初回申請し、2026年9月25日に不承認を確認した。追加Closed testingとフィードバック対応の証跡を完成させて再申請するまではProductionを利用できない。
 - 初回Production公開は段階公開、Managed publishingおよび前版への停止・切戻しを利用できないことを前提に、公開開始条件、Console登録、公開後1時間・6時間・24時間・72時間・7日間の監視、非公開化およびversionCode `7`以上の前方修正を実行票へ準備済みである。
 - versionCode `3`公開後もPre-launch reportは`リリース前レポートを生成するにはアーティファクトをアップロードしてください`の表示から変わっていない。SDK関連警告はなく、ポリシー状態は`問題は見つかりませんでした`である。レポート生成だけを目的とする追加AABは登録せず、Console側の反映を待って再確認する。
 - AdMobとGoogle Playのアプリ連携および実広告バナー表示は2026年9月7日に確認済みである。AdMob側の`app-ads.txt`検証状態、アプリ準備状況およびポリシー警告は最終公開判定時に再確認する。
@@ -186,10 +188,12 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 ## 7. 本番公開前後の残りゲート
 
 1. `[完了]` Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認し、台帳を確定する。
-2. `[完了]` Production accessを申請する。審査待ちの間も、次の候補生成とローカル検証は進めてよい。
+2. `[完了・不承認]` Production accessを初回申請し、Googleの指摘を記録する。
 3. `[完了]` versionName `1.0.0`、versionCode `6`、公開対象commit、リリースノートおよびUpload Key署名済みAABを確定し、自動検査10/10件を成功させる。
-4. versionCode `5`からの更新、データ保持、新規インストールおよび差分実機回帰18件を確認する。
-5. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
-6. 初期配布地域を日本としてProductionへ公開する。
-7. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
-8. 公開日、最終AAB SHA-256、リリースノート、正本・公開サイトのcommitおよびGitタグを記録する。
+4. versionCode `6`をClosed testingへ配布し、versionCode `5`からの更新、データ保持、新規インストールおよび差分実機回帰18件を確認する。
+5. Issue #274をversionCode `7`以上へ含めてClosed testingへ配布し、テスターから再確認結果を受ける。
+6. 追加Closed testingの参加・利用・フィードバック・更新・再確認の実績を申請文と台帳へ反映し、Production accessを再申請する。
+7. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
+8. 初期配布地域を日本としてProductionへ公開する。
+9. 公開後にGoogle Playからの新規インストール、Android vitalsおよびポリシー状態を確認する。
+10. 公開日、最終AAB SHA-256、リリースノート、正本・公開サイトのcommitおよびGitタグを記録する。
