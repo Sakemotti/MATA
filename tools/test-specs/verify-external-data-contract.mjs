@@ -103,7 +103,7 @@ check(
   "The Compose BOM runtime platform declaration is missing.",
 );
 
-check(/^gmaNextGen = "1\.4\.0"$/m.test(versions), "Reviewed GMA Next-Gen version must remain 1.4.0.");
+check(/^gmaNextGen = "1\.5\.0"$/m.test(versions), "Reviewed GMA Next-Gen version must remain 1.5.0.");
 check(/^ump = "4\.0\.0"$/m.test(versions), "Reviewed UMP version must remain 4.0.0.");
 checkIncludes(
   versions,
@@ -234,7 +234,7 @@ for (const dataType of [
 ]) {
   checkIncludes(documents.dataSafety, dataType, `Data safety declaration is missing ${dataType}.`);
 }
-checkIncludes(documents.dataSafety, "GMA Next-Gen SDK 1.4.0", "Data safety GMA version is stale.");
+checkIncludes(documents.dataSafety, "GMA Next-Gen SDK 1.5.0", "Data safety GMA version is stale.");
 checkIncludes(documents.dataSafety, "UMP 4.0.0", "Data safety UMP version is stale.");
 checkIncludes(documents.playSubmission, "| 広告 | はい、広告を含む |", "Play ads declaration changed.");
 checkIncludes(documents.playSubmission, "| 広告ID | はい |", "Play advertising ID declaration changed.");
@@ -251,5 +251,5 @@ console.log("External data contract verification passed.");
 console.log(`- Direct runtime dependencies reviewed: ${actualRuntimeLibraries.length}`);
 console.log(`- Source permissions reviewed: ${sourcePermissions.length}`);
 console.log(`- Fixed application network endpoints reviewed: ${kotlinUrls.length}`);
-console.log("- External SDKs: GMA Next-Gen 1.4.0 and UMP 4.0.0");
+console.log("- External SDKs: GMA Next-Gen 1.5.0 and UMP 4.0.0");
 console.log("- User-entered TODO/category text is not connected to ads, holiday, or diagnostic paths");
