@@ -12,7 +12,8 @@
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
-- 登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
+- 登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
+- 現行版の登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
 - 直前候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
 - versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
 - 旧版登録・更新実績: [MATA 1.0.0 (2) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-2.md)
@@ -209,12 +210,12 @@ Play Consoleへの入力文案は[Production access申請回答案](../non-funct
 初回申請で指摘されたテスター関与とフィードバック対応の実績不足を解消するため、次を再申請の必須証跡とする。
 
 - 2026年9月29日にT13からチャットで受けたFB-005を、GitHub Issue #274へ登録した。
-- Issue #274の仕様、実装、自動試験およびバックアップ互換性を同じPull Requestで追跡する。
-- versionCode `6`を先にClosed testingへ配布し、その後にIssue #274を含むversionCode `7`以上を配布する。
+- Issue #274の仕様、実装、自動試験およびバックアップ互換性をPR #275で追跡し、全CI合格後にmainへマージした。
+- versionCode `6`は2026年9月23日の本番公開候補として生成したがGoogle Playへ未登録であり、その後にIssue #274と依存関係更新が入ったため配布しない。現在のmainからversionCode `7`を生成し、versionCode `5`から直接更新する。
 - 更新版のインストールと背景色設定をT13または別のClosed testing参加者が確認し、確認日、配布versionCode、結果をFB-005へ追記する。
 - 再申請時は、参加者から受けた内容、Issue化、実装、更新配布および再確認という対応の流れを、実績どおりに回答する。
 
-Issue #274は実装中であり、更新版のClosed testing配布とテスターによる再確認は未完了である。未完了の証跡を完了済みとして再申請文へ記載しない。
+Issue #274の実装と自動試験は完了した。versionCode `7`のClosed testing配布とテスターによる再確認は未完了であるため、未完了の証跡を完了済みとして再申請文へ記載しない。
 
 ## 11. 完了判定
 
