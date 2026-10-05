@@ -1,8 +1,8 @@
 # 初回公開・外部SDK／通信／データ整合レビュー
 
-- 実施日: 2026-09-07
+- 実施日: 2026-09-07（2026-10-05にGMA Next-Gen SDK 1.5.0更新レビューを追補）
 - 対象: `REL-009`、`REL-017`
-- 対象物: versionCode 1のRelease構成
+- 対象物: versionCode 1の初回レビューおよび現在のRelease構成
 - 実施者: RELEASE_OWNER
 - 継続検査: `node tools/test-specs/verify-external-data-contract.mjs`
 
@@ -14,16 +14,18 @@
 
 ## 1. 外部SDKと直接依存
 
-| 対象 | Release構成 | 2026-09-07の確認 | 判定 |
+| 対象 | Release構成 | 最新確認 | 判定 |
 | --- | --- | --- | --- |
-| GMA Next-Gen SDK | `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.4.0` | Google公式の最新版は1.4.0。自動収集・共有はIPアドレス、アプリ操作、診断情報、端末・アカウント識別子 | 一致 |
-| UMP | `com.google.android.ump:user-messaging-platform:4.0.0` | Google公式の最新版は4.0.0。起動時更新、必要時フォーム、広告要求可否、プライバシー設定再表示の実装を確認 | 一致 |
+| GMA Next-Gen SDK | `com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.5.0` | 2026-10-05時点のGoogle公式最新版は1.5.0。1.5.0は限定提供広告形式向けAPIの追加で、MATAが利用するバナーAPIに破壊的変更はない。公式開示の自動収集・共有はIPアドレス、アプリ操作、診断情報、端末・アカウント識別子のまま | 一致 |
+| UMP | `com.google.android.ump:user-messaging-platform:4.0.0` | 2026-10-05時点のGoogle公式最新版は4.0.0。起動時更新、必要時フォーム、広告要求可否、プライバシー設定再表示の実装を確認 | 一致 |
 | その他の送信SDK | なし | Firebase Analytics、Crashlytics、独自クラッシュ送信、Billing、他社広告SDK、メディエーションAdapterは直接依存にない | 一致 |
 | アプリ内購入 | なし | Billing依存、商品、価格、購入・復元導線はない | 一致 |
 
 アプリの直接runtime依存29件を固定リストと照合する。追加・削除が発生した場合は、CIが失敗して本レビュー、Data safetyおよび法的文書の再確認を要求する。
 
 2026-09-09追補: `kotlinx-coroutines-core:1.11.0`をテスト用ライブラリと同一バージョンへ揃えるため直接依存へ追加した。このライブラリはアプリ内の非同期処理を提供し、独自の外部通信、データ収集またはデータ共有を追加しないため、Data safetyおよび法的文書の申告変更は不要と判定した。
+
+2026-10-05追補: GMA Next-Gen SDKを1.4.0から1.5.0へ更新した。Google公式リリースノートと2026-10-02更新版のGoogle Playデータ開示を照合し、MATAが利用しない限定提供広告形式向けAPIの追加だけで、既存バナー広告の処理、権限、収集・共有するデータタイプおよびPlay ConsoleのData safety回答に変更がないことを確認した。
 
 ## 2. 権限とManifest
 
@@ -63,6 +65,7 @@ MATAが直接保持する固定HTTPS通信先は`https://holidays-jp.github.io/a
 ## 5. 参照した公式資料
 
 - [GMA Next-Gen SDK](https://developers.google.com/ad-manager/mobile-ads-sdk/android/next-gen/sdk)
+- [GMA Next-Gen SDKリリースノート](https://developers.google.com/admob/android/next-gen/rel-notes)
 - [GMA Next-Gen SDKのGoogle Playデータ開示](https://developers.google.com/ad-manager/mobile-ads-sdk/android/next-gen/privacy/play-data-disclosure)
 - [GMA Next-Gen SDKのプライバシー設定](https://developers.google.com/ad-manager/mobile-ads-sdk/android/next-gen/privacy/strategies)
 - [UMP SDKの設定](https://developers.google.com/admob/android/privacy)
