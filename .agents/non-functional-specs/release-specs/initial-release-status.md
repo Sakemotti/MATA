@@ -174,7 +174,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 - versionCode `5`以降の差分棚卸しとversionCode `6`の回帰範囲は確定済みである。候補生成直前の追加差分も再確認し、自動試験10件は合格した。18件の実機回帰と7件のPlay登録後確認を実行する。
 - versionCode `6`の更新前テストデータ、6つの実施セッション、全35件の結果欄およびAAB・署名・ハッシュ・CI・Consoleの成果物台帳を準備済みである。生成済み成果物と自動試験10件には実績値を記録し、残り25件は未実施のまま維持する。
 - versionCode `6`の署名済みAABと自動証跡はクリーンなmainから生成済みである。次に[回帰試験実施票](../../test-specs/version-6-regression-results.md)の実機回帰18件とGoogle Play登録後確認7件を実施する。
-- versionCode `6`をPlayへアップロードした後にAABへ影響する変更が生じた場合は、versionCode `7`以上で候補を再生成する。
+- versionCode `6`はGoogle Playへ未登録のまま、その後にAABへ影響するIssue #274と依存関係更新が入ったため配布しない。現在のmainからversionCode `7`を再生成する。
 - Issue #274の背景色設定はversionCode `6`の生成後に追加したため、versionCode `7`以上へ含める。Closed testing配布後にT13または別の参加者が確認するまで、フィードバック対応を完了扱いにしない。
 
 ### 6.3 外部状態待ち
@@ -190,8 +190,8 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`および`5`はC
 1. `[完了]` Play Consoleで12人以上・14日間連続のClosed testing要件達成を確認し、台帳を確定する。
 2. `[完了・不承認]` Production accessを初回申請し、Googleの指摘を記録する。
 3. `[完了]` versionName `1.0.0`、versionCode `6`、公開対象commit、リリースノートおよびUpload Key署名済みAABを確定し、自動検査10/10件を成功させる。
-4. versionCode `6`をClosed testingへ配布し、versionCode `5`からの更新、データ保持、新規インストールおよび差分実機回帰18件を確認する。
-5. Issue #274をversionCode `7`以上へ含めてClosed testingへ配布し、テスターから再確認結果を受ける。
+4. Issue #274を含むversionCode `7`をClosed testingへ配布し、versionCode `5`からの更新、データ保持、新規インストールおよび差分実機回帰を確認する。生成済みversionCode `6`はGoogle Playへ未登録のため配布しない。
+5. T13または別のClosed testing参加者から、versionCode `7`の背景色設定に対する再確認結果を受ける。
 6. 追加Closed testingの参加・利用・フィードバック・更新・再確認の実績を申請文と台帳へ反映し、Production accessを再申請する。
 7. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 8. 初期配布地域を日本としてProductionへ公開する。
