@@ -1,8 +1,8 @@
 # 初回Closed testing実施台帳
 
-- 対象アプリ: MATA `1.0.0 (5)`
-- 対象ソースcommit: `09cbbc85d9c8ecb9db3137cbd62e03c22b8dcb0d`
-- 状態: versionCode 5公開済み／初回Production access申請は不承認／追加Closed testingとフィードバック対応を実施中
+- 対象アプリ: MATA `1.0.0 (7)`
+- 対象ソースcommit: `6cf969d8a13f66fc030267c784116e65c19b9da8`
+- 状態: versionCode 7公開済み／初回Production access申請は不承認／背景色設定のテスター再確認待ち
 - テスト開始日: 2026-09-09
 - 継続参加の達成日: 2026-09-23
 - 試験項目: [MATA 総合動作確認項目書](README.md)
@@ -34,14 +34,14 @@
 | 項目 | 記録 |
 | --- | --- |
 | トラック名 | Closed testing |
-| リリース状態 | versionCode `5`をClosed testingへ公開済み（2026-09-17、USER確認） |
+| リリース状態 | versionCode `7`をClosed testingへ公開済み（2026-10-06、USER確認） |
 | 対象国・地域 | 日本 |
 | テスター管理方法 | 設定済み。管理方法と対象者情報はリポジトリ外で管理 |
 | オプトインURL | 取得可能であることを確認済み。URL自体はリポジトリに記録せず、テスター向け連絡経路で共有 |
-| 公開日時 | versionCode `5`の公開済み状態を2026-09-17にUSER確認。Console上の正確な公開日時は未記録 |
-| AAB照合 | versionCode `5`候補は12,673,373 bytes、SHA-256 `2ca02fc94c25ccbe29e33d4e38ae12388a52be72e8bc62c8e1d15ea12eb01533` |
-| Play Console上のversionCode | `5`（2026-09-17、USER確認） |
-| Consoleの警告・判断 | versionCode `5`の新規警告は未確認。初回Production access申請はテスター関与とフィードバック対応の実績不足を理由に不承認 |
+| 公開日時 | versionCode `7`を2026-10-06に公開完了。Console上の正確な時刻は未記録 |
+| AAB照合 | versionCode `7`候補は13,033,358 bytes、SHA-256 `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb` |
+| Play Console上のversionCode | `7`（2026-10-06、USER確認） |
+| Consoleの警告・判断 | versionCode `7`は`ネイティブコードを含むがデバッグシンボル未登録`の既知警告のみ。初回Production access申請はテスター関与とフィードバック対応の実績不足を理由に不承認 |
 | Play Console上の参加要件 | 2026-09-09開始。2026-09-23に12人以上・14日間連続の要件達成とProduction access申請可能状態を確認（USER確認） |
 | アプリ全体のインストール済みユーザー数 | `13`（2026-09-19、USER確認）。特定バージョンまたはClosed testingだけの参加人数ではない参考指標 |
 | Production access | 2026-09-23に初回申請し、2026-09-25に不承認を確認。追加Closed testingとフィードバック対応後に再申請する（USER確認） |
@@ -50,11 +50,11 @@
 
 versionCode `1`はInternal testingで使用済みである。versionCode `2`はClosed testingでversionCode `1`からの上書き更新と主要実機試験に使用した。Closed testingフィードバックを反映した現在候補は[versionCode 3公開候補生成結果](release-candidate-1.0.0-3.md)であり、versionCode `2`からの更新結果とPlay Console上の状態を本節へ記録する。
 
-2026年9月11日に[versionCode 4公開候補](release-candidate-1.0.0-4.md)を生成し、Closed testingへ登録した。その後versionCode `5`を同じトラックへ公開したため、現在の配布状態はversionCode `5`を正とする。
+2026年9月11日に[versionCode 4公開候補](release-candidate-1.0.0-4.md)を生成し、Closed testingへ登録した。その後versionCode `5`を同じトラックへ公開し、versionCode `7`の公開まではversionCode `5`を配布状態の正としていた。
 
 2026年9月13日にカードレイアウト改善を含む[versionCode 5公開候補](release-candidate-1.0.0-5.md)を生成し、Closed testingへ公開した。正確な公開日時、警告およびGoogle Play経由の上書き更新結果は未確認のため、確認後に追記する。
 
-versionCode `6`は2026年9月23日に生成したがGoogle Playへ登録せず、その後にIssue #274と依存関係更新が入ったため配布対象外とした。2026年10月6日に現在のmainから[versionCode 7公開候補](release-candidate-1.0.0-7.md)を生成し、Upload Key署名、成果物ハッシュおよび全自動ゲートに合格した。Google Play登録とテスター再確認は未実施である。
+versionCode `6`は2026年9月23日に生成したがGoogle Playへ登録せず、その後にIssue #274と依存関係更新が入ったため配布対象外とした。2026年10月6日に現在のmainから[versionCode 7公開候補](release-candidate-1.0.0-7.md)を生成し、Upload Key署名、成果物ハッシュおよび全自動ゲートに合格した。同日にClosed testingで公開完了となった。versionCode `5`からの更新とテスター再確認は未実施である。
 
 ## 3. テスター・端末台帳
 
@@ -213,11 +213,11 @@ Play Consoleへの入力文案は[Production access申請回答案](../non-funct
 
 - 2026年9月29日にT13からチャットで受けたFB-005を、GitHub Issue #274へ登録した。
 - Issue #274の仕様、実装、自動試験およびバックアップ互換性をPR #275で追跡し、全CI合格後にmainへマージした。
-- versionCode `6`は2026年9月23日の本番公開候補として生成したがGoogle Playへ未登録であり、その後にIssue #274と依存関係更新が入ったため配布しない。現在のmainからversionCode `7`を生成し、versionCode `5`から直接更新する。
+- versionCode `6`は2026年9月23日の本番公開候補として生成したがGoogle Playへ未登録であり、その後にIssue #274と依存関係更新が入ったため配布しない。versionCode `7`を2026年10月6日にClosed testingへ公開し、versionCode `5`から直接更新する。
 - 更新版のインストールと背景色設定をT13または別のClosed testing参加者が確認し、確認日、配布versionCode、結果をFB-005へ追記する。
 - 再申請時は、参加者から受けた内容、Issue化、実装、更新配布および再確認という対応の流れを、実績どおりに回答する。
 
-Issue #274の実装と自動試験は完了した。versionCode `7`のClosed testing配布とテスターによる再確認は未完了であるため、未完了の証跡を完了済みとして再申請文へ記載しない。
+Issue #274の実装、自動試験およびversionCode `7`のClosed testing配布は完了した。テスターによる再確認は未完了であるため、再確認を完了済みとして再申請文へ記載しない。
 
 ## 11. 完了判定
 
