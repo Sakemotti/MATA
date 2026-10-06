@@ -1,6 +1,6 @@
 # MATA 1.0.0 (7) Closed testing登録・更新確認手順
 
-- 文書状態: 候補生成準備中
+- 文書状態: Upload Key署名済み候補生成・自動検証済み／Google Play登録待ち
 - 作成日: 2026-10-05
 - 対象: MATA `1.0.0 (7)` 追加Closed testing版
 - 目的: Closed testingの`1.0.0 (5)`からデータを保持して更新し、テスターフィードバックを反映した背景色設定を再確認する
@@ -12,12 +12,14 @@
 | アプリケーションID | `com.mochisofts.mata` |
 | バージョン名 | `1.0.0` |
 | バージョンコード | `7` |
-| ソースコミット | 候補生成後に記録 |
-| AAB | 候補生成後に記録 |
-| AABサイズ | 候補生成後に記録 |
-| AAB SHA-256 | 候補生成後に記録 |
+| ソースコミット | `6cf969d8a13f66fc030267c784116e65c19b9da8` |
+| AAB | `app/release/1.0.0-7/mata-1.0.0-7.aab` |
+| AABサイズ | `13,033,358 bytes` |
+| AAB SHA-256 | `F0EC8832D469891ABEF15EA59E6743915CAE3D011DD5DC36BEF009EFBA7259BB` |
 | Upload Key証明書SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` |
 | 配信先 | Closed testing |
+
+公開候補の全成果物と検証結果は[versionCode 7公開候補生成結果](release-candidate-1.0.0-7.md)に記録する。
 
 versionCode `6`はGoogle Playへ登録していない。
 その候補生成後にIssue #274と依存関係更新が入ったため、versionCode `6`を配布せず、現在のmainから生成するversionCode `7`を登録する。
@@ -37,8 +39,8 @@ Play Consoleへ`fastlane/metadata/android/ja-JP/changelogs/7.txt`と同じ次の
 - [ ] 端末にClosed testing版`1.0.0 (5)`がインストールされている。
 - [ ] アプリをアンインストールせず、TODO、カテゴリ、履歴、設定、通知およびウィジェットの状態を記録した。
 - [ ] 更新前の手動バックアップを安全な場所へ保存した。
-- [ ] versionCode `7`の署名済みAABについて、単一署名者、Upload Key証明書、容量およびSHA-256を確認した。
-- [ ] 登録するAABのSHA-256が本書の値と一致する。
+- [x] versionCode `7`の署名済みAABについて、単一署名者、Upload Key証明書、容量およびSHA-256を確認した。
+- [x] 登録するAABのSHA-256が本書の値と一致する。
 - [ ] Closed testingの対象国、テスターおよびフィードバック経路が維持されている。
 
 ## 4. Google Play Consoleへの登録

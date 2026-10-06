@@ -54,6 +54,8 @@ versionCode `1`はInternal testingで使用済みである。versionCode `2`はC
 
 2026年9月13日にカードレイアウト改善を含む[versionCode 5公開候補](release-candidate-1.0.0-5.md)を生成し、Closed testingへ公開した。正確な公開日時、警告およびGoogle Play経由の上書き更新結果は未確認のため、確認後に追記する。
 
+versionCode `6`は2026年9月23日に生成したがGoogle Playへ登録せず、その後にIssue #274と依存関係更新が入ったため配布対象外とした。2026年10月6日に現在のmainから[versionCode 7公開候補](release-candidate-1.0.0-7.md)を生成し、Upload Key署名、成果物ハッシュおよび全自動ゲートに合格した。Google Play登録とテスター再確認は未実施である。
+
 ## 3. テスター・端末台帳
 
 テスターとの連絡先対応表が必要な場合は、アクセス制限されたリポジトリ外で管理する。
