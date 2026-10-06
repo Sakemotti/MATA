@@ -156,7 +156,7 @@ Console上の選択肢表記が異なる場合は、この範囲を含む最も�
 | Googleからの指摘 | `アプリのクローズド テストにテスターが関与しなかった`、`ユーザーからのフィードバックを収集し、アプリのアップデートを通じて対応するなどの、テストにおけるベスト プラクティスを実践しなかった` |
 | 追加テスト要求 | テスターの実利用、フィードバック収集、更新版への反映および再確認の実績を追加する |
 | Production利用可否 | 不可 |
-| 次の対応 | 2026-09-29にT13から受けた背景色設定の要望をIssue #274として実装したversionCode `7`をClosed testingへ配布し、テスターの再確認後に再申請する。versionCode `6`はGoogle Playへ未登録のため配布しない |
+| 次の対応 | Issue #274を実装したversionCode `7`は2026-10-06にClosed testingへ公開済み。T13または別のテスターによる再確認を記録してから再申請する。versionCode `6`はGoogle Playへ未登録のため配布しない |
 
 同じ回答を事実確認なしで再送しない。再申請では、初回申請後に追加したテスター関与、フィードバック、Issue、更新版および再確認結果を具体的に記載する。
 
@@ -173,14 +173,14 @@ Console上の選択肢表記が異なる場合は、この範囲を含む最も�
 | 対応Issue | [#274 背景色設定の追加](https://github.com/Sakemotti/MATA/issues/274) |
 | 対応方針 | 固定7色から選択し、画面背景だけへ反映する。ダークテーマでは設定項目を表示せず、選択値は保持する |
 | 実装状態 | PR #275で実装し、CI run 37208996185の単体試験、Lint、Release・Debug・PerformanceビルドおよびAPI 30実行試験に合格 |
-| 配布versionCode | versionCode `7`のUpload Key署名済み候補を2026-10-06に生成・自動検証済み。Closed testingへの配布は未実施。生成済みversionCode `6`はGoogle Playへ未登録で、その後にアプリ変更が入ったため配布しない |
+| 配布versionCode | versionCode `7`を2026-10-06にClosed testingへ公開済み。Console警告はネイティブデバッグシンボル未登録のみ。生成済みversionCode `6`はGoogle Playへ未登録で、その後にアプリ変更が入ったため配布しない |
 | テスター再確認 | 未実施 |
 
 ### 8.2 再申請ゲート
 
 - [x] フィードバックを匿名テスターID、日付、経路および内容とともに台帳へ記録した。
 - [x] フィードバックをGitHub Issueへ登録し、仕様・実装・試験を追跡可能にした。
-- [ ] Issue #274を含む更新版をClosed testingへ配布した。
+- [x] Issue #274を含むversionCode `7`を2026-10-06にClosed testingへ配布した。
 - [ ] T13または別のClosed testing参加者が更新版をインストールして背景色設定を確認した。
 - [ ] 確認日、versionCode、結果および追加意見を台帳へ記録した。
 - [ ] 再申請時点の参加人数、継続期間、公開versionCodeおよびConsole状態を記録した。

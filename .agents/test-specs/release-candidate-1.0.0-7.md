@@ -1,6 +1,6 @@
 # MATA 1.0.0 (7) Closed testing公開候補生成結果
 
-- 状態: Upload Key署名済み候補生成・自動検証済み／Google Play登録待ち
+- 状態: Upload Key署名済み候補生成・自動検証済み／2026-10-06にClosed testing公開完了
 - 実施日: 2026-10-06
 - 実施者: OWNER / AUTO
 - 判定: 候補生成合格
@@ -28,7 +28,7 @@
 | ファイル | `app/release/1.0.0-7/mata-1.0.0-7.aab` |
 | 容量 | `13,033,358 bytes` |
 | SHA-256 | `F0EC8832D469891ABEF15EA59E6743915CAE3D011DD5DC36BEF009EFBA7259BB` |
-| Google Play登録状態 | 未登録 |
+| Google Play登録状態 | 2026-10-06にClosed testingで`公開完了`（USER確認） |
 
 `app/release/`はGit除外対象である。
 Play Consoleへアップロードするファイルは上表のAABだけとし、ZIPやmapping等をAAB欄へ登録しない。
@@ -70,7 +70,8 @@ ZIPは成果物一式の保管・受け渡し専用であり、Google Playへア
 
 - `libandroidx.graphics.path.so`と`libdatastore_shared_counter.so`は依存元ですでにシンボルが除去されており、ビルド時にstrip不可の既知警告が表示された。
 - Play Consoleでネイティブデバッグシンボル未登録警告が表示される可能性がある。空または架空のシンボルファイルは登録せず、実際の警告を記録する。
-- Google Playへの登録、versionCode `5`から`7`への上書き更新、実機回帰およびテスターによる背景色設定の再確認は未実施である。
+- Google Playへの登録は2026-10-06に完了した。versionCode `5`から`7`への上書き更新、実機回帰およびテスターによる背景色設定の再確認は未実施である。
+- Console警告は`ネイティブコードを含むがデバッグシンボル未登録`だけで、新しいエラー、SDK警告またはポリシー警告は報告されていない。
 
 ## 7. 判定
 
