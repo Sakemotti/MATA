@@ -1,6 +1,6 @@
 # MATA 1.0.0 (7) Closed testing公開候補生成結果
 
-- 状態: Upload Key署名済み候補生成・自動検証済み／2026-10-06にClosed testing公開完了
+- 状態: Upload Key署名済み候補生成・自動検証・Closed testing公開・上書き更新・テスター再確認済み
 - 実施日: 2026-10-06
 - 実施者: OWNER / AUTO
 - 判定: 候補生成合格
@@ -70,10 +70,10 @@ ZIPは成果物一式の保管・受け渡し専用であり、Google Playへア
 
 - `libandroidx.graphics.path.so`と`libdatastore_shared_counter.so`は依存元ですでにシンボルが除去されており、ビルド時にstrip不可の既知警告が表示された。
 - Play Consoleでネイティブデバッグシンボル未登録警告が表示される可能性がある。空または架空のシンボルファイルは登録せず、実際の警告を記録する。
-- Google Playへの登録は2026-10-06に完了した。versionCode `5`から`7`への上書き更新、実機回帰およびテスターによる背景色設定の再確認は未実施である。
+- Google Playへの登録は2026-10-06に完了した。2026-10-07にversionCode `5`から`7`への上書き更新とデータ保持を確認し、Closed testing参加者による背景色設定の再確認にも合格した。更新端末・OSおよび再確認者の匿名IDは未記録である。
 - Console警告は`ネイティブコードを含むがデバッグシンボル未登録`だけで、新しいエラー、SDK警告またはポリシー警告は報告されていない。
 
 ## 7. 判定
 
 versionCode `7`のClosed testing公開候補生成は合格とする。
-Productionへは昇格せず、Closed testing登録後に更新・回帰・フィードバック再確認を実施する。
+Productionへは自動昇格せず、Production access再申請前のConsole確認と承認後の最終公開判定を別途実施する。
