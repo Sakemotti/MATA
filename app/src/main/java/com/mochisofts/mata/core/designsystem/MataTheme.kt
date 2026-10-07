@@ -129,6 +129,8 @@ data class MataSemanticColors(
     val onStatusSuccessContainer: Color,
     val categoryColors: List<Color>,
     val onCategoryColors: List<Color>,
+    val calendarSaturday: Color,
+    val calendarSundayHoliday: Color,
 )
 
 internal val MataLightSemanticColors = MataSemanticColors(
@@ -138,6 +140,8 @@ internal val MataLightSemanticColors = MataSemanticColors(
     onStatusSuccessContainer = Color(0xFF002204),
     categoryColors = MataCategoryLightColors,
     onCategoryColors = MataCategoryLightOnColors,
+    calendarSaturday = Color(0xFF0D47A1),
+    calendarSundayHoliday = Color(0xFFB3261E),
 )
 
 internal val MataDarkSemanticColors = MataSemanticColors(
@@ -147,6 +151,8 @@ internal val MataDarkSemanticColors = MataSemanticColors(
     onStatusSuccessContainer = Color(0xFFB8F2B4),
     categoryColors = MataCategoryDarkColors,
     onCategoryColors = MataCategoryDarkOnColors,
+    calendarSaturday = Color(0xFF90CAF9),
+    calendarSundayHoliday = Color(0xFFFFB4AB),
 )
 
 private val LocalMataSemanticColors = staticCompositionLocalOf { MataLightSemanticColors }

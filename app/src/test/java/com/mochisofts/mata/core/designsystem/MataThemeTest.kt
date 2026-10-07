@@ -57,6 +57,26 @@ class MataThemeTest {
         }
     }
 
+    @Test
+    fun weekendDateColorsRemainLegibleOnStrongSelectionBackgrounds() {
+        val backgrounds = listOf(
+            MataLightColors.primaryContainer,
+            MataDarkColors.primaryContainer,
+            Color(0xFF666666),
+            Color(0xFF55628C),
+        )
+        listOf(MataLightSemanticColors, MataDarkSemanticColors).forEach { colors ->
+            backgrounds.forEach { background ->
+                val saturday = mataDateColorOnBackground(colors.calendarSaturday, background)
+                val sundayHoliday = mataDateColorOnBackground(colors.calendarSundayHoliday, background)
+                assertContrastAtLeast(saturday, background, 4.5f)
+                assertContrastAtLeast(sundayHoliday, background, 4.5f)
+                assertTrue("Saturday retains its blue hue", saturday.blue > saturday.red)
+                assertTrue("Sunday/holidays retain their red hue", sundayHoliday.red > sundayHoliday.blue)
+            }
+        }
+    }
+
     private fun assertColorSchemeContrast(colors: ColorScheme) {
         listOf(
             colors.onPrimary to colors.primary,

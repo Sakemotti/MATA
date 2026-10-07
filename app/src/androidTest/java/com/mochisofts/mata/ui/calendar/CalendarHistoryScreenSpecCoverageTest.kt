@@ -52,6 +52,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.MataTheme
+import com.mochisofts.mata.core.designsystem.mataDateTextColor
+import com.mochisofts.mata.data.repository.TestHolidayRepository
 import com.mochisofts.mata.core.designsystem.navigation.MataAdaptiveLayoutInfo
 import com.mochisofts.mata.core.designsystem.navigation.MataDestination
 import com.mochisofts.mata.core.designsystem.navigation.MataNavigationType
@@ -182,6 +184,7 @@ class CalendarHistoryScreenSpecCoverageTest {
         var dynamicColor by mutableStateOf(false)
         var selectedDate by mutableStateOf(TEST_DATE)
         var colorScheme: ColorScheme? = null
+        var weekendColors: List<Color> = emptyList()
         val state = calendarState(YearMonth.of(2026, 9))
         val otherDate = TEST_DATE.minusDays(1)
         val selectedOther = fullDate(otherDate) + text(R.string.calendar_history_selected_suffix)
@@ -192,7 +195,19 @@ class CalendarHistoryScreenSpecCoverageTest {
         composeRule.setContent {
             MataTheme(appTheme = theme, useDynamicColor = dynamicColor) {
                 val currentColors = MaterialTheme.colorScheme
-                SideEffect { colorScheme = currentColors }
+                val currentWeekendColors = listOf(
+                    mataDateTextColor(DayOfWeek.SATURDAY, backgroundColor = currentColors.primaryContainer),
+                    mataDateTextColor(DayOfWeek.SUNDAY, backgroundColor = currentColors.primaryContainer),
+                    mataDateTextColor(
+                        DayOfWeek.SATURDAY,
+                        isHoliday = true,
+                        backgroundColor = currentColors.primaryContainer,
+                    ),
+                )
+                SideEffect {
+                    colorScheme = currentColors
+                    weekendColors = currentWeekendColors
+                }
                 Box(Modifier.width(360.dp).height(360.dp)) {
                     MonthGrid(
                         state.copy(selectedDate = selectedDate),
@@ -231,6 +246,14 @@ class CalendarHistoryScreenSpecCoverageTest {
                     background = colors.primaryContainer,
                     minimum = 4.5f,
                 )
+                weekendColors.forEach { weekendColor ->
+                    assertContrastAtLeast(
+                        foreground = weekendColor,
+                        background = colors.primaryContainer,
+                        minimum = 4.5f,
+                    )
+                }
+                assertEquals("Saturday holidays use Sunday's red", weekendColors[1], weekendColors[2])
                 assertTrue(
                     "today border must differ from selected background",
                     colors.primary != colors.primaryContainer,
@@ -241,6 +264,7 @@ class CalendarHistoryScreenSpecCoverageTest {
         verifyTheme(AppTheme.LIGHT, expectedDynamicColor = false)
         verifyTheme(AppTheme.DARK, expectedDynamicColor = false)
         verifyTheme(AppTheme.LIGHT, expectedDynamicColor = true)
+        verifyTheme(AppTheme.DARK, expectedDynamicColor = true)
     }
 
     @Test
@@ -259,6 +283,7 @@ class CalendarHistoryScreenSpecCoverageTest {
             historyRepository = repository,
             settingsRepository = CalendarScreenTestSettingsRepository(),
             clock = TEST_CLOCK,
+            holidayRepository = TestHolidayRepository(),
         )
         viewModel.selectDate(selectedDate)
         val restorationTester = StateRestorationTester(composeRule)
@@ -292,6 +317,7 @@ class CalendarHistoryScreenSpecCoverageTest {
             historyRepository = CalendarScreenTestHistoryRepository(),
             settingsRepository = CalendarScreenTestSettingsRepository(),
             clock = TEST_CLOCK,
+            holidayRepository = TestHolidayRepository(),
         )
         assertEquals(TEST_DATE, freshViewModel.uiState.value.selectedDate)
         assertEquals(YearMonth.from(TEST_DATE), freshViewModel.uiState.value.displayedMonth)
@@ -744,6 +770,7 @@ class CalendarHistoryScreenSpecCoverageTest {
             historyRepository = CalendarScreenTestHistoryRepository(),
             settingsRepository = CalendarScreenTestSettingsRepository(),
             clock = TEST_CLOCK,
+            holidayRepository = TestHolidayRepository(),
         )
         composeRule.setContent {
             MataTheme(useDynamicColor = false) {

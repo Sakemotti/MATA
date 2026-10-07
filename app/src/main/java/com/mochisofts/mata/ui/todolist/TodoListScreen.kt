@@ -102,6 +102,8 @@ import com.mochisofts.mata.core.designsystem.categoryIcon
 import com.mochisofts.mata.core.designsystem.mataCategoryColor
 import com.mochisofts.mata.core.designsystem.mataCardColor
 import com.mochisofts.mata.core.designsystem.mataPageColor
+import com.mochisofts.mata.core.designsystem.mataColors
+import com.mochisofts.mata.core.designsystem.mataDateTextColor
 import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.TodoOccurrence
@@ -439,7 +441,7 @@ private fun HolidayDataStatus(state: TodoListUiState) {
             text = stringResource(R.string.holiday_name_format, name),
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.mataColors.calendarSundayHoliday,
         )
     }
     val message = when (state.holidayStatus) {
@@ -493,6 +495,7 @@ private fun DateMode(
 ) {
     DailyPlannerHeader(
         selectedDate = state.selectedDate,
+        holidayName = state.holidayName,
         isToday = state.isToday,
         completedCount = state.completedCount,
         plannedCount = state.plannedCount,
@@ -598,6 +601,7 @@ internal const val TODO_LIST_CONTENT_TAG = "todo-list-content"
 @Composable
 private fun DailyPlannerHeader(
     selectedDate: LocalDate,
+    holidayName: String?,
     isToday: Boolean,
     completedCount: Int,
     plannedCount: Int,
@@ -653,6 +657,11 @@ private fun DailyPlannerHeader(
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
+                        color = mataDateTextColor(
+                            dayOfWeek = selectedDate.dayOfWeek,
+                            isHoliday = holidayName != null,
+                            backgroundColor = MaterialTheme.mataCardColor,
+                        ),
                     )
                 }
                 IconButton(onClick = onNext) {

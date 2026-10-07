@@ -63,7 +63,7 @@
 
 ## 5. カレンダー
 
-- 選択日は`primaryContainer`と`onPrimaryContainer`で表示する。
+- 選択日の背景は`primaryContainer`、通常の日付文字は`onPrimaryContainer`で表示する。土曜日・日曜日・祝日の日付文字は[日付の曜日・祝日色](colors-and-themes.md#44-日付の曜日祝日色)を優先し、選択背景に応じて明るさを調整する。
 - 今日には`primary`の輪郭を表示する。
 - 選択日と今日が同じ場合は、塗りつぶしと輪郭を併用する。
 - 操作不能日は文字色、Semantics、操作可否で区別する。
