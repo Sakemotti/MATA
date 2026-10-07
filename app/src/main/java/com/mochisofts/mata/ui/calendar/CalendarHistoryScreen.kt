@@ -108,6 +108,7 @@ import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.mataCardColor
 import com.mochisofts.mata.core.designsystem.mataPageColor
+import com.mochisofts.mata.core.designsystem.mataDateTextColor
 import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDayState
 import com.mochisofts.mata.domain.model.HistoryDaySummary
@@ -425,6 +426,10 @@ private fun WeekdayHeader(weekStart: DayOfWeek) {
         calendarWeekdays(weekStart).forEach { day ->
             Text(
                 text = weekdayShortLabel(day),
+                color = mataDateTextColor(
+                    dayOfWeek = day,
+                    backgroundColor = MaterialTheme.mataCardColor,
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.weight(1f).padding(vertical = 2.dp),
@@ -472,6 +477,7 @@ internal fun MonthGrid(
                         selectedDate = state.selectedDate,
                         today = state.today,
                         summary = state.month.summaries[date],
+                        holidayName = state.holidayNamesByDate[date],
                         onClick = { onSelectDate(date) },
                         modifier = Modifier.weight(1f).heightIn(min = 44.dp),
                     )
@@ -488,6 +494,7 @@ private fun CalendarDayCell(
     selectedDate: LocalDate,
     today: LocalDate,
     summary: HistoryDaySummary?,
+    holidayName: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -507,6 +514,7 @@ private fun CalendarDayCell(
         )
         if (selected) append(stringResource(R.string.calendar_history_selected_suffix))
         if (current) append(stringResource(R.string.calendar_history_today_suffix))
+        holidayName?.let { append(" ").append(stringResource(R.string.holiday_name_format, it)) }
         summary?.let {
             if (it.plannedCount > 0) append(
                 stringResource(
@@ -521,7 +529,12 @@ private fun CalendarDayCell(
         }
     }
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-    val textColor = calendarDayTextColor(selected, MaterialTheme.colorScheme)
+    val textColor = mataDateTextColor(
+        dayOfWeek = date.dayOfWeek,
+        isHoliday = holidayName != null,
+        defaultColor = calendarDayTextColor(selected, MaterialTheme.colorScheme),
+        backgroundColor = if (selected) background else MaterialTheme.mataCardColor,
+    )
     val borderColor = if (current) MaterialTheme.colorScheme.primary else Color.Transparent
     Column(
         modifier
@@ -593,7 +606,7 @@ private fun DayHistoryArea(
                 verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
             ) {
                 item {
-                    DaySummaryHeader(day)
+                    DaySummaryHeader(day, holidayName = state.holidayNamesByDate[day.date])
                 }
                 item(key = "history-card:${day.date}") {
                     DayHistoryCard(
@@ -682,7 +695,10 @@ private fun HistorySectionContent(
 }
 
 @Composable
-internal fun DaySummaryHeader(day: com.mochisofts.mata.domain.model.HistoryDay) {
+internal fun DaySummaryHeader(
+    day: com.mochisofts.mata.domain.model.HistoryDay,
+    holidayName: String? = null,
+) {
     val progress = if (day.summary.plannedCount == 0) {
         0f
     } else {
@@ -714,6 +730,11 @@ internal fun DaySummaryHeader(day: com.mochisofts.mata.domain.model.HistoryDay) 
                     ),
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleSmall,
+                    color = mataDateTextColor(
+                        dayOfWeek = day.date.dayOfWeek,
+                        isHoliday = holidayName != null,
+                        backgroundColor = MaterialTheme.mataCardColor,
+                    ),
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

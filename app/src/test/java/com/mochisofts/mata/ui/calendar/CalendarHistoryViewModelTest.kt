@@ -8,9 +8,12 @@ import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryMonth
+import com.mochisofts.mata.domain.model.HolidayRefreshResult
+import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.summarizeHistoryDay
 import com.mochisofts.mata.domain.repository.HistoryRepository
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import java.time.Clock
 import java.time.DayOfWeek
@@ -272,10 +275,63 @@ class CalendarHistoryViewModelTest {
         assertEquals(TODAY, reopened.uiState.value.selectedDate)
     }
 
+    @Test
+    fun holidayChangesUpdateVisibleDatesWithoutReloadingHistory() = runTest {
+        val history = CalendarTestHistoryRepository()
+        val holidays = CalendarTestHolidayRepository()
+        val viewModel = createViewModel(history, holidayRepository = holidays)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        assertTrue(viewModel.uiState.value.holidayNamesByDate.isEmpty())
+        val monthLoads = history.monthLoads
+        val dayLoads = history.dayLoads
+        val septemberHoliday = LocalDate.of(2026, 9, 22)
+        val augustHoliday = LocalDate.of(2026, 8, 11)
+        holidays.updates.value = HolidaySnapshot(
+            namesByDate = mapOf(septemberHoliday to "国民の休日", augustHoliday to "山の日"),
+        )
+        runCurrent()
+
+        assertEquals(mapOf(septemberHoliday to "国民の休日"), viewModel.uiState.value.holidayNamesByDate)
+        assertEquals(monthLoads, history.monthLoads)
+        assertEquals(dayLoads, history.dayLoads)
+
+        viewModel.showPreviousMonth()
+        runCurrent()
+        assertEquals(mapOf(augustHoliday to "山の日"), viewModel.uiState.value.holidayNamesByDate)
+
+        holidays.updates.value = HolidaySnapshot()
+        runCurrent()
+        assertTrue(viewModel.uiState.value.holidayNamesByDate.isEmpty())
+    }
+
+    @Test
+    fun holidayReadFailureDoesNotBlockMonthOrDayHistory() = runTest {
+        val viewModel = createViewModel(
+            CalendarTestHistoryRepository(),
+            holidayRepository = CalendarTestHolidayRepository(failRead = true),
+        )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        runCurrent()
+
+        assertFalse(viewModel.uiState.value.isMonthLoading)
+        assertFalse(viewModel.uiState.value.isDayLoading)
+        assertNull(viewModel.uiState.value.monthErrorRes)
+        assertNull(viewModel.uiState.value.dayErrorRes)
+        assertTrue(viewModel.uiState.value.holidayNamesByDate.isEmpty())
+        assertEquals(TODAY, requireNotNull(viewModel.uiState.value.day).date)
+    }
+
     private fun createViewModel(
         repository: CalendarTestHistoryRepository,
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         settingsRepository: CalendarTestSettingsRepository = CalendarTestSettingsRepository(),
+        holidayRepository: HolidayRepository = CalendarTestHolidayRepository(),
     ) = CalendarHistoryViewModel(
         savedStateHandle = savedStateHandle,
         historyRepository = repository,
@@ -284,11 +340,28 @@ class CalendarHistoryViewModelTest {
             TODAY.atStartOfDay(ZoneId.of("Asia/Tokyo")).toInstant(),
             ZoneId.of("Asia/Tokyo"),
         ),
+        holidayRepository = holidayRepository,
     )
 
     private companion object {
         val TODAY: LocalDate = LocalDate.of(2026, 9, 6)
     }
+}
+
+private class CalendarTestHolidayRepository(failRead: Boolean = false) : HolidayRepository {
+    val updates = MutableStateFlow(HolidaySnapshot())
+    override val snapshot: Flow<HolidaySnapshot> = if (failRead) {
+        flow { error("holiday read failed") }
+    } else {
+        updates
+    }
+    override suspend fun currentSnapshot(): HolidaySnapshot = updates.value
+    override suspend fun needsRefresh(): Boolean = false
+    override suspend fun refresh(): HolidayRefreshResult = HolidayRefreshResult(successful = true)
+    override suspend fun pendingNotificationGeneration(): Long? = null
+    override suspend fun markNotificationGenerationProcessed(generation: Long) = Unit
+    override suspend fun pendingWidgetGeneration(): Long? = null
+    override suspend fun markWidgetGenerationProcessed(generation: Long) = Unit
 }
 
 private class CalendarTestHistoryRepository : HistoryRepository {

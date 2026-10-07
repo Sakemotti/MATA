@@ -8,7 +8,9 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.domain.model.HistoryActionUndoToken
 import com.mochisofts.mata.domain.model.HistoryDay
 import com.mochisofts.mata.domain.model.HistoryMonth
+import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.repository.HistoryRepository
+import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.ui.common.toUserMessageRes
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,6 +41,7 @@ data class CalendarHistoryUiState(
     val today: LocalDate,
     val weekStart: DayOfWeek = DayOfWeek.MONDAY,
     val gridDates: List<LocalDate> = emptyList(),
+    val holidayNamesByDate: Map<LocalDate, String> = emptyMap(),
     val month: HistoryMonth = HistoryMonth(emptyMap()),
     val day: HistoryDay? = null,
     val isMonthLoading: Boolean = true,
@@ -66,6 +69,7 @@ class CalendarHistoryViewModel @Inject constructor(
     private val historyRepository: HistoryRepository,
     settingsRepository: SettingsRepository,
     private val clock: Clock,
+    holidayRepository: HolidayRepository,
 ) : ViewModel() {
     private val initialToday = LocalDate.now(clock)
     private val today = MutableStateFlow(initialToday)
@@ -117,13 +121,15 @@ class CalendarHistoryViewModel @Inject constructor(
         monthLoad,
         dayLoad,
         busyExecutionId,
-    ) { selection, monthState, dayState, busyId ->
+        holidayRepository.snapshot.catch { emit(HolidaySnapshot()) },
+    ) { selection, monthState, dayState, busyId, holidays ->
         CalendarHistoryUiState(
             displayedMonth = selection.month,
             selectedDate = selection.selectedDate,
             today = selection.today,
             weekStart = selection.weekStart,
             gridDates = selection.gridDates,
+            holidayNamesByDate = holidays.namesByDate.filterKeys { it in selection.gridDates },
             month = (monthState as? LoadState.Data)?.value ?: HistoryMonth(emptyMap()),
             day = (dayState as? LoadState.Data)?.value,
             isMonthLoading = monthState is LoadState.Loading,
