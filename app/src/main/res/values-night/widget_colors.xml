@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="widget_background">#1A1C18</color>
+    <color name="widget_card">#30322D</color>
+    <color name="widget_chip">#3B3D37</color>
+    <color name="widget_count_container">#225106</color>
+    <color name="widget_on_count_container">#B7F397</color>
+    <color name="widget_divider">#43483F</color>
     <color name="widget_on_surface">#E3E3DC</color>
     <color name="widget_on_surface_variant">#C3C8BC</color>
     <color name="widget_primary">#9CD67D</color>

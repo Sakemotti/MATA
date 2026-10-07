@@ -7,7 +7,7 @@ import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HolidayRepository
 import com.mochisofts.mata.data.holiday.HolidayWorkScheduler
 import com.mochisofts.mata.data.widget.WidgetUpdater
-import com.mochisofts.mata.data.widget.WidgetPreviewPublisher
+import com.mochisofts.mata.data.widget.WidgetStaticPreviewController
 import com.mochisofts.mata.domain.repository.CategoryRepository
 import com.mochisofts.mata.domain.repository.SettingsRepository
 import com.mochisofts.mata.domain.repository.TodoRepository
@@ -32,7 +32,7 @@ class MataApplication : Application() {
     @Inject lateinit var holidayRepository: HolidayRepository
     @Inject lateinit var holidayWorkScheduler: HolidayWorkScheduler
     @Inject lateinit var widgetUpdater: WidgetUpdater
-    @Inject lateinit var widgetPreviewPublisher: WidgetPreviewPublisher
+    @Inject lateinit var widgetStaticPreviewController: WidgetStaticPreviewController
     @Inject lateinit var todoRepository: TodoRepository
     @Inject lateinit var categoryRepository: CategoryRepository
     @Inject lateinit var settingsRepository: SettingsRepository
@@ -50,7 +50,7 @@ class MataApplication : Application() {
             runCatching { holidayWorkScheduler.schedulePeriodic() }
             runCatching { widgetUpdater.ensureScheduledIfWidgetsExist() }
             supervisorScope {
-                launch { runCatching { widgetPreviewPublisher.publishIfNeeded() } }
+                launch { runCatching { widgetStaticPreviewController.clearGeneratedPreviewIfNeeded() } }
                 launch { runCatching { observeWidgetInvalidations() } }
                 launch { runCatching { runPostStartupReconciliation() } }
             }

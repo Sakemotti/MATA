@@ -22,7 +22,6 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import androidx.glance.appwidget.PreviewSizeMode
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.action.actionStartActivity
@@ -72,7 +71,6 @@ import kotlinx.coroutines.launch
 
 class TodayTodoWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = RESPONSIVE_SIZE_MODE
-    override val previewSizeMode: PreviewSizeMode = RESPONSIVE_SIZE_MODE
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
@@ -94,59 +92,6 @@ class TodayTodoWidget : GlanceAppWidget() {
                     state = state,
                     model = model,
                     lastUpdated = lastUpdated,
-                )
-            }
-        }
-    }
-
-    override suspend fun providePreview(context: Context, widgetCategory: Int) {
-        val now = System.currentTimeMillis()
-        val date = LocalDate.now().toString()
-        val model = WidgetDisplayModel(
-            generatedAt = now,
-            calendarDate = date,
-            totalCount = 2,
-            groups = listOf(
-                WidgetCategoryGroup(
-                    categoryId = "preview",
-                    categoryName = context.getString(R.string.widget_preview_category),
-                    colorIndex = 4,
-                    iconName = "Home",
-                    sortOrder = 0,
-                    logicalDate = date,
-                    logicalDateLabel = null,
-                    items = listOf(
-                        WidgetTodoItem(
-                            todoId = "preview-one",
-                            definitionRevision = 1,
-                            title = context.getString(R.string.widget_preview_todo_one),
-                            logicalDate = date,
-                            deadlineAt = now + 60 * 60 * 1_000,
-                            deadlineLabel = context.getString(R.string.widget_preview_deadline_one),
-                            overdue = false,
-                        ),
-                        WidgetTodoItem(
-                            todoId = "preview-two",
-                            definitionRevision = 1,
-                            title = context.getString(R.string.widget_preview_todo_two),
-                            logicalDate = date,
-                            deadlineAt = now + 12 * 60 * 60 * 1_000,
-                            deadlineLabel = context.getString(R.string.widget_preview_deadline_two),
-                            overdue = false,
-                        ),
-                    ),
-                ),
-            ),
-            holidayDataProvisional = false,
-            nextRefreshAt = now + 60 * 60 * 1_000,
-        )
-        provideContent {
-            GlanceTheme {
-                TodayTodoWidgetContent(
-                    appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID,
-                    state = null,
-                    model = model,
-                    lastUpdated = null,
                 )
             }
         }
@@ -174,7 +119,7 @@ private fun TodayTodoWidgetContent(
 ) {
     val context = LocalContext.current
     val compact = LocalSize.current.width < 180.dp
-    val padding = if (compact) 8.dp else 14.dp
+    val padding = if (compact) 6.dp else 10.dp
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -209,25 +154,7 @@ private fun WidgetModelContent(
 ) {
     val headerIntent = todoListIntent(context, model.calendarDate, MainActivity.WIDGET_MODE_DATE, null)
     Column(GlanceModifier.fillMaxSize()) {
-        Row(
-            modifier = GlanceModifier.fillMaxWidth().clickable(actionStartActivity(headerIntent)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = context.getString(R.string.widget_header),
-                style = TextStyle(
-                    color = WidgetColors.onSurface,
-                    fontSize = if (compact) 16.sp else 18.sp,
-                    fontWeight = FontWeight.Bold,
-                ),
-                modifier = GlanceModifier.defaultWeight(),
-                maxLines = 1,
-            )
-            Text(
-                text = context.getString(R.string.widget_count_format, model.totalCount),
-                style = TextStyle(color = WidgetColors.primary, fontSize = 13.sp),
-            )
-        }
+        WidgetHeaderCard(context, model.totalCount, compact, headerIntent)
 
         if (state?.loadState == LOAD_STALE) {
             StatusText(context.getString(R.string.widget_stale), WidgetColors.error)
@@ -236,10 +163,12 @@ private fun WidgetModelContent(
         if (model.holidayDataProvisional) {
             StatusText(context.getString(R.string.widget_holiday_provisional), WidgetColors.onSurfaceVariant)
         }
+        Spacer(GlanceModifier.height(if (compact) 6.dp else 8.dp))
         if (model.groups.isEmpty()) {
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
+                    .background(ImageProvider(R.drawable.widget_card_background))
                     .clickable(actionStartActivity(headerIntent)),
                 contentAlignment = Alignment.Center,
             ) {
@@ -252,15 +181,85 @@ private fun WidgetModelContent(
             LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                 model.groups.forEach { group ->
                     item {
-                        WidgetCategoryHeader(context, group, compact)
-                    }
-                    group.items.forEach { item ->
-                        item {
-                            WidgetTodoRow(context, appWidgetId, model.snapshotVersion, item, compact)
-                        }
+                        WidgetCategoryCard(
+                            context = context,
+                            appWidgetId = appWidgetId,
+                            snapshotVersion = model.snapshotVersion,
+                            group = group,
+                            compact = compact,
+                        )
+                        Spacer(GlanceModifier.height(if (compact) 6.dp else 10.dp))
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun WidgetHeaderCard(
+    context: Context,
+    totalCount: Int,
+    compact: Boolean,
+    headerIntent: Intent,
+) {
+    Row(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .background(ImageProvider(R.drawable.widget_card_background))
+            .clickable(actionStartActivity(headerIntent))
+            .padding(
+                horizontal = if (compact) 10.dp else 14.dp,
+                vertical = if (compact) 8.dp else 11.dp,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = context.getString(R.string.widget_header),
+            style = TextStyle(
+                color = WidgetColors.onSurface,
+                fontSize = if (compact) 15.sp else 18.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+            modifier = GlanceModifier.defaultWeight(),
+            maxLines = 1,
+        )
+        Box(
+            modifier = GlanceModifier
+                .background(ImageProvider(R.drawable.widget_count_background))
+                .padding(horizontal = if (compact) 7.dp else 10.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = context.getString(R.string.widget_count_format, totalCount),
+                style = TextStyle(
+                    color = WidgetColors.onPrimaryContainer,
+                    fontSize = if (compact) 11.sp else 12.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WidgetCategoryCard(
+    context: Context,
+    appWidgetId: Int,
+    snapshotVersion: Int,
+    group: WidgetCategoryGroup,
+    compact: Boolean,
+) {
+    Column(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .background(ImageProvider(R.drawable.widget_card_background)),
+    ) {
+        WidgetCategoryHeader(context, group, compact)
+        group.items.forEachIndexed { index, item ->
+            if (index > 0) WidgetRowDivider(compact)
+            WidgetTodoRow(context, appWidgetId, snapshotVersion, item, compact)
         }
     }
 }
@@ -281,29 +280,60 @@ private fun WidgetCategoryHeader(
         modifier = GlanceModifier
             .fillMaxWidth()
             .clickable(actionStartActivity(intent))
-            .padding(top = if (compact) 5.dp else 9.dp, bottom = 3.dp),
+            .padding(
+                horizontal = if (compact) 8.dp else 12.dp,
+                vertical = if (compact) 7.dp else 10.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            provider = ImageProvider(categoryIconResource(group.iconName)),
-            contentDescription = group.categoryName,
-            modifier = GlanceModifier.size(18.dp),
-            colorFilter = ColorFilter.tint(categoryColor(group.colorIndex)),
-        )
-        Spacer(GlanceModifier.width(6.dp))
-        Text(
-            text = group.categoryName,
-            style = TextStyle(
-                color = categoryColor(group.colorIndex),
-                fontSize = if (compact) 12.sp else 13.sp,
-                fontWeight = FontWeight.Bold,
-            ),
+        Row(
+            modifier = GlanceModifier
+                .background(ImageProvider(R.drawable.widget_chip_background))
+                .padding(
+                    horizontal = if (compact) 7.dp else 10.dp,
+                    vertical = if (compact) 5.dp else 6.dp,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                provider = ImageProvider(categoryIconResource(group.iconName)),
+                contentDescription = group.categoryName,
+                modifier = GlanceModifier.size(if (compact) 16.dp else 18.dp),
+                colorFilter = ColorFilter.tint(categoryColor(group.colorIndex)),
+            )
+            Spacer(GlanceModifier.width(6.dp))
+            Text(
+                text = group.categoryName,
+                style = TextStyle(
+                    color = categoryColor(group.colorIndex),
+                    fontSize = if (compact) 12.sp else 13.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                maxLines = 1,
+            )
+        }
+        Spacer(
             modifier = GlanceModifier.defaultWeight(),
-            maxLines = 1,
         )
         group.logicalDateLabel?.let { label ->
             Text(label, style = TextStyle(color = WidgetColors.onSurfaceVariant, fontSize = 11.sp))
         }
+    }
+}
+
+@Composable
+private fun WidgetRowDivider(compact: Boolean) {
+    Box(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .padding(horizontal = if (compact) 10.dp else 16.dp),
+    ) {
+        Spacer(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(WidgetColors.outlineVariant),
+        )
     }
 }
 
@@ -331,7 +361,7 @@ private fun WidgetTodoRow(
             .fillMaxWidth()
             .clickable(actionStartActivity(actionIntent))
             .padding(
-                horizontal = if (compact) 4.dp else 8.dp,
+                horizontal = if (compact) 10.dp else 16.dp,
                 vertical = if (compact) 10.dp else 12.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
@@ -386,7 +416,10 @@ private fun WidgetTodoRow(
 @Composable
 private fun WidgetLoadingContent(context: Context) {
     Column(
-        modifier = GlanceModifier.fillMaxSize(),
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .background(ImageProvider(R.drawable.widget_card_background))
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -398,7 +431,11 @@ private fun WidgetLoadingContent(context: Context) {
 private fun WidgetErrorContent(context: Context) {
     val intent = todoListIntent(context, LocalDate.now().toString(), MainActivity.WIDGET_MODE_DATE, null)
     Column(
-        modifier = GlanceModifier.fillMaxSize().clickable(actionStartActivity(intent)),
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .background(ImageProvider(R.drawable.widget_card_background))
+            .clickable(actionStartActivity(intent))
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -522,6 +559,8 @@ private object WidgetColors {
     val onSurface = DayNightColorProvider(Color(0xFF1A1C18), Color(0xFFE3E3DC))
     val onSurfaceVariant = DayNightColorProvider(Color(0xFF43483F), Color(0xFFC3C8BC))
     val primary = DayNightColorProvider(Color(0xFF386A20), Color(0xFF9CD67D))
+    val onPrimaryContainer = DayNightColorProvider(Color(0xFF042100), Color(0xFFB7F397))
+    val outlineVariant = DayNightColorProvider(Color(0xFFC3C8BC), Color(0xFF43483F))
     val error = DayNightColorProvider(Color(0xFFBA1A1A), Color(0xFFFFB4AB))
 }
 
