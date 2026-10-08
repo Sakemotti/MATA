@@ -1,16 +1,16 @@
 # 初回リリース進行記録
 
-- 対象: MATA初回公開（Closed testing公開版`1.0.0 (7)`）
-- 状態: 全P0/P1 405件合格／versionCode 7公開・再確認完了／versionCode 8署名済み候補生成・検証・保管完了／追加配布・再確認待ち
+- 対象: MATA初回公開（Closed testing公開版`1.0.0 (8)`）
+- 状態: 全P0/P1 405件合格／versionCode 8 Closed testing公開完了／更新・テスター再確認待ち
 - 最終更新日: 2026-10-08
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
 - Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
-- Closed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
-- Closed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
-- 次のClosed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
-- 次のClosed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
+- Closed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
+- Closed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
+- 前回Closed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
+- 前回Closed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
 - リリースブロッカー監査: [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md)
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
@@ -36,22 +36,22 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `7`。Upload Key署名済み、2026-10-06にClosed testingへ公開済み | AUTO / CONSOLE / USER |
-| ソースcommit | `6cf969d8a13f66fc030267c784116e65c19b9da8` | AUTO |
-| AAB | `app/release/1.0.0-7/mata-1.0.0-7.aab`。Git除外対象 | AUTO |
-| AAB容量 | 13,033,358 bytes | AUTO |
-| AAB SHA-256 | `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb` | AUTO |
-| ビルド日時 | `2026-10-06T01:41:23.971064Z` | AUTO |
+| versionCode | `8`。Upload Key署名済み、2026-10-08に既存Closed testingトラックへ公開完了。時刻は未記録 | AUTO / USER |
+| ソースcommit | `82f998d1d6505862508a43e8854832b1717962cc` | AUTO |
+| AAB | `app/release/1.0.0-8/mata-1.0.0-8.aab`。Git除外対象 | AUTO |
+| AAB容量 | 13,039,573 bytes | AUTO |
+| AAB SHA-256 | `421ba79a0c641afdbbee164921259e103cbc16b9d4cabcb0070afdafb65ef3c5` | AUTO |
+| ビルド日時 | `2026-10-08T01:39:52.862447500Z` | AUTO |
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
-次の追加Closed testing版は`1.0.0 (8)`とする。Issue #281のウィジェットカード化・固定プレビューとIssue #284の土日祝日色分けを含む署名済み候補をcommit `82f998d1d6505862508a43e8854832b1717962cc`から生成した。AABは`app/release/1.0.0-8/mata-1.0.0-8.aab`、13,039,573 bytes、SHA-256 `421ba79a0c641afdbbee164921259e103cbc16b9d4cabcb0070afdafb65ef3c5`である。versionCode `7`を現在の公開版として維持し、versionCode `8`のGoogle Play登録、上書き更新およびテスター再確認は別途記録する。
+追加Closed testing版`1.0.0 (8)`は、Issue #281のウィジェットカード化・固定プレビューとIssue #284の土日祝日色分けを含む。2026年10月8日に既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだった（USER確認）。時刻・Consoleの正確な状態文言、上書き更新およびテスター再確認は別途記録する。
 
 本番公開候補versionCode `6`は、mainのcommit `4bdb50bbef2f3ed15ebcb7e0a69199d53e5e6757`から2026年9月23日に生成した。AABは`app/release/1.0.0-6/mata-1.0.0-6.aab`へローカル複製し、容量12,905,674 bytes、SHA-256 `59133b8f7707dc960e0808436c0c8e13faf12e06e71da7fd8fed0f6c55cde9a4`、Upload Key署名者1件、`publishable=true`を確認した。自動試験10/10件は合格し、実機回帰18件とGoogle Play登録後確認7件は未実施である。
 
 追加Closed testing候補versionCode `7`は、mainのcommit `6cf969d8a13f66fc030267c784116e65c19b9da8`から2026年10月6日に生成した。AABは`app/release/1.0.0-7/mata-1.0.0-7.aab`へローカル複製し、容量13,033,358 bytes、SHA-256 `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb`、Upload Key署名者1件、`publishable=true`を確認した。同日にClosed testingで公開完了となり、Console警告は`ネイティブコードを含むがデバッグシンボル未登録`だけだった。versionCode `6`はGoogle Playへ未登録で、その後にIssue #274と依存関係更新が入ったため配布しない。
 
-versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`7`はClosed testingへ登録済みであり、再アップロードできない。現在のClosed testing公開版は上表のversionCode `7`である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、versionCode `7`のClosed testing検証完了後に同一AABの本番昇格可否を再判定する。
+versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`および`8`はClosed testingへ登録済みであり、再アップロードできない。現在のClosed testing公開版は上表のversionCode `8`である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
 
 ## 3. リポジトリと自動検査
 
@@ -117,7 +117,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`
 | `1.0.0 (5)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み。Productionへは昇格しない | AUTO / CONSOLE / USER |
 | `1.0.0 (6)`本番公開候補 | commit `4bdb50b`からUpload Key署名済みAABを生成し、自動試験10/10件とRelease準備検査に合格。実機・Play登録後確認待ち | AUTO |
 | `1.0.0 (7)`追加Closed testing版 | commit `6cf969d`からUpload Key署名済みAABを生成し、全CIとRelease準備検査に合格。2026-10-06に公開し、2026-10-07にversionCode 5からの上書き更新、データ保持およびテスターによる背景色設定の再確認に合格 | AUTO / CONSOLE / DEVICE / USER |
-| `1.0.0 (8)`追加Closed testing候補 | commit `82f998d`から署名済み候補を生成。全CI・Release事前検査・GitHubゲート・ローカル保管の照合に合格。Google Play登録および更新・再確認待ち | AUTO |
+| `1.0.0 (8)`追加Closed testing版 | commit `82f998d`から生成・検証・保管済み。2026-10-08に既存Closed testingトラックへ公開完了、既知のネイティブデバッグシンボル未登録警告のみ（USER確認）。更新・再確認待ち | AUTO / USER |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -166,6 +166,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`
 - 2026年9月23日にProduction accessを申請し、2026年9月25日に不承認を確認した。理由は、テスターの関与およびフィードバックを更新へ反映した実績が不十分と判断されたことである。
 - 2026年9月29日にT13からチャットで背景色設定の改善要望を受け、Issue #274へ登録した。固定色パレット、ライトテーマ限定表示、永続化およびバックアップ互換性を実装・試験し、versionCode `7`以上のClosed testing更新版でテスターの再確認を受ける。
 - 2026年10月7日にversionCode `5`から`7`への上書き更新とデータ保持に問題がないことを確認した。同日にフィードバック報告者と同じT13が背景色設定を再確認し、問題なしと報告した。端末・OSおよび追加意見は未記録である。
+- 2026年10月8日にversionCode `8`を既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだったことをUSERが確認した。時刻・Consoleの正確な状態文言と、`7`→`8`更新・テスター再確認は未確認である。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
 - 再申請まではClosed testingの参加設定と公開状態を維持し、フィードバック、Issue、更新版および再確認結果を関連付けて記録する。
 
@@ -207,7 +208,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`
 4. `[完了]` Issue #274を含むversionCode `7`を2026年10月6日にClosed testingへ配布し、2026年10月7日にversionCode `5`からの上書き更新とデータ保持を確認した。生成済みversionCode `6`はGoogle Playへ未登録のため配布しない。
 5. `[完了]` Closed testing参加者から、versionCode `7`の背景色設定に問題がないとの再確認結果を受けた。
 
-   - `[候補生成完了・配布待ち]` 次のversionCode `8`を生成・検証・保管した。Closed testingへ配布し、Issue #281・#284について更新・テスター再確認結果を追加する。開発版の表示確認を配布後の結果として扱わない。
+   - `[配布完了・再確認待ち]` versionCode `8`を生成・検証・保管し、既存Closed testingトラックへ公開したとのUSER報告を受けた。Issue #281・#284について更新・テスター再確認結果を追加する。開発版の表示確認を配布後の結果として扱わない。
 6. `[実績反映済み・再申請前確認待ち]` 追加Closed testingの参加・利用・フィードバック・更新・再確認の実績を申請文と台帳へ反映した。現在の参加人数、継続期間、公開versionCode、Console状態および回答文字数を確認してProduction accessを再申請する。
 7. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 8. 初期配布地域を日本としてProductionへ公開する。

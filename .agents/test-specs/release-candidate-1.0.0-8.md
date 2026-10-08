@@ -1,6 +1,6 @@
 # MATA 1.0.0 (8) Closed testing公開候補生成結果
 
-- 状態: Upload Key署名済み候補生成・自動検証・ローカル保管完了／Google Play登録・更新・テスター再確認待ち
+- 状態: Upload Key署名済み候補生成・自動検証・保管・Closed testing公開完了／更新・テスター再確認待ち
 - 実施日: 2026-10-08
 - 実施者: OWNER / AUTO
 - 判定: Closed testing候補生成合格。Production公開の承認ではない
@@ -30,7 +30,7 @@ versionCode設定と登録手順の[PR #287](https://github.com/Sakemotti/MATA/p
 | ファイル | `app/release/1.0.0-8/mata-1.0.0-8.aab` |
 | 容量 | `13,039,573 bytes` |
 | SHA-256 | `421BA79A0C641AFDBBEE164921259E103CBC16B9D4CABCB0070AFDAFB65EF3C5` |
-| Google Play登録状態 | 未登録。現在の公開版はversionCode `7` |
+| Google Play登録状態 | 既存Closed testingトラックへ2026-10-08に公開完了（USER確認）。時刻とConsoleの正確な状態文言は未記録 |
 
 Google PlayのAAB欄へ登録するファイルは上表のAABだけとする。
 `app/release/`はGit除外対象であり、成果物、署名鍵および秘密値を本リポジトリへ追加していない。
@@ -87,10 +87,10 @@ GitHubゲートではCodeQL Java/Kotlin未対応だけを既知の警告とし�
 
 ## 6. 残りの確認と判定
 
-候補生成は合格とし、[登録・更新確認手順](closed-testing-release-1.0.0-8.md)に従ってClosed testingへ登録する。
+候補生成は合格とし、既存Closed testingトラックへの登録・公開完了が報告された。[登録・更新確認手順](closed-testing-release-1.0.0-8.md)に従って配布版の確認を進める。
 
-- Google Play登録・公開、Console警告、Pre-launch report、SDK Indexおよびポリシー状態は確認待ちである。
+- Google Play登録・公開は2026-10-08に完了し、Console警告は既知の`ネイティブコードを含むがデバッグシンボル未登録`のみだった（USER確認）。時刻・Consoleの正確な状態文言、Pre-launch report、SDK Indexおよびポリシー状態は未確認である。
 - versionCode `7`→`8`の上書き更新・データ保持、配置済みと新規ウィジェット、土日祝日の色、テーマ別表示および主要機能のスモーク確認は未実施である。
 - Issue #281・#284の開発版表示確認を、配布後のテスター再確認として扱わない。
-- ネイティブデバッグシンボル未登録警告が表示される可能性がある。架空・空のシンボルを登録せず、Consoleで実際の警告を記録する。
+- ネイティブデバッグシンボル未登録警告を既知制約として記録して公開を継続した。架空・空のシンボルは登録しない。
 - Productionへ自動昇格せず、Production access再申請と承認後の公開判定を別途行う。
