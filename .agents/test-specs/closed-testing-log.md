@@ -2,7 +2,7 @@
 
 - 対象アプリ: MATA `1.0.0 (7)`
 - 対象ソースcommit: `6cf969d8a13f66fc030267c784116e65c19b9da8`
-- 状態: versionCode 7公開・上書き更新・背景色設定のテスター再確認完了／Production access再申請前確認待ち
+- 状態: versionCode 7公開・上書き更新・背景色設定の再確認完了／versionCode 8準備中／Production access再申請前確認待ち
 - テスト開始日: 2026-09-09
 - 継続参加の達成日: 2026-09-23
 - 試験項目: [MATA 総合動作確認項目書](README.md)
@@ -13,7 +13,8 @@
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - 登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
-- 現行版の登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
+- 次回版の登録・更新手順: [MATA 1.0.0 (8) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-8.md)
+- 旧版の登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
 - 直前候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
 - versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
 - 旧版登録・更新実績: [MATA 1.0.0 (2) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-2.md)
@@ -55,6 +56,8 @@ versionCode `1`はInternal testingで使用済みである。versionCode `2`はC
 2026年9月13日にカードレイアウト改善を含む[versionCode 5公開候補](release-candidate-1.0.0-5.md)を生成し、Closed testingへ公開した。正確な公開日時、警告およびGoogle Play経由の上書き更新結果は未確認のため、確認後に追記する。
 
 versionCode `6`は2026年9月23日に生成したがGoogle Playへ登録せず、その後にIssue #274と依存関係更新が入ったため配布対象外とした。2026年10月6日に現在のmainから[versionCode 7公開候補](release-candidate-1.0.0-7.md)を生成し、Upload Key署名、成果物ハッシュおよび全自動ゲートに合格した。同日にClosed testingで公開完了となった。2026年10月7日にversionCode `5`から`7`への上書き更新とデータ保持を確認し、Closed testing参加者による背景色設定の再確認も合格した。
+
+2026年10月8日に、Issue #281のウィジェット表示・固定プレビューとIssue #284の土日祝日色分けを含むversionCode `8`の準備を開始した。Google Playで現在公開されている版は引き続きversionCode `7`であり、versionCode `8`の配布・更新・テスター再確認は未実施である。
 
 ## 3. テスター・端末台帳
 
@@ -166,6 +169,10 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | FB-003 | 2026-09-08 | OWNER | 未完了TODO | 完了またはスキップするまで翌日以降へ繰り越せるようにする。versionCode 3へ実装し、2026年9月9日に再試験合格 | 未判定 | 修正する | [#165](https://github.com/Sakemotti/MATA/issues/165) |
 | FB-004 | 2026-09-08 | OWNER | 単発TODO | 実行日とは別に期限日を設定できるようにする。versionCode 3へ実装し、2026年9月9日に再試験合格 | 未判定 | 修正する | [#166](https://github.com/Sakemotti/MATA/issues/166) |
 | FB-005 | 2026-09-29 | T13（チャット） | 設定・背景色 | ライトテーマでアプリの背景色を選択できるようにする。固定色パレットを追加し、ダークテーマでは設定項目を表示しない方針でIssue #274へ登録。versionCode `7`へ反映し、2026年10月7日にClosed testing参加者が再確認して問題なし | 中 | 修正・再確認済み | [#274](https://github.com/Sakemotti/MATA/issues/274) |
+| FB-006 | 2026-10-07（Issue登録日） | 未記録 | ウィジェット | カードベースへ表示を改善する。初回配置の固定プレビューも修正し、開発版の表示確認済み。versionCode `8`へ含め、配布後の再確認待ち | 未判定 | 修正する | [#281](https://github.com/Sakemotti/MATA/issues/281) / [PR #285](https://github.com/Sakemotti/MATA/pull/285) |
+| FB-007 | 2026-10-07（Issue登録日） | 未記録 | TODO一覧・カレンダー履歴 | 土曜日を青、日曜日・祝日を赤で表示する。実装と開発版の表示確認済み。versionCode `8`へ含め、配布後の再確認待ち | 未判定 | 修正する | [#284](https://github.com/Sakemotti/MATA/issues/284) / [PR #286](https://github.com/Sakemotti/MATA/pull/286) |
+
+FB-006・FB-007の受領日・報告者の匿名IDは未記録であり、Issue登録日を受領日と断定しない。開発版のUSER確認をClosed testing参加者のversionCode `8`再確認として数えない。
 
 重要度は`重大`、`高`、`中`、`低`、対応判断は`修正する`、`仕様どおり`、`将来対応`、`追加確認`のいずれかを使用する。
 
