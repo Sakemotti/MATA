@@ -1,8 +1,8 @@
 # 初回Closed testing実施台帳
 
-- 対象アプリ: MATA `1.0.0 (7)`
-- 対象ソースcommit: `6cf969d8a13f66fc030267c784116e65c19b9da8`
-- 状態: versionCode 7公開・再確認完了／versionCode 8候補生成・検証・保管完了／追加配布・再確認待ち
+- 対象アプリ: MATA `1.0.0 (8)`
+- 対象ソースcommit: `82f998d1d6505862508a43e8854832b1717962cc`
+- 状態: versionCode 8 Closed testing公開完了／更新・テスター再確認待ち
 - テスト開始日: 2026-09-09
 - 継続参加の達成日: 2026-09-23
 - 試験項目: [MATA 総合動作確認項目書](README.md)
@@ -12,9 +12,9 @@
 - 事前棚卸し: [初回リリース試験棚卸し](initial-release-inventory.md)
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
-- 登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
-- 次回版の登録・更新手順: [MATA 1.0.0 (8) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-8.md)
-- 次回版の候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](release-candidate-1.0.0-8.md)
+- 登録・更新手順: [MATA 1.0.0 (8) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-8.md)
+- 現行版の候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](release-candidate-1.0.0-8.md)
+- 前回版の登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
 - 旧版の登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
 - 直前候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
 - versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
@@ -36,14 +36,14 @@
 | 項目 | 記録 |
 | --- | --- |
 | トラック名 | Closed testing |
-| リリース状態 | versionCode `7`をClosed testingへ公開済み（2026-10-06、USER確認） |
+| リリース状態 | versionCode `8`を既存Closed testingトラックへアップロード・公開済み（2026-10-08、USER報告） |
 | 対象国・地域 | 日本 |
 | テスター管理方法 | 設定済み。管理方法と対象者情報はリポジトリ外で管理 |
 | オプトインURL | 取得可能であることを確認済み。URL自体はリポジトリに記録せず、テスター向け連絡経路で共有 |
-| 公開日時 | versionCode `7`を2026-10-06に公開完了。Console上の正確な時刻は未記録 |
-| AAB照合 | versionCode `7`候補は13,033,358 bytes、SHA-256 `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb` |
-| Play Console上のversionCode | `7`（2026-10-06、USER確認） |
-| Consoleの警告・判断 | versionCode `7`は`ネイティブコードを含むがデバッグシンボル未登録`の既知警告のみ。初回Production access申請はテスター関与とフィードバック対応の実績不足を理由に不承認 |
+| 公開日時 | versionCode `8`を2026-10-08に公開完了（USER確認）。正確な時刻は未記録 |
+| AAB照合 | versionCode `8`候補は13,039,573 bytes、SHA-256 `421ba79a0c641afdbbee164921259e103cbc16b9d4cabcb0070afdafb65ef3c5` |
+| 公開versionCode / Console状態文言 | `8`（USER公開報告）。Consoleの正確な状態文言は未確認 |
+| Consoleの警告・判断 | versionCode `8`は既知の`ネイティブコードを含むがデバッグシンボル未登録`のみ。新規警告なし（USER確認）。初回Production access申請の不承認状態は維持 |
 | Play Console上の参加要件 | 2026-09-09開始。2026-09-23に12人以上・14日間連続の要件達成とProduction access申請可能状態を確認（USER確認） |
 | アプリ全体のインストール済みユーザー数 | `13`（2026-09-19、USER確認）。特定バージョンまたはClosed testingだけの参加人数ではない参考指標 |
 | Production access | 2026-09-23に初回申請し、2026-09-25に不承認を確認。追加Closed testingとフィードバック対応後に再申請する（USER確認） |
@@ -58,7 +58,7 @@ versionCode `1`はInternal testingで使用済みである。versionCode `2`はC
 
 versionCode `6`は2026年9月23日に生成したがGoogle Playへ登録せず、その後にIssue #274と依存関係更新が入ったため配布対象外とした。2026年10月6日に現在のmainから[versionCode 7公開候補](release-candidate-1.0.0-7.md)を生成し、Upload Key署名、成果物ハッシュおよび全自動ゲートに合格した。同日にClosed testingで公開完了となった。2026年10月7日にversionCode `5`から`7`への上書き更新とデータ保持を確認し、Closed testing参加者による背景色設定の再確認も合格した。
 
-2026年10月8日に、Issue #281のウィジェット表示・固定プレビューとIssue #284の土日祝日色分けを含む[versionCode 8候補](release-candidate-1.0.0-8.md)をクリーンなmainのcommit `82f998d1d6505862508a43e8854832b1717962cc`から生成し、署名、全CI、Release事前検査、GitHubゲートおよびローカル保管物の照合に合格した。Google Playで現在公開されている版は引き続きversionCode `7`であり、versionCode `8`の配布・更新・テスター再確認は未実施である。
+2026年10月8日に、Issue #281のウィジェット表示・固定プレビューとIssue #284の土日祝日色分けを含む[versionCode 8候補](release-candidate-1.0.0-8.md)をクリーンなmainのcommit `82f998d1d6505862508a43e8854832b1717962cc`から生成し、署名、全CI、Release事前検査、GitHubゲートおよびローカル保管物の照合に合格した。同日に既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだったことをUSERが確認した。現行公開版をversionCode `8`へ更新し、公開時刻・Consoleの正確な状態文言、`7`→`8`の更新結果およびテスター再確認は未確認として残す。
 
 ## 3. テスター・端末台帳
 
