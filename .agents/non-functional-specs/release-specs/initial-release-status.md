@@ -1,7 +1,7 @@
 # 初回リリース進行記録
 
 - 対象: MATA初回公開（Closed testing公開版`1.0.0 (8)`）
-- 状態: 全P0/P1 405件合格／versionCode 8 Closed testing公開完了／更新・テスター再確認待ち
+- 状態: 全P0/P1 405件合格／versionCode 8公開・更新・報告範囲の表示確認・T01再確認完了／残条件・再申請前Console確認待ち
 - 最終更新日: 2026-10-08
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
@@ -45,7 +45,7 @@
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
-追加Closed testing版`1.0.0 (8)`は、Issue #281のウィジェットカード化・固定プレビューとIssue #284の土日祝日色分けを含む。2026年10月8日に既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだった（USER確認）。時刻・Consoleの正確な状態文言、上書き更新およびテスター再確認は別途記録する。
+追加Closed testing版`1.0.0 (8)`は、Issue #281のウィジェットカード化・固定プレビューとIssue #284の土日祝日色分けを含む。2026年10月8日に既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだった（USER確認）。USER報告の更新・データ設定保持、ウィジェット操作、日付色・テーマ別表示はすべてOKであり、同日にT01もPixel 9a／Android 16で配布後の改善を再確認してOKと報告した。時刻・Consoleの正確な状態文言と未報告の試験条件は残す。
 
 本番公開候補versionCode `6`は、mainのcommit `4bdb50bbef2f3ed15ebcb7e0a69199d53e5e6757`から2026年9月23日に生成した。AABは`app/release/1.0.0-6/mata-1.0.0-6.aab`へローカル複製し、容量12,905,674 bytes、SHA-256 `59133b8f7707dc960e0808436c0c8e13faf12e06e71da7fd8fed0f6c55cde9a4`、Upload Key署名者1件、`publishable=true`を確認した。自動試験10/10件は合格し、実機回帰18件とGoogle Play登録後確認7件は未実施である。
 
@@ -117,7 +117,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`お�
 | `1.0.0 (5)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み。Productionへは昇格しない | AUTO / CONSOLE / USER |
 | `1.0.0 (6)`本番公開候補 | commit `4bdb50b`からUpload Key署名済みAABを生成し、自動試験10/10件とRelease準備検査に合格。実機・Play登録後確認待ち | AUTO |
 | `1.0.0 (7)`追加Closed testing版 | commit `6cf969d`からUpload Key署名済みAABを生成し、全CIとRelease準備検査に合格。2026-10-06に公開し、2026-10-07にversionCode 5からの上書き更新、データ保持およびテスターによる背景色設定の再確認に合格 | AUTO / CONSOLE / DEVICE / USER |
-| `1.0.0 (8)`追加Closed testing版 | commit `82f998d`から生成・検証・保管済み。2026-10-08に既存Closed testingトラックへ公開完了、既知のネイティブデバッグシンボル未登録警告のみ（USER確認）。更新・再確認待ち | AUTO / USER |
+| `1.0.0 (8)`追加Closed testing版 | commit `82f998d`から生成・検証・保管済み。2026-10-08に公開、既知警告のみ。`7`→`8`更新と報告範囲の表示・操作は合格し、T01がPixel 9a／Android 16で再確認してOK。未報告条件は専用手順に残す | AUTO / DEVICE / USER |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -166,7 +166,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`お�
 - 2026年9月23日にProduction accessを申請し、2026年9月25日に不承認を確認した。理由は、テスターの関与およびフィードバックを更新へ反映した実績が不十分と判断されたことである。
 - 2026年9月29日にT13からチャットで背景色設定の改善要望を受け、Issue #274へ登録した。固定色パレット、ライトテーマ限定表示、永続化およびバックアップ互換性を実装・試験し、versionCode `7`以上のClosed testing更新版でテスターの再確認を受ける。
 - 2026年10月7日にversionCode `5`から`7`への上書き更新とデータ保持に問題がないことを確認した。同日にフィードバック報告者と同じT13が背景色設定を再確認し、問題なしと報告した。端末・OSおよび追加意見は未記録である。
-- 2026年10月8日にversionCode `8`を既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだったことをUSERが確認した。時刻・Consoleの正確な状態文言と、`7`→`8`更新・テスター再確認は未確認である。
+- 2026年10月8日にversionCode `8`を既存Closed testingトラックへ公開完了し、警告は既知のネイティブデバッグシンボル未登録のみだったことをUSERが確認した。`7`→`8`更新・データ設定保持、ウィジェット表示・追加・完了／スキップ、土日祝日色分け・テーマ別表示の報告範囲はすべてOKであり、T01もPixel 9a／Android 16で配布後の改善を再確認してOKと報告した。
 - テスターには試験項目を割り当てず、実際に複数日にわたって自由操作してもらい、利用状況と自由記述のフィードバックを収集する。
 - 再申請まではClosed testingの参加設定と公開状態を維持し、フィードバック、Issue、更新版および再確認結果を関連付けて記録する。
 
@@ -190,7 +190,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`お�
 - versionCode `7`の署名済みAABと自動証跡はクリーンなmainから生成済みである。[versionCode 7登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)に従ったversionCode `5`からの上書き更新、データ保持およびテスターによる背景色設定の再確認は合格した。
 - versionCode `6`はGoogle Playへ未登録のまま、その後にAABへ影響するIssue #274と依存関係更新が入ったため配布しない。現在のmainからversionCode `7`を生成済みである。
 - Issue #274の背景色設定をversionCode `7`へ含め、2026年10月6日にClosed testingへ配布した。2026年10月7日にClosed testing参加者が再確認し、フィードバック対応を完了した。
-- Issue #281・#284は実装・開発版の表示確認済みである。versionCode `8`へ含め、[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)でGoogle Play経由の`7`→`8`更新、配置済み・新規ウィジェット、土日祝日色分けおよびテーマ別表示を再確認する。
+- Issue #281・#284はversionCode `8`へ反映し、USERの更新・ウィジェット・日付色／テーマ別表示とT01の配布後再確認が合格した。[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)に残したCT8-06、CT8-08等の未報告条件は別途確認する。
 
 ### 6.3 外部状態待ち
 
@@ -208,7 +208,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`お�
 4. `[完了]` Issue #274を含むversionCode `7`を2026年10月6日にClosed testingへ配布し、2026年10月7日にversionCode `5`からの上書き更新とデータ保持を確認した。生成済みversionCode `6`はGoogle Playへ未登録のため配布しない。
 5. `[完了]` Closed testing参加者から、versionCode `7`の背景色設定に問題がないとの再確認結果を受けた。
 
-   - `[配布完了・再確認待ち]` versionCode `8`を生成・検証・保管し、既存Closed testingトラックへ公開したとのUSER報告を受けた。Issue #281・#284について更新・テスター再確認結果を追加する。開発版の表示確認を配布後の結果として扱わない。
+   - `[配布・報告範囲の更新確認・テスター再確認完了]` versionCode `8`を公開し、更新・ウィジェット・日付色／テーマ別表示はUSER報告の範囲で合格した。T01、2026-10-08、Pixel 9a／Android 16、OKという配布後の改善再確認を記録した。未報告条件と再申請前のConsole確認は残す。
 6. `[実績反映済み・再申請前確認待ち]` 追加Closed testingの参加・利用・フィードバック・更新・再確認の実績を申請文と台帳へ反映した。現在の参加人数、継続期間、公開versionCode、Console状態および回答文字数を確認してProduction accessを再申請する。
 7. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 8. 初期配布地域を日本としてProductionへ公開する。
