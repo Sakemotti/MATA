@@ -1,14 +1,15 @@
 # 初回リリース進行記録
 
 - 対象: MATA初回公開（Closed testing公開版`1.0.0 (7)`）
-- 状態: 全P0/P1 405件合格／versionCode 7 Closed testing公開・上書き更新・テスター再確認完了／Production access再申請前確認待ち
-- 最終更新日: 2026-10-07
+- 状態: 全P0/P1 405件合格／versionCode 7公開・再確認完了／versionCode 8追加Closed testing準備中／Production access再申請前確認待ち
+- 最終更新日: 2026-10-08
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
 - Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
 - Closed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
 - Closed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
+- 次のClosed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
 - リリースブロッカー監査: [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md)
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
@@ -42,6 +43,8 @@
 | ビルド日時 | `2026-10-06T01:41:23.971064Z` | AUTO |
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
+
+次の追加Closed testing版は`1.0.0 (8)`とする。Issue #281のウィジェットカード化・固定プレビューとIssue #284の土日祝日色分けを含める。versionCode `7`を現在の公開版として維持し、versionCode `8`のGoogle Play登録、上書き更新およびテスター再確認は別途記録する。
 
 本番公開候補versionCode `6`は、mainのcommit `4bdb50bbef2f3ed15ebcb7e0a69199d53e5e6757`から2026年9月23日に生成した。AABは`app/release/1.0.0-6/mata-1.0.0-6.aab`へローカル複製し、容量12,905,674 bytes、SHA-256 `59133b8f7707dc960e0808436c0c8e13faf12e06e71da7fd8fed0f6c55cde9a4`、Upload Key署名者1件、`publishable=true`を確認した。自動試験10/10件は合格し、実機回帰18件とGoogle Play登録後確認7件は未実施である。
 
@@ -111,6 +114,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`
 | `1.0.0 (5)`Closed testing候補 | 署名済みAAB生成とRelease事前検査に成功。Closed testingへ公開済み。Productionへは昇格しない | AUTO / CONSOLE / USER |
 | `1.0.0 (6)`本番公開候補 | commit `4bdb50b`からUpload Key署名済みAABを生成し、自動試験10/10件とRelease準備検査に合格。実機・Play登録後確認待ち | AUTO |
 | `1.0.0 (7)`追加Closed testing版 | commit `6cf969d`からUpload Key署名済みAABを生成し、全CIとRelease準備検査に合格。2026-10-06に公開し、2026-10-07にversionCode 5からの上書き更新、データ保持およびテスターによる背景色設定の再確認に合格 | AUTO / CONSOLE / DEVICE / USER |
+| `1.0.0 (8)`追加Closed testing候補 | ウィジェット・土日祝日表示の改善を含めて準備中。署名済み候補生成、Google Play登録および更新・再確認待ち | AUTO |
 | Play App Signing | 有効。Upload Key証明書が本書の値と一致 | CONSOLE |
 | Upload Keyバックアップ | keystoreと復旧情報を暗号化された安全な別保管先へ保存済み | USER |
 | 新規インストールと起動 | 問題なし | DEVICE |
@@ -182,6 +186,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`
 - versionCode `7`の署名済みAABと自動証跡はクリーンなmainから生成済みである。[versionCode 7登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)に従ったversionCode `5`からの上書き更新、データ保持およびテスターによる背景色設定の再確認は合格した。
 - versionCode `6`はGoogle Playへ未登録のまま、その後にAABへ影響するIssue #274と依存関係更新が入ったため配布しない。現在のmainからversionCode `7`を生成済みである。
 - Issue #274の背景色設定をversionCode `7`へ含め、2026年10月6日にClosed testingへ配布した。2026年10月7日にClosed testing参加者が再確認し、フィードバック対応を完了した。
+- Issue #281・#284は実装・開発版の表示確認済みである。versionCode `8`へ含め、[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)でGoogle Play経由の`7`→`8`更新、配置済み・新規ウィジェット、土日祝日色分けおよびテーマ別表示を再確認する。
 
 ### 6.3 外部状態待ち
 
@@ -198,6 +203,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`および`
 3. `[完了]` versionName `1.0.0`、versionCode `6`、公開対象commit、リリースノートおよびUpload Key署名済みAABを確定し、自動検査10/10件を成功させる。
 4. `[完了]` Issue #274を含むversionCode `7`を2026年10月6日にClosed testingへ配布し、2026年10月7日にversionCode `5`からの上書き更新とデータ保持を確認した。生成済みversionCode `6`はGoogle Playへ未登録のため配布しない。
 5. `[完了]` Closed testing参加者から、versionCode `7`の背景色設定に問題がないとの再確認結果を受けた。
+   - `[準備中]` 次のversionCode `8`を生成・配布し、Issue #281・#284について更新・テスター再確認結果を追加する。開発版の表示確認を配布後の結果として扱わない。
 6. `[実績反映済み・再申請前確認待ち]` 追加Closed testingの参加・利用・フィードバック・更新・再確認の実績を申請文と台帳へ反映した。現在の参加人数、継続期間、公開versionCode、Console状態および回答文字数を確認してProduction accessを再申請する。
 7. Production access承認後、検証済みAABとPlayへ登録するAABのSHA-256を照合し、Pre-launch report、権限、Data safety、SDK Indexおよび法的確認を完了する。
 8. 初期配布地域を日本としてProductionへ公開する。
