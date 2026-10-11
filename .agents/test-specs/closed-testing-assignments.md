@@ -6,11 +6,11 @@
 - 項目別結果: [initial-release-results.tsv](initial-release-results.tsv)
 - 実施台帳: [初回Closed testing実施台帳](closed-testing-log.md)
 - 追加テストの運用方針更新日: 2026-10-11
-- テスター向け利用計画: [追加Closed testingの14日間利用・確認計画](closed-testing-14-day-plan.md)
+- 運営用フォロー計画: [追加Closed testingの利用・フォロー計画（14日間）](closed-testing-14-day-plan.md)
 
 ## 1. 方針
 
-Closed testing参加者には総合動作確認項目の試験IDや正式確認の担当を割り当てない。従来は自由操作のみを依頼したが、2026-10-11の方針変更後は14日間の利用例を共有し、毎日の実操作・短い利用報告・Google Play非公開フィードバック・更新時の再確認を依頼する。専門的な条件確認や全項目の合否判定はDEVとOWNERが行う。
+Closed testing参加者には総合動作確認項目の試験IDや正式確認の担当を割り当てない。2026-10-11のUSER方針に合わせ、最低限毎日アプリで何かしらのTODO管理を行い、実用した中での感想をGoogle Play非公開フィードバックへ送ることと、更新時の再確認を依頼する。日別操作・全機能の網羅・毎日の報告は指定しない。専門的な条件確認や全項目の合否判定はDEVとOWNERが行う。
 
 総合動作確認項目424件は削除せず、公開判定に必要な開発者側の正式確認として管理する。Closed testingの自由操作結果だけを根拠に、条件を確認していない試験IDを合格にしてはならない。
 
@@ -26,10 +26,11 @@ Closed testing参加者には総合動作確認項目の試験IDや正式確認�
 
 ## 2. Closed testing参加者への依頼
 
-参加者へ[参加ガイド](closed-testing-tester-guide.md)、[14日間利用計画](closed-testing-14-day-plan.md)と参加URLを共有する。計画は日常利用の例であり、順序変更・未実施の報告を許容する。次は依頼しない。
+参加者へ[参加ガイド](closed-testing-tester-guide.md)の依頼文・参加手順と参加URLを共有する。[14日間フォロー計画](closed-testing-14-day-plan.md)は運営者側で使用し、テスターへの日別操作指示として配布しない。次は依頼しない。
 
 - 個別の試験IDまたは担当範囲
 - 固定の操作順序や正式試験の網羅チェックリスト
+- 日別の機能指定、TODO件数や操作時間の指定、毎日の利用報告
 - 端末設定の変更、境界時刻待ち、TalkBack等の専門的な確認
 - バックアップファイル、端末全体のバグレポートまたは個人情報の提出
 

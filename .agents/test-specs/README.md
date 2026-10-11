@@ -12,7 +12,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 初回リリース候補に対する実行証跡と残項目は[初回リリース試験棚卸し](initial-release-inventory.md)、424件の項目別結果は[リリース別試験結果の管理](results-management.md)、自動試験との1対1対応は[自動試験証跡TSV](automated-test-evidence.tsv)、正式確認の実施区分は[初回リリース試験の実施区分](closed-testing-assignments.md)、未実施P0/P1を実機セッションへ分割した手順は[RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)、versionCode 3固有機能と不足環境の優先確認には[残実機・環境試験計画](release-v3-device-verification-plan.md)、Closed testingの参加・自由操作・フィードバックは[初回Closed testing実施台帳](closed-testing-log.md)を使用する。現在の公開版には[versionCode 8登録・更新確認手順](closed-testing-release-1.0.0-8.md)、前回版には[versionCode 7登録・更新確認手順](closed-testing-release-1.0.0-7.md)、versionCode `5`以前の履歴には各版の旧手順、versionCode `5`以降の変更内容とversionCode `6`の回帰範囲には[差分棚卸し・回帰試験計画](version-6-delta-and-regression-plan.md)、実施結果には[versionCode 6回帰試験実施票](version-6-regression-results.md)、旧本番公開候補の生成には[本番公開候補生成計画](production-release-candidate-1.0.0-6-plan.md)と[versionCode 6成果物台帳](release-candidate-1.0.0-6.md)、旧候補の登録手順には[versionCode 6 Closed testing登録・更新確認手順](internal-testing-release-1.0.0-6.md)、テスターへの案内には[MATA Closed testing参加ガイド](closed-testing-tester-guide.md)を使用する。Closed testing参加者へ個別の試験項目は割り当てない。
 
-2026-10-11の追加Closed testing方針では、[参加ガイドの依頼文](closed-testing-tester-guide.md#12-配布メッセージひな型)と[14日間の利用・確認計画](closed-testing-14-day-plan.md)を共有する。これは外部テスターの実利用とフィードバックを支援する計画であり、正式試験424件の担当割り当てや合格証跡を置き換えない。
+2026-10-11の追加Closed testing方針では、[参加ガイドの依頼文](closed-testing-tester-guide.md#12-配布メッセージひな型)で毎日の自由なTODO管理と実用した中での感想を依頼する。[14日間の利用・フォロー計画](closed-testing-14-day-plan.md)は運営側で使用し、テスターへ日別操作を指定しない。正式試験424件の担当割り当てや合格証跡は置き換えない。
 
 ## 2. 正とする文書
 
