@@ -373,7 +373,7 @@ class SettingsScreenSpecCoverageTest {
             canScheduleExactAlarms = true,
         )
         val scheduler = SettingsScreenTestNotificationScheduler(
-            initialNotificationCount = 1,
+            initialNotificationCount = 0,
             initialSystemState = notRelevantState,
         )
         val lifecycleOwner = SettingsScreenTestLifecycleOwner()
@@ -413,6 +413,7 @@ class SettingsScreenSpecCoverageTest {
             .assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.settings_exact_alarm_fallback_description))
             .assertIsDisplayed()
+        composeRule.runOnIdle { assertTrue(launchedIntents.isEmpty()) }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title)).performClick()
@@ -443,8 +444,56 @@ class SettingsScreenSpecCoverageTest {
         }
         composeRule.onNodeWithText(text(R.string.settings_exact_alarm_description))
             .assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title)).assertIsEnabled()
         composeRule.onAllNodesWithText(text(R.string.settings_permission_granted))
             .assertCountEquals(2)
+    }
+
+    @Test
+    fun st015_removingLastNotificationKeepsExactAlarmSettingsAvailable() {
+        val scheduler = SettingsScreenTestNotificationScheduler(
+            initialNotificationCount = 1,
+            initialSystemState = NotificationSystemState(
+                canPostNotifications = true,
+                runtimePermissionRelevant = false,
+                runtimePermissionGranted = true,
+                exactAlarmRelevant = true,
+                canScheduleExactAlarms = false,
+            ),
+        )
+        val launchedIntents = mutableListOf<Intent>()
+        lateinit var viewModel: SettingsViewModel
+        setScreen(
+            notificationScheduler = scheduler,
+            systemSettingsIntentLauncher = launchedIntents::add,
+            onViewModelCreated = { viewModel = it },
+        )
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            viewModel.uiState.value.notificationCount == 1
+        }
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title))
+            .performScrollTo()
+            .assertIsEnabled()
+
+        composeRule.runOnIdle { scheduler.notificationCount.value = 0 }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            viewModel.uiState.value.notificationCount == 0
+        }
+        composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title))
+            .assertIsEnabled()
+        composeRule.runOnIdle { assertTrue(launchedIntents.isEmpty()) }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            composeRule.onNodeWithText(text(R.string.settings_exact_alarm_title)).performClick()
+            composeRule.runOnIdle {
+                val intent = launchedIntents.single()
+                assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, intent.action)
+                assertEquals(
+                    "package:${InstrumentationRegistry.getInstrumentation().targetContext.packageName}",
+                    intent.dataString,
+                )
+            }
+        }
     }
 
     @Test
@@ -1062,7 +1111,7 @@ private class SettingsScreenTestNotificationScheduler(
         canScheduleExactAlarms = true,
     ),
 ) : NotificationScheduler {
-    override val notificationCount: Flow<Int> = MutableStateFlow(initialNotificationCount)
+    override val notificationCount = MutableStateFlow(initialNotificationCount)
     val previewedEndHours = mutableListOf<Int>()
     var reconcileCalls = 0
     var systemStateCalls = 0
