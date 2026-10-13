@@ -353,7 +353,7 @@ fun SettingsScreen(
                                     },
                                 ),
                                 isSaving = false,
-                                enabled = settingsEnabled && state.notificationCount > 0,
+                                enabled = settingsEnabled,
                                 onClick = {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                         launchSystemSettings(
