@@ -31,7 +31,7 @@ uiautomator = "2.4.0"
 testRunner = "1.7.0"
 aboutLibraries = "15.2.0"
 windowManager = "1.5.1"
-cyclonedx = "3.4.1"
+cyclonedx = "3.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
