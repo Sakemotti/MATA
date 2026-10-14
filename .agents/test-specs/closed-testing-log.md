@@ -2,10 +2,10 @@
 
 - 対象アプリ: MATA `1.0.0 (8)`
 - 対象ソースcommit: `82f998d1d6505862508a43e8854832b1717962cc`
-- 状態: versionCode 8確認済み／1回目の再申請も不承認／新規募集と14日間の追加テスト計画準備済み・実施前
-- 最終更新日: 2026-10-13
-- テスト開始日: 2026-09-09
-- 継続参加の達成日: 2026-09-23
+- 状態: versionCode 8配布中／本番アクセス再申請不承認後の新トラックで追加テスト実施中／versionCode 9更新準備中
+- 最終更新日: 2026-10-14
+- 初回テスト開始日: 2026-09-09
+- 初回継続参加の達成日: 2026-09-23
 - 試験項目: [MATA 総合動作確認項目書](README.md)
 - 正式試験の実施区分: [初回リリース試験の実施区分](closed-testing-assignments.md)
 - OWNER実機試験計画: [MATA 1.0.0 (2) RELEASE_OWNER実機試験実施計画](release-owner-device-test-plan.md)
@@ -15,6 +15,7 @@
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - 新規募集の運営用フォロー計画・記録欄: [追加Closed testingの利用・フォロー計画（14日間）](closed-testing-14-day-plan.md)
 - 登録・更新手順: [MATA 1.0.0 (8) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-8.md)
+- 次回更新の登録・確認手順: [MATA 1.0.0 (9) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-9.md)
 - 現行版の候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](release-candidate-1.0.0-8.md)
 - 前回版の登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
 - 旧版の登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
@@ -187,9 +188,9 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | FB-005 | 2026-09-29 | T13（チャット） | 設定・背景色 | ライトテーマでアプリの背景色を選択できるようにする。固定色パレットを追加し、ダークテーマでは設定項目を表示しない方針でIssue #274へ登録。versionCode `7`へ反映し、2026年10月7日にClosed testing参加者が再確認して問題なし | 中 | 修正・再確認済み | [#274](https://github.com/Sakemotti/MATA/issues/274) |
 | FB-006 | 2026-10-07（Issue登録日） | 原報告者未記録／再確認T01 | ウィジェット | カード化・固定プレビューをversionCode `8`へ反映。2026-10-08にT01がPixel 9a／Android 16で配布後の改善を再確認してOK（CT-019） | 未判定 | 修正・再確認済み | [#281](https://github.com/Sakemotti/MATA/issues/281) / [PR #285](https://github.com/Sakemotti/MATA/pull/285) |
 | FB-007 | 2026-10-07（Issue登録日） | 原報告者未記録／再確認T01 | TODO一覧・カレンダー履歴 | 土曜日を青、日曜日・祝日を赤にする改善をversionCode `8`へ反映。2026-10-08にT01がPixel 9a／Android 16で配布後の改善を再確認してOK（CT-019） | 未判定 | 修正・再確認済み | [#284](https://github.com/Sakemotti/MATA/issues/284) / [PR #286](https://github.com/Sakemotti/MATA/pull/286) |
-| FB-008 | 2026-10-13（Issue登録日） | Closed testing参加者（個別IDはリポジトリ外で管理） | 設定・正確なアラーム | Galaxy S26／Android 16で「許可されていません」の行をタップしても画面が開かないと報告。USERがエミュレーターの再インストール直後に同じ症状を確認したため、通知設定0件で操作を無効化する条件を原因候補として修正する。手動操作は件数によらず許可し、画面表示だけで自動遷移しない方針 | 未判定 | 修正する・配布後の再確認待ち | [#299](https://github.com/Sakemotti/MATA/issues/299) |
+| FB-008 | 2026-10-13（Issue登録日） | Closed testing参加者（個別IDはリポジトリ外で管理） | 設定・正確なアラーム | Galaxy S26／Android 16で設定行をタップしても開かないと報告。USERのエミュレーター再現確認に加え、2026-10-14のUSER報告で原報告者も現象時に通知設定付きTODOがなかったと確認した。通知0件による操作無効化をPR #300で修正し、設定画面からの手動操作は件数によらず許可する。versionCode `9`として更新準備中 | 未判定 | 修正済み・配布後の再確認待ち | [#299](https://github.com/Sakemotti/MATA/issues/299) / [PR #300](https://github.com/Sakemotti/MATA/pull/300) |
 
-FB-008の原報告者に通知設定付きTODOがあったかは未確認であり、Galaxy S26上の原因確定・修正版の再確認・配布versionCodeは未記録である。USERのエミュレーター再現確認を、原報告者の再現条件確認や修正版合格へ転用しない。
+FB-008は原報告者からの回答により通知設定0件という原因条件を確認済みである。回答の実際の受領日は未記録であり、2026-10-14はUSERからの報告日とする。Google Playの非公開フィードバック投稿済みとは扱わない。修正前の条件確認、開発版の自動・手動試験、配布後のGalaxyでの改善確認は別実績として記録し、versionCode `9`の配布・再確認は未実施のままとする。
 
 FB-006・FB-007の受領日・原報告者の匿名IDは未記録であり、Issue登録日を受領日と断定しない。配布後の再確認はCT-019のT01実績に基づき、開発版のUSER確認や原報告者本人の再確認と混同しない。
 
@@ -199,7 +200,7 @@ FB-006・FB-007の受領日・原報告者の匿名IDは未記録であり、Iss
 
 | Issue | 重大度 | 影響する試験ID | 発生version | 修正version | 初回結果 | 再試験結果 | 状態 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| なし | - | - | - | - | - | - | 未登録 |
+| [#299](https://github.com/Sakemotti/MATA/issues/299) | S2（通知設定追加などの代替操作あり） | ST-015 | 原報告版は未確認 | `9`（準備中・未配布） | USERがエミュレーターで再現し、原報告者の通知0件という条件も確認 | PR #300 CI合格、API 37のローカルUI30件・OS設定遷移確認合格。Galaxy配布後の再確認は未実施 | 修正済み・配布と原報告者再確認待ち |
 
 重大度はリリース仕様に従い`S0`〜`S3`で記録する。`S0`または`S1`、データ消失、履歴改変、通知誤発火、広告同意違反は、修正版の配布と再試験が完了するまで本番公開のブロッカーとする。
 
