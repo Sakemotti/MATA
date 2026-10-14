@@ -1,8 +1,8 @@
 # 初回Closed testing実施台帳
 
-- 対象アプリ: MATA `1.0.0 (8)`
-- 対象ソースcommit: `82f998d1d6505862508a43e8854832b1717962cc`
-- 状態: versionCode 8配布中／本番アクセス再申請不承認後の新トラックで追加テスト実施中／versionCode 9候補生成・検証・保管済み・未配布
+- 対象アプリ: MATA `1.0.0 (9)`（原報告者の使用版をUSER確認。Console公開記録は未確認）
+- 対象ソースcommit: `53bb2764e935c13430e3360460032b6dd48c9007`（versionCode 9候補の生成元）
+- 状態: 新トラックで追加テスト実施中／versionCode 9でIssue #299の原報告者による改善再確認完了／Console公開日時・警告は未確認
 - 最終更新日: 2026-10-14
 - 初回テスト開始日: 2026-09-09
 - 初回継続参加の達成日: 2026-09-23
@@ -14,11 +14,11 @@
 - テーマ・最大フォント確認: [REL-008 テーマ・最大フォント実機確認手順](rel-008-visual-check.md)
 - テスター向け案内: [MATA Closed testing参加ガイド](closed-testing-tester-guide.md)
 - 新規募集の運営用フォロー計画・記録欄: [追加Closed testingの利用・フォロー計画（14日間）](closed-testing-14-day-plan.md)
-- 登録・更新手順: [MATA 1.0.0 (8) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-8.md)
-- 次回更新の登録・確認手順: [MATA 1.0.0 (9) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-9.md)
-- 次回更新の候補証跡: [MATA 1.0.0 (9) Closed testing候補生成結果](release-candidate-1.0.0-9.md)
-- 現行版の候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](release-candidate-1.0.0-8.md)
-- 前回版の登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
+- 前回版の登録・更新手順: [MATA 1.0.0 (8) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-8.md)
+- versionCode 9の登録・確認手順: [MATA 1.0.0 (9) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-9.md)
+- versionCode 9の候補証跡: [MATA 1.0.0 (9) Closed testing候補生成結果](release-candidate-1.0.0-9.md)
+- 前回版の候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](release-candidate-1.0.0-8.md)
+- 旧版の登録・更新手順: [MATA 1.0.0 (7) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-7.md)
 - 旧版の登録・更新手順: [MATA 1.0.0 (5) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-5.md)
 - 直前候補の登録・更新手順: [MATA 1.0.0 (4) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-4.md)
 - versionCode 3残試験: [MATA 1.0.0 (3) 残実機・環境試験計画](release-v3-device-verification-plan.md)
@@ -40,14 +40,14 @@
 | 項目 | 記録 |
 | --- | --- |
 | トラック名 | Closed testing |
-| リリース状態 | versionCode `8`を既存Closed testingトラックへアップロード・公開済み（2026-10-08、USER報告） |
+| リリース状態 | versionCode `9`を原報告者が使用して改善を再確認（2026-10-14、USER報告）。Consoleの公開状態・日時・警告は未確認。versionCode `8`の公開実績は2026-10-08 |
 | 対象国・地域 | 日本 |
 | テスター管理方法 | 設定済み。管理方法と対象者情報はリポジトリ外で管理 |
 | オプトインURL | 取得可能であることを確認済み。URL自体はリポジトリに記録せず、テスター向け連絡経路で共有 |
-| 公開日時 | versionCode `8`を2026-10-08に公開完了（USER確認）。正確な時刻は未記録 |
-| AAB照合 | versionCode `8`候補は13,039,573 bytes、SHA-256 `421ba79a0c641afdbbee164921259e103cbc16b9d4cabcb0070afdafb65ef3c5` |
-| 公開versionCode / Console状態文言 | `8`（USER公開報告）。Consoleの正確な状態文言は未確認 |
-| Consoleの警告・判断 | versionCode `8`は既知の`ネイティブコードを含むがデバッグシンボル未登録`のみ。新規警告なし（USER確認）。初回Production access申請の不承認状態は維持 |
+| 公開日時 | versionCode `9`は未記録。再確認日の2026-10-14を公開日時へ転用しない。versionCode `8`の公開日は2026-10-08 |
+| AAB照合 | versionCode `9`の保管候補は13,039,823 bytes、SHA-256 `c619ca30f6747f408f56f15ca3120382da384f5018d1dfbbd145c7130256e461`。Console解析結果・配布版との照合は未記録 |
+| 使用versionCode / Console状態文言 | 原報告者の使用版は`9`（2026-10-14、USER確認）。Consoleの正確な状態文言は未確認 |
+| Consoleの警告・判断 | versionCode `9`の警告は未確認。versionCode `8`は既知の`ネイティブコードを含むがデバッグシンボル未登録`のみだった。Production accessは未承認のまま維持 |
 | Play Console上の参加要件 | 2026-09-09開始。2026-09-23に12人以上・14日間連続の要件達成とProduction access申請可能状態を確認（USER確認） |
 | 再申請前の参加要件・Console | 2026-10-09に再申請可能、オプトイン12人以上・連続参加14日以上をUSER確認。正確な人数・日数は未記録 |
 | 再申請前の警告・未完了項目 | 2026-10-09にPlay Console（SDK Index・ポリシー・App content）とAdMobに新規警告・未完了項目なしとUSER確認。既知のネイティブデバッグシンボル未登録警告を除く |
@@ -68,7 +68,9 @@ versionCode `6`は2026年9月23日に生成したがGoogle Playへ登録せず�
 
 2026年10月8日に、Issue #281のウィジェット表示・固定プレビューとIssue #284の土日祝日色分けを含む[versionCode 8候補](release-candidate-1.0.0-8.md)をクリーンなmainのcommit `82f998d1d6505862508a43e8854832b1717962cc`から生成・検証・保管し、Closed testingへ公開した。更新・データ設定保持、ウィジェット操作、土日祝日色・テーマ別表示は合格し、T01もPixel 9a／Android 16で改善を再確認してOKと報告した。2026年10月9日に詳細条件も確認済みとUSER報告。個別所見・公開時刻・Consoleの正確な文言を推測で補完せず、OWNER試験と別テスターT01の再確認を分けて記録する。
 
-2026年10月14日に、Issue #299の正確なアラーム設定操作の修正と通常の開発依存関係更新を含む[versionCode 9候補](release-candidate-1.0.0-9.md)を、クリーンなmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは13,039,823 bytes、SHA-256 `c619ca30f6747f408f56f15ca3120382da384f5018d1dfbbd145c7130256e461`である。生成元CIとRelease事前検査は合格したが、Issue #299は配布後の原報告者再確認待ちとして開いたままで、本番向けGitHubゲートの総合結果は`failed`である。Google Playへ未アップロード・未公開のため、現在の配布版はversionCode `8`のままとする。
+2026年10月14日に、Issue #299の正確なアラーム設定操作の修正と通常の開発依存関係更新を含む[versionCode 9候補](release-candidate-1.0.0-9.md)を、クリーンなmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは13,039,823 bytes、SHA-256 `c619ca30f6747f408f56f15ca3120382da384f5018d1dfbbd145c7130256e461`である。生成元CIとRelease事前検査は合格した。候補生成時点では未配布でIssue #299の再確認待ちにより本番向けGitHubゲートは`failed`だった。この生成時の証跡は書き換えない。
+
+その後、2026-10-14に原報告者本人がversionCode `9`をGalaxy S26／Android 16で確認し、改善したとUSERが報告した（CT-021）。Issue #299の改善確認は完了とするが、Console公開日時・警告、OWNERの`8`→`9`上書き更新とデータ保持、再確認時の通知件数等の個別条件は未記録のまま残す。確認済みの版・端末・日付以外を推測せず、全試験や本番公開ゲートの合格へ広げない。
 
 ## 3. テスター・端末台帳
 
@@ -175,6 +177,7 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | CT-018 | 2026-10-08（報告日） | OWNER | 8 | 土日祝日の色分け・テーマ別表示 | 端末・OS・実施日は未記録 | 合格 | 報告された表示確認はすべてOK。祝日更新・取得失敗やテーマの個別条件は未確認 |
 | CT-019 | 2026-10-08 | T01 | 8 | `FB-006`・`FB-007`・ウィジェットと日付表示の改善再確認 | Pixel 9a／Android 16 | 合格 | T01が配布後の改善を再確認してOKとUSER報告。原報告者との同一性や追加意見は未記録 |
 | CT-020 | 2026-10-09（報告日） | OWNER | 8 | 詳細条件（Dynamic Color・最大フォント、祝日更新／取得失敗、通知・バックアップ等）の確認 | 端末・OS・実施日時・個別所見は未記録 | 合格 | USERが前回未報告の詳細条件を確認済みと報告。追加不具合報告なし。具体的な試験環境や所見を推測で補完しない |
+| CT-021 | 2026-10-14（確認日・USER報告日） | Issue #299の原報告者本人（個別IDはリポジトリ外） | 9 | `FB-008`・正確なアラーム設定操作の改善再確認 | Galaxy S26／Android 16（報告時と同端末）。再確認時の通知件数等の詳細条件は未記録 | 合格 | 原報告者本人がversionCode `9`で改善を確認したとUSER報告。改善確認の報告範囲を合格とし、OWNERの更新・データ保持や他の試験結果は補完しない |
 
 行が不足したら実施IDを連番で追加する。結果は`合格`、`不合格`、`保留`、`対象外`のいずれかとする。
 
@@ -191,9 +194,9 @@ Closed testing参加者の自由操作は`操作・試験ID`へ主に利用し�
 | FB-005 | 2026-09-29 | T13（チャット） | 設定・背景色 | ライトテーマでアプリの背景色を選択できるようにする。固定色パレットを追加し、ダークテーマでは設定項目を表示しない方針でIssue #274へ登録。versionCode `7`へ反映し、2026年10月7日にClosed testing参加者が再確認して問題なし | 中 | 修正・再確認済み | [#274](https://github.com/Sakemotti/MATA/issues/274) |
 | FB-006 | 2026-10-07（Issue登録日） | 原報告者未記録／再確認T01 | ウィジェット | カード化・固定プレビューをversionCode `8`へ反映。2026-10-08にT01がPixel 9a／Android 16で配布後の改善を再確認してOK（CT-019） | 未判定 | 修正・再確認済み | [#281](https://github.com/Sakemotti/MATA/issues/281) / [PR #285](https://github.com/Sakemotti/MATA/pull/285) |
 | FB-007 | 2026-10-07（Issue登録日） | 原報告者未記録／再確認T01 | TODO一覧・カレンダー履歴 | 土曜日を青、日曜日・祝日を赤にする改善をversionCode `8`へ反映。2026-10-08にT01がPixel 9a／Android 16で配布後の改善を再確認してOK（CT-019） | 未判定 | 修正・再確認済み | [#284](https://github.com/Sakemotti/MATA/issues/284) / [PR #286](https://github.com/Sakemotti/MATA/pull/286) |
-| FB-008 | 2026-10-13（Issue登録日） | Closed testing参加者（個別IDはリポジトリ外で管理） | 設定・正確なアラーム | Galaxy S26／Android 16で設定行をタップしても開かないと報告。USERのエミュレーター再現確認に加え、2026-10-14のUSER報告で原報告者も現象時に通知設定付きTODOがなかったと確認した。通知0件による操作無効化をPR #300で修正し、設定画面からの手動操作は件数によらず許可する。versionCode `9`候補を生成・検証・保管済み。未配布 | 未判定 | 修正済み・配布後の再確認待ち | [#299](https://github.com/Sakemotti/MATA/issues/299) / [PR #300](https://github.com/Sakemotti/MATA/pull/300) |
+| FB-008 | 2026-10-13（Issue登録日） | Closed testing参加者・原報告者本人（個別IDはリポジトリ外で管理） | 設定・正確なアラーム | Galaxy S26／Android 16で設定行をタップしても開かないと報告。現象時の通知設定0件という原因条件を確認し、PR #300で件数による操作無効化を削除した。2026-10-14に原報告者本人がversionCode `9`を報告時と同端末で確認し、改善を確認した（CT-021） | 未判定 | 修正・原報告者再確認済み | [#299](https://github.com/Sakemotti/MATA/issues/299) / [PR #300](https://github.com/Sakemotti/MATA/pull/300) |
 
-FB-008は原報告者からの回答により通知設定0件という原因条件を確認済みである。回答の実際の受領日は未記録であり、2026-10-14はUSERからの報告日とする。Google Playの非公開フィードバック投稿済みとは扱わない。修正前の条件確認、開発版の自動・手動試験、配布後のGalaxyでの改善確認は別実績として記録し、versionCode `9`の配布・再確認は未実施のままとする。
+FB-008は、修正前に通知設定0件だったとの回答と、versionCode `9`での改善再確認を分けて記録する。前者の回答の実際の受領日は未記録で2026-10-14はUSER報告日、後者の確認日は2026-10-14とUSERが明示した。再確認者は原報告者本人、環境はGalaxy S26／Android 16である。ストア外の回答と改善確認をGoogle Playの非公開フィードバック投稿済みとは扱わず、投稿状況は別管理とする。
 
 FB-006・FB-007の受領日・原報告者の匿名IDは未記録であり、Issue登録日を受領日と断定しない。配布後の再確認はCT-019のT01実績に基づき、開発版のUSER確認や原報告者本人の再確認と混同しない。
 
@@ -203,7 +206,7 @@ FB-006・FB-007の受領日・原報告者の匿名IDは未記録であり、Iss
 
 | Issue | 重大度 | 影響する試験ID | 発生version | 修正version | 初回結果 | 再試験結果 | 状態 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [#299](https://github.com/Sakemotti/MATA/issues/299) | S2（通知設定追加などの代替操作あり） | ST-015 | 原報告版は未確認 | `9`（候補生成・検証・保管済み・未配布） | USERがエミュレーターで再現し、原報告者の通知0件という条件も確認 | PR #300 CI合格、API 37のローカルUI30件・OS設定遷移確認合格。versionCode 9生成元CI合格。Galaxy配布後の再確認は未実施 | 修正済み・配布と原報告者再確認待ち |
+| [#299](https://github.com/Sakemotti/MATA/issues/299) | S2（通知設定追加などの代替操作あり） | ST-015 | 原報告版は未確認 | `9`（原報告者の使用版をUSER確認） | USERがエミュレーターで再現し、原報告者の通知0件という条件も確認 | PR #300 CI、API 37ローカルUI30件・OS設定遷移確認、versionCode 9生成元CIに合格。2026-10-14に原報告者本人がGalaxy S26／Android 16のversionCode 9で改善を確認（CT-021） | 修正・原報告者再確認完了 |
 
 重大度はリリース仕様に従い`S0`〜`S3`で記録する。`S0`または`S1`、データ消失、履歴改変、通知誤発火、広告同意違反は、修正版の配布と再試験が完了するまで本番公開のブロッカーとする。
 

@@ -1,9 +1,9 @@
 # MATA 1.0.0 (9) Closed testing候補生成結果
 
-- 状態: 生成・署名・検証・保管済み／未配布／原報告者の再確認待ち
+- 状態: 生成・署名・検証・保管済み／原報告者のversionCode 9改善再確認完了／Console公開記録は未確認
 - 実施日: 2026-10-14
 - 実施者: AUTO
-- 判定: Closed testing候補の生成・署名・Release事前検査は合格。Production向けGitHubゲートは未合格
+- 判定: Closed testing候補の生成・署名・Release事前検査は合格。生成時のProduction向けGitHubゲートは未合格の歴史証跡として維持し、現在の本番公開判定は未実施
 - 登録手順: [MATA 1.0.0 (9) Closed testing登録・更新確認手順](closed-testing-release-1.0.0-9.md)
 
 ## 1. 候補の識別
@@ -29,7 +29,7 @@ versionCode設定と登録手順の[PR #301](https://github.com/Sakemotti/MATA/p
 | ファイル | `app/release/1.0.0-9/mata-1.0.0-9.aab` |
 | 容量 | `13,039,823 bytes` |
 | SHA-256 | `C619CA30F6747F408F56F15CA3120382DA384F5018D1DFBBD145C7130256E461` |
-| Google Play登録状態 | 未アップロード・未公開 |
+| 配布・使用確認 | 2026-10-14に原報告者がversionCode `9`で改善を確認（USER報告）。Console公開状態・日時・警告は未確認 |
 | 配信対象 | 新規募集に使用中のClosed testingトラック。初期の旧トラックへ戻さない |
 
 Google PlayのAAB欄へ登録するファイルは上表のAABだけとする。`app/release/`はGit除外対象であり、成果物、署名鍵および秘密値を本リポジトリへ追加していない。
@@ -71,7 +71,7 @@ ZIPは保管・受け渡し専用であり、Google Playへアップロードし
 - [x] `node tools/release/verify-readiness.mjs --release`の全7検査が合格。5成果物のハッシュ、226 runtime component、単一Upload Key署名者および期待する証明書SHA-256が一致した。
 - [x] リリース検証ツールの回帰試験、試験実施区分424件、自動試験との1対1対応336件、アーキテクチャ検査および外部データ契約検査が合格した。
 - [x] 候補生成時に既存の試験結果台帳でP0/P1 405/405件の合格を確認した。versionCode `9`のPlay経由更新・実機・テスター再確認の合格を意味しない。
-- [ ] `node tools/release/verify-github-release-gates.mjs`の総合結果は`failed`。失敗は`open_issues`の1件のみで、[Issue #299](https://github.com/Sakemotti/MATA/issues/299)を配布後の原報告者再確認待ちとして保持している。
+- [ ] 候補生成時の`node tools/release/verify-github-release-gates.mjs`の総合結果は`failed`だった。失敗は`open_issues`の1件のみで、その時点では[Issue #299](https://github.com/Sakemotti/MATA/issues/299)を原報告者再確認待ちとして保持していた。2026-10-14の改善確認後も生成時のJSON・ZIPは書き換えず、現在の本番公開ゲートは別途再検査する。
 
 GitHubゲートのmain一致、クリーンな作業ツリー、未解決PR 0件、ブランチ保護、必須チェック、セキュリティ機能、open alert各0件および生成元CIは合格した。CodeQL Java/Kotlin未対応だけを既知の警告として記録した。Issueを形式的に閉じる、保護を迂回する、ゲート結果を合格へ書き換える等の操作は行っていない。
 
@@ -90,10 +90,10 @@ JBR 25.0.3の`jarsigner -verify`も終了コード0の`jar verified.`だった�
 
 ## 6. 引き渡しと残りの確認
 
-本候補は未配布であり、Production向け承認済みとは扱わない。[登録・更新確認手順](closed-testing-release-1.0.0-9.md)に従い、現在運用中の新Closed testingトラックへ登録する。
+候補生成時点では未配布だった。その後2026-10-14に、原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Production向け承認済みとは扱わず、[登録・更新確認手順](closed-testing-release-1.0.0-9.md)に沿って未記録のConsole情報とOWNER確認を補う。
 
 - Google Playの解析結果、公開日時・状態文言・警告、SDK Index・ポリシー・App content・AdMobとPre-launch reportは未確認である。
 - OWNERの`8`→`9`上書き更新・データ保持とCT9-01〜CT9-07は未実施である。
-- 原報告者のGalaxy S26／Android 16でのCT9-08は未実施である。通知設定0件だったとの修正前の回答と、修正版の改善確認を混同しない。
-- Issue #299は配布後の再確認結果が得られるまで開いたままにし、結果をClosed testing台帳へ記録する。ストア外の回答をGoogle Playへのフィードバック投稿済みとしない。
+- 原報告者のGalaxy S26／Android 16、versionCode `9`での改善確認は2026-10-14に完了した。CT9-08へ報告範囲を記録し、再確認時の通知件数等の未報告の個別条件は推測で補完しない。
+- Issue #299は原報告者の改善再確認により完了扱いとする。結果をClosed testing台帳へ記録し、ストア外の回答をGoogle Playへのフィードバック投稿済みとしない。
 - Productionへ自動昇格せず、追加テスト、Production access再申請・承認および本番公開ゲートを別途完了させる。

@@ -1,17 +1,17 @@
 # 初回リリース進行記録
 
-- 対象: MATA初回公開（Closed testing公開版`1.0.0 (8)`）
-- 状態: 全P0/P1 405件合格／versionCode 8確認済み／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9候補生成済み・未配布
+- 対象: MATA初回公開（Closed testing版`1.0.0 (9)`で原報告者の改善再確認済み。Console公開記録は未確認）
+- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9のIssue #299改善再確認完了
 - 最終更新日: 2026-10-14
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
 - Closed testing記録: [初回Closed testing実施台帳](../../test-specs/closed-testing-log.md)
-- Closed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
-- Closed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
-- 次回更新の引き渡し・証跡: [MATA 1.0.0 (9) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)
-- 前回Closed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
-- 前回Closed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
+- 前回版のClosed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
+- 前回版のClosed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
+- versionCode 9の引き渡し・証跡: [MATA 1.0.0 (9) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)
+- 旧版のClosed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
+- 旧版のClosed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
 - リリースブロッカー監査: [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md)
 - versionCode 6回帰範囲: [versionCode 5以降の差分棚卸し・versionCode 6回帰試験計画](../../test-specs/version-6-delta-and-regression-plan.md)
@@ -37,12 +37,12 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `8`。Upload Key署名済み、2026-10-08に既存Closed testingトラックへ公開完了。時刻は未記録 | AUTO / USER |
-| ソースcommit | `82f998d1d6505862508a43e8854832b1717962cc` | AUTO |
-| AAB | `app/release/1.0.0-8/mata-1.0.0-8.aab`。Git除外対象 | AUTO |
-| AAB容量 | 13,039,573 bytes | AUTO |
-| AAB SHA-256 | `421ba79a0c641afdbbee164921259e103cbc16b9d4cabcb0070afdafb65ef3c5` | AUTO |
-| ビルド日時 | `2026-10-08T01:39:52.862447500Z` | AUTO |
+| versionCode | `9`。Upload Key署名済み候補を生成し、2026-10-14に原報告者の使用版と改善再確認をUSER確認。Console公開日時・状態は未確認 | AUTO / USER |
+| ソースcommit | `53bb2764e935c13430e3360460032b6dd48c9007`（保管候補の生成元） | AUTO |
+| AAB | `app/release/1.0.0-9/mata-1.0.0-9.aab`。Git除外対象 | AUTO |
+| AAB容量 | 13,039,823 bytes | AUTO |
+| AAB SHA-256 | `c619ca30f6747f408f56f15ca3120382da384f5018d1dfbbd145c7130256e461` | AUTO |
+| ビルド日時 | `2026-10-14T02:11:48.876285100Z` | AUTO |
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
@@ -52,9 +52,11 @@
 
 追加Closed testing候補versionCode `7`は、mainのcommit `6cf969d8a13f66fc030267c784116e65c19b9da8`から2026年10月6日に生成した。AABは`app/release/1.0.0-7/mata-1.0.0-7.aab`へローカル複製し、容量13,033,358 bytes、SHA-256 `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb`、Upload Key署名者1件、`publishable=true`を確認した。同日にClosed testingで公開完了となり、Console警告は`ネイティブコードを含むがデバッグシンボル未登録`だけだった。versionCode `6`はGoogle Playへ未登録で、その後にIssue #274と依存関係更新が入ったため配布しない。
 
-versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`および`8`はClosed testingへ登録済みであり、再アップロードできない。現在のClosed testing公開版は上表のversionCode `8`である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
+versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`および`8`はClosed testingへ登録済みであり、再アップロードできない。versionCode `9`は原報告者による使用・改善再確認が報告されたが、Consoleの正確な公開状態・日時・警告は未記録である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
 
-2026年10月14日に、Issue #299を修正した次回Closed testing候補versionCode `9`をmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは`app/release/1.0.0-9/mata-1.0.0-9.aab`、13,039,823 bytes、SHA-256 `c619ca30f6747f408f56f15ca3120382da384f5018d1dfbbd145c7130256e461`で、既存Upload Keyと一致した。生成元CIとRelease事前検査7件は合格した。Issue #299は原報告者の配布後再確認待ちとして開いたままで、本番向けGitHubゲートの総合結果は`failed`である。Play Consoleへ未アップロード・未公開で、配布版と上表の実績はversionCode `8`のまま維持する。個別参加者の対応表はリポジトリ外で管理する。
+2026年10月14日に、Issue #299を修正したClosed testing候補versionCode `9`をmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは上表のとおり既存Upload Keyと一致し、生成元CIとRelease事前検査7件は合格した。生成時点ではIssue #299の原報告者再確認待ちにより本番向けGitHubゲートは`failed`だった。このJSON・ZIPとAABは歴史証跡として変更しない。
+
+その後、2026-10-14に原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Issue #299は修正・原報告者再確認完了とする。Console公開日時・警告とOWNERの`8`→`9`更新・データ保持等は未確認・未実施のままであり、今回の改善確認を全試験や本番公開承認へ広げない。個別参加者の対応表はリポジトリ外で管理する。
 
 ## 3. リポジトリと自動検査
 
