@@ -1,6 +1,6 @@
 # MATA 1.0.0 (9) Closed testing登録・更新確認手順
 
-- 文書状態: 更新版準備中・未配布
+- 文書状態: 候補生成・署名・検証・保管済み・未配布
 - 作成日: 2026-10-14
 - 対象: MATA `1.0.0 (9)` 追加Closed testing版
 - 前回公開版: `1.0.0 (8)`
@@ -13,8 +13,10 @@
 | Application ID | `com.mochisofts.mata` |
 | versionName / versionCode | `1.0.0` / `9` |
 | 配信先 | 新規募集に使用中のClosed testingトラック。初期の旧トラックへ戻さない |
-| 公開用AABの保管予定先 | `app/release/1.0.0-9/mata-1.0.0-9.aab` |
-| 生成元commit・容量・SHA-256 | 生成後に候補台帳へ記録する。生成前に推測して補完しない |
+| 公開用AABの保管先 | `app/release/1.0.0-9/mata-1.0.0-9.aab` |
+| 生成元commit | `53bb2764e935c13430e3360460032b6dd48c9007` |
+| AAB容量 / SHA-256 | `13,039,823 bytes` / `C619CA30F6747F408F56F15CA3120382DA384F5018D1DFBBD145C7130256E461` |
+| 候補の生成・検証証跡 | [MATA 1.0.0 (9) Closed testing候補生成結果](release-candidate-1.0.0-9.md) |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` |
 
 versionCode `8`の生成元`82f998d1d6505862508a43e8854832b1717962cc`以降の変更を含める。
@@ -35,6 +37,8 @@ versionCode `8`の生成元`82f998d1d6505862508a43e8854832b1717962cc`以降の�
 ```
 
 ## 3. 登録前の確認
+
+2026-10-14にクリーンなmainから署名済み候補を生成・保管し、Release事前検査7件と生成元CIが合格した。本番向けGitHubゲートはIssue #299の再確認待ち1件により`failed`のまま保管した。候補の生成はGoogle Playへの配布・実機確認の完了を意味しない。
 
 - クリーンなmainからUpload Key署名済みAABを生成し、単一署名者・証明書・Application ID・versionCode・SHA-256を検証する。
 - 生成元mainのCIとCodeQL、Manifest、SBOM、ライセンス、Release事前検査を確認する。
