@@ -19,7 +19,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [Google Play Data safety申告](data-safety-declaration.md) | 収集・共有データ、目的、削除、最終検証 |
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 | [Release事前検査仕様](release-preflight.md) | 設定、法的文書、ストア成果物、AABと証跡の統合検査 |
-| [初回リリース進行記録](initial-release-status.md) | 公開済み`1.0.0 (8)`と未配布候補`1.0.0 (9)`のClosed testing、過去候補、Console、実機確認、保留事項 |
+| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (9)`の候補生成・原報告者改善再確認、過去版のClosed testing、Console、実機確認、保留事項 |
 | [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md) | Issue・PR、CI、秘密情報、GitHubセキュリティ機能および外部Consoleの候補生成前監査 |
 | [Production access申請回答・実施票](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の提出用回答と申請・審査記録 |
 | [初回Production公開実行票](initial-production-runbook.md) | versionCode 6のProduction登録、初回公開固有の制約、監視および重大問題対応 |
@@ -41,7 +41,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 - 初回公開ではversionCode `5`をClosed testing検証版、versionCode `6`を本番公開候補として扱い、versionCode `5`をProductionへ昇格しない。
 - versionCode `6`はClosed testing要件達成後にクリーンなmainから生成し、実績を[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)へ引き継ぐ。
 - 上記のversionCode `5`・`6`は当初の計画である。versionCode `6`は未配布のまま、追加フィードバック対応によりversionCode `7`・`8`をClosed testingへ公開した。Production候補の確定は追加テストとProduction accessの承認状況を踏まえて別途行う。
-- versionCode `9`は2026-10-14に生成・署名・検証・保管した未配布のClosed testing候補である。[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)を使用し、原報告者の改善再確認とProduction向けゲートの判定は別途行う。
+- versionCode `9`は2026-10-14に生成・署名・検証・保管し、同日に原報告者本人がGalaxy S26／Android 16で改善を確認したClosed testing版である。[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)を使用し、未記録のConsole公開情報、OWNERの更新確認およびProduction向けゲートの判定は別途行う。
 
 ## 4. 固定する公開値
 
