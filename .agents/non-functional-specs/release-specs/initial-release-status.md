@@ -1,7 +1,7 @@
 # 初回リリース進行記録
 
-- 対象: MATA初回公開（Closed testing版`1.0.0 (9)`で原報告者の改善再確認済み。Console公開記録は未確認）
-- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9のIssue #299改善再確認完了
+- 対象: MATA初回公開（Closed testing版`1.0.0 (9)`、2026-10-14公開済み）
+- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9公開・更新とデータ保持・原報告者改善再確認完了／OWNER回帰6件は未実施
 - 最終更新日: 2026-10-14
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
@@ -37,7 +37,7 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `9`。Upload Key署名済み候補を生成し、2026-10-14に原報告者の使用版と改善再確認をUSER確認。Console公開日時・状態は未確認 | AUTO / USER |
+| versionCode | `9`。2026-10-14公開済み、既存警告のみ・新規警告なし（USER確認）。8→9更新とデータ保持・原報告者改善再確認も完了。公開時刻は未記録 | AUTO / USER |
 | ソースcommit | `53bb2764e935c13430e3360460032b6dd48c9007`（保管候補の生成元） | AUTO |
 | AAB | `app/release/1.0.0-9/mata-1.0.0-9.aab`。Git除外対象 | AUTO |
 | AAB容量 | 13,039,823 bytes | AUTO |
@@ -52,11 +52,11 @@
 
 追加Closed testing候補versionCode `7`は、mainのcommit `6cf969d8a13f66fc030267c784116e65c19b9da8`から2026年10月6日に生成した。AABは`app/release/1.0.0-7/mata-1.0.0-7.aab`へローカル複製し、容量13,033,358 bytes、SHA-256 `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb`、Upload Key署名者1件、`publishable=true`を確認した。同日にClosed testingで公開完了となり、Console警告は`ネイティブコードを含むがデバッグシンボル未登録`だけだった。versionCode `6`はGoogle Playへ未登録で、その後にIssue #274と依存関係更新が入ったため配布しない。
 
-versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`および`8`はClosed testingへ登録済みであり、再アップロードできない。versionCode `9`は原報告者による使用・改善再確認が報告されたが、Consoleの正確な公開状態・日時・警告は未記録である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
+versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`、`8`および`9`は登録済みであり、再アップロードできない。versionCode `9`を2026-10-14に公開済み、既存警告のみ・新規警告なしとUSERが報告した。公開時刻は未記録である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
 
 2026年10月14日に、Issue #299を修正したClosed testing候補versionCode `9`をmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは上表のとおり既存Upload Keyと一致し、生成元CIとRelease事前検査7件は合格した。生成時点ではIssue #299の原報告者再確認待ちにより本番向けGitHubゲートは`failed`だった。このJSON・ZIPとAABは歴史証跡として変更しない。
 
-その後、2026-10-14に原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Issue #299は修正・原報告者再確認完了とする。Console公開日時・警告とOWNERの`8`→`9`更新・データ保持等は未確認・未実施のままであり、今回の改善確認を全試験や本番公開承認へ広げない。個別参加者の対応表はリポジトリ外で管理する。
+その後、2026-10-14に原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Issue #299は修正・原報告者再確認完了とする。同日に公開済み・本日公開・既存警告のみ、OWNERの`8`→`9`更新とデータ保持は問題なしとUSER報告（CT-022）。公開時刻とOWNERの端末・OS・実施日時・個別所見は未記録である。残る回帰6件を合格へ変更せず、全試験や本番公開承認へ広げない。個別参加者の対応表はリポジトリ外で管理する。
 
 ## 3. リポジトリと自動検査
 
