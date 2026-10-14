@@ -14,7 +14,7 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 
 2026-10-11の追加Closed testing方針では、[参加ガイドの依頼文](closed-testing-tester-guide.md#12-配布メッセージひな型)で毎日の自由なTODO管理と実用した中での感想を依頼する。[14日間の利用・フォロー計画](closed-testing-14-day-plan.md)は運営側で使用し、テスターへ日別操作を指定しない。正式試験424件の担当割り当てや合格証跡は置き換えない。
 
-versionCode `9`には[登録・更新確認手順](closed-testing-release-1.0.0-9.md)と[候補生成結果](release-candidate-1.0.0-9.md)を使用する。2026-10-14公開済み・既存警告のみ、8→9更新・データ保持と原報告者本人の改善再確認（Galaxy S26／Android 16）はUSER確認済み。残るOWNER回帰はCT9-02〜CT9-07の6件であり、既存のP0/P1合格をversionCode `9`の全項目再実施済みと扱わない。
+versionCode `9`には[登録・更新確認手順](closed-testing-release-1.0.0-9.md)と[候補生成結果](release-candidate-1.0.0-9.md)を使用する。2026-10-14公開済み・既存警告のみ、8→9更新・データ保持と原報告者本人の改善再確認（Galaxy S26／Android 16）はUSER確認済み。CT9-02〜CT9-07のOWNER回帰6件も同日のUSER報告ですべて合格・確認完了（CT-023）。既存のP0/P1合格をversionCode `9`の全項目再実施済みと扱わない。
 
 ## 2. 正とする文書
 
