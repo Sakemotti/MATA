@@ -1,6 +1,6 @@
 # MATA 1.0.0 (9) Closed testing候補生成結果
 
-- 状態: 生成・署名・検証・保管済み／原報告者のversionCode 9改善再確認完了／Console公開記録は未確認
+- 状態: 生成・署名・検証・保管・2026-10-14公開済み／8→9更新とデータ保持・原報告者改善再確認完了／OWNER回帰6件は未実施
 - 実施日: 2026-10-14
 - 実施者: AUTO
 - 判定: Closed testing候補の生成・署名・Release事前検査は合格。生成時のProduction向けGitHubゲートは未合格の歴史証跡として維持し、現在の本番公開判定は未実施
@@ -29,7 +29,7 @@ versionCode設定と登録手順の[PR #301](https://github.com/Sakemotti/MATA/p
 | ファイル | `app/release/1.0.0-9/mata-1.0.0-9.aab` |
 | 容量 | `13,039,823 bytes` |
 | SHA-256 | `C619CA30F6747F408F56F15CA3120382DA384F5018D1DFBBD145C7130256E461` |
-| 配布・使用確認 | 2026-10-14に原報告者がversionCode `9`で改善を確認（USER報告）。Console公開状態・日時・警告は未確認 |
+| 配布・使用確認 | 2026-10-14公開済み、既存の警告のみ・新規警告なし（USER報告）。公開時刻は未記録。原報告者改善再確認とOWNERの8→9更新・データ保持も確認済み |
 | 配信対象 | 新規募集に使用中のClosed testingトラック。初期の旧トラックへ戻さない |
 
 Google PlayのAAB欄へ登録するファイルは上表のAABだけとする。`app/release/`はGit除外対象であり、成果物、署名鍵および秘密値を本リポジトリへ追加していない。
@@ -90,10 +90,10 @@ JBR 25.0.3の`jarsigner -verify`も終了コード0の`jar verified.`だった�
 
 ## 6. 引き渡しと残りの確認
 
-候補生成時点では未配布だった。その後2026-10-14に、原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Production向け承認済みとは扱わず、[登録・更新確認手順](closed-testing-release-1.0.0-9.md)に沿って未記録のConsole情報とOWNER確認を補う。
+候補生成時点では未配布だった。その後2026-10-14に、原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。公開済み・本日公開・既存警告のみ、OWNERの8→9更新・データ保持に問題なしとのUSER報告も記録した（CT-022）。Production向け承認済みとは扱わず、[登録・更新確認手順](closed-testing-release-1.0.0-9.md)に沿って残るOWNER確認を進める。
 
-- Google Playの解析結果、公開日時・状態文言・警告、SDK Index・ポリシー・App content・AdMobとPre-launch reportは未確認である。
-- OWNERの`8`→`9`上書き更新・データ保持とCT9-01〜CT9-07は未実施である。
+- Google Play公開状態は公開済み、公開日は2026-10-14、既存警告のみ・新規警告なしとUSER確認。公開時刻・解析結果の照合、SDK Index・ポリシー・App content・AdMobとPre-launch reportの今回の個別状態は未記録である。
+- OWNERの`8`→`9`更新・データ保持は問題なしとUSER確認（CT9-01・CT-022）。CT9-02〜CT9-07の6件は未実施である。
 - 原報告者のGalaxy S26／Android 16、versionCode `9`での改善確認は2026-10-14に完了した。CT9-08へ報告範囲を記録し、再確認時の通知件数等の未報告の個別条件は推測で補完しない。
 - Issue #299は原報告者の改善再確認により完了扱いとする。結果をClosed testing台帳へ記録し、ストア外の回答をGoogle Playへのフィードバック投稿済みとしない。
 - Productionへ自動昇格せず、追加テスト、Production access再申請・承認および本番公開ゲートを別途完了させる。

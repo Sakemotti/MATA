@@ -41,7 +41,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 - 初回公開ではversionCode `5`をClosed testing検証版、versionCode `6`を本番公開候補として扱い、versionCode `5`をProductionへ昇格しない。
 - versionCode `6`はClosed testing要件達成後にクリーンなmainから生成し、実績を[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)へ引き継ぐ。
 - 上記のversionCode `5`・`6`は当初の計画である。versionCode `6`は未配布のまま、追加フィードバック対応によりversionCode `7`・`8`をClosed testingへ公開した。Production候補の確定は追加テストとProduction accessの承認状況を踏まえて別途行う。
-- versionCode `9`は2026-10-14に生成・署名・検証・保管し、同日に原報告者本人がGalaxy S26／Android 16で改善を確認したClosed testing版である。[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)を使用し、未記録のConsole公開情報、OWNERの更新確認およびProduction向けゲートの判定は別途行う。
+- versionCode `9`は2026-10-14に生成・署名・検証・保管・公開したClosed testing版である。既存警告のみ、OWNERの8→9更新とデータ保持、原報告者本人のGalaxy S26／Android 16での改善再確認をUSER確認済み。[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)を使用し、残るOWNER回帰6件とProduction向けゲートの判定は別途行う。
 
 ## 4. 固定する公開値
 
