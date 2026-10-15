@@ -39,7 +39,6 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -114,6 +113,7 @@ import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
 import com.mochisofts.mata.core.designsystem.mataCardColor
 import com.mochisofts.mata.core.designsystem.mataPageColor
@@ -782,6 +782,11 @@ internal const val CATEGORY_ICON_SEARCH_TEST_TAG = "category_icon_search"
 internal const val CATEGORY_ICON_RESULTS_TEST_TAG = "category_icon_results"
 internal const val CATEGORY_ICON_OPTION_TEST_TAG_PREFIX = "category_icon_option_"
 internal const val CATEGORY_ICON_GROUP_TEST_TAG_PREFIX = "category_icon_group_"
+internal const val CATEGORY_EDITOR_SCROLL_TEST_TAG = "category_editor_scroll"
+internal const val CATEGORY_EDITOR_PREVIEW_CARD_TEST_TAG = "category_editor_preview_card"
+internal const val CATEGORY_EDITOR_NAME_CARD_TEST_TAG = "category_editor_name_card"
+internal const val CATEGORY_EDITOR_COLOR_CARD_TEST_TAG = "category_editor_color_card"
+internal const val CATEGORY_EDITOR_ICON_CARD_TEST_TAG = "category_editor_icon_card"
 
 internal val CategoryColorIdKey = SemanticsPropertyKey<String>("CategoryColorId")
 internal val CategoryColorArgbKey = SemanticsPropertyKey<Long>("CategoryColorArgb")
@@ -1043,17 +1048,12 @@ fun CategoryEditorScreen(
     viewModel: CategoryEditorViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val categoryColors = MaterialTheme.mataColors.categoryColors
     var showDiscardDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var showIconPicker by rememberSaveable(state.categoryId) { mutableStateOf(false) }
-    var iconSearchQuery by rememberSaveable(state.categoryId) { mutableStateOf("") }
 
     fun requestBack() {
         if (state.isDirty) showDiscardDialog = true else onBack()
     }
-    BackHandler(enabled = !showIconPicker, onBack = ::requestBack)
-    BackHandler(enabled = showIconPicker) { showIconPicker = false }
+    BackHandler(onBack = ::requestBack)
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
@@ -1064,127 +1064,15 @@ fun CategoryEditorScreen(
         }
     }
 
-    if (showIconPicker) {
-        CategoryIconPicker(
-            selectedIconId = state.iconName,
-            searchQuery = iconSearchQuery,
-            onSearchQueryChange = { iconSearchQuery = it },
-            onBack = { showIconPicker = false },
-            onSelect = { iconId ->
-                viewModel.setIcon(iconId)
-                showIconPicker = false
-            },
-        )
-        return
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(
-                            if (state.isNew) {
-                                R.string.category_editor_add_title
-                            } else {
-                                R.string.category_editor_edit_title
-                            },
-                        ),
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = ::requestBack) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
-                actions = {
-                    if (!state.isNew) {
-                        IconButton(onClick = { showDeleteDialog = true }, enabled = !state.isSaving) {
-                            Icon(
-                                Icons.Outlined.Delete,
-                                contentDescription = stringResource(R.string.content_description_delete_category),
-                            )
-                        }
-                    }
-                    TextButton(
-                        onClick = viewModel::save,
-                        enabled = state.canSave && state.isDirty,
-                    ) { Text(stringResource(R.string.action_save)) }
-                },
-            )
-        },
-    ) { padding ->
-        if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                CategoryPreview(state)
-                OutlinedTextField(
-                    value = state.name,
-                    onValueChange = viewModel::setName,
-                    shape = MataCardLayout.InputShape,
-                    label = { Text(stringResource(R.string.category_name_required_label)) },
-                    supportingText = {
-                        Text(stringResource(R.string.character_counter_format, state.name.length, 30))
-                    },
-                    isError = state.name.length > 30,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = categoryColors[state.colorIndex],
-                        unfocusedBorderColor = categoryColors[state.colorIndex],
-                    ),
-                )
-                Text(stringResource(R.string.category_color_label), style = MaterialTheme.typography.titleMedium)
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    categoryColors.chunked(4).forEach { rowColors ->
-                        Row(
-                            Modifier.fillMaxWidth().focusGroup(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            rowColors.forEach { color ->
-                                val index = categoryColors.indexOf(color)
-                                ColorOption(
-                                    color = color,
-                                    contentColor = MaterialTheme.mataColors.onCategoryColors[index],
-                                    colorId = CategoryColorOptions[index].id,
-                                    label = stringResource(CategoryColorNameResIds[index]),
-                                    selected = state.colorIndex == index,
-                                    onClick = { viewModel.setColor(index) },
-                                )
-                            }
-                        }
-                    }
-                }
-                Text(stringResource(R.string.category_icon_label), style = MaterialTheme.typography.titleMedium)
-                CategoryIconField(
-                    selectedIconId = state.iconName,
-                    enabled = !state.isSaving,
-                    onClick = {
-                        iconSearchQuery = ""
-                        showIconPicker = true
-                    },
-                )
-                state.errorMessageRes?.let {
-                    Text(stringResource(it), color = MaterialTheme.colorScheme.error)
-                }
-                if (state.isSaving) CircularProgressIndicator()
-            }
-        }
-    }
+    CategoryEditorScaffold(
+        state = state,
+        onBack = ::requestBack,
+        onNameChange = viewModel::setName,
+        onColorChange = viewModel::setColor,
+        onIconChange = viewModel::setIcon,
+        onSave = viewModel::save,
+        onDelete = viewModel::delete,
+    )
 
     if (showDiscardDialog) {
         AlertDialog(
@@ -1197,23 +1085,6 @@ fun CategoryEditorScreen(
             dismissButton = {
                 TextButton(onClick = { showDiscardDialog = false }) {
                     Text(stringResource(R.string.action_continue_editing))
-                }
-            },
-        )
-    }
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(R.string.dialog_delete_category_title)) },
-            text = { Text(stringResource(R.string.dialog_delete_category_message)) },
-            confirmButton = {
-                TextButton(onClick = { showDeleteDialog = false; viewModel.delete() }) {
-                    Text(stringResource(R.string.action_delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
                 }
             },
         )
@@ -1252,48 +1123,59 @@ private fun CategoryEditorScaffold(
         return
     }
 
+    val pageColor = MaterialTheme.mataPageColor
     Scaffold(
+        containerColor = pageColor,
         topBar = {
-            if (showTopBar) TopAppBar(
-                title = {
-                    Text(
-                        stringResource(
-                            if (state.isNew) {
-                                R.string.category_editor_add_title
-                            } else {
-                                R.string.category_editor_edit_title
-                            },
-                        ),
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
-                actions = {
-                    if (!state.isNew) {
-                        IconButton(
-                            onClick = { showDeleteDialog = true },
-                            enabled = !state.isSaving,
-                        ) {
-                            Icon(
-                                Icons.Outlined.Delete,
-                                contentDescription = stringResource(
-                                    R.string.content_description_delete_category,
+            if (showTopBar) {
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                stringResource(
+                                    if (state.isNew) {
+                                        R.string.category_editor_add_title
+                                    } else {
+                                        R.string.category_editor_edit_title
+                                    },
                                 ),
                             )
-                        }
-                    }
-                    TextButton(
-                        onClick = onSave,
-                        enabled = state.canSave && state.isDirty,
-                    ) { Text(stringResource(R.string.action_save)) }
-                },
-            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.ArrowBack,
+                                    contentDescription = stringResource(R.string.action_back),
+                                )
+                            }
+                        },
+                        actions = {
+                            if (!state.isNew) {
+                                IconButton(
+                                    onClick = { showDeleteDialog = true },
+                                    enabled = !state.isSaving,
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Delete,
+                                        contentDescription = stringResource(
+                                            R.string.content_description_delete_category,
+                                        ),
+                                    )
+                                }
+                            }
+                            TextButton(
+                                onClick = onSave,
+                                enabled = state.canSave && state.isDirty,
+                            ) { Text(stringResource(R.string.action_save)) }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = pageColor,
+                            scrolledContainerColor = pageColor,
+                        ),
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
         },
     ) { padding ->
         if (state.isLoading) {
@@ -1305,64 +1187,71 @@ private fun CategoryEditorScaffold(
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .testTag(CATEGORY_EDITOR_SCROLL_TEST_TAG)
                     .verticalScroll(rememberScrollState())
                     .imePadding()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(MataCardLayout.PageContentPadding),
+                verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
             ) {
                 CategoryPreview(state)
-                OutlinedTextField(
-                    value = state.name,
-                    onValueChange = onNameChange,
-                    shape = MataCardLayout.InputShape,
-                    label = { Text(stringResource(R.string.category_name_required_label)) },
-                    supportingText = {
-                        Text(stringResource(R.string.character_counter_format, state.name.length, 30))
-                    },
-                    isError = state.name.length > 30,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = categoryColors[state.colorIndex],
-                        unfocusedBorderColor = categoryColors[state.colorIndex],
-                    ),
-                )
-                Text(
-                    stringResource(R.string.category_color_label),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    categoryColors.chunked(4).forEach { rowColors ->
-                        Row(
-                            Modifier.fillMaxWidth().focusGroup(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            rowColors.forEach { color ->
-                                val index = categoryColors.indexOf(color)
-                                ColorOption(
-                                    color = color,
-                                    contentColor = MaterialTheme.mataColors.onCategoryColors[index],
-                                    colorId = CategoryColorOptions[index].id,
-                                    label = stringResource(CategoryColorNameResIds[index]),
-                                    selected = state.colorIndex == index,
-                                    onClick = { onColorChange(index) },
-                                )
+                MataSectionCard(
+                    modifier = Modifier.fillMaxWidth().testTag(CATEGORY_EDITOR_NAME_CARD_TEST_TAG),
+                ) {
+                    OutlinedTextField(
+                        value = state.name,
+                        onValueChange = onNameChange,
+                        shape = MataCardLayout.InputShape,
+                        label = { Text(stringResource(R.string.category_name_required_label)) },
+                        supportingText = {
+                            Text(stringResource(R.string.character_counter_format, state.name.length, 30))
+                        },
+                        isError = state.name.length > 30,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = categoryColors[state.colorIndex],
+                            unfocusedBorderColor = categoryColors[state.colorIndex],
+                        ),
+                    )
+                }
+                MataSectionCard(
+                    title = stringResource(R.string.category_color_label),
+                    modifier = Modifier.fillMaxWidth().testTag(CATEGORY_EDITOR_COLOR_CARD_TEST_TAG),
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        categoryColors.chunked(4).forEach { rowColors ->
+                            Row(
+                                Modifier.fillMaxWidth().focusGroup(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                            ) {
+                                rowColors.forEach { color ->
+                                    val index = categoryColors.indexOf(color)
+                                    ColorOption(
+                                        color = color,
+                                        contentColor = MaterialTheme.mataColors.onCategoryColors[index],
+                                        colorId = CategoryColorOptions[index].id,
+                                        label = stringResource(CategoryColorNameResIds[index]),
+                                        selected = state.colorIndex == index,
+                                        onClick = { onColorChange(index) },
+                                    )
+                                }
                             }
                         }
                     }
                 }
-                Text(
-                    stringResource(R.string.category_icon_label),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                CategoryIconField(
-                    selectedIconId = state.iconName,
-                    enabled = !state.isSaving,
-                    onClick = {
-                        iconSearchQuery = ""
-                        showIconPicker = true
-                    },
-                )
+                MataSectionCard(
+                    title = stringResource(R.string.category_icon_label),
+                    modifier = Modifier.fillMaxWidth().testTag(CATEGORY_EDITOR_ICON_CARD_TEST_TAG),
+                ) {
+                    CategoryIconField(
+                        selectedIconId = state.iconName,
+                        enabled = !state.isSaving,
+                        onClick = {
+                            iconSearchQuery = ""
+                            showIconPicker = true
+                        },
+                    )
+                }
                 state.errorMessageRes?.let {
                     Text(stringResource(it), color = MaterialTheme.colorScheme.error)
                 }
@@ -1599,8 +1488,14 @@ internal fun normalizeCategoryIconSearch(value: String): String =
 @Composable
 private fun CategoryPreview(state: CategoryEditorUiState) {
     val categoryColor = mataCategoryColor(state.colorIndex)
-    Card(Modifier.fillMaxWidth()) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().testTag(CATEGORY_EDITOR_PREVIEW_CARD_TEST_TAG),
+        shape = MataCardLayout.Shape,
+        color = MaterialTheme.mataCardColor,
+        tonalElevation = 1.dp,
+    ) {
         ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             leadingContent = {
                 Icon(
                     categoryIcon(state.iconName),

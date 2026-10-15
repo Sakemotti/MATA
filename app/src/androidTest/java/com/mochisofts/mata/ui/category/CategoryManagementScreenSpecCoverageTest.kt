@@ -167,12 +167,44 @@ class CategoryManagementScreenSpecCoverageTest {
         composeRule.onNodeWithTag(CATEGORY_EMPTY_ADD_TEST_TAG).performClick()
 
         composeRule.onNodeWithText(text(R.string.category_name_preview)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_PREVIEW_CARD_TEST_TAG).assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_NAME_CARD_TEST_TAG).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.category_name_required_label)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.category_color_label)).assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_COLOR_CARD_TEST_TAG).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.category_icon_label))
             .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_ICON_CARD_TEST_TAG).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_back)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_save)).assertIsDisplayed()
         composeRule.onNodeWithText("一日の終了時刻").assertDoesNotExist()
         composeRule.onNodeWithText("終了時刻").assertDoesNotExist()
+    }
+
+    @Test
+    fun todoEditorCategoryCreationUsesSharedCardsAndReturnsFromIconPickerWithoutLosingName() {
+        val viewModel = CategoryEditorViewModel(SavedStateHandle(), CategoryScreenTestRepository(emptyList()))
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                CategoryEditorScreen(
+                    onBack = {},
+                    onSaved = { _, _ -> },
+                    onDeleted = {},
+                    viewModel = viewModel,
+                )
+            }
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) { !viewModel.uiState.value.isLoading }
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_PREVIEW_CARD_TEST_TAG).assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_NAME_CARD_TEST_TAG).assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performTextInput("下書きのカテゴリ")
+        composeRule.onNodeWithTag(CATEGORY_ICON_LIST_TEST_TAG).performScrollTo().performClick()
+        composeRule.onNodeWithTag(CATEGORY_ICON_PICKER_TEST_TAG).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_NAME_CARD_TEST_TAG).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction() and hasText("下書きのカテゴリ")).assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_COLOR_CARD_TEST_TAG).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(CATEGORY_EDITOR_ICON_CARD_TEST_TAG).performScrollTo().assertIsDisplayed()
     }
 
     @Test

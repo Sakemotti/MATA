@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -101,6 +100,7 @@ import com.mochisofts.mata.core.designsystem.mataColors
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
 import com.mochisofts.mata.core.designsystem.MataSnackbarHost
 import com.mochisofts.mata.core.designsystem.MataCardLayout
+import com.mochisofts.mata.core.designsystem.MataDetailBottomActions
 import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.mataCardSegmentShape
 import com.mochisofts.mata.core.designsystem.mataCardColor
@@ -122,7 +122,7 @@ import com.mochisofts.mata.domain.model.TodoNotification
 import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.ui.common.TodoDetailCategory
 import com.mochisofts.mata.ui.common.TodoDetailField
-import com.mochisofts.mata.ui.common.TodoDetailModal
+import com.mochisofts.mata.ui.common.TodoDetailFullScreen
 import com.mochisofts.mata.ui.common.TodoDetailModalData
 import com.mochisofts.mata.ui.common.TodoDetailSection
 import com.mochisofts.mata.ui.common.TodoDefinitionCard
@@ -1140,32 +1140,14 @@ private fun ArchiveBottomActions(
     onRestore: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Surface(shadowElevation = 8.dp) {
-        Row(
-            Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Button(onClick = onRestore, enabled = enabled, modifier = Modifier.weight(1f)) {
-                if (loading) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(8.dp))
-                }
-                Icon(Icons.Outlined.Restore, null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.action_restore))
-            }
-            Button(
-                onClick = onDelete,
-                enabled = enabled,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.weight(1f),
-            ) {
-                Icon(Icons.Outlined.DeleteForever, null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.action_delete_permanently))
-            }
-        }
-    }
+    MataDetailBottomActions(
+        primaryLabel = stringResource(R.string.action_restore),
+        primaryIcon = Icons.Outlined.Restore,
+        onPrimary = onRestore,
+        onDelete = onDelete,
+        enabled = enabled,
+        loading = loading,
+    )
 }
 
 @Composable
@@ -1272,7 +1254,7 @@ private fun ArchiveActionDialog(
 
 @Composable
 private fun ArchiveHistoryDialog(item: ArchivedHistoryItem, onDismiss: () -> Unit) {
-    TodoDetailModal(data = item.detailModalData(), onDismiss = onDismiss)
+    TodoDetailFullScreen(data = item.detailModalData(), onDismiss = onDismiss)
 }
 
 @Composable
@@ -1281,7 +1263,7 @@ private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
         is ArchivedHistoryItem.Execution -> entry.snapshot
         is ArchivedHistoryItem.Period -> entry.snapshot
     }
-    val fields = mutableListOf(
+    val scheduleFields = mutableListOf(
         TodoDetailField(
             label = stringResource(R.string.archive_label_recurrence),
             value = recurrenceDescription(snapshot.recurrenceRule),
@@ -1292,27 +1274,24 @@ private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
                 stringResource(R.string.time_format, it / 60, it % 60)
             } ?: stringResource(R.string.label_not_set),
         ),
-        TodoDetailField(
-            label = stringResource(R.string.archive_label_notifications),
-            value = todoNotificationSettingsText(snapshot.notifications),
-        ),
     )
     snapshot.dueDate?.let { dueDate ->
-        fields += TodoDetailField(
+        scheduleFields += TodoDetailField(
             label = stringResource(R.string.todo_editor_due_date_label),
             value = dueDate.toPlainDate(),
         )
     }
-    fields += TodoDetailField(
+    scheduleFields += TodoDetailField(
         label = stringResource(R.string.todo_editor_carry_over_label),
         value = stringResource(
             if (snapshot.carryOverEnabled) R.string.label_enabled else R.string.label_disabled,
         ),
     )
+    val historyFields = mutableListOf<TodoDetailField>()
     when (this) {
         is ArchivedHistoryItem.Execution -> {
             snapshot.scheduledLogicalDate?.let { scheduledDate ->
-                fields += TodoDetailField(
+                scheduleFields += TodoDetailField(
                     label = stringResource(R.string.todo_editor_execution_date_label),
                     value = scheduledDate.toPlainDate(),
                 )
@@ -1320,28 +1299,28 @@ private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
             snapshot.resolvedLogicalDate
                 ?.takeIf { it != snapshot.scheduledLogicalDate }
                 ?.let { resolvedDate ->
-                    fields += TodoDetailField(
+                    historyFields += TodoDetailField(
                         label = stringResource(R.string.todo_resolution_date_label),
                         value = resolvedDate.toPlainDate(),
                     )
                 }
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_logical_date),
                 value = entry.logicalDate.toPlainDate(),
             )
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_state),
                 value = todoStateLabel(entry.state),
             )
             entry.actedAt?.let {
-                fields += TodoDetailField(
+                historyFields += TodoDetailField(
                     label = stringResource(R.string.calendar_history_operation_time),
                     value = formatEpochMillis(it),
                 )
             }
         }
         is ArchivedHistoryItem.Period -> {
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_period),
                 value = stringResource(
                     R.string.calendar_history_period_range,
@@ -1349,7 +1328,7 @@ private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
                     entry.periodEnd.toPlainDate(),
                 ),
             )
-            fields += TodoDetailField(
+            historyFields += TodoDetailField(
                 label = stringResource(R.string.calendar_history_result),
                 value = stringResource(
                     R.string.calendar_history_result_count,
@@ -1368,7 +1347,25 @@ private fun ArchivedHistoryItem.detailModalData(): TodoDetailModalData {
             iconName = snapshot.categoryIconName,
             colorIndex = snapshot.categoryColorIndex,
         ),
-        fields = fields,
+        sections = listOf(
+            TodoDetailSection(
+                title = stringResource(R.string.todo_editor_section_schedule),
+                fields = scheduleFields,
+            ),
+            TodoDetailSection(
+                title = stringResource(R.string.todo_editor_section_notification),
+                fields = listOf(
+                    TodoDetailField(
+                        label = stringResource(R.string.archive_label_notifications),
+                        value = todoNotificationSettingsText(snapshot.notifications),
+                    ),
+                ),
+            ),
+            TodoDetailSection(
+                title = stringResource(R.string.archive_section_history),
+                fields = historyFields,
+            ),
+        ),
     )
 }
 

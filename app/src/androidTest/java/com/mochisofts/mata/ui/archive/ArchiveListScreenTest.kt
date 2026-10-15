@@ -18,6 +18,9 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -46,6 +49,7 @@ import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
+import com.mochisofts.mata.ui.common.TODO_DETAIL_SCREEN_TAG
 import com.mochisofts.mata.core.backup.BackupGateway
 import com.mochisofts.mata.core.backup.BackupOperationPhase
 import com.mochisofts.mata.core.backup.BackupOperationState
@@ -326,7 +330,7 @@ class ArchiveListScreenTest {
             scrollToDetailText(title)
             composeRule.onNodeWithText(title).performClick()
             waitForText("当時の説明")
-            composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+            historyCloseButton().performClick()
             composeRule.waitUntil(timeoutMillis = 5_000) {
                 composeRule.onAllNodesWithText("当時の説明").fetchSemanticsNodes().isEmpty()
             }
@@ -366,7 +370,7 @@ class ArchiveListScreenTest {
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(historyTitle))
         composeRule.onNodeWithText(historyTitle).performClick()
 
-        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
+        historyCloseButton().assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.action_undo)).assertDoesNotExist()
         composeRule.onNodeWithText(text(R.string.action_skip)).assertDoesNotExist()
         composeRule.onNodeWithText(text(R.string.action_archive)).assertDoesNotExist()
@@ -747,7 +751,7 @@ class ArchiveListScreenTest {
 
         composeRule.onNodeWithText("再生成時の説明180").assertIsDisplayed()
         assertTrue(managed.viewModel.detailScrollPosition.index > 100)
-        composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+        historyCloseButton().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.onNodeWithText(historyTarget).assertIsDisplayed()
@@ -835,7 +839,7 @@ class ArchiveListScreenTest {
         }
         composeRule.onNodeWithText(historyTitle).performClick()
         composeRule.onNodeWithText("履歴の長い説明".repeat(20)).performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+        historyCloseButton().performClick()
         composeRule.onNodeWithText(text(R.string.action_restore)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
     }
@@ -954,7 +958,7 @@ class ArchiveListScreenTest {
         ).forEach { label ->
             scrollToLastText(label)
         }
-        composeRule.onNodeWithText(text(R.string.action_close)).performClick()
+        historyCloseButton().performClick()
         composeRule.onNodeWithText(longExecutionDescription).assertDoesNotExist()
 
         scrollToDetailText(periodSnapshot.title)
@@ -1072,6 +1076,11 @@ class ArchiveListScreenTest {
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(value))
         composeRule.onNodeWithText(value).assertIsDisplayed()
     }
+
+    private fun historyCloseButton() = composeRule.onNode(
+        hasContentDescription(text(R.string.action_close)) and
+            hasAnyAncestor(hasTestTag(TODO_DETAIL_SCREEN_TAG)),
+    )
 
     private fun scrollToLastText(value: String) {
         val nodes = composeRule.onAllNodesWithText(value)

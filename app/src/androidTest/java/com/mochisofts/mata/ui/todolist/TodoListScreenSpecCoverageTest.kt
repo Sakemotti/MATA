@@ -1,9 +1,7 @@
 package com.mochisofts.mata.ui.todolist
 
 import android.app.Activity
-import android.os.SystemClock
 import android.text.format.DateFormat
-import android.view.MotionEvent
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
@@ -288,7 +286,7 @@ class TodoListScreenSpecCoverageTest {
         ).assertIsNotEnabled()
 
         composeRule.onNodeWithText(skipped.todo.title).performClick()
-        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).assertIsDisplayed()
         composeRule.runOnIdle { assertEquals(0, repository.mutationCount) }
     }
 
@@ -347,7 +345,7 @@ class TodoListScreenSpecCoverageTest {
         }
         composeRule.onNodeWithText(text(R.string.action_edit)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.action_delete_permanently)).assertIsDisplayed()
-        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).assertIsDisplayed()
         composeRule.onAllNodesWithText(text(R.string.action_skip)).assertCountEquals(0)
         composeRule.onAllNodesWithText(text(R.string.action_archive)).assertCountEquals(0)
         composeRule.onAllNodesWithText(text(R.string.action_undo)).assertCountEquals(0)
@@ -615,16 +613,13 @@ class TodoListScreenSpecCoverageTest {
         ).forEach { resourceId ->
             composeRule.onNodeWithText(text(resourceId)).performScrollTo().assertIsDisplayed()
         }
-        composeRule.onNodeWithText(text(R.string.action_close)).assertIsDisplayed().performClick()
+        composeRule.onNodeWithContentDescription(text(R.string.action_close)).assertIsDisplayed().performClick()
         composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(1)
 
         openDetail()
         pressBack()
         composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(1)
 
-        openDetail()
-        tapScreenAt(x = 1f, y = 500f)
-        composeRule.onAllNodesWithText(detail.todo.title).assertCountEquals(1)
     }
 
     @Test
@@ -728,19 +723,6 @@ class TodoListScreenSpecCoverageTest {
     private fun openActionMenu() {
         composeRule.onNodeWithContentDescription(text(R.string.content_description_todo_actions))
             .performClick()
-    }
-
-    @Suppress("DEPRECATION")
-    private fun tapScreenAt(x: Float, y: Float) {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val downTime = SystemClock.uptimeMillis()
-        instrumentation.sendPointerSync(
-            MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0),
-        )
-        instrumentation.sendPointerSync(
-            MotionEvent.obtain(downTime, downTime + 50, MotionEvent.ACTION_UP, x, y, 0),
-        )
-        instrumentation.waitForIdleSync()
     }
 
     private fun waitForText(value: String) {

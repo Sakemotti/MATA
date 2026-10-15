@@ -1,5 +1,6 @@
 package com.mochisofts.mata.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -17,11 +18,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -29,9 +30,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.mochisofts.mata.R
 import com.mochisofts.mata.core.designsystem.MataCardLayout
 import com.mochisofts.mata.core.designsystem.MataCategoryLabel
+import com.mochisofts.mata.core.designsystem.MataDetailBottomActions
 import com.mochisofts.mata.core.designsystem.MataSectionCard
 import com.mochisofts.mata.core.designsystem.mataPageColor
 import com.mochisofts.mata.core.designsystem.mataPageKeyScroll
+import com.mochisofts.mata.core.designsystem.navigation.MataContentFrame
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationUnit
 import com.mochisofts.mata.domain.model.TodoNotification
@@ -60,54 +63,17 @@ data class TodoDetailModalData(
     val sections: List<TodoDetailSection> = emptyList(),
 )
 
-@Composable
-fun TodoDetailModal(
-    data: TodoDetailModalData,
-    onDismiss: () -> Unit,
-    onEdit: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null,
-) {
-    val scrollState = rememberScrollState()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(data.title) },
-        text = {
-            TodoDetailContent(
-                data = data,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .mataPageKeyScroll(scrollState)
-                    .verticalScroll(scrollState),
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
-            }
-        },
-        dismissButton = {
-            if (onEdit != null || onDelete != null) {
-                androidx.compose.foundation.layout.Row {
-                    onEdit?.let { action ->
-                        TextButton(onClick = action) {
-                            Text(stringResource(R.string.action_edit))
-                        }
-                    }
-                    onDelete?.let { action ->
-                        TextButton(onClick = action) {
-                            Text(stringResource(R.string.action_delete_permanently))
-                        }
-                    }
-                }
-            }
-        },
-    )
-}
+internal const val TODO_DETAIL_CARD_TAG = "todo_detail_card"
+internal const val TODO_DETAIL_SCROLL_TAG = "todo_detail_scroll"
+internal const val TODO_DETAIL_SCREEN_TAG = "todo_detail_screen"
+internal const val TODO_DETAIL_SECTION_TAG_PREFIX = "todo_detail_section_"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoDetailFullScreen(
     data: TodoDetailModalData,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
     Dialog(
@@ -118,29 +84,54 @@ fun TodoDetailFullScreen(
         ),
     ) {
         val pageColor = MaterialTheme.mataPageColor
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = pageColor,
-            topBar = {
-                ReadOnlyDetailTopAppBar(
-                    title = stringResource(R.string.todo_detail_title),
-                    onClose = onDismiss,
-                )
-            },
-        ) { padding ->
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .mataPageKeyScroll(scrollState)
-                    .verticalScroll(scrollState)
-                    .padding(MataCardLayout.PageContentPadding),
-            ) {
-                TodoDefinitionCard(
-                    data = data,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+        MataContentFrame(maxWidth = 840.dp, modifier = Modifier.background(pageColor)) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize().testTag(TODO_DETAIL_SCREEN_TAG),
+                containerColor = pageColor,
+                topBar = {
+                    ReadOnlyDetailTopAppBar(
+                        title = stringResource(R.string.todo_detail_title),
+                        onClose = onDismiss,
+                    )
+                },
+                bottomBar = {
+                    if (onEdit != null || onDelete != null) {
+                        MataDetailBottomActions(
+                            primaryLabel = stringResource(R.string.action_edit),
+                            primaryIcon = Icons.Outlined.Edit,
+                            onPrimary = onEdit,
+                            onDelete = onDelete,
+                        )
+                    }
+                },
+            ) { padding ->
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .testTag(TODO_DETAIL_SCROLL_TAG)
+                        .mataPageKeyScroll(scrollState)
+                        .verticalScroll(scrollState)
+                        .padding(MataCardLayout.PageContentPadding),
+                    verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
+                ) {
+                    TodoDefinitionCard(
+                        data = data.copy(sections = emptyList()),
+                        sectionTitle = stringResource(R.string.todo_editor_section_basic_information),
+                        modifier = Modifier.fillMaxWidth().testTag(TODO_DETAIL_CARD_TAG),
+                    )
+                    data.sections.filter { it.fields.isNotEmpty() }.forEachIndexed { index, section ->
+                        MataSectionCard(
+                            title = section.title,
+                            modifier = Modifier.fillMaxWidth().testTag(TODO_DETAIL_SECTION_TAG_PREFIX + index),
+                        ) {
+                            section.fields.forEach { field ->
+                                TodoDetailLine(field.label, field.value)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
