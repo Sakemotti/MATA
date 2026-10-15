@@ -114,8 +114,9 @@ import com.mochisofts.mata.domain.model.TodoState
 import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.ui.common.TodoDetailCategory
 import com.mochisofts.mata.ui.common.TodoDetailField
-import com.mochisofts.mata.ui.common.TodoDetailModal
+import com.mochisofts.mata.ui.common.TodoDetailFullScreen
 import com.mochisofts.mata.ui.common.TodoDetailModalData
+import com.mochisofts.mata.ui.common.TodoDetailSection
 import com.mochisofts.mata.ui.common.todoNotificationSettingsText
 import java.time.Instant
 import java.time.LocalDate
@@ -355,7 +356,7 @@ fun TodoListScreen(
     }
 
     readOnlyOccurrence?.let { occurrence ->
-        TodoDetailModal(
+        TodoDetailFullScreen(
             data = occurrence.detailModalData(),
             onDismiss = { readOnlyOccurrence = null },
             onEdit = {
@@ -950,43 +951,58 @@ private fun TodoOccurrence.detailModalData(): TodoDetailModalData = TodoDetailMo
         iconName = category?.iconName,
         colorIndex = category?.colorIndex,
     ),
-    fields = listOf(
-        TodoDetailField(
-            label = stringResource(R.string.calendar_history_logical_date),
-            value = logicalDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
-        ),
-        TodoDetailField(
-            label = stringResource(R.string.todo_editor_execution_date_label),
-            value = scheduledLogicalDate.toJapaneseDate(
-                stringResource(R.string.date_pattern_plain),
+    sections = listOf(
+        TodoDetailSection(
+            title = stringResource(R.string.todo_editor_section_schedule),
+            fields = listOf(
+                TodoDetailField(
+                    label = stringResource(R.string.todo_editor_execution_date_label),
+                    value = scheduledLogicalDate.toJapaneseDate(
+                        stringResource(R.string.date_pattern_plain),
+                    ),
+                ),
+                TodoDetailField(
+                    label = stringResource(R.string.todo_editor_due_date_label),
+                    value = effectiveDueDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
+                ),
+                TodoDetailField(
+                    label = stringResource(R.string.calendar_history_due),
+                    value = todo.dueMinutes?.let { minutes ->
+                        stringResource(R.string.time_format, minutes / 60, minutes % 60)
+                    } ?: stringResource(R.string.label_not_set),
+                ),
+                TodoDetailField(
+                    label = stringResource(R.string.calendar_history_recurrence),
+                    value = recurrenceSummary(todo),
+                ),
+                TodoDetailField(
+                    label = stringResource(R.string.todo_editor_carry_over_label),
+                    value = stringResource(
+                        if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled,
+                    ),
+                ),
             ),
         ),
-        TodoDetailField(
-            label = stringResource(R.string.todo_editor_due_date_label),
-            value = effectiveDueDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
+        TodoDetailSection(
+            title = stringResource(R.string.todo_editor_section_notification),
+            fields = listOf(
+                TodoDetailField(
+                    label = stringResource(R.string.calendar_history_notifications),
+                    value = todoNotificationSettingsText(todo.notifications),
+                ),
+            ),
         ),
-        TodoDetailField(
-            label = stringResource(R.string.calendar_history_due),
-            value = todo.dueMinutes?.let { minutes ->
-                stringResource(R.string.time_format, minutes / 60, minutes % 60)
-            } ?: stringResource(R.string.label_not_set),
-        ),
-        TodoDetailField(
-            label = stringResource(R.string.calendar_history_recurrence),
-            value = recurrenceSummary(todo),
-        ),
-        TodoDetailField(
-            label = stringResource(R.string.calendar_history_notifications),
-            value = todoNotificationSettingsText(todo.notifications),
-        ),
-        TodoDetailField(
-            label = stringResource(R.string.calendar_history_state),
-            value = stringResource(state.labelRes()),
-        ),
-        TodoDetailField(
-            label = stringResource(R.string.todo_editor_carry_over_label),
-            value = stringResource(
-                if (todo.carryOverEnabled) R.string.label_enabled else R.string.label_disabled,
+        TodoDetailSection(
+            title = stringResource(R.string.archive_section_history),
+            fields = listOf(
+                TodoDetailField(
+                    label = stringResource(R.string.calendar_history_logical_date),
+                    value = logicalDate.toJapaneseDate(stringResource(R.string.date_pattern_plain)),
+                ),
+                TodoDetailField(
+                    label = stringResource(R.string.calendar_history_state),
+                    value = stringResource(state.labelRes()),
+                ),
             ),
         ),
     ),

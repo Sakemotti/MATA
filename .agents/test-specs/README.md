@@ -1,7 +1,7 @@
 # MATA 総合動作確認項目書
 
 - 文書状態: 第2版
-- 最終更新日: 2026-10-14
+- 最終更新日: 2026-10-15
 - 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../functional-specs/monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../non-functional-specs/startup-specs/README.md)、[MATAデザインシステム仕様](../non-functional-specs/design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../non-functional-specs/adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../non-functional-specs/error-handling-specs/README.md)、[性能・省電力仕様](../non-functional-specs/performance-specs/README.md)、[セキュリティ・プライバシー仕様](../non-functional-specs/security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../non-functional-specs/observability-specs/README.md)、[リリース・配布運用仕様](../non-functional-specs/release-specs/README.md)、[実装アーキテクチャ・データアクセス仕様](../non-functional-specs/architecture-specs/README.md)
 
 ## 1. 目的
@@ -17,6 +17,8 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 versionCode `9`には[登録・更新確認手順](closed-testing-release-1.0.0-9.md)と[候補生成結果](release-candidate-1.0.0-9.md)を使用する。2026-10-14公開済み・既存警告のみ、8→9更新・データ保持と原報告者本人の改善再確認（Galaxy S26／Android 16）はUSER確認済み。CT9-02〜CT9-07のOWNER回帰6件も同日のUSER報告ですべて合格・確認完了（CT-023）。既存のP0/P1合格をversionCode `9`の全項目再実施済みと扱わない。
 
 ## 2. 正とする文書
+
+Issue #307の対応と検証は[レイアウト統一漏れの調査・確認範囲](layout-consistency-307.md)に整理する。2026-10-15にUSERが表示を承認し、正式採用した。versionCode `9`で実施済みの結果とは分け、更新配布後の回帰確認は別途行う。
 
 テスト項目と仕様が矛盾する場合は、次の順で扱う。
 
