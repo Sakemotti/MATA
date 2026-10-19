@@ -97,6 +97,7 @@ normalizedNameには一意制約を設ける。並べ替え後は1トランザ�
 | repeatParamsJson | JSON | 方式固有の値 |
 | deadlineMinute | 整数またはnull | 0～1439、nullは論理日の終了時刻 |
 | carryOverEnabled | 真偽値 | 未完了を解決まで表示するか。回数指定方式ではfalse |
+| incompleteDismissedThroughDate | ISO日付またはnull | 未完了一覧専用の確認済み境界。通常は元の実行日、回数型は期間末日で識別。履歴や繰り返し・定義改訂番号は変更しない |
 | definitionRevision | 整数 | 初期値1、編集成功ごとに増加 |
 | archivedAt | Epochミリ秒またはnull | nullは通常、値ありはアーカイブ済み |
 | createdAt | Epochミリ秒 | 作成時点 |

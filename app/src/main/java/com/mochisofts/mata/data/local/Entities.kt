@@ -59,6 +59,7 @@ data class TodoEntity(
     val archivedAt: Long?,
     val dueDate: String? = null,
     val carryOverEnabled: Boolean = false,
+    val incompleteDismissedThroughDate: String? = null,
 )
 
 @Entity(

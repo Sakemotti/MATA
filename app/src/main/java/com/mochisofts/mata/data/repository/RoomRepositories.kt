@@ -16,6 +16,12 @@ import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.IncompleteTodoSource
+import com.mochisofts.mata.domain.model.IncompleteTodoRegistration
+import com.mochisofts.mata.domain.model.IncompleteTodoGroup
+import com.mochisofts.mata.domain.model.IncompleteTodoHistory
+import com.mochisofts.mata.domain.model.IncompleteTodoSummary
+import com.mochisofts.mata.domain.model.buildIncompleteTodoGroups
 import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
@@ -160,6 +166,52 @@ class RoomTodoRepository @Inject constructor(
     private val holidayRepository: HolidayRepository,
     private val clock: Clock,
 ) : TodoRepository {
+    override fun observePastIncompleteTodoCount(): Flow<Int> =
+        todoDao.observeIncompleteSummaries().map { it.size }
+
+    override fun observeIncompleteTodos(): Flow<List<IncompleteTodoGroup>> = combine(
+        todoDao.observeActive(), categoryDao.observeAll(), todoDao.observeIncompleteSummaries(),
+        observeOccurrences(LocalDate.now(clock)),
+    ) { todos, categories, summaries, current ->
+        buildIncompleteTodoGroups(
+            todos.map(TodoEntity::toDomain), categories.map(CategoryEntity::toDomain),
+            summaries.map { IncompleteTodoSummary(
+                it.todoId, it.count, LocalDate.parse(it.oldestDate), LocalDate.parse(it.latestDate),
+            ) }, current,
+            todos.mapNotNull { todo -> todo.incompleteDismissedThroughDate?.let {
+                todo.id to LocalDate.parse(it)
+            } }.toMap(),
+        )
+    }
+
+    override fun observeIncompleteHistory(todoId: String, limit: Int, offset: Int): Flow<List<IncompleteTodoHistory>> =
+        todoDao.observeIncompleteHistory(todoId, limit.coerceIn(1, 100), offset.coerceAtLeast(0)).map { rows ->
+            rows.map { IncompleteTodoHistory(LocalDate.parse(it.date), it.periodStart?.let(LocalDate::parse)) }
+        }
+
+    override suspend fun dismissIncompleteTodos(source: IncompleteTodoSource): Result<Unit> = runCatching {
+        database.withTransaction { acknowledgeIncomplete(source) }
+    }
+
+    private suspend fun acknowledgeIncomplete(source: IncompleteTodoSource) {
+        val original = todoDao.findById(source.todoId)
+            ?: throw ValidationException(ValidationError.TODO_NOT_FOUND)
+        validate(original.archivedAt == null, ValidationError.TODO_NOT_ACTIVE)
+        validate(
+            original.incompleteDismissedThroughDate?.let { LocalDate.parse(it) < source.throughDate } ?: true,
+            ValidationError.INCOMPLETE_ALREADY_HANDLED,
+        )
+        todoDao.setIncompleteDismissedThroughDate(source.todoId, source.throughDate.toString())
+    }
+
+    override suspend fun registerIncompleteTodo(
+        source: IncompleteTodoSource,
+        registration: IncompleteTodoRegistration,
+    ): Result<String> = with(registration) {
+        saveTodoInternal(null, title, description, categoryId, startDate, endDate, recurrenceRule,
+            dueMinutes, notifications, dueDate, carryOverEnabled, source)
+    }
+
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> {
         val persistedInputs = combine(
             todoDao.observeActive(),
@@ -322,6 +374,14 @@ class RoomTodoRepository @Inject constructor(
         notifications: List<TodoNotification>,
         dueDate: LocalDate?,
         carryOverEnabled: Boolean,
+    ): Result<String> = saveTodoInternal(id, title, description, categoryId, startDate, endDate,
+        recurrenceRule, dueMinutes, notifications, dueDate, carryOverEnabled)
+
+    private suspend fun saveTodoInternal(
+        id: String?, title: String, description: String, categoryId: String?,
+        startDate: LocalDate, endDate: LocalDate?, recurrenceRule: RecurrenceRule,
+        dueMinutes: Int?, notifications: List<TodoNotification>, dueDate: LocalDate?,
+        carryOverEnabled: Boolean, incompleteSource: IncompleteTodoSource? = null,
     ): Result<String> = runCatching {
         val trimmedTitle = title.trim()
         validate(trimmedTitle.isNotEmpty(), ValidationError.TODO_TITLE_REQUIRED)
@@ -347,8 +407,8 @@ class RoomTodoRepository @Inject constructor(
             throw ValidationException(ValidationError.TODO_CATEGORY_NOT_FOUND)
         }
         val dayEndHour = settingsRepository.dayEndHour.first()
+        val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), dayEndHour)
         if (id == null) {
-            val currentLogicalDate = logicalDate(ZonedDateTime.now(clock), dayEndHour)
             validate(!startDate.isBefore(currentLogicalDate), ValidationError.TODO_DATE_IN_PAST)
         }
 
@@ -369,6 +429,8 @@ class RoomTodoRepository @Inject constructor(
         val todoId = id ?: UUID.randomUUID().toString()
         val encodedRule = RecurrenceRuleJson.encode(recurrenceRule)
         database.withTransaction {
+            // Creating the new definition and acknowledging the old inbox entries are one atomic action.
+            incompleteSource?.let { acknowledgeIncomplete(it) }
             val existing = id?.let { todoDao.findById(it) }
             val now = clock.millis()
             val updatedTodo = TodoEntity(
@@ -392,6 +454,16 @@ class RoomTodoRepository @Inject constructor(
                     archivedAt = existing?.archivedAt,
                     dueDate = dueDate.takeIf { recurrenceRule.type == RecurrenceType.ONCE }?.toString(),
                     carryOverEnabled = carryOverEnabled && !recurrenceRule.type.isCountBased,
+                    incompleteDismissedThroughDate = existing?.incompleteDismissedThroughDate?.let { dismissed ->
+                        val scheduleChanged = existing.startDate != startDate.toString() ||
+                            existing.recurrenceType != encodedRule.typeCode ||
+                            existing.repeatParamsJson != encodedRule.paramsJson
+                        if (scheduleChanged && LocalDate.parse(dismissed) >= currentLogicalDate) {
+                            // A dismissed count period may end in the future. A new schedule must
+                            // not inherit that future cutoff, while already hidden past stays hidden.
+                            currentLogicalDate.minusDays(1).toString()
+                        } else dismissed
+                    },
                 )
             todoDao.upsert(updatedTodo)
             val existingNotifications = notificationDao.findForTodo(todoId).associateBy { it.id }

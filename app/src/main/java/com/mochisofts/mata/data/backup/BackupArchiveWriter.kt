@@ -261,6 +261,7 @@ class BackupArchiveWriter @Inject constructor(
         endObject()
         name("deadlineMinute").nullable(value.dueMinutes)
         name("carryOverEnabled").value(value.carryOverEnabled)
+        name("incompleteDismissedThroughDate").nullable(value.incompleteDismissedThroughDate)
         name("definitionRevision").value(value.definitionRevision.toLong())
         name("archivedAt").nullable(value.archivedAt)
         name("createdAt").value(value.createdAt)

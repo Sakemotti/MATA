@@ -72,6 +72,7 @@ import java.util.TimeZone
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -82,6 +83,25 @@ import org.junit.Test
 class TodoListScreenSpecCoverageTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun pastIncompleteEntryOpensIndependentListWithoutChangingDailyProgress() {
+        val destinations = mutableListOf<MataDestination>()
+        val current = occurrence("incomplete-source", "未完了あり", TODAY, TodoState.PENDING)
+        val repository = TestTodoRepository(listOf(current))
+        repository.incompleteGroups.value = listOf(com.mochisofts.mata.domain.model.IncompleteTodoGroup(
+            current.todo, null, 3, TODAY.minusDays(3), TODAY, current,
+            com.mochisofts.mata.domain.model.IncompleteTodoSource(current.todo.id, TODAY)))
+        setScreen(repository, onDestination = destinations::add)
+        waitForText(text(R.string.incomplete_open))
+        composeRule.onNodeWithTag("incomplete_home_entry").assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.todo_list_daily_progress_format, 0, 1)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.incomplete_open)).performClick()
+        composeRule.runOnIdle { assertEquals(listOf(MataDestination.INCOMPLETE), destinations) }
+        composeRule.onNodeWithContentDescription(text(R.string.content_description_previous_day)).performClick()
+        waitForText(displayedDate(TODAY.minusDays(1), false))
+        composeRule.onNodeWithTag("incomplete_home_entry").assertDoesNotExist()
+    }
 
     @Test
     fun tl001_normalLaunchAndCurrentDrawerItemKeepSingleDateTodoList() {
@@ -798,6 +818,9 @@ class TodoListScreenSpecCoverageTest {
 }
 
 private class TestTodoRepository(initialOccurrences: List<TodoOccurrence>) : TodoRepository {
+    val incompleteGroups = MutableStateFlow<List<com.mochisofts.mata.domain.model.IncompleteTodoGroup>>(emptyList())
+    override fun observeIncompleteTodos() = incompleteGroups
+    override fun observePastIncompleteTodoCount() = incompleteGroups.map { groups -> groups.count { it.pastCount > 0 } }
     val occurrences = MutableStateFlow(initialOccurrences)
     val todos = MutableStateFlow(initialOccurrences.map(TodoOccurrence::todo))
     var completeCalls = 0

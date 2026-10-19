@@ -21,6 +21,7 @@
 | SCR-005 | アーカイブ済みTODO一覧 | [archived-todos/spec.md](archived-todos/spec.md) |
 | SCR-006 | 設定 | [settings/spec.md](settings/spec.md) |
 | SCR-007 | カテゴリ別TODO一覧 | [category-todo-list/spec.md](category-todo-list/spec.md) |
+| SCR-008 | 未完了TODO一覧 | [incomplete-todos/spec.md](incomplete-todos/spec.md) |
 
 独立した画面として追加する必要が生じた場合は、画面IDを付けてディレクトリと仕様ファイルを追加する。ダイアログ、ボトムシートなど画面内で完結するUIは、原則として呼び出し元の画面仕様に含める。
 

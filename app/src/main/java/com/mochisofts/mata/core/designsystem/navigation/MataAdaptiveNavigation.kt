@@ -108,6 +108,7 @@ internal fun mataAdaptiveLayoutInfoFor(
         MataDestination.CALENDAR -> 1200f
         MataDestination.SETTINGS -> 720f
         MataDestination.TODOS,
+        MataDestination.INCOMPLETE,
         MataDestination.CATEGORY_TODOS,
         MataDestination.CATEGORIES,
         MataDestination.ARCHIVE,
@@ -339,6 +340,7 @@ fun MataAdaptiveNavigation(
             MataDestination.CALENDAR -> 1200.dp
             MataDestination.SETTINGS -> 720.dp
             MataDestination.TODOS,
+            MataDestination.INCOMPLETE,
             MataDestination.CATEGORY_TODOS,
             MataDestination.CATEGORIES,
             MataDestination.ARCHIVE,
@@ -360,7 +362,11 @@ fun MataAdaptiveNavigation(
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
-                        MataNavigationDrawer(selected) { destination ->
+                        MataNavigationDrawer(
+                            selected,
+                            isOpen = drawerState.currentValue == androidx.compose.material3.DrawerValue.Open ||
+                                drawerState.targetValue == androidx.compose.material3.DrawerValue.Open,
+                        ) { destination ->
                             scope.launch {
                                 drawerState.close()
                                 navigate(destination)

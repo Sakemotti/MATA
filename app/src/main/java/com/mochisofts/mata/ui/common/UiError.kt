@@ -35,6 +35,7 @@ fun AppFailure.toUserMessageRes(@StringRes fallback: Int): Int =
             R.string.error_todo_notification_after_requires_deadline
         ValidationError.TODO_NOTIFICATION_AFTER_DAY_END -> R.string.error_todo_notification_after_day_end
         ValidationError.TODO_ALREADY_ACTED -> R.string.error_todo_already_acted
+        ValidationError.INCOMPLETE_ALREADY_HANDLED -> R.string.incomplete_already_handled
         ValidationError.TODO_REQUIRED_COUNT_REACHED -> R.string.error_todo_required_count_reached
         ValidationError.TODO_NOT_FOUND -> R.string.error_todo_not_found
         ValidationError.TODO_NOT_ACTIVE -> R.string.error_todo_not_active

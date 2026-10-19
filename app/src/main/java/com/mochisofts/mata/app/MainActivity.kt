@@ -66,6 +66,8 @@ import com.mochisofts.mata.core.navigation.OpenSourceLicensesRoute
 import com.mochisofts.mata.core.navigation.SettingsRoute
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.core.navigation.TodoListRoute
+import com.mochisofts.mata.core.navigation.IncompleteTodoListRoute
+import com.mochisofts.mata.ui.incomplete.IncompleteTodoListScreen
 import com.mochisofts.mata.core.navigation.TODO_EDITOR_RESULT_KEY
 import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.core.navigation.UNCATEGORIZED_CATEGORY_KEY
@@ -260,6 +262,7 @@ private fun MataApp(
     val navigateToDestination: (MataDestination) -> Unit = { destination ->
         when (destination) {
             MataDestination.TODOS -> navController.navigate(TodoListRoute()) { launchSingleTop = true }
+            MataDestination.INCOMPLETE -> navController.navigate(IncompleteTodoListRoute) { launchSingleTop = true }
             MataDestination.CATEGORY_TODOS -> {
                 navController.navigate(CategoryTodoListRoute()) { launchSingleTop = true }
             }
@@ -299,6 +302,17 @@ private fun MataApp(
                 onAddTodo = { navController.navigate(TodoEditorRoute()) },
                 onEditTodo = { navController.navigate(TodoEditorRoute(it)) },
                 onDestination = navigateToDestination,
+            )
+        }
+        composable<IncompleteTodoListRoute> {
+            IncompleteTodoListScreen(
+                onDestination = navigateToDestination,
+                onRegister = { source ->
+                    navController.navigate(TodoEditorRoute(
+                        incompleteTodoId = source.todoId,
+                        incompleteThroughDate = source.throughDate.toString(),
+                    ))
+                },
             )
         }
         composable<TodoEditorRoute> {

@@ -8,6 +8,8 @@ import com.mochisofts.mata.R
 import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.core.navigation.TodoEditorRoute
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.IncompleteTodoSource
+import com.mochisofts.mata.domain.model.IncompleteTodoRegistration
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.MonthlyNthWeekday
@@ -51,6 +53,7 @@ import kotlinx.coroutines.launch
 data class TodoEditorUiState(
     val isLoading: Boolean = true,
     val isNew: Boolean = true,
+    val isReRegistration: Boolean = false,
     val title: String = "",
     val description: String = "",
     val categories: List<Category> = emptyList(),
@@ -184,13 +187,16 @@ class TodoEditorViewModel @Inject constructor(
     private val route = TodoEditorRoute(
         todoId = savedStateHandle["todoId"],
         initialDate = savedStateHandle["initialDate"],
+        incompleteTodoId = savedStateHandle["incompleteTodoId"],
+        incompleteThroughDate = savedStateHandle["incompleteThroughDate"],
     )
     private val today = LocalDate.now(clock)
     private val initialDate = route.initialDate
         ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
         ?: today
     private val _uiState = MutableStateFlow(
-        TodoEditorUiState(isNew = route.todoId == null, today = today, startDate = initialDate),
+        TodoEditorUiState(isNew = route.todoId == null, today = today, startDate = initialDate,
+            isReRegistration = route.incompleteTodoId != null),
     )
     val uiState: StateFlow<TodoEditorUiState> = _uiState.asStateFlow()
 
@@ -286,14 +292,23 @@ class TodoEditorViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            val todo = route.todoId?.let { todoRepository.getTodo(it) }
-            if (route.todoId != null && todo == null) {
+            val requestedId = route.todoId ?: route.incompleteTodoId
+            val todo = requestedId?.let { todoRepository.getTodo(it) }
+            if (requestedId != null && (todo == null || todo.archivedAt != null)) {
                 effectsChannel.send(TodoEditorEffect.NotFound)
                 return@launch
             }
             _uiState.update { state ->
                 val loadedState = refreshDerived(if (todo == null) {
                     state.copy(isLoading = false)
+                } else if (route.incompleteTodoId != null) {
+                    state.copy(
+                        isLoading = false, title = todo.title, description = todo.description,
+                        categoryId = todo.categoryId, startDate = state.today,
+                        endDate = null, recurrenceType = RecurrenceType.ONCE,
+                        dueDate = null, dueMinutes = null, carryOverEnabled = false,
+                        notifications = emptyList(),
+                    )
                 } else {
                     state.copy(
                         isLoading = false,
@@ -460,7 +475,20 @@ class TodoEditorViewModel @Inject constructor(
         if (!state.canSave) return
         _uiState.update { it.copy(isSaving = true, errorMessageRes = null) }
         viewModelScope.launch {
-            todoRepository.saveTodo(
+            val registrationResult = if (route.incompleteTodoId != null) {
+                runCatching {
+                    val source = IncompleteTodoSource(
+                        route.incompleteTodoId, LocalDate.parse(requireNotNull(route.incompleteThroughDate)),
+                    )
+                    todoRepository.registerIncompleteTodo(source, IncompleteTodoRegistration(
+                        state.title, state.description, state.categoryId, state.startDate,
+                        state.endDate.takeUnless { state.recurrenceType == RecurrenceType.ONCE },
+                        state.recurrenceRule, state.dueMinutes, state.notifications,
+                        state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
+                        state.carryOverEnabled && !state.recurrenceType.isCountBased,
+                    )).getOrThrow()
+                }
+            } else todoRepository.saveTodo(
                 id = route.todoId,
                 title = state.title,
                 description = state.description,
@@ -472,7 +500,8 @@ class TodoEditorViewModel @Inject constructor(
                 notifications = state.notifications,
                 dueDate = state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
                 carryOverEnabled = state.carryOverEnabled && !state.recurrenceType.isCountBased,
-            ).onSuccess { todoId ->
+            )
+            registrationResult.onSuccess { todoId ->
                 clearDraft()
                 val systemState = notificationScheduler.systemState()
                 val shouldRequestPermission = state.notifications.isNotEmpty() &&
