@@ -1,6 +1,6 @@
 # MATA 1.0.0 (10) Closed testing候補生成結果
 
-- 状態: 生成・署名・検証・保管済み／Console登録・公開・配布後確認は未実施
+- 状態: 生成・署名・検証・保管済み／AABアップロード済み・既知の警告のみ（USER報告）／公開状態・配布後確認は未確認
 - 実施日: 2026-10-19
 - 実施者: AUTO
 - 判定: Closed testing候補の技術的検査は合格。本番向けGitHubゲートは未解決Issue・PRにより未合格であり、Production公開承認ではない
@@ -29,7 +29,7 @@
 | 容量 | `13,084,152 bytes` |
 | SHA-256 | `2203C2F7934D36CAA63D98412DFB097E626661EB8BC56B056A53908F12EDCB99` |
 | 配信先 | 現在運用中の新しいClosed testingトラック |
-| Console登録・公開 | 未実施 |
+| Consoleアップロード・公開 | アップロード済み・既知の警告のみ（2026-10-19 USER報告、CT-024）。公開状態・日時は未確認 |
 
 Google Playへ登録するのは上記AABだけであり、保管用ZIPやmappingをAAB欄へアップロードしない。`app/release/`はGit除外対象で、生成物・keystore・秘密値はコミットしていない。
 
@@ -79,9 +79,9 @@ Google Playへ登録するのは上記AABだけであり、保管用ZIPやmappin
 - 最終ManifestはversionCodeを9→10へ置き換えると完全一致した。権限・exported component等の追加はない。
 - アプリの変更は未完了TODO一覧とレイアウト改善を含み、Roomは8→9、バックアップ形式は5→6となる。旧形式1〜5の読込を維持するが、形式6を旧アプリでは復元できない。
 - AABにBaseline Profileの`baseline.prof`（11,905 bytes）と`baseline.profm`（1,496 bytes）を含む。
-- AABにネイティブライブラリ8件を含み、取得可能なNative Debug Symbolsは0件だった。今回のPlay Console警告はアップロード後に記録する。
+- AABにネイティブライブラリ8件を含み、取得可能なNative Debug Symbolsは0件だった。2026-10-19にUSERからアップロード時の警告は既知のもののみと報告された。今回の正確な文言・件数は未記録である。
 - JBRの`jarsigner -verify`は終了コード0・`jar verified.`だった。自己署名、信頼チェーン、タイムスタンプなし、POSIX属性およびJarFile／JarInputStreamの差異に関する警告も表示された。versionCode 9の記録にも同種の診断がある。Gradle側のJarFile検証と単一署名者・期待証明書の一致を確認し、署名検証の無効化・AABの並べ替え・再署名は行っていない。Play Consoleでの受理を先取りしない。
 
 ## 6. 引き渡しと残りの確認
 
-現在運用中のClosed testingトラックへ上記AABを登録し、公開状態・日時・警告を報告範囲で記録する。次にアンインストールせず9→10へ更新し、[登録・更新確認手順](closed-testing-release-1.0.0-10.md)のOWNER回帰と、テスターによる追加機能の再確認を行う。公開・実機・テスター確認は未実施であり、Productionへ自動昇格しない。
+2026-10-19にUSERからAABのアップロード済み・既知の警告のみとの報告を受領した（CT-024）。報告日を実際のアップロード日・公開日として補完せず、Consoleの公開状態・日時と配布後確認は未確認のまま維持する。公開後にアンインストールせず9→10へ更新し、[登録・更新確認手順](closed-testing-release-1.0.0-10.md)のOWNER回帰と、テスターによる追加機能の再確認を行う。Productionへ自動昇格しない。
