@@ -2,7 +2,7 @@
 
 - 対象: MATA初回公開（Closed testing版`1.0.0 (9)`、2026-10-14公開済み）
 - 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9公開・更新とデータ保持・原報告者改善再確認・OWNER回帰6件の確認完了
-- 最終更新日: 2026-10-15
+- 最終更新日: 2026-10-19
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -10,6 +10,7 @@
 - 前回版のClosed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
 - 前回版のClosed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
 - versionCode 9の引き渡し・証跡: [MATA 1.0.0 (9) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)
+- versionCode 10の配布準備: [MATA 1.0.0 (10) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)。未完了TODO一覧と詳細画面等のレイアウト改善を含む。生成・公開・配布後確認は未実施
 - 旧版のClosed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
 - 旧版のClosed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
