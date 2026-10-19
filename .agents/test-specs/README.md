@@ -1,7 +1,7 @@
 # MATA 総合動作確認項目書
 
 - 文書状態: 第2版
-- 最終更新日: 2026-10-15
+- 最終更新日: 2026-10-19
 - 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../functional-specs/monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../non-functional-specs/startup-specs/README.md)、[MATAデザインシステム仕様](../non-functional-specs/design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../non-functional-specs/adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../non-functional-specs/error-handling-specs/README.md)、[性能・省電力仕様](../non-functional-specs/performance-specs/README.md)、[セキュリティ・プライバシー仕様](../non-functional-specs/security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../non-functional-specs/observability-specs/README.md)、[リリース・配布運用仕様](../non-functional-specs/release-specs/README.md)、[実装アーキテクチャ・データアクセス仕様](../non-functional-specs/architecture-specs/README.md)
 
 ## 1. 目的
@@ -15,6 +15,8 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 2026-10-11の追加Closed testing方針では、[参加ガイドの依頼文](closed-testing-tester-guide.md#12-配布メッセージひな型)で毎日の自由なTODO管理と実用した中での感想を依頼する。[14日間の利用・フォロー計画](closed-testing-14-day-plan.md)は運営側で使用し、テスターへ日別操作を指定しない。正式試験424件の担当割り当てや合格証跡は置き換えない。
 
 versionCode `9`には[登録・更新確認手順](closed-testing-release-1.0.0-9.md)と[候補生成結果](release-candidate-1.0.0-9.md)を使用する。2026-10-14公開済み・既存警告のみ、8→9更新・データ保持と原報告者本人の改善再確認（Galaxy S26／Android 16）はUSER確認済み。CT9-02〜CT9-07のOWNER回帰6件も同日のUSER報告ですべて合格・確認完了（CT-023）。既存のP0/P1合格をversionCode `9`の全項目再実施済みと扱わない。
+
+versionCode `10`は未完了TODO一覧と詳細画面等のレイアウト改善を含む配布準備版であり、[登録・更新確認手順](closed-testing-release-1.0.0-10.md)で9→10更新・DB8→9移行・バックアップ形式6・配布後回帰を追跡する。生成・公開・実機合格の各状態を分けて記録する。
 
 ## 2. 正とする文書
 
