@@ -43,7 +43,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 - 上記のversionCode `5`・`6`は当初の計画である。versionCode `6`は未配布のまま、追加フィードバック対応によりversionCode `7`・`8`をClosed testingへ公開した。Production候補の確定は追加テストとProduction accessの承認状況を踏まえて別途行う。
 - versionCode `9`は2026-10-14に生成・署名・検証・保管・公開したClosed testing版である。既存警告のみ、OWNERの8→9更新とデータ保持、原報告者本人のGalaxy S26／Android 16での改善再確認とOWNER回帰6件をUSER確認済み。[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)に実績を記録し、追加テストの要件達成とProduction向けゲートの判定は別途行う。
 
-- versionCode `10`は2026-10-19に未完了TODO一覧・詳細画面等のレイアウト改善を含む署名済み候補を生成・検証・保管した。Console登録・公開・配布後確認は未実施である。[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)で追跡し、本番向けGitHubゲートの未解決Issue・通常依存関係PRによる未合格は別途維持する。
+- versionCode `10`は2026-10-19に未完了TODO一覧・詳細画面等のレイアウト改善を含む署名済み候補を生成・検証・保管した。同日にUSERからアップロード済み・既知の警告のみと報告された（CT-024）。公開状態・日時・配布後確認は未確認である。[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)で追跡し、本番向けGitHubゲートの未解決Issue・通常依存関係PRによる未合格は別途維持する。
 
 ## 4. 固定する公開値
 
