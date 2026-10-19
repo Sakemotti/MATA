@@ -1,7 +1,7 @@
 # リリース・配布運用仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-10-14
+- 最終更新日: 2026-10-19
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[総合動作確認項目書](../../test-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[法的文書仕様](../legal-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)
 
 ## 1. 目的
@@ -19,7 +19,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [Google Play Data safety申告](data-safety-declaration.md) | 収集・共有データ、目的、削除、最終検証 |
 | [リリースチェックリスト](release-checklist.md) | 準備、検証、公開、監視、停止、Hotfix |
 | [Release事前検査仕様](release-preflight.md) | 設定、法的文書、ストア成果物、AABと証跡の統合検査 |
-| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (9)`の候補生成・原報告者改善再確認、過去版のClosed testing、Console、実機確認、保留事項 |
+| [初回リリース進行記録](initial-release-status.md) | `1.0.0 (10)`候補の生成・保管、前回版までのClosed testing、Console、実機確認、保留事項 |
 | [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md) | Issue・PR、CI、秘密情報、GitHubセキュリティ機能および外部Consoleの候補生成前監査 |
 | [Production access申請回答・実施票](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の提出用回答と申請・審査記録 |
 | [初回Production公開実行票](initial-production-runbook.md) | versionCode 6のProduction登録、初回公開固有の制約、監視および重大問題対応 |
@@ -42,6 +42,8 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 - versionCode `6`はClosed testing要件達成後にクリーンなmainから生成し、実績を[本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)へ引き継ぐ。
 - 上記のversionCode `5`・`6`は当初の計画である。versionCode `6`は未配布のまま、追加フィードバック対応によりversionCode `7`・`8`をClosed testingへ公開した。Production候補の確定は追加テストとProduction accessの承認状況を踏まえて別途行う。
 - versionCode `9`は2026-10-14に生成・署名・検証・保管・公開したClosed testing版である。既存警告のみ、OWNERの8→9更新とデータ保持、原報告者本人のGalaxy S26／Android 16での改善再確認とOWNER回帰6件をUSER確認済み。[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)に実績を記録し、追加テストの要件達成とProduction向けゲートの判定は別途行う。
+
+- versionCode `10`は2026-10-19に未完了TODO一覧・詳細画面等のレイアウト改善を含む署名済み候補を生成・検証・保管した。Console登録・公開・配布後確認は未実施である。[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)で追跡し、本番向けGitHubゲートの未解決Issue・通常依存関係PRによる未合格は別途維持する。
 
 ## 4. 固定する公開値
 
