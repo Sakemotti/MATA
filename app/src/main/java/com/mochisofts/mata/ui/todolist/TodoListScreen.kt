@@ -155,6 +155,7 @@ fun TodoListScreen(
     viewModel: TodoListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pastIncompleteTodoCount by viewModel.pastIncompleteTodoCount.collectAsStateWithLifecycle()
     val adsRuntimeState by viewModel.adsRuntimeState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
@@ -300,6 +301,8 @@ fun TodoListScreen(
             ) {
                 DateMode(
                     state = state,
+                    pastIncompleteTodoCount = pastIncompleteTodoCount,
+                    onOpenIncomplete = { onDestination(MataDestination.INCOMPLETE) },
                     onPrevious = viewModel::selectPreviousDate,
                     onNext = viewModel::selectNextDate,
                     onPickDate = { showDatePicker = true },
@@ -484,6 +487,8 @@ private fun HolidayDataStatus(state: TodoListUiState) {
 @Composable
 private fun DateMode(
     state: TodoListUiState,
+    pastIncompleteTodoCount: Int,
+    onOpenIncomplete: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onPickDate: () -> Unit,
@@ -505,6 +510,18 @@ private fun DateMode(
         onPickDate = onPickDate,
     )
     HolidayDataStatus(state)
+    if (state.isToday && pastIncompleteTodoCount > 0) {
+        com.mochisofts.mata.core.designsystem.MataSectionCard(
+            modifier = Modifier.fillMaxWidth().padding(MataCardLayout.PageContentPadding)
+                .testTag("incomplete_home_entry"),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.incomplete_home, pastIncompleteTodoCount), Modifier.weight(1f))
+                TextButton(onClick = onOpenIncomplete) { Text(stringResource(R.string.incomplete_open)) }
+            }
+        }
+    }
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.message_loading))

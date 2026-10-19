@@ -5,6 +5,8 @@ import com.mochisofts.mata.MainDispatcherRule
 import com.mochisofts.mata.core.navigation.TODO_EDITOR_CATEGORY_RESULT_KEY
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.IncompleteTodoSource
+import com.mochisofts.mata.domain.model.IncompleteTodoRegistration
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.HolidayYearState
@@ -53,6 +55,71 @@ import org.junit.Test
 class TodoEditorViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun incompleteRegistrationStartsAsTodayOnceWithoutMutatingTheOriginalOnOpen() = runTest {
+        val date = LocalDate.of(2026, 9, 3)
+        val original = Todo("original", "持ち越し忘れ", "説明", null, date.minusDays(3), null,
+            RecurrenceRule.daily(), 600, 2, null, 1,
+            notifications = listOf(TodoNotification("n", NotificationRelation.AT, 0, NotificationUnit.MINUTE)))
+        val repository = FakeTodoRepository(mapOf(original.id to original))
+        val handle = SavedStateHandle(mapOf("incompleteTodoId" to original.id, "incompleteThroughDate" to date.minusDays(1).toString()))
+        val vm = createViewModel(todoRepository = repository, savedStateHandle = handle)
+        runCurrent()
+        val state = vm.uiState.value
+        assertTrue(state.isReRegistration)
+        assertTrue(state.isNew)
+        assertEquals(original.title, state.title)
+        assertEquals(date, state.startDate)
+        assertEquals(RecurrenceType.ONCE, state.recurrenceType)
+        assertNull(state.dueMinutes)
+        assertNull(state.dueDate)
+        assertTrue(state.notifications.isEmpty())
+        assertEquals(0, repository.registrationCount)
+        assertEquals(0, repository.saveCount)
+        assertEquals(original, repository.getTodo(original.id))
+    }
+
+    @Test
+    fun incompleteRegistrationUsesAtomicRepositoryActionAndDuplicateTapIsIgnored() = runTest {
+        val date = LocalDate.of(2026, 9, 3)
+        val original = Todo("original", "再登録", "説明", null, date.minusDays(3), null,
+            RecurrenceRule.daily(), null, 1, null, 0)
+        val repository = FakeTodoRepository(mapOf(original.id to original))
+        repository.saveGate = CompletableDeferred()
+        val handle = SavedStateHandle(mapOf("incompleteTodoId" to original.id, "incompleteThroughDate" to date.minusDays(1).toString()))
+        val vm = createViewModel(todoRepository = repository, savedStateHandle = handle)
+        runCurrent()
+        vm.save()
+        vm.save()
+        runCurrent()
+        assertEquals(1, repository.registrationCount)
+        assertEquals(0, repository.saveCount)
+        assertEquals(IncompleteTodoSource(original.id, date.minusDays(1)), repository.registeredSource)
+        repository.saveGate!!.complete(Unit)
+        runCurrent()
+        assertEquals(TodoEditorEffect.Saved(true), vm.effects.first())
+        assertEquals(RecurrenceType.ONCE, repository.registeredDraft?.recurrenceRule?.type)
+    }
+
+    @Test
+    fun incompleteRegistrationUsesLogicalTodayBeforeDayEndAndRestoresItsDraft() = runTest {
+        val original = Todo("original", "元のタイトル", "", null, LocalDate.of(2026, 8, 1), null,
+            RecurrenceRule.daily(), null, 1, null, 0)
+        val repository = FakeTodoRepository(mapOf(original.id to original))
+        val handle = SavedStateHandle(mapOf("incompleteTodoId" to original.id, "incompleteThroughDate" to "2026-09-01"))
+        val settings = FakeSettingsRepository(dayEndHour = 4)
+        val clock = fixedClock("2026-09-03T02:00:00+09:00")
+        val vm = createViewModel(todoRepository = repository, settingsRepository = settings, savedStateHandle = handle, clock = clock)
+        runCurrent()
+        assertEquals(LocalDate.of(2026, 9, 2), vm.uiState.value.startDate)
+        vm.setTitle("変更した下書き")
+        val restored = createViewModel(todoRepository = repository, settingsRepository = settings, savedStateHandle = handle, clock = clock)
+        runCurrent()
+        assertEquals("変更した下書き", restored.uiState.value.title)
+        assertTrue(restored.uiState.value.isReRegistration)
+        assertEquals(0, repository.registrationCount)
+    }
 
     @Test
     fun te010_recurrenceSpecificDraftValuesSurviveModeSwitchButNotANewEditor() = runTest {
@@ -1036,6 +1103,16 @@ private class FakeTodoRepository(
     var saveResult: Result<String> = Result.success("saved-todo")
     var saveCount: Int = 0
     var lastSave: SaveTodoCall? = null
+    var registrationCount = 0
+    var registeredSource: IncompleteTodoSource? = null
+    var registeredDraft: IncompleteTodoRegistration? = null
+    override suspend fun registerIncompleteTodo(source: IncompleteTodoSource, registration: IncompleteTodoRegistration): Result<String> {
+        registrationCount++
+        registeredSource = source
+        registeredDraft = registration
+        saveGate?.await()
+        return saveResult
+    }
     var archiveResult: Result<Unit> = Result.success(Unit)
     var deleteResult: Result<Unit> = Result.success(Unit)
     var archiveCount: Int = 0

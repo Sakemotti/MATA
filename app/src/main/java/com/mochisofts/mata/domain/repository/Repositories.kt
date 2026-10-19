@@ -8,6 +8,10 @@ import com.mochisofts.mata.domain.model.ArchiveSortOrder
 import com.mochisofts.mata.domain.model.ArchivedHistoryItem
 import com.mochisofts.mata.domain.model.ArchivedTodoItem
 import com.mochisofts.mata.domain.model.Category
+import com.mochisofts.mata.domain.model.IncompleteTodoGroup
+import com.mochisofts.mata.domain.model.IncompleteTodoHistory
+import com.mochisofts.mata.domain.model.IncompleteTodoSource
+import com.mochisofts.mata.domain.model.IncompleteTodoRegistration
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.Todo
@@ -45,6 +49,17 @@ data class CategoryTodoCounts(
 )
 
 interface TodoRepository {
+    fun observePastIncompleteTodoCount(): Flow<Int> = flowOf(0)
+    fun observeIncompleteTodos(): Flow<List<IncompleteTodoGroup>> =
+        flowOf(emptyList())
+    fun observeIncompleteHistory(todoId: String, limit: Int, offset: Int = 0):
+        Flow<List<IncompleteTodoHistory>> = flowOf(emptyList())
+    suspend fun dismissIncompleteTodos(source: IncompleteTodoSource):
+        Result<Unit> = Result.failure(UnsupportedOperationException())
+    suspend fun registerIncompleteTodo(
+        source: IncompleteTodoSource,
+        registration: IncompleteTodoRegistration,
+    ): Result<String> = Result.failure(UnsupportedOperationException())
     fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>>
     fun observeTodos(): Flow<List<Todo>>
     fun observeCompletedDates(todoId: String): Flow<List<LocalDate>> = flowOf(emptyList())

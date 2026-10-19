@@ -15,6 +15,23 @@ data class HistoryMonthExecutionRow(
     val status: String,
 )
 
+data class IncompleteSummaryRow(
+    val todoId: String,
+    val count: Int,
+    val oldestDate: String,
+    val latestDate: String,
+)
+
+data class IncompleteHistoryRow(val date: String, val periodStart: String?)
+
+private const val INCOMPLETE_HISTORY_SQL = """
+    SELECT todoId, scheduledLogicalDate AS date, NULL AS periodStart
+    FROM todo_executions WHERE status = 'missed'
+    UNION ALL
+    SELECT todoId, periodEnd AS date, periodStart
+    FROM period_results WHERE achieved = 0
+"""
+
 data class HistoryMonthPeriodRow(
     val displayDate: String,
     val achieved: Boolean,
@@ -117,6 +134,28 @@ interface CategoryDao {
 
 @Dao
 interface TodoDao {
+    @Query("""
+        SELECT h.todoId, COUNT(*) AS count, MIN(h.date) AS oldestDate, MAX(h.date) AS latestDate
+        FROM (""" + INCOMPLETE_HISTORY_SQL + """) h
+        JOIN todos ON todos.id = h.todoId
+        WHERE todos.archivedAt IS NULL
+          AND (todos.incompleteDismissedThroughDate IS NULL OR h.date > todos.incompleteDismissedThroughDate)
+        GROUP BY h.todoId
+    """)
+    fun observeIncompleteSummaries(): Flow<List<IncompleteSummaryRow>>
+
+    @Query("""
+        SELECT h.date, h.periodStart FROM (""" + INCOMPLETE_HISTORY_SQL + """) h
+        JOIN todos ON todos.id = h.todoId
+        WHERE h.todoId = :todoId AND todos.archivedAt IS NULL
+          AND (todos.incompleteDismissedThroughDate IS NULL OR h.date > todos.incompleteDismissedThroughDate)
+        ORDER BY h.date DESC, h.periodStart DESC LIMIT :limit OFFSET :offset
+    """)
+    fun observeIncompleteHistory(todoId: String, limit: Int, offset: Int): Flow<List<IncompleteHistoryRow>>
+
+    @Query("UPDATE todos SET incompleteDismissedThroughDate = :date WHERE id = :id")
+    suspend fun setIncompleteDismissedThroughDate(id: String, date: String)
+
     @Query("SELECT * FROM todos WHERE archivedAt IS NULL ORDER BY createdAt ASC")
     fun observeActive(): Flow<List<TodoEntity>>
 

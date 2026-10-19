@@ -19,6 +19,25 @@ class MataDatabaseMigrationTest {
     )
 
     @Test
+    fun migrate8To9_preservesTodosAndDefaultsInboxAcknowledgementToNull() {
+        helper.createDatabase(databaseName, 8).use { db ->
+            db.execSQL("""
+                INSERT INTO todos (id, title, description, startDate, recurrenceType,
+                    repeatParamsVersion, repeatParamsJson, definitionRevision, createdAt, updatedAt, carryOverEnabled)
+                VALUES ('inbox-original', 'kept', '', '2026-10-15', 'daily', 1, '{}', 4, 1, 2, 0)
+            """.trimIndent())
+        }
+        helper.runMigrationsAndValidate(databaseName, 9, true, MIGRATION_8_9).use { db ->
+            db.query("SELECT title, definitionRevision, incompleteDismissedThroughDate FROM todos WHERE id = 'inbox-original'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("kept", cursor.getString(0))
+                assertEquals(4, cursor.getInt(1))
+                assertEquals(true, cursor.isNull(2))
+            }
+        }
+    }
+
+    @Test
     fun migrate1To2_preservesTodoAndAddsRecurrenceFields() {
         helper.createDatabase(databaseName, 1).apply {
             execSQL(

@@ -30,6 +30,8 @@ import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.Category
 import com.mochisofts.mata.domain.model.HolidayRefreshResult
 import com.mochisofts.mata.domain.model.HolidaySnapshot
+import com.mochisofts.mata.domain.model.IncompleteTodoRegistration
+import com.mochisofts.mata.domain.model.IncompleteTodoSource
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
@@ -48,6 +50,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -314,6 +317,62 @@ class TodoEditorScreenSpecCoverageTest {
     }
 
     @Test
+    fun incompleteReRegistrationSavesPrefilledDraftWithoutManualChanges() {
+        val original = existingTodo()
+        val repository = TodoEditorTestTodoRepository(original, emptyList())
+        val result = CompletableDeferred<Result<String>>()
+        repository.registrationResult = result
+        val viewModel = reRegistrationViewModel(original, repository)
+        val savedModes = mutableListOf<Boolean>()
+        setScreen(mutableStateOf(viewModel), onSaved = { savedModes += it })
+        waitForText(text(R.string.incomplete_register_explanation))
+        val save = composeRule.onNodeWithText(text(R.string.action_save))
+
+        composeRule.runOnIdle {
+            assertTrue(viewModel.uiState.value.isReRegistration)
+            assertEquals(false, viewModel.uiState.value.isDirty)
+        }
+        save.assertIsEnabled()
+        composeRule.runOnIdle { viewModel.setTitle("") }
+        save.assertIsNotEnabled()
+        composeRule.runOnIdle { viewModel.setTitle(original.title) }
+        save.assertIsEnabled().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { repository.registrations.size == 1 }
+        save.assertIsNotEnabled()
+        composeRule.runOnIdle {
+            val (source, registration) = repository.registrations.single()
+            assertEquals(IncompleteTodoSource(original.id, TODAY.minusDays(1)), source)
+            assertEquals(original.title, registration.title)
+            assertEquals(TODAY, registration.startDate)
+            assertEquals(RecurrenceType.ONCE, registration.recurrenceRule.type)
+            assertTrue(savedModes.isEmpty())
+            result.complete(Result.success("re-registered"))
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) { savedModes == listOf(true) }
+        save.assertIsNotEnabled()
+        composeRule.runOnIdle { assertEquals(1, repository.registrations.size) }
+    }
+
+    @Test
+    fun incompleteReRegistrationCanBeCancelledWithoutSavingOrDiscardPrompt() {
+        val original = existingTodo()
+        val repository = TodoEditorTestTodoRepository(original, emptyList())
+        var backCount = 0
+        setScreen(
+            mutableStateOf(reRegistrationViewModel(original, repository)),
+            onBack = { backCount += 1 },
+        )
+        waitForText(text(R.string.incomplete_register_explanation))
+
+        composeRule.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(text(R.string.dialog_discard_changes_title)).assertDoesNotExist()
+        composeRule.runOnIdle {
+            assertEquals(1, backCount)
+            assertTrue(repository.registrations.isEmpty())
+        }
+    }
+
+    @Test
     fun te026_saveReportsNewOrEditModeForListNavigationAndMessageSelection() {
         val newViewModel = viewModel()
         val editViewModel = viewModel(todo = existingTodo())
@@ -462,6 +521,24 @@ class TodoEditorScreenSpecCoverageTest {
         createdAt = 1,
     )
 
+    private fun reRegistrationViewModel(
+        original: Todo,
+        repository: TodoEditorTestTodoRepository,
+    ) = TodoEditorViewModel(
+        savedStateHandle = SavedStateHandle(
+            mapOf(
+                "incompleteTodoId" to original.id,
+                "incompleteThroughDate" to TODAY.minusDays(1).toString(),
+            ),
+        ),
+        todoRepository = repository,
+        categoryRepository = TodoEditorTestCategoryRepository(emptyList()),
+        settingsRepository = TodoEditorTestSettingsRepository(),
+        notificationScheduler = TodoEditorTestNotificationScheduler(),
+        holidayRepository = TodoEditorTestHolidayRepository(),
+        clock = FIXED_CLOCK,
+    )
+
     private fun waitForText(value: String) {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText(value).fetchSemanticsNodes().isNotEmpty()
@@ -495,6 +572,16 @@ private class TodoEditorTestTodoRepository(
     private val completedDates: List<LocalDate>,
 ) : TodoRepository {
     private val todoById = todo?.let { mapOf(it.id to it) }.orEmpty()
+    val registrations = mutableListOf<Pair<IncompleteTodoSource, IncompleteTodoRegistration>>()
+    var registrationResult: CompletableDeferred<Result<String>>? = null
+
+    override suspend fun registerIncompleteTodo(
+        source: IncompleteTodoSource,
+        registration: IncompleteTodoRegistration,
+    ): Result<String> {
+        registrations += source to registration
+        return registrationResult?.await() ?: Result.success("re-registered")
+    }
 
     override fun observeOccurrences(selectedDate: LocalDate): Flow<List<TodoOccurrence>> =
         flowOf(emptyList())

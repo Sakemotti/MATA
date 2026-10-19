@@ -27,7 +27,12 @@ data class CategoryTodoListRoute(
 data class TodoEditorRoute(
     val todoId: String? = null,
     val initialDate: String? = null,
+    val incompleteTodoId: String? = null,
+    val incompleteThroughDate: String? = null,
 )
+
+@Serializable
+data object IncompleteTodoListRoute
 
 @Serializable
 data object CategoryListRoute

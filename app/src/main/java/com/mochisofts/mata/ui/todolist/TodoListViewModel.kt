@@ -113,6 +113,10 @@ class TodoListViewModel @Inject constructor(
     private val loadGeneration = MutableStateFlow(0)
     val effects: Flow<TodoListEffect> = effectsChannel.receiveAsFlow()
     val adsRuntimeState = adsConsentRepository.state
+    val pastIncompleteTodoCount = loadGeneration.flatMapLatest {
+        todoRepository.observePastIncompleteTodoCount()
+            .catch { emit(0) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     init {
         if (route.showTodoNotFound) {

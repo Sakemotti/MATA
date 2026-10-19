@@ -407,6 +407,12 @@ class BackupArchiveReader @Inject constructor() {
             false
         }
         if (carryOverEnabled && type.isCountBased) invalid("Invalid carry-over setting")
+        val incompleteDismissedThroughDate = if (formatVersion >= 6) {
+            expectName("incompleteDismissedThroughDate")
+            nullableString()?.also { isoDate(it) }
+        } else {
+            null
+        }
         expectName("definitionRevision")
         val revision = strictInt().also { if (it < 1) invalid("Invalid TODO revision") }
         expectName("archivedAt")
@@ -447,6 +453,7 @@ class BackupArchiveReader @Inject constructor() {
             archivedAt = archivedAt,
             dueDate = dueDate?.toString(),
             carryOverEnabled = carryOverEnabled,
+            incompleteDismissedThroughDate = incompleteDismissedThroughDate,
         ).also { context.todosById[id] = it }
     }
 

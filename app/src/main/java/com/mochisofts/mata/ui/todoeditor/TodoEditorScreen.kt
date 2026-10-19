@@ -230,7 +230,7 @@ fun TodoEditorScreen(
                                     viewModel.save()
                                 }
                             },
-                            enabled = state.canSave && state.isDirty,
+                            enabled = state.canSave && (state.isDirty || state.isReRegistration),
                         ) {
                             Text(stringResource(R.string.action_save))
                         }
@@ -261,6 +261,11 @@ fun TodoEditorScreen(
                     .padding(MataCardLayout.PageContentPadding),
                 verticalArrangement = Arrangement.spacedBy(MataCardLayout.CardSpacing),
             ) {
+                if (state.isReRegistration) {
+                    MataSectionCard(title = stringResource(R.string.incomplete_register), modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.incomplete_register_explanation))
+                    }
+                }
                 MataSectionCard(
                     title = stringResource(R.string.todo_editor_section_basic_information),
                     modifier = Modifier.fillMaxWidth(),

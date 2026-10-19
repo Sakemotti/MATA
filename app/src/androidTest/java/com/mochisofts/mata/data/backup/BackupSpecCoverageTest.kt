@@ -140,6 +140,41 @@ class BackupSpecCoverageTest {
     }
 
     @Test
+    fun inboxAcknowledgementRoundTripsAndLegacyVersion5DefaultsToNull() = runBlocking {
+        seedAllUserData()
+        database.todoDao().setIncompleteDismissedThroughDate(TODO_ID, "2026-08-10")
+        val archive = writeArchive()
+        database.todoDao().setIncompleteDismissedThroughDate(TODO_ID, "2026-08-01")
+        restoreArchive(archive)
+        assertEquals("2026-08-10", database.todoDao().findById(TODO_ID)?.incompleteDismissedThroughDate)
+
+        val oldData = zipEntries(archive).getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+            .replaceFirst("\"formatVersion\":6", "\"formatVersion\":5")
+            .replace(Regex(",\"incompleteDismissedThroughDate\":(?:null|\"[^\"]+\")"), "")
+        val updatedData = replaceData(archive, oldData)
+        val oldManifest = zipEntries(updatedData).getValue(MANIFEST_ENTRY).toString(Charsets.UTF_8)
+            .replaceFirst("\"formatVersion\":6", "\"formatVersion\":5")
+            .replaceFirst("\"minimumReaderVersion\":6", "\"minimumReaderVersion\":5")
+        restoreArchive(replaceManifest(updatedData, oldManifest))
+        assertNull(database.todoDao().findById(TODO_ID)?.incompleteDismissedThroughDate)
+    }
+
+    @Test
+    fun invalidInboxAcknowledgementDateIsRejectedBeforeRestore() = runBlocking {
+        seedAllUserData()
+        database.todoDao().setIncompleteDismissedThroughDate(TODO_ID, "2026-08-10")
+        val archive = writeArchive()
+        val json = zipEntries(archive).getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+            .replace("\"incompleteDismissedThroughDate\":\"2026-08-10\"", "\"incompleteDismissedThroughDate\":\"invalid\"")
+        val staged = temporaryDataFile()
+        val error = runCatching {
+            reader.extractAndValidate(ByteArrayInputStream(replaceData(archive, json)), staged)
+        }.exceptionOrNull()
+        assertTrue(error is BackupFormatException)
+        assertEquals("2026-08-10", database.todoDao().findById(TODO_ID)?.incompleteDismissedThroughDate)
+    }
+
+    @Test
     fun st019_allUserDataStreamsToAValidatedBackup() = runBlocking {
         seedAllUserData()
         val progress = mutableListOf<Int>()
@@ -992,6 +1027,7 @@ class BackupSpecCoverageTest {
         var data = entries.getValue(DATA_ENTRY).toString(Charsets.UTF_8)
             .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":$formatVersion")
             .replace(Regex(",\"backgroundColor\":\"[^\"]+\""), "")
+            .replace(Regex(",\"incompleteDismissedThroughDate\":(?:null|\"[^\"]+\")"), "")
         if (formatVersion < 4) {
             data = data.replace(Regex(",\"dueDate\":(?:null|\"[^\"]+\")"), "")
                 .replace(Regex(",\"carryOverEnabled\":(?:true|false)"), "")

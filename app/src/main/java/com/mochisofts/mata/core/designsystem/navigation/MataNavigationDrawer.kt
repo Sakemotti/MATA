@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.PendingActions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
@@ -18,7 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +35,7 @@ import com.mochisofts.mata.core.designsystem.mataClickablePointer
 
 enum class MataDestination(@StringRes val labelRes: Int) {
     TODOS(R.string.nav_todo_list),
+    INCOMPLETE(R.string.incomplete_title),
     CATEGORY_TODOS(R.string.nav_category_todo_list),
     CALENDAR(R.string.nav_calendar_history),
     CATEGORIES(R.string.nav_category_management),
@@ -40,9 +46,10 @@ enum class MataDestination(@StringRes val labelRes: Int) {
 @Composable
 fun MataNavigationDrawer(
     selected: MataDestination,
+    isOpen: Boolean = true,
     onSelect: (MataDestination) -> Unit,
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(modifier = if (isOpen) Modifier else Modifier.clearAndSetSemantics { hideFromAccessibility() }) {
         MataNavigationDrawerContent(selected = selected, onSelect = onSelect)
     }
 }
@@ -52,7 +59,7 @@ fun MataNavigationDrawerContent(
     selected: MataDestination,
     onSelect: (MataDestination) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().focusGroup()) {
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).focusGroup()) {
         Text(
             text = stringResource(R.string.app_name),
             style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
@@ -80,7 +87,7 @@ fun MataNavigationRail(
     modifier: Modifier = Modifier,
 ) {
     NavigationRail(
-        modifier = modifier.focusGroup(),
+        modifier = modifier.verticalScroll(rememberScrollState()).focusGroup(),
     ) {
         Spacer(Modifier.height(12.dp))
         MataDestination.entries.forEach { destination ->
@@ -99,6 +106,7 @@ fun MataNavigationRail(
 private val MataDestination.icon
     get() = when (this) {
         MataDestination.TODOS -> Icons.Outlined.Checklist
+        MataDestination.INCOMPLETE -> Icons.Outlined.PendingActions
         MataDestination.CATEGORY_TODOS -> Icons.AutoMirrored.Outlined.ViewList
         MataDestination.CALENDAR -> Icons.Outlined.CalendarMonth
         MataDestination.CATEGORIES -> Icons.Outlined.Category

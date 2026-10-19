@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="incomplete_title">未完了TODO</string>
+    <string name="incomplete_description">今日の未完了と、過去の未完了・未達成期間をTODOごとにまとめています。未来の予定・完了・スキップ・アーカイブ済みは含みません。</string>
+    <string name="incomplete_count">対象TODO %1$d件</string>
+    <string name="incomplete_group_count">未完了・未達成 %1$d件</string>
+    <string name="incomplete_past_count">過去分 %1$d件</string>
+    <string name="incomplete_range">対象日：%1$s ～ %2$s</string>
+    <string name="incomplete_current">今日の実行対象に未完了あり</string>
+    <string name="incomplete_current_period">現在の期間：あと%1$d回</string>
+    <string name="incomplete_expand">対象日を表示</string>
+    <string name="incomplete_collapse">対象日を閉じる</string>
+    <string name="incomplete_history_page">過去分 %1$d～%2$d / %3$d件</string>
+    <string name="incomplete_period">%1$s ～ %2$s（期間未達成）</string>
+    <string name="incomplete_register">今日への再登録</string>
+    <string name="incomplete_register_explanation">元の履歴・繰り返し設定を変更せず、新しいTODOを作成します。実行日は今日、繰り返しなし・期限設定なし・通知なしで開始します。保存すると、今回の元の未完了分を未完了一覧から除外します。キャンセルした場合は変更しません。</string>
+    <string name="incomplete_hide">未完了TODOに表示しない</string>
+    <string name="incomplete_hide_title">今回の未完了分を一覧から除外しますか？</string>
+    <string name="incomplete_hide_message">「%1$s」の今回の未完了分を除外します。履歴・今日のTODO一覧・ウィジェットは変更しません。新しい未完了が発生した場合は再表示されます。</string>
+    <string name="incomplete_hidden">今回の未完了分を一覧から除外しました</string>
+    <string name="incomplete_empty">未完了TODOはありません</string>
+    <string name="incomplete_filter_empty">この条件の未完了TODOはありません</string>
+    <string name="incomplete_load_error">未完了TODOを読み込めませんでした</string>
+    <string name="incomplete_action_error">一覧の状態が変わったか、処理に失敗しました。再読み込みしてお試しください。</string>
+    <string name="incomplete_already_handled">今回の未完了分はすでに一覧から除外されています。最新の一覧をご確認ください。</string>
+    <string name="incomplete_reconciling">過去の履歴を確認しています…</string>
+    <string name="incomplete_all_categories">すべてのカテゴリ</string>
+    <string name="incomplete_home">過去の未完了あり：%1$d件のTODO</string>
+    <string name="incomplete_open">一覧を見る</string>
+    <string name="incomplete_previous_page">前の対象日</string>
+    <string name="incomplete_next_page">次の対象日</string>
+</resources>
