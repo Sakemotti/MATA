@@ -1,12 +1,19 @@
 # MATA 1.0.0 (10) Closed testing登録・更新確認手順
 
-- 文書状態: 配布準備中、生成・Console登録・公開・配布後確認は未実施
+- 文書状態: 生成・署名・検証・保管済み、Console登録・公開・配布後確認は未実施
 - 作成日: 2026-10-19
 - 対象: MATA `1.0.0 (10)` 追加Closed testing版
 - 前回公開版: `1.0.0 (9)`
 - 配信先: 現在運用中の新しいClosed testingトラック。旧トラックへ戻さない
 
 ## 1. 変更範囲
+
+| 項目 | 生成済み候補 |
+| --- | --- |
+| アップロード用AAB | `app/release/1.0.0-10/mata-1.0.0-10.aab` |
+| 容量 / SHA-256 | 13,084,152 bytes / `2203C2F7934D36CAA63D98412DFB097E626661EB8BC56B056A53908F12EDCB99` |
+| 生成元commit | `5728f4fd2ceb0867150b699bea960634abcdb92c` |
+| 署名・保管・検査証跡 | [候補生成結果](release-candidate-1.0.0-10.md) |
 
 - [PR #308](https://github.com/Sakemotti/MATA/pull/308): 過去TODO詳細・アーカイブ履歴詳細・カテゴリ編集のカード、区切り、下部ボタンを統一する。
 - [Issue #309](https://github.com/Sakemotti/MATA/issues/309) / [PR #312](https://github.com/Sakemotti/MATA/pull/312): ドロワーと今日の一覧から開く未完了TODO一覧、TODO単位のカード・カテゴリ絞り込み・過去分のページ表示、今日への再登録と今回分の一覧除外を追加する。
@@ -56,7 +63,7 @@
 
 ## 5. 配布の記録
 
-- 署名済み候補・保管先・SHA-256: 生成後に記録
+- 署名済み候補・保管先・SHA-256: 2026-10-19生成・検証・保管済み。第1節と[候補生成結果](release-candidate-1.0.0-10.md)のAABを使用する。保管用ZIPはPlayへ登録しない
 - Console公開状態・日時・警告: 未確認
 - OWNERのPlay経由更新・実機回帰: 未実施
 - テスターによる追加機能再確認: 未実施

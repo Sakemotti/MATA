@@ -1,7 +1,7 @@
 # 初回リリース進行記録
 
-- 対象: MATA初回公開（Closed testing版`1.0.0 (9)`、2026-10-14公開済み）
-- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9公開・更新とデータ保持・原報告者改善再確認・OWNER回帰6件の確認完了
+- 対象: MATA初回公開（Closed testing版`1.0.0 (9)`は公開済み、追加候補`1.0.0 (10)`は生成・保管済みで未公開）
+- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 9の回帰確認完了／versionCode 10は生成・署名・検証・保管済み、Console登録・公開・配布後確認は未実施
 - 最終更新日: 2026-10-19
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
@@ -10,7 +10,7 @@
 - 前回版のClosed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
 - 前回版のClosed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
 - versionCode 9の引き渡し・証跡: [MATA 1.0.0 (9) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)
-- versionCode 10の配布準備: [MATA 1.0.0 (10) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)。未完了TODO一覧と詳細画面等のレイアウト改善を含む。生成・公開・配布後確認は未実施
+- versionCode 10の配布準備: [MATA 1.0.0 (10) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)。未完了TODO一覧と詳細画面等のレイアウト改善を含む。生成・保管済み、Console登録・公開・配布後確認は未実施
 - 旧版のClosed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
 - 旧版のClosed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
@@ -37,13 +37,13 @@
 | 項目 | 確定値・結果 | 確認元 |
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
-| versionName | `1.0.0` | AUTO / CONSOLE |
-| versionCode | `9`。2026-10-14公開済み、既存警告のみ・新規警告なし（USER確認）。8→9更新とデータ保持・原報告者改善再確認も完了。公開時刻は未記録 | AUTO / USER |
-| ソースcommit | `53bb2764e935c13430e3360460032b6dd48c9007`（保管候補の生成元） | AUTO |
-| AAB | `app/release/1.0.0-9/mata-1.0.0-9.aab`。Git除外対象 | AUTO |
-| AAB容量 | 13,039,823 bytes | AUTO |
-| AAB SHA-256 | `c619ca30f6747f408f56f15ca3120382da384f5018d1dfbbd145c7130256e461` | AUTO |
-| ビルド日時 | `2026-10-14T02:11:48.876285100Z` | AUTO |
+| versionName | `1.0.0` | AUTO |
+| versionCode | `10`。生成・署名・検証・保管済み。Console登録・公開・配布後確認は未実施。前回公開版は`9` | AUTO |
+| ソースcommit | `5728f4fd2ceb0867150b699bea960634abcdb92c`（保管候補の生成元） | AUTO |
+| AAB | `app/release/1.0.0-10/mata-1.0.0-10.aab`。Git除外対象 | AUTO |
+| AAB容量 | 13,084,152 bytes | AUTO |
+| AAB SHA-256 | `2203c2f7934d36caa63d98412dfb097e626661eb8bc56b056a53908f12edcb99` | AUTO |
+| ビルド日時 | `2026-10-19T02:22:35.541221500Z` | AUTO |
 | 署名方法 | Upload Key、署名者1件、`publishable=true` | AUTO |
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` | AUTO / CONSOLE |
 
@@ -55,11 +55,13 @@
 
 versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`、`8`および`9`は登録済みであり、再アップロードできない。versionCode `9`を2026-10-14に公開済み、既存警告のみ・新規警告なしとUSERが報告した。公開時刻は未記録である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
 
-2026年10月14日に、Issue #299を修正したClosed testing候補versionCode `9`をmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは上表のとおり既存Upload Keyと一致し、生成元CIとRelease事前検査7件は合格した。生成時点ではIssue #299の原報告者再確認待ちにより本番向けGitHubゲートは`failed`だった。このJSON・ZIPとAABは歴史証跡として変更しない。
+2026年10月14日に、Issue #299を修正したClosed testing候補versionCode `9`をmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは[versionCode 9候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)のとおり既存Upload Keyと一致し、生成元CIとRelease事前検査7件は合格した。生成時点ではIssue #299の原報告者再確認待ちにより本番向けGitHubゲートは`failed`だった。このJSON・ZIPとAABは歴史証跡として変更しない。
 
 その後、2026-10-14に原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Issue #299は修正・原報告者再確認完了とする。同日に公開済み・本日公開・既存警告のみ、OWNERの`8`→`9`更新とデータ保持は問題なしとUSER報告（CT-022）。続いてCT9-02〜CT9-07の回帰6件すべて問題なしとの報告を受け、今回のversionCode 9回帰確認を完了とした（CT-023）。公開時刻とOWNERの端末・OS・実施日時・個別所見は未記録であり、全試験の再実施や本番公開承認へ広げない。個別参加者の対応表はリポジトリ外で管理する。
 
 ## 3. リポジトリと自動検査
+
+2026年10月19日に[PR #313](https://github.com/Sakemotti/MATA/pull/313)を全CI成功後に通常マージし、生成元mainのAndroid CI・CodeQLも成功した。上表のversionCode `10`を生成し、Release事前検査7件、署名・5成果物ハッシュ、8保管ファイルとZIP内容を照合した。SDK・ライセンス・権限等に前版から追加はないが、Room8→9・バックアップ形式5→6への移行を含む。生成時の本番向けGitHubゲートはIssue #306と通常依存関係PR #310・#311により`failed`のまま保管した。詳細は[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)に記録し、配布後の実機確認や本番承認へ広げない。
 
 2026年10月8日にversionCode `8`を設定した[PR #287](https://github.com/Sakemotti/MATA/pull/287)を全CI成功後にマージした。PRの[Android CI run 37712733228](https://github.com/Sakemotti/MATA/actions/runs/37712733228)はAPI 30 instrumented testを含む全ジョブに成功し、生成元mainの[Android CI run 37713981531](https://github.com/Sakemotti/MATA/actions/runs/37713981531)と[CodeQL run 37713981879](https://github.com/Sakemotti/MATA/actions/runs/37713981879)も成功した。クリーンなmainから署名済み候補を生成し、Release事前検査7/7件、署名・5成果物ハッシュ・GitHubゲート・8保管ファイルとZIP内容の照合に合格した。versionCode `7`と比較してSDK依存関係とライセンスは同一で、ManifestはversionCode以外に変更がない。詳細は[versionCode 8公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)に記録する。
 
