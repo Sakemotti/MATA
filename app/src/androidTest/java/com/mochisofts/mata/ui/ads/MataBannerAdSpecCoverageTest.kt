@@ -2,14 +2,20 @@ package com.mochisofts.mata.ui.ads
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -23,12 +29,133 @@ import com.mochisofts.mata.domain.model.AdsRuntimeState
 import com.mochisofts.mata.domain.model.AdsSdkInitialization
 import com.mochisofts.mata.ui.todolist.TodoListTopBarActions
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
 class MataBannerAdSpecCoverageTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun issue320_bannerStaysAboveBottomSystemArea() {
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                Box(Modifier.size(320.dp, 260.dp).testTag(INSET_ROOT_TAG)) {
+                    MataBannerAdLayout(
+                        runtimeState = eligibleRuntime(consentRevision = 1),
+                        isForeground = true,
+                        isScreenVisible = true,
+                        isImeVisible = false,
+                        hasOverlay = false,
+                        hasValidConfiguration = true,
+                        contentWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 72),
+                        modifier = Modifier.align(Alignment.BottomCenter).testTag(BANNER_AREA_TAG),
+                    ) { _, _ ->
+                        Box(Modifier.fillMaxWidth().height(50.dp).testTag(BANNER_CONTENT_TAG))
+                    }
+                }
+            }
+        }
+
+        val root = composeRule.onNodeWithTag(INSET_ROOT_TAG).fetchSemanticsNode().boundsInRoot
+        val banner = composeRule.onNodeWithTag(BANNER_CONTENT_TAG).fetchSemanticsNode().boundsInRoot
+        assertEquals(72f, root.bottom - banner.bottom, 1f)
+    }
+
+    @Test
+    fun issue320_sideSystemInsetsReduceRequestedAdWidth() {
+        var requestedWidth = 0
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                InsetTestBanner(
+                    insets = WindowInsets(left = 40, top = 0, right = 80, bottom = 0),
+                    onRequestedWidth = { requestedWidth = it },
+                )
+            }
+        }
+
+        val root = bounds(INSET_ROOT_TAG)
+        val banner = bounds(BANNER_CONTENT_TAG)
+        assertTrue(banner.left >= root.left + 40f)
+        assertTrue(banner.right <= root.right - 80f)
+        assertEquals(((root.width - 120f) / composeRule.density.density).toInt(), requestedWidth)
+    }
+
+    @Test
+    fun issue320_parentConsumedInsetsAreNotAppliedTwice() {
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                InsetTestBanner(
+                    insets = WindowInsets(left = 40, top = 0, right = 80, bottom = 72),
+                    parentConsumesInsets = true,
+                )
+            }
+        }
+
+        val root = bounds(INSET_ROOT_TAG)
+        val banner = bounds(BANNER_CONTENT_TAG)
+        assertEquals(72f, root.bottom - banner.bottom, 1f)
+        assertEquals(40f, banner.left - root.left, 2f)
+        assertEquals(80f, root.right - banner.right, 2f)
+    }
+
+    @Test
+    fun issue320_loadFailureAndHiddenAdsKeepOnlySystemSafetySpace() {
+        var loadState by mutableStateOf(BannerLoadState.LOADING)
+        var foreground by mutableStateOf(true)
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                InsetTestBanner(
+                    insets = WindowInsets(left = 0, top = 0, right = 0, bottom = 72),
+                    loadState = loadState,
+                    isForeground = foreground,
+                )
+            }
+        }
+
+        val loadingBounds = listOf(bounds(BANNER_AREA_TAG), bounds(BANNER_CONTENT_TAG))
+        assertEquals(72f, bounds(INSET_ROOT_TAG).bottom - bounds(BANNER_CONTENT_TAG).bottom, 1f)
+        composeRule.runOnIdle { loadState = BannerLoadState.LOADED }
+        assertEquals(loadingBounds, listOf(bounds(BANNER_AREA_TAG), bounds(BANNER_CONTENT_TAG)))
+
+        composeRule.runOnIdle { loadState = BannerLoadState.FAILED }
+        assertEquals(0f, bounds(BANNER_CONTENT_TAG).height, 1f)
+        assertEquals(72f, bounds(BANNER_AREA_TAG).height, 1f)
+        composeRule.runOnIdle { foreground = false }
+        composeRule.onNodeWithTag(BANNER_CONTENT_TAG).assertDoesNotExist()
+        assertEquals(72f, bounds(BANNER_AREA_TAG).height, 1f)
+    }
+
+    @Test
+    fun issue320_narrowerSafeWidthDoesNotClipOldBannerDuringDebounce() {
+        var insets by mutableStateOf(WindowInsets(left = 0, top = 0, right = 0, bottom = 0))
+        var requestedWidth = 0
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                InsetTestBanner(insets = insets, onRequestedWidth = { requestedWidth = it })
+            }
+        }
+        composeRule.onNodeWithTag(BANNER_CONTENT_TAG).assertIsDisplayed()
+        composeRule.mainClock.autoAdvance = false
+        try {
+            composeRule.runOnIdle {
+                insets = WindowInsets(left = 40, top = 0, right = 80, bottom = 72)
+            }
+            composeRule.mainClock.advanceTimeByFrame()
+            composeRule.onNodeWithTag(BANNER_CONTENT_TAG).assertDoesNotExist()
+            composeRule.mainClock.advanceTimeBy(400)
+            composeRule.onNodeWithTag(BANNER_CONTENT_TAG).assertIsDisplayed()
+            val root = bounds(INSET_ROOT_TAG)
+            val banner = bounds(BANNER_CONTENT_TAG)
+            assertTrue(banner.left >= root.left + 40f)
+            assertTrue(banner.right <= root.right - 80f)
+            assertEquals(((root.width - 120f) / composeRule.density.density).toInt(), requestedWidth)
+            assertEquals(72f, root.bottom - banner.bottom, 1f)
+        } finally {
+            composeRule.mainClock.autoAdvance = true
+        }
+    }
 
     @Test
     fun tl028_consentRevisionReplacesAndConsentLossDisposesBannerResource() {
@@ -46,7 +173,7 @@ class MataBannerAdSpecCoverageTest {
                         isImeVisible = false,
                         hasOverlay = false,
                         hasValidConfiguration = true,
-                    ) { _, consentRevision, _ ->
+                    ) { _, consentRevision ->
                         val resource = rememberDisposableResource(
                             key = consentRevision,
                             create = {
@@ -106,7 +233,7 @@ class MataBannerAdSpecCoverageTest {
                     isImeVisible = false,
                     hasOverlay = false,
                     hasValidConfiguration = true,
-                ) { _, consentRevision, _ ->
+                ) { _, consentRevision ->
                     val resource = rememberDisposableResource(
                         key = consentRevision,
                         create = {
@@ -185,7 +312,7 @@ class MataBannerAdSpecCoverageTest {
                         hasOverlay = false,
                         hasValidConfiguration = true,
                         modifier = Modifier.testTag(BANNER_AREA_TAG),
-                    ) { _, _, _ ->
+                    ) { _, _ ->
                         Box(
                             Modifier
                                 .testTag(BANNER_CONTENT_TAG)
@@ -211,6 +338,43 @@ class MataBannerAdSpecCoverageTest {
         composeRule.onNodeWithText(text(R.string.action_return_to_today)).assertIsDisplayed()
         assertEquals(loadingBounds, layoutBounds())
     }
+
+    @Composable
+    private fun InsetTestBanner(
+        insets: WindowInsets,
+        parentConsumesInsets: Boolean = false,
+        loadState: BannerLoadState = BannerLoadState.LOADED,
+        isForeground: Boolean = true,
+        onRequestedWidth: (Int) -> Unit = {},
+    ) {
+        Box(Modifier.size(320.dp, 260.dp).testTag(INSET_ROOT_TAG)) {
+            val parentModifier = if (parentConsumesInsets) {
+                Modifier.fillMaxSize().windowInsetsPadding(insets)
+            } else {
+                Modifier.fillMaxSize()
+            }
+            Box(parentModifier) {
+                MataBannerAdLayout(
+                    runtimeState = eligibleRuntime(consentRevision = 1),
+                    isForeground = isForeground,
+                    isScreenVisible = true,
+                    isImeVisible = false,
+                    hasOverlay = false,
+                    hasValidConfiguration = true,
+                    contentWindowInsets = insets,
+                    modifier = Modifier.align(Alignment.BottomCenter).testTag(BANNER_AREA_TAG),
+                ) { width, _ ->
+                    SideEffect { onRequestedWidth(width) }
+                    Box(
+                        Modifier.bannerAdSize(loadState, widthDp = width, heightDp = 50)
+                            .testTag(BANNER_CONTENT_TAG),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun bounds(tag: String) = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
 
     private fun layoutBounds() = listOf(
         composeRule.onNodeWithTag(TOP_ACTION_AREA_TAG).fetchSemanticsNode().boundsInRoot,
@@ -238,5 +402,6 @@ class MataBannerAdSpecCoverageTest {
         const val LIST_AREA_TAG = "list-area"
         const val BANNER_AREA_TAG = "banner-area"
         const val BANNER_CONTENT_TAG = "banner-content"
+        const val INSET_ROOT_TAG = "banner-inset-root"
     }
 }

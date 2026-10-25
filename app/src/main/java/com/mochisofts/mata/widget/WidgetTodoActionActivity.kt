@@ -150,7 +150,6 @@ internal fun WidgetTodoActionDialog(
             isScreenVisible = true,
             isImeVisible = false,
             hasOverlay = false,
-            applyBottomSafeInset = true,
         )
     }
 }
