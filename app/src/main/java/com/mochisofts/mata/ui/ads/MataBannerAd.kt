@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -54,7 +54,6 @@ fun MataBannerAd(
     isImeVisible: Boolean,
     hasOverlay: Boolean,
     modifier: Modifier = Modifier,
-    applyBottomSafeInset: Boolean = false,
 ) {
     val isPreview = LocalInspectionMode.current
     val validConfiguration = remember {
@@ -73,12 +72,10 @@ fun MataBannerAd(
         hasOverlay = hasOverlay,
         hasValidConfiguration = validConfiguration && !isPreview,
         modifier = modifier,
-        applyBottomSafeInset = applyBottomSafeInset,
-        bannerHost = { widthDp, consentRevision, bottomSafeInset ->
+        bannerHost = { widthDp, consentRevision ->
             BannerAdHost(
                 widthDp = widthDp,
                 consentRevision = consentRevision,
-                applyBottomSafeInset = bottomSafeInset,
             )
         },
     )
@@ -93,8 +90,10 @@ internal fun MataBannerAdLayout(
     hasOverlay: Boolean,
     hasValidConfiguration: Boolean,
     modifier: Modifier = Modifier,
-    applyBottomSafeInset: Boolean = false,
-    bannerHost: @Composable (widthDp: Int, consentRevision: Long, applyBottomSafeInset: Boolean) -> Unit,
+    contentWindowInsets: WindowInsets = WindowInsets.safeDrawing.only(
+        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+    ),
+    bannerHost: @Composable (widthDp: Int, consentRevision: Long) -> Unit,
 ) {
     val decision = BannerDisplayConditions(
         runtimeAllowsAds = runtimeState.canLoadBanner,
@@ -106,7 +105,11 @@ internal fun MataBannerAdLayout(
     ).evaluate()
     val canLoad = decision == BannerDisplayDecision.SHOW
 
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+    // Custom Scaffold bottom bars must handle their own insets. Measure the ad
+    // inside the remaining safe width, consuming only insets not handled by a parent.
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth().windowInsetsPadding(contentWindowInsets),
+    ) {
         val requestedWidth = maxWidth.coerceAtMost(840.dp).value.toInt()
         var stableWidth by remember { mutableIntStateOf(requestedWidth) }
         LaunchedEffect(canLoad, requestedWidth) {
@@ -119,9 +122,9 @@ internal fun MataBannerAdLayout(
                 stableWidth = requestedWidth
             }
         }
-        if (canLoad && stableWidth > 0) {
+        if (canLoad && stableWidth > 0 && stableWidth <= requestedWidth) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                bannerHost(stableWidth, runtimeState.consentRevision, applyBottomSafeInset)
+                bannerHost(stableWidth, runtimeState.consentRevision)
             }
         }
     }
@@ -131,7 +134,6 @@ internal fun MataBannerAdLayout(
 private fun BannerAdHost(
     widthDp: Int,
     consentRevision: Long,
-    applyBottomSafeInset: Boolean,
 ) {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() } ?: return
@@ -162,16 +164,9 @@ private fun BannerAdHost(
         )
     }
 
-    val loadedModifier = if (applyBottomSafeInset) {
-        Modifier.windowInsetsPadding(
-            WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
-        )
-    } else {
-        Modifier
-    }
     AndroidView(
         factory = { adView },
-        modifier = loadedModifier.bannerAdSize(
+        modifier = Modifier.bannerAdSize(
             loadState = loadState,
             widthDp = adSize.width,
             heightDp = adSize.height,
