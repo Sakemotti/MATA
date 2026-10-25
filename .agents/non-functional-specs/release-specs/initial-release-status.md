@@ -1,8 +1,8 @@
 # 初回リリース進行記録
 
 - 対象: MATA初回公開（追加Closed testing版`1.0.0 (10)`は公開済み）
-- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 10は公開済み・OWNERのデータ保持と回帰確認は問題なし／テスターによる追加機能再確認は未確認
-- 最終更新日: 2026-10-20
+- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 10は公開済み・OWNERのデータ保持と回帰確認は問題なし／原報告者本人の追加機能再確認も問題なし
+- 最終更新日: 2026-10-25
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -10,7 +10,7 @@
 - 前回版のClosed testing引き渡し: [MATA 1.0.0 (8) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-8.md)
 - 前回版のClosed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
 - versionCode 9の引き渡し・証跡: [MATA 1.0.0 (9) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)
-- versionCode 10の配布記録: [MATA 1.0.0 (10) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)。未完了TODO一覧と詳細画面等のレイアウト改善を含む。公開済み、OWNERのデータ保持・回帰確認は問題なし（USER報告）。テスターによる追加機能再確認は未確認
+- versionCode 10の配布記録: [MATA 1.0.0 (10) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)。未完了TODO一覧と詳細画面等のレイアウト改善を含む。公開済み、OWNERのデータ保持・回帰確認は問題なし。2026-10-25に原報告者本人の追加機能再確認も問題なしとUSER報告（CT-027）
 - 旧版のClosed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
 - 旧版のClosed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
@@ -38,7 +38,7 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO |
-| versionCode | `10`。生成・署名・検証・保管済み。アップロード・既知の警告のみ、続いて公開済み・データ保持・OWNER回帰確認は問題なしとUSER報告。正確な公開日時・Console状態文言とテスター再確認は未記録 | AUTO / USER |
+| versionCode | `10`。生成・署名・検証・保管済み。アップロード・既知の警告のみ、続いて公開済み・データ保持・OWNER回帰確認は問題なしとUSER報告。2026-10-25に原報告者本人の未完了TODO追加機能再確認も問題なし（CT-027）。正確な公開日時・Console状態文言は未記録 | AUTO / USER |
 | ソースcommit | `5728f4fd2ceb0867150b699bea960634abcdb92c`（保管候補の生成元） | AUTO |
 | AAB | `app/release/1.0.0-10/mata-1.0.0-10.aab`。Git除外対象 | AUTO |
 | AAB容量 | 13,084,152 bytes | AUTO |
@@ -63,7 +63,9 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`、`
 
 2026-10-19にUSERからversionCode `10`のアップロード済み・既知の警告のみとの報告を受領した（CT-024）。実際のアップロード日時と警告の正確な文言・件数は未記録である。審査送信・公開完了、9→10の更新・データ保持、テスター再確認は今回の報告から補完しない。
 
-続いて同日にUSERからversionCode `10`の公開済み（CT-025）、データ保持・回帰確認は問題なし（CT-026）との報告を受領した。CT10-01〜CT10-10をOWNERの一括報告として合格とし、テスターによる追加機能再確認（CT10-11）は未確認のまま維持する。正確なConsole状態文言、実際の公開・確認日時、端末・OS・条件別所見は未記録であり、報告日や前版の環境を転用しない。既存の全P0/P1の再実施やProduction access承認は意味しない。
+続いて同日にUSERからversionCode `10`の公開済み（CT-025）、データ保持・回帰確認は問題なし（CT-026）との報告を受領した。CT10-01〜CT10-10をOWNERの一括報告として合格とし、テスターによる追加機能再確認（CT10-11）はその時点では未確認とした。正確なConsole状態文言、実際の公開・確認日時、端末・OS・条件別所見は未記録であり、報告日や前版の環境を転用しない。既存の全P0/P1の再実施やProduction access承認は意味しない。
+
+2026-10-25にUSERから、R3-T11（原報告者本人）が同日`1.0.0-10`で未完了TODO一覧の追加機能を確認して問題なしと報告を受領した（CT10-11・CT-027・FB-009）。端末・Androidは不明、具体的な報告経路・操作別所見は未記録。原報告者の配布後再確認を完了とし、Google Playへの新しいFB投稿、Issue #306の発生条件特定、全試験再実施やProduction access承認とは分ける。
 
 2026年10月19日に[PR #313](https://github.com/Sakemotti/MATA/pull/313)を全CI成功後に通常マージし、生成元mainのAndroid CI・CodeQLも成功した。上表のversionCode `10`を生成し、Release事前検査7件、署名・5成果物ハッシュ、8保管ファイルとZIP内容を照合した。SDK・ライセンス・権限等に前版から追加はないが、Room8→9・バックアップ形式5→6への移行を含む。生成時の本番向けGitHubゲートはIssue #306と通常依存関係PR #310・#311により`failed`のまま保管した。詳細は[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)に記録し、配布後の実機確認や本番承認へ広げない。
 
