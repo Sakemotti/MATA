@@ -43,7 +43,7 @@
       "kind": "phoneScreenshot",
       "width": 1080,
       "height": 1920,
-      "altText": "色とアイコンを設定したカテゴリ管理画面"
+      "altText": "カテゴリの色とアイコンを設定する編集画面"
     },
     {
       "path": "metadata/android/ja-JP/images/phoneScreenshots/05-widget.png",
@@ -57,14 +57,14 @@
       "kind": "phoneScreenshot",
       "width": 1080,
       "height": 1920,
-      "altText": "通知や表示と手動バックアップを管理する設定画面"
+      "altText": "手動バックアップと復元を管理するダークテーマの設定画面"
     },
     {
       "path": "metadata/android/ja-JP/images/sevenInchScreenshots/01-two-pane.png",
       "kind": "tabletScreenshot",
       "width": 1920,
       "height": 1080,
-      "altText": "7インチタブレットで一覧と詳細を表示した2ペイン画面"
+      "altText": "7インチ掲載欄向けのカテゴリ一覧と編集を並べた2ペイン画面"
     },
     {
       "path": "metadata/android/ja-JP/images/sevenInchScreenshots/02-categories.png",
@@ -92,7 +92,7 @@
       "kind": "tabletScreenshot",
       "width": 1920,
       "height": 1080,
-      "altText": "10インチタブレットで一覧と詳細を表示した2ペイン画面"
+      "altText": "10インチ掲載欄向けのカテゴリ一覧と編集を並べた2ペイン画面"
     },
     {
       "path": "metadata/android/ja-JP/images/tenInchScreenshots/02-categories.png",
