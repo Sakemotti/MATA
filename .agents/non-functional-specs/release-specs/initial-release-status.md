@@ -1,8 +1,8 @@
 # 初回リリース進行記録
 
-- 対象: MATA初回公開（Closed testing版`1.0.0 (10)`は公開済み、`1.0.0 (11)`候補は生成済み・未配布）
-- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 10のOWNER回帰・未完了TODO原報告者再確認は問題なし／Issue #320を修正したversionCode 11は署名・検証・保管済み、更新配布・原報告者再確認待ち
-- 最終更新日: 2026-10-26
+- 対象: MATA初回公開（追加Closed testing版`1.0.0 (11)`は公開済み）
+- 状態: 全P0/P1 405件の既存結果は合格／本番アクセス1回目再申請も不承認／新トラックで追加テスト実施中／versionCode 10のOWNER回帰・未完了TODO原報告者再確認は問題なし／Issue #320を修正したversionCode 11は公開済み・既存の警告のみ、10→11更新回帰・原報告者再確認待ち
+- 最終更新日: 2026-10-27
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 公開判定基準: [リリースチェックリスト](release-checklist.md)
 - 試験状況: [初回リリース試験棚卸し](../../test-specs/initial-release-inventory.md)
@@ -11,7 +11,7 @@
 - 前回版のClosed testing候補証跡: [MATA 1.0.0 (8) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-8.md)
 - versionCode 9の引き渡し・証跡: [MATA 1.0.0 (9) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-9.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)
 - versionCode 10の配布記録: [MATA 1.0.0 (10) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)、[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)。未完了TODO一覧と詳細画面等のレイアウト改善を含む。公開済み、OWNERのデータ保持・回帰確認は問題なし。2026-10-25に原報告者本人の追加機能再確認も問題なしとUSER報告（CT-027）
-- versionCode 11の候補・引き渡し: [候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)、[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-11.md)。広告安全領域修正を含む。生成済み・未配布で、公開・更新回帰・R3-T16の再確認は未実施
+- versionCode 11の配布記録: [候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)、[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-11.md)。広告安全領域修正を含む。2026-10-27にUSERからアップロード・公開済み、既存の警告のみと報告（CT-028）。10→11更新回帰・R3-T16の再確認は未実施
 - 旧版のClosed testing引き渡し: [MATA 1.0.0 (7) 登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-7.md)
 - 旧版のClosed testing候補証跡: [MATA 1.0.0 (7) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-7.md)
 - 旧本番公開候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
@@ -39,7 +39,7 @@
 | --- | --- | --- |
 | Application ID | `com.mochisofts.mata` | AUTO |
 | versionName | `1.0.0` | AUTO |
-| versionCode | 候補は`11`。2026-10-26に生成・署名・検証・保管済み。アップロード・公開・配布後回帰・原報告者再確認は未実施。現在の公開版は`10` | AUTO |
+| versionCode | `11`。2026-10-26に生成・署名・検証・保管済み。2026-10-27にUSERから現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告（CT-028）。実際の公開日時・正確なConsole状態文言は未記録。10→11更新回帰・原報告者再確認は未実施 | AUTO / USER |
 | ソースcommit | `13af30baeec2c78de4661beda98535877585029c`（versionCode 11保管候補の生成元） | AUTO |
 | AAB | `app/release/1.0.0-11/mata-1.0.0-11.aab`。Git除外対象 | AUTO |
 | AAB容量 | 13,084,547 bytes | AUTO |
@@ -54,13 +54,15 @@
 
 追加Closed testing候補versionCode `7`は、mainのcommit `6cf969d8a13f66fc030267c784116e65c19b9da8`から2026年10月6日に生成した。AABは`app/release/1.0.0-7/mata-1.0.0-7.aab`へローカル複製し、容量13,033,358 bytes、SHA-256 `f0ec8832d469891abef15ea59e6743915cae3d011dd5dc36bef009efba7259bb`、Upload Key署名者1件、`publishable=true`を確認した。同日にClosed testingで公開完了となり、Console警告は`ネイティブコードを含むがデバッグシンボル未登録`だけだった。versionCode `6`はGoogle Playへ未登録で、その後にIssue #274と依存関係更新が入ったため配布しない。
 
-versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`、`8`、`9`および`10`は登録済みであり、再アップロードできない。versionCode `9`を2026-10-14に公開済み、既存警告のみ・新規警告なしとUSERが報告した。公開時刻は未記録である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
+versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`、`8`、`9`、`10`および`11`は登録済みであり、再アップロードできない。versionCode `9`を2026-10-14に公開済み、既存警告のみ・新規警告なしとUSERが報告した。公開時刻は未記録である。versionCode `5`と未登録のversionCode `6`はProductionへ昇格せず、現行版のClosed testing検証とProduction access承認後に本番昇格可否を再判定する。
 
 2026年10月14日に、Issue #299を修正したClosed testing候補versionCode `9`をmainのcommit `53bb2764e935c13430e3360460032b6dd48c9007`から生成・署名・検証・保管した。AABは[versionCode 9候補生成結果](../../test-specs/release-candidate-1.0.0-9.md)のとおり既存Upload Keyと一致し、生成元CIとRelease事前検査7件は合格した。生成時点ではIssue #299の原報告者再確認待ちにより本番向けGitHubゲートは`failed`だった。このJSON・ZIPとAABは歴史証跡として変更しない。
 
 その後、2026-10-14に原報告者本人がversionCode `9`をGalaxy S26／Android 16（報告時と同端末）で確認し、改善したとUSERが報告した（CT-021）。Issue #299は修正・原報告者再確認完了とする。同日に公開済み・本日公開・既存警告のみ、OWNERの`8`→`9`更新とデータ保持は問題なしとUSER報告（CT-022）。続いてCT9-02〜CT9-07の回帰6件すべて問題なしとの報告を受け、今回のversionCode 9回帰確認を完了とした（CT-023）。公開時刻とOWNERの端末・OS・実施日時・個別所見は未記録であり、全試験の再実施や本番公開承認へ広げない。個別参加者の対応表はリポジトリ外で管理する。
 
 ## 3. リポジトリと自動検査
+
+2026-10-27にUSERからversionCode `11`を現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告を受領した（CT-028）。実際の操作・公開日時、正確なConsole状態文言と警告の文言・件数は未記録。公開完了と10→11更新・回帰・原報告者再確認は分けて扱い、後者は未実施のまま維持する。生成時のAAB・ZIP・ゲートJSONは変更しない。
 
 2026-10-26に[PR #322](https://github.com/Sakemotti/MATA/pull/322)を全CI成功後に通常マージし、生成元mainのAndroid CI・CodeQLも成功した。Issue #320の修正を含むversionCode `11`をクリーンなmainから生成し、Release事前検査7件、単一署名者・期待証明書、5成果物のハッシュ、8保管ファイルとZIP内容を照合した。前版とSDK・ライセンス・権限・DBスキーマ・バックアップ形式の差分はない。本番向けGitHubゲートは通常依存関係PR #310・#311が未解決のため`failed`のまま保管した。詳細は[候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)を参照し、公開・配布後確認の完了を補完しない。
 
@@ -211,7 +213,7 @@ versionCode `1`はInternal testing、versionCode `2`、`3`、`4`、`5`、`7`、`
 
 ### 6.3 外部状態待ち
 
-- 2026-10-25にR3-T16からIssue #320として、1.0.0-10のTODO一覧で広告がシステムナビゲーションに重なるとの報告を受領した（FB-010）。端末・Androidは不明、提供画像で3ボタンとの重なりを確認した。共通広告部品を修正し、UI41件・単体240件・Lint・Debugビルドに合格し、同日にUSERが4掲載画面で改善を確認した。PR #321を全CI成功後に通常マージし、2026-10-26に修正版のversionCode 11候補を生成・検証・保管した。更新配布・原報告者再確認は未実施のため本番公開を保留し、過去の回帰合格から完了を補完しない。詳細は[確認項目](../../test-specs/banner-system-insets-320.md)と[versionCode 11手順](../../test-specs/closed-testing-release-1.0.0-11.md)へ記録する。
+- 2026-10-25にR3-T16からIssue #320として、1.0.0-10のTODO一覧で広告がシステムナビゲーションに重なるとの報告を受領した（FB-010）。端末・Androidは不明、提供画像で3ボタンとの重なりを確認した。共通広告部品を修正し、UI41件・単体240件・Lint・Debugビルドに合格し、同日にUSERが4掲載画面で改善を確認した。PR #321を全CI成功後に通常マージし、2026-10-26に修正版のversionCode 11候補を生成・検証・保管した。2026-10-27に現在のClosed testingへアップロード・公開済み、警告は既存のもののみとUSER報告（CT-028）。10→11更新回帰・原報告者再確認は未実施のため本番公開は保留し、過去の回帰合格から完了を補完しない。詳細は[確認項目](../../test-specs/banner-system-insets-320.md)と[versionCode 11手順](../../test-specs/closed-testing-release-1.0.0-11.md)へ記録する。
 - Production accessは2026年9月23日に初回申請し、2026年9月25日に不承認を確認した。追加Closed testingとフィードバック対応の証跡を完成させて再申請するまではProductionを利用できない。
 - 2026-10-09に再申請前の人数・期間・警告なしを確認し、原稿を確定した。その後2026-10-11に1回目の再申請も初回と同じ2理由で不承認だったとUSER報告。正確な申請・通知日時は未記録であり、[申請実行票](production-access-application-draft.md#9-今回の再申請実行票)へ過去履歴として記録した。
 - 次回向けに[テスター依頼文](../../test-specs/closed-testing-tester-guide.md#12-配布メッセージひな型)と[14日間利用・確認計画](../../test-specs/closed-testing-14-day-plan.md)を準備した。2026-10-15にUSERが15人で開始したと報告し、運用開始日も同日と確認した。リポジトリ外の対応表でも開始報告15人を確認した。新トラックのConsole人数・継続日数は旧トラック表示のため不明であり、旧トラックの数値を流用しない。終了・要件達成予定は未確定。全員の毎日利用・投稿完了や個別版を補完せず、必要な更新配布と再確認は実績に基づいて追跡する。
