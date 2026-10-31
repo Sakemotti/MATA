@@ -1,7 +1,7 @@
 # リリース・配布運用仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-10-31
+- 最終更新日: 2026-11-01
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[総合動作確認項目書](../../test-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[法的文書仕様](../legal-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)
 
 ## 1. 目的
@@ -23,6 +23,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md) | Issue・PR、CI、秘密情報、GitHubセキュリティ機能および外部Consoleの候補生成前監査 |
 | [Production access申請回答・実施票](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の提出用回答と申請・審査記録 |
 | [本番候補1.0.0 (11)の確定・昇格確認](../../test-specs/production-candidate-1.0.0-11.md) | 既登録AABの固定、Release差分・ハッシュ再照合、未合格ゲートと残確認 |
+| [Dependabot通常更新5件の統合検証](../../test-specs/dependabot-maintenance-2026-11-01.md) | 次回開発向けmainへの依存更新・全CI成功・元5件のMERGED確認。本番候補11は変更しない |
 | [初回Production公開実行票](initial-production-runbook.md) | 既登録versionCode 11のProduction登録、初回公開固有の制約、監視および重大問題対応 |
 
 ## 3. 基本方針
@@ -49,6 +50,8 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 - versionCode `11`は2026-10-26に広告とシステムナビゲーションの重なり修正を含む署名済みClosed testing候補を生成・検証・保管した。2026-10-27にUSERから現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告された（CT-028）。実際の公開日時・正確なConsole状態文言と警告の文言・件数は未記録。[候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-11.md)で追跡する。2026-10-29に10→11のデータ保持・OWNER回帰はOKと報告（CT-029）、原報告者R3-T16の再確認は回答待ち。本番向けGitHubゲートの生成時の未合格は歴史証跡として維持する。
 
 - 2026-10-31にUSERがProduction access承認を報告し、現在の最新を本番候補とすることを了承した。本番候補は既登録の`1.0.0 (11)`であり、同じAABを再ビルドせず昇格させる。最新mainからRelease入力の変更がないことと保管物・署名を再照合した。未解決Dependabot PR5件によるGitHubゲート未合格と外部最終確認は残り、本番リリース自体の審査・一般公開は未実施。[候補確定記録](../../test-specs/production-candidate-1.0.0-11.md)、[申請承認記録](production-access-application-draft.md#11-第3回申請2回目の再申請の承認記録)と[残りゲート](initial-release-status.md#7-本番公開前後の残りゲート)を正とする。
+
+2026-11-01にDependabot通常更新5件を統合PR #332で検証・通常マージし、元PRがすべて`MERGED`になったことを確認した。上記の選定時の未合格状態は過去の記録として保持する。最新mainの依存構成と保管済み本番候補11を区別し、今回の更新を配布する場合は12以上の別候補・差分回帰を必要とする。依存更新の完了をProductionへの送信・公開完了と扱わない。
 
 ## 4. 固定する公開値
 
