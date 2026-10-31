@@ -22,7 +22,8 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [初回リリース進行記録](initial-release-status.md) | Closed testing公開版`1.0.0 (11)`と旧版の生成・保管、Console、OWNER確認、原報告者再確認と保留事項 |
 | [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md) | Issue・PR、CI、秘密情報、GitHubセキュリティ機能および外部Consoleの候補生成前監査 |
 | [Production access申請回答・実施票](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の提出用回答と申請・審査記録 |
-| [初回Production公開実行票](initial-production-runbook.md) | Production access承認後の公開準備。旧versionCode 6向け手順を保持し、現行候補確定・更新までは公開操作を実行しない |
+| [本番候補1.0.0 (11)の確定・昇格確認](../../test-specs/production-candidate-1.0.0-11.md) | 既登録AABの固定、Release差分・ハッシュ再照合、未合格ゲートと残確認 |
+| [初回Production公開実行票](initial-production-runbook.md) | 既登録versionCode 11のProduction登録、初回公開固有の制約、監視および重大問題対応 |
 
 ## 3. 基本方針
 
@@ -47,7 +48,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 
 - versionCode `11`は2026-10-26に広告とシステムナビゲーションの重なり修正を含む署名済みClosed testing候補を生成・検証・保管した。2026-10-27にUSERから現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告された（CT-028）。実際の公開日時・正確なConsole状態文言と警告の文言・件数は未記録。[候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-11.md)で追跡する。2026-10-29に10→11のデータ保持・OWNER回帰はOKと報告（CT-029）、原報告者R3-T16の再確認は回答待ち。本番向けGitHubゲートの生成時の未合格は歴史証跡として維持する。
 
-- 2026-10-31にUSERがProduction access承認を報告した。これは本番リリース自体の審査・一般公開完了ではない。本番候補は未確定であり、旧versionCode 6を使用せず、現行候補の確定・最新ゲートの再確認後に公開手順を更新する。[申請承認記録](production-access-application-draft.md#11-第3回申請2回目の再申請の承認記録)と[残りゲート](initial-release-status.md#7-本番公開前後の残りゲート)を正とする。
+- 2026-10-31にUSERがProduction access承認を報告し、現在の最新を本番候補とすることを了承した。本番候補は既登録の`1.0.0 (11)`であり、同じAABを再ビルドせず昇格させる。最新mainからRelease入力の変更がないことと保管物・署名を再照合した。未解決Dependabot PR5件によるGitHubゲート未合格と外部最終確認は残り、本番リリース自体の審査・一般公開は未実施。[候補確定記録](../../test-specs/production-candidate-1.0.0-11.md)、[申請承認記録](production-access-application-draft.md#11-第3回申請2回目の再申請の承認記録)と[残りゲート](initial-release-status.md#7-本番公開前後の残りゲート)を正とする。
 
 ## 4. 固定する公開値
 

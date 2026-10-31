@@ -315,3 +315,5 @@ Issue #274のversionCode `7`でのT13再確認と、Issue #281・#284のversionC
 2026-10-31にUSERから本番環境アクセス申請が承認されたと報告を受領した。第3回申請（2回目の再申請）の結果として[申請実行票第11節](../non-functional-specs/release-specs/production-access-application-draft.md#11-第3回申請2回目の再申請の承認記録)へ記録した。実際の申請・承認・通知日時、提出本文、正確なConsole文言と参加人数・連続日数は今回の報告から補完しない。
 
 Production access承認と本番リリースの審査・一般公開を区別する。versionCode 11は引き続きClosed testing公開版であり、本番候補と公開手順は別に確定する。R3-T16の広告位置再確認は回答待ち、Pre-launch reportの結果は未確認であり、承認により完了へ変更しない。Closed testingの停止・テスター設定の削除は行っていない。
+
+その後同日にUSERが現在の最新を本番候補とすることを了承した。Release入力に差分がないことと保管成果物・署名の再照合後、既登録のversionCode 11を本番候補に確定した。新しいAABの生成やProductionの公開操作は行っていない。[候補確定記録](production-candidate-1.0.0-11.md)で、未解決Dependabot PR5件によるGitHubゲート未合格と残る外部最終確認を追跡する。

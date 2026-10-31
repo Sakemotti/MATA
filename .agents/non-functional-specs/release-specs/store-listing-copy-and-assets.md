@@ -1,7 +1,7 @@
 # Google Playストア掲載文・画像仕様
 
 - 文書状態: 初回本番公開文案確定・掲載文成果物化済み・Play Console反映待ち
-- 最終更新日: 2026-10-27
+- 最終更新日: 2026-10-31
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連文書: [Google Play Console申請シート](play-console-submission.md)
 - 関連成果物: [Google Play掲載成果物](../../../fastlane/README.md)
@@ -75,6 +75,8 @@ Google Playの「このリリースの新機能」へ、配布するversionCode�
 
 ### 4.2 versionCode `6`（初回Production確定文）
 
+当初は未配布のversionCode 6向けに確定した文案である。2026-10-31に本番候補を既登録の11へ確定したため、11をProductionへ昇格させる初回公開にもこの文章を使用する。AABの再生成や過去のClosed testing告知の上書きは行わない。
+
 > MATAの初回リリースです。
 > 毎日・曜日指定・月末・毎月第X曜日・N週間にX回・月X回など、柔軟な繰り返しTODOを管理できます。
 > 今日の一覧、通知、ウィジェット、カレンダー履歴、カテゴリ分け、未完了TODOの繰り越し、手動バックアップに対応しています。
@@ -110,6 +112,8 @@ Google Playの「このリリースの新機能」へ、配布するversionCode�
 リリースノートは宣伝やインストールの呼びかけに使用しない。
 
 Google Playへ配布する`versionCode`と同名の`fastlane/metadata/android/ja-JP/changelogs/<versionCode>.txt`へ確定文案を同期する。旧`versionCode`のファイルは、過去に登録した成果物の記録として削除または上書きしない。
+
+同じAABを別トラックへ昇格させる今回の初回Productionでは、`changelogs/11.txt`をClosed testing告知の履歴として維持し、ProductionのConsole入力文は第4.2節で管理する。11のファイルが初回Productionの文章であると誤認しない。
 
 ## 5. ストアアイコン
 
