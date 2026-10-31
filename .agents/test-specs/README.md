@@ -1,7 +1,7 @@
 # MATA 総合動作確認項目書
 
 - 文書状態: 第2版
-- 最終更新日: 2026-10-25
+- 最終更新日: 2026-10-27
 - 対象仕様: [アプリ全体仕様](../app-spec.md)、[開発ガイドライン](../development-guidelines.md)、[全画面仕様](../screen-specs/README.md)、[収益化仕様](../functional-specs/monetization-specs/README.md)、[アプリ起動・初期化・復帰仕様](../non-functional-specs/startup-specs/README.md)、[MATAデザインシステム仕様](../non-functional-specs/design-system-specs/README.md)、[画面サイズ・適応レイアウト仕様](../non-functional-specs/adaptive-layout-specs/README.md)、[エラー処理・障害回復仕様](../non-functional-specs/error-handling-specs/README.md)、[性能・省電力仕様](../non-functional-specs/performance-specs/README.md)、[セキュリティ・プライバシー仕様](../non-functional-specs/security-privacy-specs/README.md)、[ログ・診断・品質監視仕様](../non-functional-specs/observability-specs/README.md)、[リリース・配布運用仕様](../non-functional-specs/release-specs/README.md)、[実装アーキテクチャ・データアクセス仕様](../non-functional-specs/architecture-specs/README.md)
 
 ## 1. 目的
@@ -17,6 +17,8 @@ MATAの実装が、現時点で確定しているアプリ全体仕様と7画面
 versionCode `9`には[登録・更新確認手順](closed-testing-release-1.0.0-9.md)と[候補生成結果](release-candidate-1.0.0-9.md)を使用する。2026-10-14公開済み・既存警告のみ、8→9更新・データ保持と原報告者本人の改善再確認（Galaxy S26／Android 16）はUSER確認済み。CT9-02〜CT9-07のOWNER回帰6件も同日のUSER報告ですべて合格・確認完了（CT-023）。既存のP0/P1合格をversionCode `9`の全項目再実施済みと扱わない。
 
 versionCode `10`は2026-10-19に署名済み候補を生成・検証・保管した追加Closed testing版である。[候補生成結果](release-candidate-1.0.0-10.md)と[登録・更新確認手順](closed-testing-release-1.0.0-10.md)で9→10更新・DB8→9移行・バックアップ形式6・配布後回帰を追跡する。同日にUSERからアップロード済み・既知の警告のみ（CT-024）、続いて公開済み（CT-025）・データ保持とOWNER回帰確認は問題なし（CT-026）と報告された。CT10-01〜CT10-10はOWNERの一括報告として合格。2026-10-25にR3-T11（原報告者本人）が1.0.0-10で未完了TODO追加機能を再確認して問題なしとUSERが報告し、CT10-11も報告範囲の合格とした（CT-027）。テスターの端末・Androidは不明。実際の公開日時、正確なConsole状態文言、OWNERの実施日時・環境、各操作の所見は未記録であり、従来の全P0/P1再実施やProduction承認へ広げない。
+
+versionCode `11`は2026-10-26に広告安全領域修正を含む署名済みClosed testing候補を生成・検証・保管した。2026-10-27にUSERから現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告された（CT-028）。実際の公開日時・正確なConsole状態文言と警告の文言・件数は未記録。[候補生成結果](release-candidate-1.0.0-11.md)と[登録・更新確認手順](closed-testing-release-1.0.0-11.md)で10→11更新、4掲載画面の広告配置、回転・失敗時動作と原報告者R3-T16の再確認を追跡する。配布後回帰・原報告者再確認は未実施であり、既存のP0/P1結果を今回の実施結果へ流用しない。
 
 ## 2. 正とする文書
 

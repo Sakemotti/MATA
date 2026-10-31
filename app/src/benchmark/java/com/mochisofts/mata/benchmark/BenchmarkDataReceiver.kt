@@ -162,11 +162,19 @@ class BenchmarkDataReceiver : BroadcastReceiver() {
                 dueMinutes = 23 * 60,
             ),
         )
-        activeTodos.forEach { todo -> saveStoreTodo(todo, today.minusMonths(2)) }
+        activeTodos.forEach { todo ->
+            val startDate = if (todo.recurrenceRule.type == RecurrenceType.WEEKLY_COUNT) {
+                today
+            } else {
+                today.minusMonths(2)
+            }
+            saveStoreTodo(todo, startDate)
+        }
 
         seedPastAction(storeTodoId(1), today.minusDays(1), TodoState.COMPLETED)
         seedPastAction(storeTodoId(5), today.minusDays(1), TodoState.SKIPPED)
         seedPastAction(storeTodoId(1), today.minusDays(2), TodoState.COMPLETED)
+        seedStoreHistory(activeTodos, today)
 
         val archivedTodo = StoreTodo(
             id = storeTodoId(7),
@@ -185,6 +193,31 @@ class BenchmarkDataReceiver : BroadcastReceiver() {
         settingsRepository.setTodoListMode(TODO_LIST_MODE_DATE)
         settingsRepository.setWeekStart(DayOfWeek.MONDAY)
         settingsRepository.setTheme(AppTheme.LIGHT)
+    }
+
+    private suspend fun seedStoreHistory(todos: List<StoreTodo>, today: LocalDate) {
+        var date = today.minusMonths(2)
+        while (date < today) {
+            todos.forEach { todo ->
+                val scheduled = when (todo.recurrenceRule.type) {
+                    RecurrenceType.DAILY -> true
+                    RecurrenceType.SELECTED_WEEKDAYS ->
+                        date.dayOfWeek in todo.recurrenceRule.selectedWeekdays
+                    RecurrenceType.MONTHLY_NTH_WEEKDAYS -> MonthlyNthWeekday(
+                        (date.dayOfMonth - 1) / 7 + 1,
+                        date.dayOfWeek,
+                    ) in todo.recurrenceRule.monthlyNthWeekdays
+                    else -> false
+                }
+                // Keep one recent household routine unfinished to show the inbox entry.
+                val recentUnfinished = todo.id == storeTodoId(4) &&
+                    date.isAfter(today.minusWeeks(1))
+                if (scheduled && !recentUnfinished) {
+                    seedPastAction(todo.id, date, TodoState.COMPLETED)
+                }
+            }
+            date = date.plusDays(1)
+        }
     }
 
     private suspend fun saveStoreTodo(todo: StoreTodo, startDate: LocalDate) {
