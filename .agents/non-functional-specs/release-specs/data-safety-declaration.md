@@ -1,13 +1,15 @@
 # Google Play Data safety申告
 
 - 文書状態: Console回答済み・Release静的整合確認済み・実機通信確認前
-- 最終更新日: 2026-10-05
+- 最終更新日: 2026-10-31
 - 親仕様: [リリース・配布運用仕様](README.md)
 - 関連仕様: [データ・プライバシー仕様](../security-privacy-specs/data-and-privacy.md)、[外部送信に関する公表](../legal-specs/external-transmission.md)
 
 ## 1. 適用範囲
 
-本書は、現在のRelease構成をGoogle Play ConsoleのData safetyフォームへ転記するための申告内容である。MATA本体だけでなく、GMA Next-Gen SDK 1.5.0、UMP 4.0.0およびHolidays JPへの通信を含む。2026年10月5日に、GMA Next-Gen SDKの2026年10月2日更新版データ開示、同SDK 1.5.0およびUMP 4.0.0が最新であることを公式資料で確認した。GMA 1.5.0はMATAが利用しない限定提供広告形式向けAPIの追加であり、既存の収集・共有データタイプに変更はない。2026年9月4日時点でConsoleへの回答と全App contentカードの完了をユーザーが確認済みとする。
+本書は、現在のmainのRelease構成をGoogle Play ConsoleのData safetyフォームへ転記するための申告内容である。MATA本体だけでなく、GMA Next-Gen SDK 1.6.0、UMP 4.0.0およびHolidays JPへの通信を含む。2026-10-31にGoogle公式の1.6.0リリースノートと2026-10-30更新版のデータ開示を確認した。広告検査画面、MATAが使用しないリワード広告、HSDP依存の修正が含まれ、公式開示の収集・共有データタイプは引き続きIPアドレス、アプリ操作、診断情報、端末・アカウント識別子である。MATAで新しい広告形式や追加送信APIは使用しない。推移依存、最終Manifest、SBOMと実機通信は実際の公開候補ごとに再確認する。
+
+固定した本番候補`1.0.0 (11)`のAABにはGMA Next-Gen SDK 1.5.0とUMP 4.0.0が含まれ、今回のmain向け依存更新を後付けしない。旧1.5.0は2026-10-05に当時の公式開示でレビュー済みである。2026-09-04のConsole回答・全App contentカード完了と、今回のmain向け更新レビュー、11の公開前最終確認は分けて扱う。
 
 Google Playの定義では、アプリまたはSDKが端末外へ送信するデータを「収集」に含める。最終回答はRelease AABのマージ済みManifest、Google Play SDK Index、各SDKの最新開示および実機通信検査を基に確定し、本書との差異があれば公開前に本書、プライバシーポリシーおよび外部送信に関する公表を同時更新する。
 
@@ -76,5 +78,7 @@ Google Playの定義では、アプリまたはSDKが端末外へ送信するデ
 
 - [Provide information for Google Play's Data safety section](https://support.google.com/googleplay/android-developer/answer/10787469)
 - [GMA Next-Gen SDK: Google Play's data disclosure requirements](https://developers.google.com/ad-manager/mobile-ads-sdk/android/next-gen/privacy/play-data-disclosure)
+- [GMA Next-Gen SDK release notes](https://developers.google.com/admob/android/next-gen/rel-notes)
+- [AdMob GMA Next-Gen SDK data disclosure](https://developers.google.com/admob/android/next-gen/privacy/play-data-disclosure)
 - [Declare your app's data use](https://developer.android.com/privacy-and-security/declare-data-use)
 - [Understanding Google Play's app account deletion requirements](https://support.google.com/googleplay/android-developer/answer/13327111)

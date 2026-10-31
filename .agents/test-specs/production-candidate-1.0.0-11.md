@@ -20,7 +20,9 @@
 | Upload Key SHA-256 | `EC:63:FF:99:D4:80:DA:DD:2F:2E:21:42:0A:FD:E6:18:52:C3:57:38:4C:93:BA:AE:6E:03:DA:74:35:F2:93:4D` |
 | 採用方法 | Closed testingへ登録済みの同じ11のAABをProductionへ昇格またはライブラリから追加する。再ビルド・同じ番号の再アップロードは行わない |
 
-最新mainとの差分は文書、ストア画像と掲載マニフェスト、benchmark専用の撮影データである。本番ソース・リソース、Release設定、Gradle設定・Wrapper、依存関係、DBスキーマとバックアップ形式に変更はない。`app/src/benchmark`のデータ投入処理はReleaseへ含まれない。候補確定後に本番向け変更を取り込む場合は、11へ後付けせず、12以上かつ全登録済み番号より大きいversionCodeで別候補を作り、差分試験と識別情報を更新する。
+選定時mainとの差分は文書、ストア画像と掲載マニフェスト、benchmark専用の撮影データであり、その時点では本番ソース・リソース、Release設定、Gradle設定・Wrapper、依存関係、DBスキーマとバックアップ形式に変更はなかった。`app/src/benchmark`のデータ投入処理はReleaseへ含まれない。候補確定後に本番向け変更を候補へ取り込む場合は、11へ後付けせず、12以上かつ全登録済み番号より大きいversionCodeで別候補を作り、差分試験と識別情報を更新する。
+
+今回のDependabot整理では、次回開発向けmainへ5件の依存更新を統合する。本番候補11は上記AABに固定し、新しい依存・ツールを含めない。更新後のmainと11の生成元は同一のRelease構成ではなく、mainから新しくビルドして11の保管物を置き換えることは禁止する。現在のmainのCI・GitHubゲートと、固定した11の生成元CI・配布後確認を別々に追跡する。
 
 ## 2. 2026-10-31の再照合
 
@@ -45,7 +47,7 @@
 
 GitHub監査は`node tools/release/verify-github-release-gates.mjs`で実施し、結果はGit除外の`app/build/outputs/release-metadata/github-release-gates.json`へ保存した。対象は選定時mainであり、AAB生成元の監査結果と混同しない。
 
-未解決の通常Dependabot PRは[#310](https://github.com/Sakemotti/MATA/pull/310)、[#311](https://github.com/Sakemotti/MATA/pull/311)、[#324](https://github.com/Sakemotti/MATA/pull/324)、[#325](https://github.com/Sakemotti/MATA/pull/325)、[#326](https://github.com/Sakemotti/MATA/pull/326)である。これらを候補へ自動で取り込まず、形式的なクローズやゲートの緩和もしない。別途対応して最新ゲートを再実行するまでは、Productionへの送信・公開を行わない。候補に影響する変更が必要になった場合は第1節に従って再確定する。
+選定時に未解決だった通常Dependabot PRは[#310](https://github.com/Sakemotti/MATA/pull/310)、[#311](https://github.com/Sakemotti/MATA/pull/311)、[#324](https://github.com/Sakemotti/MATA/pull/324)、[#325](https://github.com/Sakemotti/MATA/pull/325)、[#326](https://github.com/Sakemotti/MATA/pull/326)である。これらは統合検証後にmainへ取り込む方針とし、候補への自動反映、形式的なクローズやゲートの緩和は行わない。統合後に元PRの対応状態と最新ゲートを再確認するまでは、Productionへの送信・公開を行わない。選定時の未合格結果は履歴として維持する。
 
 ## 4. 引き渡しと公開前の残確認
 
