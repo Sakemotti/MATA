@@ -1,7 +1,8 @@
 # MATA 1.0.0 (11) 本番公開候補の確定・昇格確認
 
-- 状態: 候補確定。公開ゲートは未合格、Productionへの登録・審査送信・一般公開は未実施
+- 状態: 候補確定。依存更新PR5件は対応済み、外部最終確認・公開判断は未完了。Productionへの登録・審査送信・一般公開は未実施
 - 確定日・確認元: 2026-10-31、USERが現在の最新を本番公開候補とすることを了承
+- 最終更新日: 2026-11-01
 - 成果物の生成記録: [Closed testing候補生成結果](release-candidate-1.0.0-11.md)
 - 配布後の確認: [versionCode 11登録・更新確認手順](closed-testing-release-1.0.0-11.md)
 - 公開手順: [初回Production公開実行票](../non-functional-specs/release-specs/initial-production-runbook.md)
@@ -22,7 +23,7 @@
 
 選定時mainとの差分は文書、ストア画像と掲載マニフェスト、benchmark専用の撮影データであり、その時点では本番ソース・リソース、Release設定、Gradle設定・Wrapper、依存関係、DBスキーマとバックアップ形式に変更はなかった。`app/src/benchmark`のデータ投入処理はReleaseへ含まれない。候補確定後に本番向け変更を候補へ取り込む場合は、11へ後付けせず、12以上かつ全登録済み番号より大きいversionCodeで別候補を作り、差分試験と識別情報を更新する。
 
-今回のDependabot整理では、次回開発向けmainへ5件の依存更新を統合する。本番候補11は上記AABに固定し、新しい依存・ツールを含めない。更新後のmainと11の生成元は同一のRelease構成ではなく、mainから新しくビルドして11の保管物を置き換えることは禁止する。現在のmainのCI・GitHubゲートと、固定した11の生成元CI・配布後確認を別々に追跡する。
+2026-11-01に[統合PR #332](https://github.com/Sakemotti/MATA/pull/332)を全CI成功後に通常マージし、次回開発向けmainへ5件の依存更新を取り込んだ。本番候補11は上記AABに固定し、新しい依存・ツールを含めない。更新後のmainと11の生成元は同一のRelease構成ではなく、mainから新しくビルドして11の保管物を置き換えることは禁止する。現在のmainのCI・GitHubゲートと、固定した11の生成元CI・配布後確認を別々に追跡する。
 
 ## 2. 2026-10-31の再照合
 
@@ -41,17 +42,17 @@
 | P0/P1 | 既存結果405/405件合格。今回の全件再実施ではない |
 | 10→11の更新・OWNER回帰 | 2026-10-29の一括報告で問題なし（CT-029）。端末・OS・実施日時・条件別詳細は未記録 |
 | 広告位置の原報告者再確認 | R3-T16の回答待ち。候補確定によって完了にはしない |
-| GitHubゲート | **未合格**。選定時mainに対する監査で、未解決PR5件だけが失敗。未解決Issue・セキュリティalertは各0件、main CIと保護設定は合格。Java/Kotlin CodeQL未対応の警告は維持 |
+| GitHubゲート | 選定時mainでは未解決PR5件により未合格だった。その5件は2026-11-01にPR #332で対応済み、確認時の未解決PRは0件。選定時の判定を上書きせず、最新mainのCI・監査JSONを公開直前に再照合する。Java/Kotlin CodeQL未対応の警告は維持 |
 | Console・AdMob・公開Web | 公開前の最終照合は未完了。Pre-launch reportは結果未確認。最新ストア画像のConsole差し替え完了も未確認 |
 | 公開の最終承認 | 未実施。候補選定の了承と公開開始の了承を分ける |
 
 GitHub監査は`node tools/release/verify-github-release-gates.mjs`で実施し、結果はGit除外の`app/build/outputs/release-metadata/github-release-gates.json`へ保存した。対象は選定時mainであり、AAB生成元の監査結果と混同しない。
 
-選定時に未解決だった通常Dependabot PRは[#310](https://github.com/Sakemotti/MATA/pull/310)、[#311](https://github.com/Sakemotti/MATA/pull/311)、[#324](https://github.com/Sakemotti/MATA/pull/324)、[#325](https://github.com/Sakemotti/MATA/pull/325)、[#326](https://github.com/Sakemotti/MATA/pull/326)である。これらは統合検証後にmainへ取り込む方針とし、候補への自動反映、形式的なクローズやゲートの緩和は行わない。統合後に元PRの対応状態と最新ゲートを再確認するまでは、Productionへの送信・公開を行わない。選定時の未合格結果は履歴として維持する。
+選定時に未解決だった通常Dependabot PRは[#310](https://github.com/Sakemotti/MATA/pull/310)、[#311](https://github.com/Sakemotti/MATA/pull/311)、[#324](https://github.com/Sakemotti/MATA/pull/324)、[#325](https://github.com/Sakemotti/MATA/pull/325)、[#326](https://github.com/Sakemotti/MATA/pull/326)である。2026-11-01の統合マージ後に全5件が`MERGED`であることを確認した。候補への自動反映、形式的なクローズやゲートの緩和は行っていない。詳細は[統合検証記録](dependabot-maintenance-2026-11-01.md)を参照し、選定時の未合格結果は履歴として維持する。
 
 ## 4. 引き渡しと公開前の残確認
 
-1. 未解決PRを別途対応し、最新のGitHubゲートを再判定する。
+1. 依存更新PR5件の対応は完了。公開直前に最新のGitHubゲートを再判定する。
 2. R3-T16の広告位置再確認待ちの扱いと、未確認の試験・レポートについて最終公開判断を記録する。未回答を合格へ変えない。
 3. Productionページ、地域（日本）、無料・商品なし、App content、SDK Index、Data safety、ポリシー、AdMob、公開法的文書と掲載文・画像を最終確認する。
 4. 全ゲートの完了とOWNERの公開開始判断後、Productionで既登録の`1.0.0 (11)`を選択する。再アップロードや新しい署名鍵の設定は行わない。

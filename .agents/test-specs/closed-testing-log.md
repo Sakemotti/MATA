@@ -3,7 +3,7 @@
 - 対象アプリ: MATA追加Closed testing版`1.0.0 (11)`は現在のトラックへアップロード・公開済み（USER報告）
 - 対象ソースcommit: `13af30baeec2c78de4661beda98535877585029c`（versionCode 11候補の生成元。versionCode 10以前は各候補生成結果を参照）
 - 状態: Production access承認済み（2026-10-31 USER報告）／本番公開は未実施／versionCode 11はClosed testingへ公開済み／10→11のデータ保持・OWNER回帰は問題なし／原報告者R3-T16の再確認は回答待ち
-- 最終更新日: 2026-10-31
+- 最終更新日: 2026-11-01
 - 初回テスト開始日: 2026-09-09
 - 初回継続参加の達成日: 2026-09-23
 - 試験項目: [MATA 総合動作確認項目書](README.md)
@@ -317,3 +317,5 @@ Issue #274のversionCode `7`でのT13再確認と、Issue #281・#284のversionC
 Production access承認と本番リリースの審査・一般公開を区別する。versionCode 11は引き続きClosed testing公開版であり、本番候補と公開手順は別に確定する。R3-T16の広告位置再確認は回答待ち、Pre-launch reportの結果は未確認であり、承認により完了へ変更しない。Closed testingの停止・テスター設定の削除は行っていない。
 
 その後同日にUSERが現在の最新を本番候補とすることを了承した。Release入力に差分がないことと保管成果物・署名の再照合後、既登録のversionCode 11を本番候補に確定した。新しいAABの生成やProductionの公開操作は行っていない。[候補確定記録](production-candidate-1.0.0-11.md)で、未解決Dependabot PR5件によるGitHubゲート未合格と残る外部最終確認を追跡する。
+
+2026-11-01にDependabot PR5件を[統合PR #332](https://github.com/Sakemotti/MATA/pull/332)で検証し、全CI成功後に通常マージした。元5件はすべて`MERGED`である。選定時の未合格要因は解消したが、本番候補11のAABを更新後mainの検証成果物へ置き換えていない。新しい配布版・テスターの再確認・フィードバック受領・Production公開の実績には加算せず、未確認の外部最終確認はそのまま維持する。
