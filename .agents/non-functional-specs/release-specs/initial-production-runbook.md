@@ -1,12 +1,19 @@
 # MATA初回Production公開実行票
 
-- 対象: `com.mochisofts.mata` / `1.0.0 (6)`
-- 状態: 未実施。Production access承認とversionCode `6`の全ゲート合格後に使用する
+- 対象: `com.mochisofts.mata` / 本番候補のversionCodeは未確定（本文は旧`1.0.0 (6)`向けの準備票）
+- 状態: Production access承認済み（2026-10-31 USER報告）。本番リリースは未実施。現行候補向けの手順・ゲート更新が必要
 - 作成日: 2026-09-17
+- 最終更新日: 2026-10-31
 - 本番候補計画: [MATA 1.0.0 (6) 本番公開候補生成計画](../../test-specs/production-release-candidate-1.0.0-6-plan.md)
 - 回帰試験実施票: [MATA 1.0.0 (6) 回帰試験実施票](../../test-specs/version-6-regression-results.md)
 - 成果物台帳: [MATA 1.0.0 (6) 公開候補生成結果](../../test-specs/release-candidate-1.0.0-6.md)
 - 公式手順: [リリースを準備して公開する](https://support.google.com/googleplay/android-developer/answer/9859348?hl=ja)
+
+## 0. 現在の適用状態
+
+2026-10-31にUSERがProduction access承認を報告した。本番リリース自体の審査・一般公開は未実施である。versionCode 6は未配布の旧候補であり使用しない。最新のClosed testing公開版は11だが、本番候補への昇格または新規候補の生成は未確定である。
+
+第1〜10節には旧versionCode 6と前方修正版7以上の番号・回帰件数・リリースノートパスが残っている。旧計画の履歴として保持し、現行候補の番号・commit・成果物・回帰範囲・修正版採番へ更新するまで、本書の公開操作を実行しない。現在の残作業は[進行記録第7節](initial-release-status.md#7-本番公開前後の残りゲート)を参照する。Productionページの利用可否確認、最終公開判断とConsole登録はまだ完了していない。
 
 ## 1. 初回公開固有の制約
 
@@ -70,7 +77,7 @@
 | Upload Key SHA-256 | 未確認 |
 | Internal testingのリリース状態 | 未登録 |
 | versionCode 6回帰試験 | 未実施 |
-| Production access | 未承認 |
+| Production access | 承認済み（2026-10-31 USER報告）。実際の承認日時と正確なConsole文言は未記録。Productionページの操作確認は未実施 |
 | ポリシー状態 | 未確認 |
 | Pre-launch report | 未確認 |
 | 対象国・地域 | 日本予定 |

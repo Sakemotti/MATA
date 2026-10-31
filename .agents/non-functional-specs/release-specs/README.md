@@ -1,7 +1,7 @@
 # リリース・配布運用仕様
 
 - 文書状態: 確定
-- 最終更新日: 2026-10-27
+- 最終更新日: 2026-10-31
 - 関連仕様: [アプリ全体仕様](../../app-spec.md)、[開発ガイドライン](../../development-guidelines.md)、[総合動作確認項目書](../../test-specs/README.md)、[収益化仕様](../../functional-specs/monetization-specs/README.md)、[セキュリティ・プライバシー仕様](../security-privacy-specs/README.md)、[法的文書仕様](../legal-specs/README.md)、[ログ・診断・品質監視仕様](../observability-specs/README.md)
 
 ## 1. 目的
@@ -22,7 +22,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [初回リリース進行記録](initial-release-status.md) | Closed testing公開版`1.0.0 (11)`と旧版の生成・保管、Console、OWNER確認、原報告者再確認と保留事項 |
 | [versionCode 6 リリースブロッカー監査票](version-6-blocker-audit.md) | Issue・PR、CI、秘密情報、GitHubセキュリティ機能および外部Consoleの候補生成前監査 |
 | [Production access申請回答・実施票](production-access-application-draft.md) | Closed testing、対象ユーザー、本番準備状況の提出用回答と申請・審査記録 |
-| [初回Production公開実行票](initial-production-runbook.md) | versionCode 6のProduction登録、初回公開固有の制約、監視および重大問題対応 |
+| [初回Production公開実行票](initial-production-runbook.md) | Production access承認後の公開準備。旧versionCode 6向け手順を保持し、現行候補確定・更新までは公開操作を実行しない |
 
 ## 3. 基本方針
 
@@ -45,7 +45,9 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 
 - versionCode `10`は2026-10-19に未完了TODO一覧・詳細画面等のレイアウト改善を含む署名済み候補を生成・検証・保管した。同日にUSERからアップロード済み・既知の警告のみ（CT-024）、続いて公開済み（CT-025）・データ保持とOWNER回帰確認は問題なし（CT-026）と報告された。2026-10-25にはR3-T11（原報告者本人）が1.0.0-10で追加機能を再確認して問題なしとUSER報告（CT10-11・CT-027）。端末・Androidは不明、正確なConsole状態文言・公開日時・操作別所見は未記録である。[候補生成結果](../../test-specs/release-candidate-1.0.0-10.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-10.md)で追跡し、本番向けGitHubゲートの生成時の未合格は書き換えず、Production向け判定は別途行う。
 
-- versionCode `11`は2026-10-26に広告とシステムナビゲーションの重なり修正を含む署名済みClosed testing候補を生成・検証・保管した。2026-10-27にUSERから現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告された（CT-028）。実際の公開日時・正確なConsole状態文言と警告の文言・件数は未記録。[候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-11.md)で追跡し、10→11更新回帰・原報告者R3-T16の再確認は未実施。本番向けGitHubゲートの生成時の未合格を維持し、Production公開承認とは扱わない。
+- versionCode `11`は2026-10-26に広告とシステムナビゲーションの重なり修正を含む署名済みClosed testing候補を生成・検証・保管した。2026-10-27にUSERから現在のClosed testingへアップロード・公開済み、警告は既存のもののみと報告された（CT-028）。実際の公開日時・正確なConsole状態文言と警告の文言・件数は未記録。[候補生成結果](../../test-specs/release-candidate-1.0.0-11.md)と[登録・更新確認手順](../../test-specs/closed-testing-release-1.0.0-11.md)で追跡する。2026-10-29に10→11のデータ保持・OWNER回帰はOKと報告（CT-029）、原報告者R3-T16の再確認は回答待ち。本番向けGitHubゲートの生成時の未合格は歴史証跡として維持する。
+
+- 2026-10-31にUSERがProduction access承認を報告した。これは本番リリース自体の審査・一般公開完了ではない。本番候補は未確定であり、旧versionCode 6を使用せず、現行候補の確定・最新ゲートの再確認後に公開手順を更新する。[申請承認記録](production-access-application-draft.md#11-第3回申請2回目の再申請の承認記録)と[残りゲート](initial-release-status.md#7-本番公開前後の残りゲート)を正とする。
 
 ## 4. 固定する公開値
 
