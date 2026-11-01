@@ -111,3 +111,16 @@ Publisher IDはアプリのAdMob設定と一致しており、プレースホル
 ### 判定
 
 `REL-022`の本番公開前URL・同期ゲートは合格とする。法的正本または`app-ads.txt`を今後変更した場合は、公開リポジトリへの再同期、Pages deployment成功、13ファイルのblob比較、公開URLのSHA-256比較およびアプリ内遷移を再実施する。
+
+## 2026年11月1日 初回Production前の再確認
+
+確認開始時のMATA mainは`521a70457bac9103d8df670291d409eb3f9ac237`、正本の最終変更は`45ead6a73ac742899cb812e93fbbb0c01f1cf68f`だった。公開側`Sakemotti/matadoc`のmainは引き続き`ad26db4aed4f97eaed7d74d66bcc44d63d90fda2`で、13/13ファイルのGit blobが一致した。許容した`.gitignore`以外に公開側だけのファイルはなく、再同期は不要と判定した。
+
+- `node legal-site/verify.mjs --release`は成功した。
+- Mobile／Desktop相当のUser-Agentで、トップ・法的4文書・app-ads.txt・CSS・robots・sitemapの9ファイルをそれぞれGETし、18/18がHTTP 200、同一ホストのHTTPS、正本SHA-256一致だった。本文の容量・ハッシュは上記2026年9月17日の表と同一で、Content-TypeもHTML・CSS・text/plain・application/xmlに対応していた。
+- privacy等の拡張子なしURLは同一ホストの末尾スラッシュ付きHTTPSへ解決した。HTTPのトップ・privacy・app-ads.txtは301で同一パスのHTTPSへ転送された。
+- Pages APIは`built`、`cname=mochisofts.com`、HTTPS強制有効、証明書`approved`で、API上の有効期限は2026-12-01だった。最新Pages buildも公開側mainと同じcommitで`built`だった。
+- 公開app-ads.txtは59 bytes、正式なPublisher ID `pub-6387608801909086`を含む正本1行と完全一致した。AdMob側のクロール・アプリ確認状態は管理画面で別に確認する。
+- 認証・Cookie・署名資格情報を使わずに公開HTTP本文を取得した。User-Agent比較は実ブラウザーや実機での新しい表示・アプリ内遷移試験ではなく、過去の実機確認を今回再実施したとは扱わない。
+
+公開リポジトリ、DNS、証明書または正本へ変更は加えていない。法的内容に対する新しい専門家審査を意味せず、今回は配信・同期・形式の再確認である。[Console・AdMob最終確認票](production-console-final-check-1.0.0-11.md)で管理画面側の未確認事項を追跡する。
