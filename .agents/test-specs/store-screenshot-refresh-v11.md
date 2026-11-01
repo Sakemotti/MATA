@@ -2,7 +2,7 @@
 
 - 撮影・確認日: 2026-10-27
 - 最終更新日: 2026-11-01
-- 状態: 実画面14枚を取得・目視確認・配置済み／Play Console差し替え未実施
+- 状態: 実画面14枚を取得・目視確認・配置済み／2026-11-01にUSERからPlay Consoleへの画像反映完了を報告。審査送信・一般公開状態は別管理
 - 正本: [ストア掲載文・画像仕様](../non-functional-specs/release-specs/store-listing-copy-and-assets.md)
 - 成果物: [Google Play掲載成果物](../../fastlane/README.md)
 
@@ -61,9 +61,11 @@ benchmark専用の`SEED_STORE_SCREENSHOT_DATA`を使用し、日常・家事・�
 
 この撮影は掲載画像の確認に限る。Play経由のversionCode 11の10→11更新回帰、広告の実配信、原報告者の改善再確認、Closed testingの要件達成、Production accessの承認を補完しない。配布済みAAB・ZIP・候補メタデータは再生成・変更しない。
 
-## 5. Play Consoleへの反映（未実施）
+## 5. Play Consoleへの反映（USER完了報告あり）
 
 2026-11-01のUSER回答でも、前回用意した最新画像への差し替えは未完了である。配布用ZIPは`build/store-screenshots-v11/MATA-store-screenshots-v11.zip`に保管し、SHA-256 `D5A93D523F1CD17F4A63010024BBEEAB6E2D478CC708A72B1B9446D6F3DE03D6`を再照合した。今回は初回Production前の最終確認として差し替え・保存まで進め、審査送信・公開は[外部最終確認票](production-console-final-check-1.0.0-11.md)と公開実行票の最終判断後に行う。
+
+その後同日にUSERが「画像を反映させました」と報告した。最新画像へのConsole反映完了として記録する。正確なConsole状態文言・操作日時・個別プレビュー所見は未報告であり、審査送信やストアへの一般公開完了を補完しない。上記の未完了状態は最初の確認時の履歴である。
 
 1. メインのストア掲載情報を開く。
 2. スマートフォン6枚、7インチ4枚、10インチ4枚を、それぞれ上記画像へ差し替える。
