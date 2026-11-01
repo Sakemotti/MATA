@@ -1,6 +1,6 @@
 # MATA 1.0.0 (11) 本番公開候補の確定・昇格確認
 
-- 状態: 候補確定・依存更新対応・公開前確認・OWNERの最終方針了承は完了。既登録11の製品版審査送信手順へ進む。Production登録・審査送信・一般公開は未実施
+- 状態: 候補確定・公開前確認・OWNERの方針了承後、2026-11-01 13:25（日本時間）の審査送信をUSER報告。警告は既知のみ。送信対象に製品版11が含まれるかと実際の審査状態は照合中。審査承認・一般公開は未確認
 - 確定日・確認元: 2026-10-31、USERが現在の最新を本番公開候補とすることを了承
 - 最終更新日: 2026-11-01
 - 成果物の生成記録: [Closed testing候補生成結果](release-candidate-1.0.0-11.md)
@@ -48,6 +48,7 @@
 | Console・AdMob・公開Web | 2026-11-01に公開Webは正本一致・取得成功、Console主要項目と画像以外の掲載情報はUSER確認済み。その後、最新画像もConsoleへ反映したとUSER報告。Pre-launch reportは表示なし・結果未確認。AdMobは新規警告・配信制限なし、UMP公開済みとのUSER回答。ストア連携は一般公開後へ引き継ぎ、アプリ承認済みとは扱わない。詳細は外部最終確認票を参照 |
 | 成果物の別保管 | 2026-11-01にUSERが候補ZIPをPC故障に備えた別の安全な場所へコピー済みと回答 |
 | 公開の最終方針了承 | 2026-11-01にUSERがレポート未確認での公開判断、AdMobの一般公開後対応と審査中の配信制限の可能性、日本での初回公開と自身による24時間監視・問題時対応判断を了承。既登録11の製品版審査送信手順へ進む。実際の送信・一般公開は別に記録する |
+| その後の審査送信 | USER回答は2026-11-01 13:25（日本時間）、既知警告のみ・新規なし。ダッシュボード画像はアクセス承認・案内2/5完了で、実際の送信対象・リリース状態は未確認。製品版11を含む送信かを「公開の概要」と製品版で照合中。審査承認・一般公開は未確認 |
 
 GitHub監査は`node tools/release/verify-github-release-gates.mjs`で実施し、結果はGit除外の`app/build/outputs/release-metadata/github-release-gates.json`へ保存する。選定時main、外部最終確認時の最新mainとAAB生成元を区別し、生成時の保管済みJSONは上書きしない。
 
@@ -62,4 +63,4 @@ GitHub監査は`node tools/release/verify-github-release-gates.mjs`で実施し�
 5. 初回Production用の掲載文仕様第4.2節をリリースノートに使用する。`changelogs/11.txt`はClosed testingの修正告知履歴として保持し、公開原稿と混同しない。
 6. Consoleの審査・公開状態と既知警告を実際の文言で記録し、公開後の新規インストールと監視を行う。`v1.0.0`タグは実際の公開確認後にAAB生成元commitへ付与する。
 
-既登録AABの再利用は[Google Playの公式手順](https://support.google.com/googleplay/android-developer/answer/9859348?hl=ja)に従う。公開操作とテストトラックの停止は今回実施していない。
+既登録AABの再利用は[Google Playの公式手順](https://support.google.com/googleplay/android-developer/answer/9859348?hl=ja)に従う。今回こちらからConsole操作やテストトラックの停止は行っていない。USERの審査送信報告と、未確認の送信対象・Google審査承認・一般公開を区別する。
