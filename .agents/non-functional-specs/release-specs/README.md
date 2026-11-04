@@ -25,6 +25,7 @@ MATAのビルド識別、署名、テストトラック、Google Play掲載、�
 | [本番候補1.0.0 (11)の確定・昇格確認](../../test-specs/production-candidate-1.0.0-11.md) | 既登録AABの固定、Release差分・ハッシュ再照合、未合格ゲートと残確認 |
 | [本番候補11の外部最終確認票](../../test-specs/production-console-final-check-1.0.0-11.md) | Console・AdMobのUSER回答、公開Web検査、画像反映・成果物別保管の完了と一般公開後への引き継ぎ |
 | [Dependabot通常更新5件の統合検証](../../test-specs/dependabot-maintenance-2026-11-01.md) | 次回開発向けmainへの依存更新・全CI成功・元5件のMERGED確認。本番候補11は変更しない |
+| [Dependabot更新2件の統合検証（11月4日）](../../test-specs/dependabot-maintenance-2026-11-04.md) | AGP 9.5.0・DataStore 1.3.0、IDE互換性、チェックサム・ロック更新と公開版11との境界 |
 | [初回Production公開実行票](initial-production-runbook.md) | 既登録versionCode 11のProduction登録、初回公開固有の制約、監視および重大問題対応 |
 | [公開後監視・不具合確認記録](../../test-specs/production-monitoring-1.0.0-11.md) | 日ごとの監視回答、公開後のカテゴリ並べ替え不具合の再現・ローカル修正・USER動作確認と未配布の追跡 |
 
