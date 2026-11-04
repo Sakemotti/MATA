@@ -213,17 +213,18 @@ private fun CategoryListScreenContent(
                 item.key != categoryId &&
                 state.categories.any { it.id == item.key }
         }
-        val targetItem = visibleCategoryItems.firstOrNull { item ->
-            draggedCenter >= item.offset && draggedCenter <= item.offset + item.size
-        } ?: when {
-            draggedCenter < (visibleCategoryItems.firstOrNull()?.offset ?: Int.MIN_VALUE) -> {
-                visibleCategoryItems.firstOrNull()
+        // Crossing a row center is required; picking the nearest other row at an edge
+        // would swap the dragged item back on the next pointer event after reordering.
+        val targetItem = visibleCategoryItems
+            .filter { item ->
+                categoryDragCrossesItemCenter(
+                    draggedIndex = draggedItem.index,
+                    draggedCenter = draggedCenter,
+                    targetIndex = item.index,
+                    targetCenter = item.offset + item.size / 2f,
+                )
             }
-            draggedCenter > (
-                visibleCategoryItems.lastOrNull()?.let { it.offset + it.size } ?: Int.MAX_VALUE
-            ) -> visibleCategoryItems.lastOrNull()
-            else -> null
-        }
+            .minByOrNull { item -> kotlin.math.abs(draggedCenter - (item.offset + item.size / 2f)) }
         if (targetItem != null &&
             viewModel.moveReorderingCategory(categoryId, targetItem.key as String)
         ) {
@@ -565,6 +566,17 @@ internal data class CategoryPaneWidths(
     val listWidthDp: Float,
     val editorWidthDp: Float,
 )
+
+internal fun categoryDragCrossesItemCenter(
+    draggedIndex: Int,
+    draggedCenter: Float,
+    targetIndex: Int,
+    targetCenter: Float,
+): Boolean = when {
+    targetIndex > draggedIndex -> draggedCenter > targetCenter
+    targetIndex < draggedIndex -> draggedCenter < targetCenter
+    else -> false
+}
 
 internal fun categoryAutoScrollDelta(
     draggedCenter: Float,
@@ -947,9 +959,13 @@ private fun CategoryListRow(
                     }
                 }
             },
+                // Keep parent input nodes mounted while a descendant handle owns the drag.
+                // Removing the hover node cancels that gesture before it can move or finish.
                 modifier = Modifier
-                    .mataClickablePointer(enabled = !isDragging && operationEnabled)
-                    .clickable(enabled = !isDragging && operationEnabled, onClick = onClick)
+                    .mataClickablePointer(enabled = operationEnabled)
+                    .clickable(enabled = operationEnabled) {
+                        if (!isDragging) onClick()
+                    }
                     .semantics {
                         this.selected = selected
                         stateDescription = positionLabel
