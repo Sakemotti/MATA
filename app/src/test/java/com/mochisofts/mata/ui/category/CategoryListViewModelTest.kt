@@ -82,6 +82,19 @@ class CategoryListViewModelTest {
     }
 
     @Test
+    fun dragTarget_requiresCrossingTheOtherRowCenterAndDoesNotSwapBack() {
+        assertFalse(categoryDragCrossesItemCenter(0, 149f, 1, 150f))
+        assertFalse(categoryDragCrossesItemCenter(0, 150f, 1, 150f))
+        assertTrue(categoryDragCrossesItemCenter(0, 151f, 1, 150f))
+        assertFalse(categoryDragCrossesItemCenter(1, 151f, 0, 50f))
+        assertFalse(categoryDragCrossesItemCenter(1, 51f, 0, 50f))
+        assertFalse(categoryDragCrossesItemCenter(1, 50f, 0, 50f))
+        assertTrue(categoryDragCrossesItemCenter(1, 49f, 0, 50f))
+        assertFalse(categoryDragCrossesItemCenter(0, 49f, 1, 150f))
+        assertFalse(categoryDragCrossesItemCenter(0, 50f, 0, 50f))
+    }
+
+    @Test
     fun accessibilityMove_savesOneStepAndBlocksAnotherMoveWhileSaving() = runTest {
         val repository = FakeCategoryRepository(categories()).apply {
             reorderGate = CompletableDeferred()

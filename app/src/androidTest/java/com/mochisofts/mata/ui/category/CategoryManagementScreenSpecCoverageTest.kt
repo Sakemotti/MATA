@@ -2,6 +2,7 @@ package com.mochisofts.mata.ui.category
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -27,6 +28,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mochisofts.mata.R
@@ -384,6 +386,47 @@ class CategoryManagementScreenSpecCoverageTest {
     }
 
     @Test
+    fun cm007_handleLongPressDragDownSavesWithoutOpeningEditor() {
+        val repository = setScreen(categories())
+        dragCategoryHandle("daily", "game")
+
+        composeRule.runOnIdle {
+            assertEquals(listOf("game", "daily"), repository.snapshot.map(Category::id))
+            assertEquals(1, repository.reorderRequests)
+        }
+        composeRule.onNodeWithText(text(R.string.category_editor_edit_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun cm007_handleLongPressDragUpSavesWithoutOpeningEditor() {
+        val repository = setScreen(categories())
+        dragCategoryHandle("game", "daily")
+
+        composeRule.runOnIdle {
+            assertEquals(listOf("game", "daily"), repository.snapshot.map(Category::id))
+            assertEquals(1, repository.reorderRequests)
+        }
+        composeRule.onNodeWithText(text(R.string.category_editor_edit_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun cm007_cancelledHandleDragRestoresOrderWithoutSaving() {
+        val repository = setScreen(categories())
+        dragCategoryHandle("daily", "game", cancel = true)
+
+        composeRule.runOnIdle {
+            assertEquals(listOf("daily", "game"), repository.snapshot.map(Category::id))
+            assertEquals(0, repository.reorderRequests)
+        }
+        val dailyBounds = composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + "daily")
+            .fetchSemanticsNode().boundsInRoot
+        val gameBounds = composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + "game")
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(dailyBounds.center.y < gameBounds.center.y)
+        composeRule.onNodeWithText(text(R.string.category_editor_edit_title)).assertDoesNotExist()
+    }
+
+    @Test
     fun cm009_accessibilityActionsMoveOneStepAndOmitUnavailableDirections() {
         val repository = setScreen(categories())
         val moveUp = text(R.string.category_move_up)
@@ -655,6 +698,33 @@ class CategoryManagementScreenSpecCoverageTest {
         return repository
     }
 
+    private fun dragCategoryHandle(fromId: String, toId: String, cancel: Boolean = false) {
+        val handle = composeRule.onNodeWithTag(
+            CATEGORY_REORDER_HANDLE_TEST_TAG_PREFIX + fromId,
+            useUnmergedTree = true,
+        )
+        val fromBounds = composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + fromId)
+            .fetchSemanticsNode().boundsInRoot
+        val toBounds = composeRule.onNodeWithTag(CATEGORY_ROW_TEST_TAG_PREFIX + toId)
+            .fetchSemanticsNode().boundsInRoot
+        // Cross the other row's center instead of stopping exactly on the swap boundary.
+        val distance = (toBounds.center.y - fromBounds.center.y) * 1.2f
+        handle.performTouchInput {
+            down(center)
+            advanceEventTime(800)
+            moveBy(Offset.Zero)
+        }
+        composeRule.waitForIdle()
+        repeat(12) {
+            handle.performTouchInput { moveBy(Offset(0f, distance / 12f), delayMillis = 16) }
+            composeRule.waitForIdle()
+        }
+        handle.performTouchInput {
+            if (cancel) cancel() else up()
+        }
+        composeRule.waitForIdle()
+    }
+
     private fun assertNewEditorDisplayed() {
         composeRule.onNodeWithText(text(R.string.category_editor_add_title)).assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.category_name_preview)).assertIsDisplayed()
@@ -678,6 +748,8 @@ private class CategoryScreenTestRepository(
     private val todoCounts: Map<String, CategoryTodoCounts> = emptyMap(),
 ) : CategoryRepository {
     private val categories = MutableStateFlow(initialCategories)
+    var reorderRequests: Int = 0
+        private set
     val snapshot: List<Category>
         get() = categories.value
 
@@ -713,6 +785,7 @@ private class CategoryScreenTestRepository(
     }
 
     override suspend fun reorderCategories(orderedIds: List<String>): Result<Unit> {
+        reorderRequests += 1
         val byId = categories.value.associateBy(Category::id)
         categories.value = orderedIds.mapIndexed { index, id ->
             requireNotNull(byId[id]).copy(sortOrder = index)
