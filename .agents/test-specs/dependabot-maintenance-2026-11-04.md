@@ -20,8 +20,9 @@
 - AGP 9.5.0の最低条件はGradle 9.6.0・JDK 17。既存Wrapper 9.8.2とローカルのdaemon JDK 21を維持する。
 - Android Studio Quail 4のAGP対応上限は9.4であり、9.5にはRabbit 2以降が必要。2026-11-04にUSERがIDEを自身で更新する前提で2件とも進めることを了承した。IDE自体の更新や設定変更は行わず、更新完了も補完しない。
 - 標準Gradleタスクで両モジュールのロックと検証メタデータを再生成した。SBOM・ライセンス生成が別途取得するPOMも登録し、CI用Linux AAPT2も個別に確認した。
-- 既存artifact 2,747件のSHA-256集合と検証設定は不変。artifactエントリ155件を追加し、信頼ワイルドカードの拡張や`strict`の無効化は行わない。
+- 既存artifact 2,747件のSHA-256集合と検証設定は不変。artifactエントリ156件を追加し、信頼ワイルドカードの拡張や`strict`の無効化は行わない。
 - AGPのplugin POM 2件、AGP本体JAR、DataStore PreferencesのPOM、AAPT2のWindows／Linux JAR・POMの計7件は、Google公式Mavenの公開SHA-256と取得内容・登録値の一致を確認した。
+- 統合PR [#347](https://github.com/Sakemotti/MATA/pull/347)の[初回CI](https://github.com/Sakemotti/MATA/actions/runs/41815406742)では、キャッシュのない環境が取得する`org.bouncycastle:bc-jdk18on-bom:1.80.2`のmoduleメタデータ1件が未登録で失敗した。Maven Centralの公開SHA-256・内容・座標を照合して追加し、初回の失敗は履歴として保持する。公式チェックサムとの追加照合は上記7件と合わせて8件。
 - DataStoreに伴うCollection 1.6.0、Tracing 2.0.1、AtomicFU 0.28.0、Okio 3.17.0等の推移依存と、AGPのLint・テストエンジン等のロック更新を確認する。新しいWeb保存・Tink暗号化・Builder APIをアプリへ導入する変更ではない。
 
 ## 3. 検証の扱い
