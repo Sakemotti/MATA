@@ -1,7 +1,7 @@
 # MATA データモデル仕様
 
 - 文書状態: 初版
-- 最終更新日: 2026-08-10
+- 最終更新日: 2026-11-13
 - 対応する決定事項: データ設計質問 1～18、97～126、137～138
 
 ## 1. 目的
@@ -117,6 +117,7 @@ repeatTypeには次の安定コードを使用する。
 | 毎月 第X X曜日 | monthly_nth_weekdays |
 | 毎月の月末 | month_end |
 | 一定日数ごと | every_n_days |
+| 前回完了日からN日後 | after_completion_days |
 | N週間にX回 | weekly_count |
 | 月X回 | monthly_count |
 
@@ -126,6 +127,7 @@ repeatParamsJsonには、選択した方式に必要な値だけを保存する�
 - monthly_day: 1～31
 - monthly_nth_weekdays: 第1～第5と曜日コードの重複しない組み合わせ配列
 - every_n_days: 1以上の日数
+- after_completion_days: 1～999の日数。繰り越しは必須ON。起点は保存済み完了・スキップの解決論理日から算出し、別列へ保存しない
 - weekly_count: 期間週数1～52、必要回数1～期間週数×7、対象日条件、任意曜日。既存データで追加値がない場合は期間週数1・すべての日として扱う
 - monthly_count: 1～31
 - その他: 空オブジェクト

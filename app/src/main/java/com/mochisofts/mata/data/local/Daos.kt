@@ -310,7 +310,13 @@ interface TodoExecutionDao {
         FROM todo_executions
         INNER JOIN todos ON todos.id = todo_executions.todoId
         WHERE todos.archivedAt IS NULL
-          AND (todo_executions.logicalDate BETWEEN :startDate AND :endDate OR todos.recurrenceType = 'once')
+          AND (todo_executions.logicalDate BETWEEN :startDate AND :endDate OR todos.recurrenceType = 'once'
+            OR (todos.recurrenceType = 'after_completion_days'
+              AND todo_executions.status IN ('completed', 'skipped')
+              AND todo_executions.logicalDate = (
+                SELECT MAX(anchor.logicalDate) FROM todo_executions AS anchor
+                WHERE anchor.todoId = todos.id AND anchor.status IN ('completed', 'skipped')
+              )))
         """,
     )
     suspend fun findForWidget(startDate: String, endDate: String): List<TodoExecutionEntity>

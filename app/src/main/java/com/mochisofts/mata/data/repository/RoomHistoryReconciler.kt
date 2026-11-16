@@ -18,6 +18,7 @@ import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.effectiveDueDate
 import com.mochisofts.mata.domain.model.occursOn
+import com.mochisofts.mata.domain.model.completionOccurrenceOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryReconciliationResult
@@ -104,6 +105,23 @@ class RoomHistoryReconciler @Inject constructor(
     ): ReconcileOutcome = database.withTransaction {
         val runtime = runtimeStateDao.find(todo.id) ?: initialRuntime(todo)
         val domainTodo = todo.toDomain()
+        if (domainTodo.recurrenceType.isCompletionBased) {
+            val scheduled = domainTodo.withExecutionHistory(executionDao.findForTodo(todo.id))
+                .completionOccurrenceOn(currentLogicalDate)
+            runtimeStateDao.upsert(
+                runtime.copy(
+                    lastFinalizedLogicalDate = maxOf(
+                        runtime.lastFinalizedLogicalDate?.let(LocalDate::parse) ?: LocalDate.MIN,
+                        currentLogicalDate.minusDays(1),
+                    ).toString(),
+                    pendingScheduledLogicalDate = scheduled?.takeIf { it < currentLogicalDate }?.toString(),
+                    appliedDefinitionRevision = todo.definitionRevision,
+                    reconciliationCursorDate = null,
+                    updatedAt = clock.millis(),
+                ),
+            )
+            return@withTransaction ReconcileOutcome(0, false)
+        }
         runtime.pendingScheduledLogicalDate?.let {
             runtimeStateDao.upsert(
                 runtime.copy(

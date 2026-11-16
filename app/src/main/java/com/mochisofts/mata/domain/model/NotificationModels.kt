@@ -235,6 +235,8 @@ fun Todo.nextOccurrenceOnOrAfter(
             val intervals = ceil(days.toDouble() / interval).toLong()
             startDate.plusDays(intervals * interval)
         }
+        RecurrenceType.AFTER_COMPLETION_DAYS ->
+            nextCompletionScheduledDate()?.takeUnless { it.isBefore(from) }
     }
     return candidate?.takeIf { date -> endDate == null || !date.isAfter(endDate) }
 }

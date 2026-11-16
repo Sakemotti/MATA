@@ -1046,6 +1046,10 @@ internal fun recurrenceSummary(todo: Todo): String = when (todo.recurrenceType) 
         R.string.todo_recurrence_every_n_days_format,
         todo.recurrenceRule.intervalDays ?: 1,
     )
+    RecurrenceType.AFTER_COMPLETION_DAYS -> stringResource(
+        R.string.todo_recurrence_after_completion_days_format,
+        todo.recurrenceRule.intervalDays ?: 1,
+    )
     RecurrenceType.WEEKLY_COUNT -> {
         val period = stringResource(
             R.string.todo_recurrence_weekly_interval_count_format,

@@ -89,10 +89,24 @@ fun Todo.occursOn(date: LocalDate, holidays: Set<LocalDate> = emptySet()): Boole
             val interval = recurrenceRule.intervalDays ?: return false
             ChronoUnit.DAYS.between(startDate, date) % interval == 0L
         }
+        RecurrenceType.AFTER_COMPLETION_DAYS -> date == nextCompletionScheduledDate()
         RecurrenceType.WEEKLY_COUNT -> recurrenceRule.matchesDayFilter(date, holidays)
         RecurrenceType.MONTHLY_COUNT -> true
     }
 }
+
+/** Only one next occurrence is knowable until it is completed or skipped. */
+fun Todo.nextCompletionScheduledDate(): LocalDate? {
+    if (!recurrenceType.isCompletionBased || archivedAt != null) return null
+    val interval = recurrenceRule.intervalDays?.takeIf { it in 1..999 } ?: return null
+    val next = lastResolvedLogicalDate?.let { resolved ->
+        runCatching { resolved.plusDays(interval.toLong()) }.getOrNull() ?: return null
+    } ?: startDate
+    return maxOf(startDate, next).takeUnless { endDate?.let(it::isAfter) == true }
+}
+
+fun Todo.completionOccurrenceOn(date: LocalDate): LocalDate? =
+    nextCompletionScheduledDate()?.takeUnless { it.isAfter(date) }
 
 fun Todo.occurrencesIn(
     startInclusive: LocalDate,
@@ -100,6 +114,9 @@ fun Todo.occurrencesIn(
     holidays: Set<LocalDate> = emptySet(),
 ): List<LocalDate> {
     if (endInclusive.isBefore(startInclusive)) return emptyList()
+    if (recurrenceType.isCompletionBased) return listOfNotNull(
+        nextCompletionScheduledDate()?.takeIf { it in startInclusive..endInclusive },
+    )
     return generateSequence(startInclusive) { current ->
         current.plusDays(1).takeUnless { it.isAfter(endInclusive) }
     }.filter { occursOn(it, holidays) }.toList()
@@ -112,6 +129,9 @@ fun Todo.nextOccurrences(
 ): List<LocalDate> {
     require(limit >= 0)
     if (limit == 0) return emptyList()
+    if (recurrenceType.isCompletionBased) return listOfNotNull(
+        nextCompletionScheduledDate()?.takeUnless { it.isBefore(fromInclusive) },
+    )
     val searchStart = maxOf(fromInclusive, startDate)
     val searchEnd = endDate ?: searchStart.plusYears(10)
     return generateSequence(searchStart) { current ->

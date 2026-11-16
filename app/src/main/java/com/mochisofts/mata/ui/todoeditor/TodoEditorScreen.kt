@@ -99,6 +99,7 @@ import com.mochisofts.mata.domain.model.RecurrenceType
 import com.mochisofts.mata.domain.model.HolidayYearStatus
 import com.mochisofts.mata.domain.model.Todo
 import com.mochisofts.mata.domain.model.nextOccurrences
+import com.mochisofts.mata.domain.model.nextCompletionScheduledDate
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.model.usesHolidayData
 import java.time.DayOfWeek
@@ -407,14 +408,19 @@ fun TodoEditorScreen(
                         Column(Modifier.weight(1f)) {
                             Text(stringResource(R.string.todo_editor_carry_over_label))
                             Text(
-                                stringResource(R.string.todo_editor_carry_over_description),
+                                stringResource(
+                                    if (state.recurrenceType.isCompletionBased) R.string.todo_editor_completion_carry_over
+                                    else R.string.todo_editor_carry_over_description,
+                                ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
                         Switch(
-                            checked = state.carryOverEnabled,
+                            checked = state.effectiveCarryOverEnabled,
                             onCheckedChange = viewModel::setCarryOverEnabled,
+                            enabled = !state.recurrenceType.isCompletionBased,
+                            modifier = Modifier.testTag(TODO_EDITOR_CARRY_OVER_TAG),
                         )
                     }
                 }
@@ -838,7 +844,9 @@ private fun RecurrenceParameters(state: TodoEditorUiState, viewModel: TodoEditor
                 )
             }
         }
-        RecurrenceType.EVERY_N_DAYS -> OutlinedTextField(
+        RecurrenceType.EVERY_N_DAYS,
+        RecurrenceType.AFTER_COMPLETION_DAYS,
+        -> OutlinedTextField(
             value = state.intervalDaysInput,
             onValueChange = viewModel::setIntervalDays,
             shape = MataCardLayout.InputShape,
@@ -985,6 +993,7 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         definitionRevision = 1,
         archivedAt = null,
         createdAt = 0,
+        lastResolvedLogicalDate = state.lastResolvedLogicalDate,
     )
     val previewFrom = maxOf(state.today, state.startDate)
     if (state.recurrenceType.isCountBased) {
@@ -1013,6 +1022,16 @@ private fun SchedulePreview(state: TodoEditorUiState) {
         if (state.recurrenceRule.usesHolidayData()) {
             HolidayDataStatus(state, setOf(previewFrom.year))
         }
+    } else if (state.recurrenceType.isCompletionBased) {
+        val nextDate = todo.nextCompletionScheduledDate()
+        Text(
+            nextDate?.toJapaneseDate() ?: stringResource(R.string.todo_editor_no_upcoming_dates),
+            modifier = Modifier.testTag(todoEditorFixedPreviewTag(0)),
+        )
+        Text(
+            stringResource(R.string.todo_editor_completion_schedule_description),
+            style = MaterialTheme.typography.bodySmall,
+        )
     } else {
         val dates = if (state.recurrenceRule.isValid()) {
             todo.nextOccurrences(previewFrom, 3, state.holidaySnapshot.dates)
@@ -1151,6 +1170,7 @@ private fun recurrenceLabel(type: RecurrenceType): String = stringResource(
         RecurrenceType.MONTHLY_NTH_WEEKDAYS -> R.string.label_monthly_nth_weekdays
         RecurrenceType.MONTH_END -> R.string.label_month_end
         RecurrenceType.EVERY_N_DAYS -> R.string.label_every_n_days
+        RecurrenceType.AFTER_COMPLETION_DAYS -> R.string.label_after_completion_days
         RecurrenceType.WEEKLY_COUNT -> R.string.label_weekly_count
         RecurrenceType.MONTHLY_COUNT -> R.string.label_monthly_count
     },
@@ -1178,5 +1198,6 @@ internal const val TODO_EDITOR_UNCATEGORIZED_MENU_TAG = "todo-editor-category-un
 internal const val TODO_EDITOR_ADD_CATEGORY_TAG = "todo-editor-category-add"
 internal const val TODO_EDITOR_TITLE_TAG = "todo-editor-title"
 internal const val TODO_EDITOR_COUNT_PREVIEW_TAG = "todo-editor-count-preview"
+internal const val TODO_EDITOR_CARRY_OVER_TAG = "todo-editor-carry-over"
 internal fun todoEditorCategoryMenuTag(categoryId: String) = "todo-editor-category-$categoryId"
 internal fun todoEditorFixedPreviewTag(index: Int) = "todo-editor-fixed-preview-$index"

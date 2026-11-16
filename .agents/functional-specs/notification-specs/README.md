@@ -1,7 +1,7 @@
 # MATA 通知仕様
 
 - 文書状態: 初版
-- 最終更新日: 2026-08-26
+- 最終更新日: 2026-11-13
 
 このフォルダでは、MATAの通知候補計算、Androidへの登録、通知表示、通知からの操作、再登録と障害復旧を定義する。
 
@@ -19,6 +19,7 @@
 - [アプリ全体仕様](../../app-spec.md)
 - [データモデル仕様](../domain-specs/data-model.md)
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
+- [解決日基準の繰り返し](../domain-specs/completion-based-recurrence.md): 保存済み完了・スキップから既知の次回1件だけを通知候補にする。
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
 - [実行期間・期限日・未完了繰り越し仕様](../domain-specs/execution-window-and-carryover.md)
 - [日本の祝日データ仕様](../holiday-specs/README.md)

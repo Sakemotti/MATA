@@ -451,6 +451,31 @@ class NotificationSchedulerTestSpecCoverageTest {
         clock = clock,
     )
 
+    @Test
+    fun r355_completionAnchorReschedulesOnlyOneCycleAndDoesNotInventOverdueCycles() = runBlocking {
+        insertTodo(
+            rule = RecurrenceRule(RecurrenceType.AFTER_COMPLETION_DAYS, intervalDays = 3),
+            carryOverEnabled = true,
+        )
+        insertNotification()
+        scheduler.reconcileTodo(TODO_ID)
+        val first = assertSingleFutureNotification("2026-08-11")
+
+        clock.advance(Duration.ofDays(2))
+        insertExecution(date = LocalDate.of(2026, 8, 13))
+        gateway.clearEvents()
+        scheduler.reconcileTodo(TODO_ID)
+        val next = assertSingleFutureNotification("2026-08-16")
+        assertNotEquals(first.candidateKey, next.candidateKey)
+        assertTrue(gateway.cancelled.any { it.key == first.candidateKey })
+        repeat(3) { scheduler.reconcileTodo(TODO_ID) }
+        assertEquals(1, database.scheduledNotificationDao().findForTodo(TODO_ID).size)
+
+        clock.advance(Duration.ofDays(5))
+        scheduler.reconcileTodo(TODO_ID)
+        assertTrue(database.scheduledNotificationDao().findForTodo(TODO_ID).isEmpty())
+    }
+
     private suspend fun assertSingleFutureNotification(expectedDate: String): ScheduledNotificationEntity {
         val records = database.scheduledNotificationDao().findForTodo(TODO_ID)
         assertEquals(1, records.size)

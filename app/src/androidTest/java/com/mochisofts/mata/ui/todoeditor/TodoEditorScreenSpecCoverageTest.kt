@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -472,6 +473,38 @@ class TodoEditorScreenSpecCoverageTest {
             .assertIsDisplayed()
         composeRule.onNodeWithText(text(R.string.action_save)).assertIsDisplayed().assertIsEnabled()
         composeRule.runOnIdle { assertEquals("IME入力", viewModel.uiState.value.title) }
+    }
+
+    @Test
+    fun r355_completionModeSelectsOneKnownDateAndForcesCarryOverOn() {
+        val viewModel = viewModel()
+        setScreen(mutableStateOf(viewModel))
+        waitForText(text(R.string.todo_editor_add_title))
+
+        composeRule.onNodeWithContentDescription(
+            fieldDescription(R.string.todo_editor_recurrence_label, text(R.string.label_no_recurrence)),
+        ).performScrollTo().performClick()
+        composeRule.onNodeWithText(text(R.string.label_after_completion_days))
+            .performScrollTo().performClick()
+        composeRule.runOnIdle {
+            assertEquals(RecurrenceType.AFTER_COMPLETION_DAYS, viewModel.uiState.value.recurrenceType)
+            viewModel.setTitle("完了日基準の繰り返し")
+            viewModel.setIntervalDays("3")
+        }
+
+        composeRule.onNodeWithTag(TODO_EDITOR_CARRY_OVER_TAG)
+            .performScrollTo().assertIsOn().assertIsNotEnabled()
+        composeRule.onNodeWithText(text(R.string.todo_editor_completion_carry_over))
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(todoEditorFixedPreviewTag(0))
+            .performScrollTo().assertTextEquals(japaneseDate(TODAY))
+        composeRule.onNodeWithTag(todoEditorFixedPreviewTag(1)).assertDoesNotExist()
+        composeRule.onNodeWithText(text(R.string.todo_editor_completion_schedule_description))
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.action_save)).assertIsEnabled()
+
+        composeRule.runOnIdle { viewModel.setIntervalDays("") }
+        composeRule.onNodeWithText(text(R.string.action_save)).assertIsNotEnabled()
     }
 
     private fun setScreen(

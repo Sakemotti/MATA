@@ -74,6 +74,7 @@ data class TodoEditorUiState(
     val dueMinutes: Int? = null,
     val dueDate: LocalDate? = null,
     val carryOverEnabled: Boolean = false,
+    val lastResolvedLogicalDate: LocalDate? = null,
     val dayEndHour: Int = 0,
     val notifications: List<TodoNotification> = emptyList(),
     val completedLogicalDates: List<LocalDate> = emptyList(),
@@ -95,6 +96,9 @@ data class TodoEditorUiState(
     val effectiveEndHour: Int
         get() = dayEndHour
 
+    val effectiveCarryOverEnabled: Boolean
+        get() = recurrenceType.isCompletionBased || (carryOverEnabled && !recurrenceType.isCountBased)
+
     val notificationErrors: Set<NotificationValidationError>
         get() = validateNotifications(notifications, dueMinutes, effectiveEndHour)
 
@@ -110,7 +114,7 @@ data class TodoEditorUiState(
             }.orEmpty(),
             monthlyDay = monthlyDay.takeIf { recurrenceType == RecurrenceType.MONTHLY_DAY },
             intervalDays = intervalDaysInput.toIntOrNull()
-                ?.takeIf { recurrenceType == RecurrenceType.EVERY_N_DAYS },
+                ?.takeIf { recurrenceType == RecurrenceType.EVERY_N_DAYS || recurrenceType.isCompletionBased },
             requiredCount = when (recurrenceType) {
                 RecurrenceType.WEEKLY_COUNT -> weeklyCount
                 RecurrenceType.MONTHLY_COUNT -> monthlyCount
@@ -171,7 +175,7 @@ private fun TodoEditorUiState.toPersistedDraft() = TodoEditorPersistedDraft(
             .thenBy { it.unit.ordinal },
     ),
     dueDate = dueDate.takeIf { recurrenceType == RecurrenceType.ONCE },
-    carryOverEnabled = carryOverEnabled && !recurrenceType.isCountBased,
+    carryOverEnabled = effectiveCarryOverEnabled,
 )
 
 @HiltViewModel
@@ -329,6 +333,7 @@ class TodoEditorViewModel @Inject constructor(
                         dueMinutes = todo.dueMinutes,
                         dueDate = todo.dueDate,
                         carryOverEnabled = todo.carryOverEnabled,
+                        lastResolvedLogicalDate = todo.lastResolvedLogicalDate,
                         notifications = todo.notifications,
                     )
                 })
@@ -357,7 +362,9 @@ class TodoEditorViewModel @Inject constructor(
     fun setStartDate(value: LocalDate) = edit { copy(startDate = value) }
     fun setEndDate(value: LocalDate?) = edit { copy(endDate = value) }
     fun setDueDate(value: LocalDate?) = edit { copy(dueDate = value) }
-    fun setCarryOverEnabled(value: Boolean) = edit { copy(carryOverEnabled = value) }
+    fun setCarryOverEnabled(value: Boolean) = edit {
+        copy(carryOverEnabled = value || recurrenceType.isCompletionBased)
+    }
     fun setRecurrence(value: RecurrenceType) = edit {
         copy(
             recurrenceType = value,
@@ -392,7 +399,7 @@ class TodoEditorViewModel @Inject constructor(
             } else {
                 monthlyDay
             },
-            carryOverEnabled = carryOverEnabled && !value.isCountBased,
+            carryOverEnabled = value.isCompletionBased || (carryOverEnabled && !value.isCountBased),
         )
     }
     fun toggleWeekday(value: DayOfWeek) = edit {
@@ -485,7 +492,7 @@ class TodoEditorViewModel @Inject constructor(
                         state.endDate.takeUnless { state.recurrenceType == RecurrenceType.ONCE },
                         state.recurrenceRule, state.dueMinutes, state.notifications,
                         state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
-                        state.carryOverEnabled && !state.recurrenceType.isCountBased,
+                        state.effectiveCarryOverEnabled,
                     )).getOrThrow()
                 }
             } else todoRepository.saveTodo(
@@ -499,7 +506,7 @@ class TodoEditorViewModel @Inject constructor(
                 dueMinutes = state.dueMinutes,
                 notifications = state.notifications,
                 dueDate = state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
-                carryOverEnabled = state.carryOverEnabled && !state.recurrenceType.isCountBased,
+                carryOverEnabled = state.effectiveCarryOverEnabled,
             )
             registrationResult.onSuccess { todoId ->
                 clearDraft()
@@ -625,7 +632,8 @@ class TodoEditorViewModel @Inject constructor(
             createdAt = 0,
             notifications = state.notifications,
             dueDate = state.dueDate.takeIf { state.recurrenceType == RecurrenceType.ONCE },
-            carryOverEnabled = state.carryOverEnabled && !state.recurrenceType.isCountBased,
+            carryOverEnabled = state.effectiveCarryOverEnabled,
+            lastResolvedLogicalDate = state.lastResolvedLogicalDate,
         )
         val now = ZonedDateTime.now(clock)
         val previews = state.notifications.associate { notification ->

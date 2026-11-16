@@ -57,6 +57,27 @@ class TodoEditorViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
+    fun completionRecurrenceForcesCarryOverAndValidatesInterval() = runTest {
+        val vm = createViewModel()
+        runCurrent()
+        vm.setTitle("completion cycle")
+        vm.setRecurrence(RecurrenceType.AFTER_COMPLETION_DAYS)
+        vm.setIntervalDays("3")
+        vm.setCarryOverEnabled(false)
+        assertTrue(vm.uiState.value.effectiveCarryOverEnabled)
+        assertTrue(vm.uiState.value.canSave)
+        assertEquals(3, vm.uiState.value.recurrenceRule.intervalDays)
+        vm.setIntervalDays("0")
+        assertFalse(vm.uiState.value.canSave)
+        vm.setIntervalDays("1000")
+        assertEquals("100", vm.uiState.value.intervalDaysInput)
+        vm.setIntervalDays("")
+        assertFalse(vm.uiState.value.canSave)
+        vm.setIntervalDays("999")
+        assertTrue(vm.uiState.value.canSave)
+    }
+
+    @Test
     fun incompleteRegistrationStartsAsTodayOnceWithoutMutatingTheOriginalOnOpen() = runTest {
         val date = LocalDate.of(2026, 9, 3)
         val original = Todo("original", "持ち越し忘れ", "説明", null, date.minusDays(3), null,
