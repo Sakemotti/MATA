@@ -78,7 +78,7 @@ class BackupArchiveReaderTest {
 
     @Test
     fun version5EmptyBackup_remainsAccepted() = runTest {
-        val data = EMPTY_DATA.replace("\"formatVersion\":6", "\"formatVersion\":5").toByteArray(Charsets.UTF_8)
+        val data = EMPTY_DATA.replace("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":5").toByteArray(Charsets.UTF_8)
         val backup = archive(data, sha256(data), formatVersion = 5, minimumReaderVersion = 5)
         val output = temporaryDataFile()
         val result = BackupArchiveReader().extractAndValidate(ByteArrayInputStream(backup), output)
@@ -97,6 +97,21 @@ class BackupArchiveReaderTest {
         }.exceptionOrNull()
         assertTrue(error is BackupFormatException)
         output.delete()
+    }
+
+    @Test
+    fun version6EmptyBackup_remainsAccepted() = runTest {
+        val data = EMPTY_DATA.replace("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":6")
+            .toByteArray(Charsets.UTF_8)
+        val output = temporaryDataFile()
+        try {
+            val result = BackupArchiveReader().extractAndValidate(
+                ByteArrayInputStream(archive(data, sha256(data), 6, 6)), output,
+            )
+            assertEquals(6, result.manifest.formatVersion)
+        } finally {
+            output.delete()
+        }
     }
 
     private fun archive(
@@ -132,7 +147,7 @@ class BackupArchiveReaderTest {
 
     private companion object {
         const val ENTRY_TIME = 1_700_000_000_000L
-        const val EMPTY_DATA = """{"formatVersion":6,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system","backgroundColor":"default"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
+        const val EMPTY_DATA = """{"formatVersion":$BACKUP_FORMAT_VERSION,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system","backgroundColor":"default"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
         const val EMPTY_DATA_V4 = """{"formatVersion":4,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
         const val EMPTY_DATA_V3 = """{"formatVersion":3,"settings":{"dayEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""
         const val EMPTY_DATA_V2 = """{"formatVersion":2,"settings":{"uncategorizedEndHour":0,"weekStartDay":"monday","showCompletedTodos":false,"theme":"system"},"categories":[],"todos":[],"notifications":[],"executions":[],"periodResults":[],"runtimeStates":[]}"""

@@ -33,12 +33,15 @@ import com.mochisofts.mata.data.local.WidgetInstanceStateEntity
 import com.mochisofts.mata.data.repository.DataStoreSettingsRepository
 import com.mochisofts.mata.data.repository.HistorySnapshotJson
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.data.repository.toDomain
+import com.mochisofts.mata.data.repository.withExecutionHistory
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.AppBackgroundColor
 import com.mochisofts.mata.domain.model.AppTheme
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.RecurrenceRule
 import com.mochisofts.mata.domain.model.RecurrenceType
+import com.mochisofts.mata.domain.model.nextCompletionScheduledDate
 import com.mochisofts.mata.domain.repository.HistoryReconciler
 import com.mochisofts.mata.domain.repository.HistoryReconciliationResult
 import com.mochisofts.mata.domain.repository.NotificationScheduler
@@ -140,6 +143,72 @@ class BackupSpecCoverageTest {
     }
 
     @Test
+    fun completionRecurrenceRoundTripsAndRejectsMissingCarryOverOrLegacyFormat() = runBlocking {
+        seedAllUserData()
+        val original = database.todoDao().findById(TODO_ID)!!
+        val rule = RecurrenceRuleJson.encode(
+            RecurrenceRule(RecurrenceType.AFTER_COMPLETION_DAYS, intervalDays = 3),
+        )
+        val cycle = original.copy(recurrenceType = rule.typeCode,
+            repeatParamsVersion = rule.paramsVersion, repeatParamsJson = rule.paramsJson,
+            carryOverEnabled = true, dueDate = null)
+        database.todoDao().upsert(cycle)
+        val completed = database.todoExecutionDao().findForTodo(TODO_ID).single()
+        database.todoExecutionDao().delete(TODO_ID, completed.logicalDate)
+        database.todoExecutionDao().insert(completed.copy(
+            scheduledLogicalDate = cycle.startDate,
+            snapshotJson = HistorySnapshotJson.encode(
+                todo = cycle,
+                category = database.categoryDao().findById(CATEGORY_ID),
+                notifications = database.todoNotificationDao().findForTodo(TODO_ID),
+                endHour = 4,
+                weekStart = DayOfWeek.SUNDAY,
+                logicalDate = LocalDate.parse(completed.logicalDate),
+                scheduledLogicalDate = LocalDate.parse(cycle.startDate),
+            ),
+        ))
+        val previousHistory = database.todoExecutionDao().findForTodo(TODO_ID)
+        val archive = writeArchive()
+        database.todoDao().upsert(original)
+        restoreArchive(archive)
+        val restored = database.todoDao().findById(TODO_ID)!!
+        assertEquals(cycle.recurrenceType, restored.recurrenceType)
+        assertEquals(cycle.repeatParamsJson, restored.repeatParamsJson)
+        assertTrue(restored.carryOverEnabled)
+        assertEquals(previousHistory, database.todoExecutionDao().findForTodo(TODO_ID))
+        assertEquals(LocalDate.of(2026, 8, 7), restored.toDomain()
+            .withExecutionHistory(database.todoExecutionDao().findForTodo(TODO_ID))
+            .nextCompletionScheduledDate())
+
+        val data = zipEntries(archive).getValue(DATA_ENTRY).toString(Charsets.UTF_8)
+        val invalidData = listOf(
+            data.replaceFirst("\"carryOverEnabled\":true", "\"carryOverEnabled\":false"),
+            data.replaceFirst("\"intervalDays\":3", "\"intervalDays\":0"),
+        )
+        invalidData.forEach { invalid ->
+            val staged = temporaryDataFile()
+            try {
+                val failure = runCatching {
+                    reader.extractAndValidate(ByteArrayInputStream(replaceData(archive, invalid)), staged)
+                }.exceptionOrNull()
+                assertTrue(failure is BackupFormatException)
+            } finally { staged.delete() }
+        }
+        val legacyData = data.replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":6")
+        val replaced = replaceData(archive, legacyData)
+        val legacyManifest = zipEntries(replaced).getValue(MANIFEST_ENTRY).toString(Charsets.UTF_8)
+            .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":6")
+            .replaceFirst("\"minimumReaderVersion\":$BACKUP_FORMAT_VERSION", "\"minimumReaderVersion\":6")
+        val staged = temporaryDataFile()
+        try {
+            val failure = runCatching {
+                reader.extractAndValidate(ByteArrayInputStream(replaceManifest(replaced, legacyManifest)), staged)
+            }.exceptionOrNull()
+            assertTrue(failure is BackupFormatException)
+        } finally { staged.delete() }
+    }
+
+    @Test
     fun inboxAcknowledgementRoundTripsAndLegacyVersion5DefaultsToNull() = runBlocking {
         seedAllUserData()
         database.todoDao().setIncompleteDismissedThroughDate(TODO_ID, "2026-08-10")
@@ -149,12 +218,12 @@ class BackupSpecCoverageTest {
         assertEquals("2026-08-10", database.todoDao().findById(TODO_ID)?.incompleteDismissedThroughDate)
 
         val oldData = zipEntries(archive).getValue(DATA_ENTRY).toString(Charsets.UTF_8)
-            .replaceFirst("\"formatVersion\":6", "\"formatVersion\":5")
+            .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":5")
             .replace(Regex(",\"incompleteDismissedThroughDate\":(?:null|\"[^\"]+\")"), "")
         val updatedData = replaceData(archive, oldData)
         val oldManifest = zipEntries(updatedData).getValue(MANIFEST_ENTRY).toString(Charsets.UTF_8)
-            .replaceFirst("\"formatVersion\":6", "\"formatVersion\":5")
-            .replaceFirst("\"minimumReaderVersion\":6", "\"minimumReaderVersion\":5")
+            .replaceFirst("\"formatVersion\":$BACKUP_FORMAT_VERSION", "\"formatVersion\":5")
+            .replaceFirst("\"minimumReaderVersion\":$BACKUP_FORMAT_VERSION", "\"minimumReaderVersion\":5")
         restoreArchive(replaceManifest(updatedData, oldManifest))
         assertNull(database.todoDao().findById(TODO_ID)?.incompleteDismissedThroughDate)
     }

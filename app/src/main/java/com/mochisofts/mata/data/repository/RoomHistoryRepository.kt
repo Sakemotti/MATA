@@ -298,7 +298,11 @@ class RoomHistoryRepository @Inject constructor(
                 executionDate in period.startDate..period.endDate
             } == true
         } else {
-            executionDate == currentLogicalDate && domainTodo.occursOn(scheduledDate) &&
+            val validSchedule = if (domainTodo.recurrenceType.isCompletionBased) {
+                scheduledDate >= domainTodo.startDate &&
+                    domainTodo.endDate?.let { scheduledDate <= it } != false
+            } else domainTodo.occursOn(scheduledDate)
+            executionDate == currentLogicalDate && validSchedule &&
                 (scheduledDate == currentLogicalDate ||
                     !currentLogicalDate.isAfter(domainTodo.effectiveDueDate(scheduledDate)) ||
                     domainTodo.carryOverEnabled)

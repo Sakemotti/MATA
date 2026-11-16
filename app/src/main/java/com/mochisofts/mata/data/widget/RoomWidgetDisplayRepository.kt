@@ -14,6 +14,7 @@ import com.mochisofts.mata.data.local.TodoExecutionEntity
 import com.mochisofts.mata.data.local.TodoRuntimeStateDao
 import com.mochisofts.mata.data.local.TodoRuntimeStateEntity
 import com.mochisofts.mata.data.repository.toDomain
+import com.mochisofts.mata.data.repository.withExecutionHistory
 import com.mochisofts.mata.domain.model.HolidaySnapshot
 import com.mochisofts.mata.domain.model.RecurrenceProgress
 import com.mochisofts.mata.domain.model.TodoState
@@ -26,6 +27,7 @@ import com.mochisofts.mata.domain.model.isInExecutionWindow
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
+import com.mochisofts.mata.domain.model.completionOccurrenceOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.model.usesHolidayData
 import com.mochisofts.mata.domain.repository.HolidayRepository
@@ -128,13 +130,15 @@ internal fun buildWidgetDisplayModel(
     var provisional = false
 
     source.todos.forEach { entity ->
-        val todo = entity.toDomain()
+        val todoExecutions = executionsByTodo[entity.id].orEmpty()
+        val todo = entity.toDomain().withExecutionHistory(todoExecutions)
         val category = entity.categoryId?.let(categories::get)
         val targetDate = logicalDate(now, dayEndHour)
-        val todoExecutions = executionsByTodo[todo.id].orEmpty()
         val pendingDate = runtimeByTodo[todo.id]?.pendingScheduledLogicalDate
             ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
         val scheduledDate = when {
+            todo.recurrenceType.isCompletionBased ->
+                todo.completionOccurrenceOn(targetDate) ?: return@forEach
             pendingDate != null -> pendingDate
             todo.recurrenceType == com.mochisofts.mata.domain.model.RecurrenceType.ONCE &&
                 todo.isInExecutionWindow(targetDate) -> todo.startDate
@@ -159,7 +163,8 @@ internal fun buildWidgetDisplayModel(
 
         val effectiveDueDate = todo.effectiveDueDate(scheduledDate)
         val deadline = deadlineAt(effectiveDueDate, dayEndHour, todo.dueMinutes, now.zone)
-        val isCarryOver = pendingDate == scheduledDate && targetDate.isAfter(effectiveDueDate)
+        val isCarryOver = (pendingDate == scheduledDate || todo.recurrenceType.isCompletionBased) &&
+            targetDate.isAfter(effectiveDueDate)
         groupedItems.getOrPut(entity.categoryId) { mutableListOf() } += WidgetTodoItem(
             todoId = todo.id,
             definitionRevision = todo.definitionRevision,

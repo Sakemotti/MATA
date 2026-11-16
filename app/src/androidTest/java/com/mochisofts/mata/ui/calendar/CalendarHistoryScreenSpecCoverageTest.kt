@@ -752,6 +752,22 @@ class CalendarHistoryScreenSpecCoverageTest {
         assertReadOnlyDetail("対象論理日")
     }
 
+    @Test
+    fun r355_historyDetailShowsTheConfiguredCompletionInterval() {
+        val original = historyEntry("完了日基準", TodoState.COMPLETED)
+        val entry = original.copy(snapshot = original.snapshot.copy(
+            recurrenceRule = RecurrenceRule(RecurrenceType.AFTER_COMPLETION_DAYS, intervalDays = 3),
+            carryOverEnabled = true,
+        ))
+        composeRule.setContent {
+            MataTheme(useDynamicColor = false) {
+                TodoDetailFullScreen(HistoryDialogItem.Execution(entry).detailModalData()) {}
+            }
+        }
+        composeRule.onNodeWithText("前回完了日から3日後")
+            .performScrollTo().assertIsDisplayed()
+    }
+
     private fun assertReadOnlyDetail(expectedHistoryField: String) {
         composeRule.onNodeWithText("TODO詳細").assertIsDisplayed()
         composeRule.onNodeWithText("スケジュール").assertIsDisplayed()

@@ -1,7 +1,7 @@
 # MATA ウィジェット仕様
 
 - 文書状態: 初版
-- 最終更新日: 2026-08-26
+- 最終更新日: 2026-11-13
 
 このフォルダでは、ホーム画面へ表示する「今日のTODO」ウィジェットのレイアウト、表示データ、操作、更新、テストを定義する。
 
@@ -19,6 +19,7 @@
 - [アプリ全体仕様](../../app-spec.md)
 - [データモデル仕様](../domain-specs/data-model.md)
 - [繰り返し計算仕様](../domain-specs/recurrence-rules.md)
+- [解決日基準の繰り返し](../domain-specs/completion-based-recurrence.md): 通常の取得期間より古い起点も反映し、未完了は常に1回分だけを表示する。
 - [状態遷移・整合処理仕様](../domain-specs/state-transitions.md)
 - [実行期間・期限日・未完了繰り越し仕様](../domain-specs/execution-window-and-carryover.md)
 - [日本の祝日データ仕様](../holiday-specs/README.md)

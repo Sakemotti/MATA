@@ -25,6 +25,7 @@ import com.mochisofts.mata.data.notification.AndroidNotificationScheduler
 import com.mochisofts.mata.data.notification.NotificationChannels
 import com.mochisofts.mata.data.notification.NotificationReconcileWorkScheduler
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.data.repository.withExecutionHistory
 import com.mochisofts.mata.data.widget.WidgetUpdater
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.RecurrenceProgress
@@ -170,6 +171,7 @@ class NotificationDeliveryService @Inject constructor(
         }
 
         val date = LocalDate.parse(scheduled.logicalDate)
+        val executions = executionDao.findForTodo(entity.id)
         val todo = Todo(
             id = entity.id,
             title = entity.title,
@@ -189,7 +191,8 @@ class NotificationDeliveryService @Inject constructor(
             dueDate = entity.dueDate?.let(LocalDate::parse),
             carryOverEnabled = entity.carryOverEnabled,
         )
-        val execution = executionDao.findForTodo(todo.id)
+        .withExecutionHistory(executions)
+        val execution = executions
             .firstOrNull { it.scheduledLogicalDate == date.toString() }
         val holidays = holidayRepository.currentSnapshot().dates
         if (!todo.occursOn(date, holidays) || execution != null ||

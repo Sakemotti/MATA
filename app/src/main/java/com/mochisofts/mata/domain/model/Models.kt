@@ -12,11 +12,15 @@ enum class RecurrenceType(val code: String) {
     MONTHLY_NTH_WEEKDAYS("monthly_nth_weekdays"),
     MONTH_END("month_end"),
     EVERY_N_DAYS("every_n_days"),
+    AFTER_COMPLETION_DAYS("after_completion_days"),
     WEEKLY_COUNT("weekly_count"),
     MONTHLY_COUNT("monthly_count");
 
     val isCountBased: Boolean
         get() = this == WEEKLY_COUNT || this == MONTHLY_COUNT
+
+    val isCompletionBased: Boolean
+        get() = this == AFTER_COMPLETION_DAYS
 
     companion object {
         fun fromStoredValue(value: String): RecurrenceType =
@@ -76,7 +80,9 @@ data class RecurrenceRule(
         RecurrenceType.MONTHLY_DAY -> monthlyDay in 1..31
         RecurrenceType.MONTHLY_NTH_WEEKDAYS ->
             monthlyNthWeekdays.isNotEmpty() && monthlyNthWeekdays.all(MonthlyNthWeekday::isValid)
-        RecurrenceType.EVERY_N_DAYS -> intervalDays in 1..999
+        RecurrenceType.EVERY_N_DAYS,
+        RecurrenceType.AFTER_COMPLETION_DAYS,
+        -> intervalDays in 1..999
         RecurrenceType.WEEKLY_COUNT ->
             periodWeeks in 1..52 && requiredCount in 1..(periodWeeks * 7) &&
                 (dayFilter != RecurrenceDayFilter.CUSTOM || selectedWeekdays.isNotEmpty())
@@ -113,6 +119,8 @@ data class Todo(
     val notifications: List<TodoNotification> = emptyList(),
     val dueDate: LocalDate? = null,
     val carryOverEnabled: Boolean = false,
+    // Derived from durable completed/skipped history, never a second persisted schedule.
+    val lastResolvedLogicalDate: LocalDate? = null,
 ) {
     val recurrenceType: RecurrenceType
         get() = recurrenceRule.type

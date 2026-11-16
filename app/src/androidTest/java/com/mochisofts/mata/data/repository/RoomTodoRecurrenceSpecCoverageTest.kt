@@ -466,6 +466,138 @@ class RoomTodoRecurrenceSpecCoverageTest {
         assertFalse(todoRepository.observeOccurrences(clock.date).first().isEmpty())
     }
 
+    @Test
+    fun completionCycleDelayedCompletionSchedulesFromResolutionAndRejectsStaleAction() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle()
+        assertTrue(database.todoDao().findById(id)!!.carryOverEnabled)
+        clock.setDate(start.plusDays(4))
+        val current = todoRepository.observeOccurrences(clock.date).first().single()
+        assertEquals(start, current.scheduledLogicalDate)
+        assertTrue(current.isCarryOver)
+        todoRepository.setCompleted(id, clock.date, true, "complete-cycle", start).getOrThrow()
+        assertTrue(todoRepository.observeOccurrences(clock.date).first().all { it.state == TodoState.COMPLETED })
+        val saved = database.todoExecutionDao().findForTodo(id).single()
+        assertEquals(clock.date.toString(), saved.resolvedLogicalDate)
+        assertEquals(start.toString(), saved.scheduledLogicalDate)
+        assertEquals(listOf(start.plusDays(7)), todoRepository.getTodo(id)!!.nextOccurrences(clock.date, 3))
+        assertTrue(todoRepository.setCompleted(id, clock.date, true, "stale-cycle", start).isFailure)
+        clock.setDate(start.plusDays(6))
+        assertTrue(todoRepository.observeOccurrences(clock.date).first().isEmpty())
+        clock.setDate(start.plusDays(7))
+        assertEquals(clock.date, todoRepository.observeOccurrences(clock.date).first().single().scheduledLogicalDate)
+    }
+
+    @Test
+    fun completionCycleSkipAdvancesAndHistoryUndoReopensTheOriginalOccurrence() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle()
+        clock.setDate(start.plusDays(2))
+        todoRepository.setSkipped(id, clock.date, true, "skip-cycle", start).getOrThrow()
+        assertEquals(listOf(start.plusDays(5)), todoRepository.getTodo(id)!!.nextOccurrences(clock.date, 3))
+        val skipped = database.todoExecutionDao().findForTodo(id).single()
+        val token = historyRepository().undoAction(skipped.id).getOrThrow()
+        assertEquals(start, todoRepository.observeOccurrences(clock.date).first().single().scheduledLogicalDate)
+        historyRepository().restoreAction(token).getOrThrow()
+        assertEquals(listOf(start.plusDays(5)), todoRepository.getTodo(id)!!.nextOccurrences(clock.date, 3))
+    }
+
+    @Test
+    fun completionCycleCurrentCompletionCanBeUndoneWithoutChangingOlderHistory() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle()
+        todoRepository.setCompleted(id, start, true, "first-cycle", start).getOrThrow()
+        val first = database.todoExecutionDao().findForTodo(id).single()
+        clock.setDate(start.plusDays(3))
+        todoRepository.setCompleted(id, clock.date, true, "second-cycle", clock.date).getOrThrow()
+        val second = database.todoExecutionDao().findForTodo(id).first { it.id != first.id }
+        assertTrue(historyRepository().observeDay(clock.date).first().entries.single().canUndoAction)
+        historyRepository().undoAction(second.id).getOrThrow()
+        assertEquals(listOf(first), database.todoExecutionDao().findForTodo(id))
+        assertEquals(clock.date, todoRepository.observeOccurrences(clock.date).first().single().scheduledLogicalDate)
+        assertTrue(historyRepository().undoAction(first.id).isFailure)
+    }
+
+    @Test
+    fun completionCycleLongAbsenceNeverCreatesMissedHistoryOrDuplicateRows() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle()
+        clock.setDate(start.plusYears(5))
+        repeat(3) {
+            val result = historyReconciler().reconcile(500)
+            assertEquals(0, result.generatedRecords)
+            assertFalse(result.hasMore)
+        }
+        assertTrue(database.todoExecutionDao().findForTodo(id).isEmpty())
+        assertEquals(start, todoRepository.observeOccurrences(clock.date).first().single().scheduledLogicalDate)
+        assertEquals(start.toString(), database.todoRuntimeStateDao().find(id)?.pendingScheduledLogicalDate)
+    }
+
+    @Test
+    fun completionCycleUsesLogicalDayAndRecomputesNotificationsAndWidgetFromSameAnchor() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle()
+        settings.dayEndHour.value = 4
+        clock.setDateTime(start.plusDays(1), 2)
+        todoRepository.setCompleted(id, start, true, "logical-cycle", start).getOrThrow()
+        val todo = todoRepository.getTodo(id)!!
+        val notification = TodoNotification("n", NotificationRelation.AT, 0, NotificationUnit.MINUTE)
+        assertEquals(start.plusDays(3), nextNotificationCandidate(todo, notification, 4,
+            clock.instant().atZone(zone), DayOfWeek.MONDAY)?.logicalDate)
+        val entity = database.todoDao().findById(id)!!
+        val executions = database.todoExecutionDao().findForTodo(id)
+        assertEquals(0, widgetModel(entity, start.plusDays(2), executions, emptySet()).totalCount)
+        assertEquals(1, widgetModel(entity, start.plusDays(3), executions, emptySet()).totalCount)
+    }
+
+    @Test
+    fun completionCycleWidgetQueryIncludesTheAnchorOlderThanItsNormalWindow() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle(interval = 90)
+        todoRepository.setCompleted(id, start, true, "long-cycle", start).getOrThrow()
+        val date = start.plusDays(80)
+        val rows = database.todoExecutionDao().findForWidget(date.minusDays(10).toString(), date.toString())
+        assertEquals(1, rows.size)
+        assertEquals(0, widgetModel(database.todoDao().findById(id)!!, date, rows, emptySet()).totalCount)
+    }
+
+    @Test
+    fun completionCycleEndDateStopsNewCyclesButKeepsTheExistingUnfinishedCycle() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle(endDate = start)
+        clock.setDate(start.plusDays(8))
+        assertEquals(start, todoRepository.observeOccurrences(clock.date).first().single().scheduledLogicalDate)
+        todoRepository.setCompleted(id, clock.date, true, "ended-cycle", start).getOrThrow()
+        clock.setDate(start.plusDays(9))
+        assertTrue(todoRepository.observeOccurrences(clock.date).first().isEmpty())
+        assertTrue(todoRepository.getTodo(id)!!.nextOccurrences(clock.date, 3).isEmpty())
+    }
+
+    @Test
+    fun completionCycleIntervalEditUsesExistingHistoryAndArchiveRestoreDoesNotBackfill() = runBlocking {
+        val start = clock.date
+        val id = saveCompletionCycle()
+        todoRepository.setCompleted(id, start, true, "edit-cycle", start).getOrThrow()
+        val history = database.todoExecutionDao().findForTodo(id)
+        todoRepository.saveTodo(id, "edited", "", null, start, null,
+            RecurrenceRule(RecurrenceType.AFTER_COMPLETION_DAYS, intervalDays = 5), null,
+            emptyList(), null, false).getOrThrow()
+        assertEquals(listOf(start.plusDays(5)), todoRepository.getTodo(id)!!.nextOccurrences(start, 3))
+        assertEquals(history, database.todoExecutionDao().findForTodo(id))
+        todoRepository.archiveTodo(id).getOrThrow()
+        clock.setDate(start.plusDays(10))
+        assertTrue(todoRepository.observeOccurrences(clock.date).first().isEmpty())
+        todoRepository.restoreTodo(id).getOrThrow()
+        historyReconciler().reconcile(500)
+        assertEquals(history, database.todoExecutionDao().findForTodo(id))
+        assertEquals(start.plusDays(5), todoRepository.observeOccurrences(clock.date).first().single().scheduledLogicalDate)
+    }
+
+    private suspend fun saveCompletionCycle(interval: Int = 3, endDate: LocalDate? = null): String =
+        todoRepository.saveTodo(null, "completion cycle", "", null, clock.date, endDate,
+            RecurrenceRule(RecurrenceType.AFTER_COMPLETION_DAYS, intervalDays = interval),
+            null, emptyList(), null, false).getOrThrow()
+
     private fun historyRepository() = RoomHistoryRepository(
         database = database,
         todoDao = database.todoDao(),

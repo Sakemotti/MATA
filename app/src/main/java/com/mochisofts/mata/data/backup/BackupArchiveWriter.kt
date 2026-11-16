@@ -245,7 +245,9 @@ class BackupArchiveWriter @Inject constructor(
                     }
                 endArray()
             }
-            RecurrenceType.EVERY_N_DAYS -> name("intervalDays").value(rule.intervalDays!!.toLong())
+            RecurrenceType.EVERY_N_DAYS,
+            RecurrenceType.AFTER_COMPLETION_DAYS,
+            -> name("intervalDays").value(rule.intervalDays!!.toLong())
             RecurrenceType.WEEKLY_COUNT -> {
                 name("periodWeeks").value(rule.periodWeeks.toLong())
                 name("requiredCount").value(rule.requiredCount!!.toLong())

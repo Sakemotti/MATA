@@ -23,6 +23,7 @@ import com.mochisofts.mata.data.local.TodoExecutionDao
 import com.mochisofts.mata.data.local.TodoNotificationDao
 import com.mochisofts.mata.data.local.TodoNotificationEntity
 import com.mochisofts.mata.data.repository.RecurrenceRuleJson
+import com.mochisofts.mata.data.repository.withExecutionHistory
 import com.mochisofts.mata.domain.model.NotificationRelation
 import com.mochisofts.mata.domain.model.NotificationSystemState
 import com.mochisofts.mata.domain.model.NotificationUnit
@@ -103,10 +104,10 @@ class AndroidNotificationScheduler @Inject constructor(
             return
         }
 
-        val todo = entity.toDomain()
+        val executions = executionDao.findForTodo(todoId)
+        val todo = entity.toDomain().withExecutionHistory(executions)
         val endHour = settingsRepository.dayEndHour.first()
         val weekStart = settingsRepository.weekStart.first()
-        val executions = executionDao.findForTodo(todoId)
         val completedDates = executions.filter { TodoState.fromStoredValue(it.status) == TodoState.COMPLETED }
             .mapTo(mutableSetOf()) { LocalDate.parse(it.scheduledLogicalDate) }
         val actedDates = executions.mapTo(mutableSetOf()) { LocalDate.parse(it.scheduledLogicalDate) }

@@ -38,6 +38,7 @@ import com.mochisofts.mata.domain.model.isInExecutionWindow
 import com.mochisofts.mata.domain.model.logicalDate
 import com.mochisofts.mata.domain.model.logicalDayEnd
 import com.mochisofts.mata.domain.model.occursOn
+import com.mochisofts.mata.domain.model.completionOccurrenceOn
 import com.mochisofts.mata.domain.model.recurrencePeriod
 import com.mochisofts.mata.domain.model.validateNotifications
 import com.mochisofts.mata.domain.repository.CategoryRepository
@@ -241,7 +242,8 @@ class RoomTodoRepository @Inject constructor(
             val currentLogicalDate = logicalDate(now, input.dayEndHour)
 
             input.todos.mapNotNull { entity ->
-                val currentTodo = entity.toDomain()
+                val todoExecutions = executionsByTodo[entity.id].orEmpty()
+                val currentTodo = entity.toDomain().withExecutionHistory(todoExecutions)
                 val targetDate = if (selectedDate == today) {
                     currentLogicalDate
                 } else {
@@ -282,11 +284,14 @@ class RoomTodoRepository @Inject constructor(
                 } else {
                     entity.categoryId?.let(categories::get)?.toDomain()
                 }
-                val todoExecutions = executionsByTodo[currentTodo.id].orEmpty()
                 val pendingDate = runtimeByTodo[currentTodo.id]?.pendingScheduledLogicalDate
                     ?.let { value -> runCatching { LocalDate.parse(value) }.getOrNull() }
                 val scheduledDate = when {
                     execution != null -> LocalDate.parse(execution.scheduledLogicalDate)
+                    todo.recurrenceType.isCompletionBased -> {
+                        (if (targetDate == currentLogicalDate) todo.completionOccurrenceOn(targetDate)
+                        else targetDate.takeIf { todo.occursOn(it) }) ?: return@mapNotNull null
+                    }
                     targetDate == currentLogicalDate && pendingDate != null -> pendingDate
                     todo.recurrenceType == RecurrenceType.ONCE &&
                         todo.isInExecutionWindow(targetDate) -> todo.startDate
@@ -326,7 +331,8 @@ class RoomTodoRepository @Inject constructor(
                     ),
                     scheduledLogicalDate = scheduledDate,
                     effectiveDueDate = todo.effectiveDueDate(scheduledDate),
-                    isCarryOver = execution == null && pendingDate == scheduledDate &&
+                    isCarryOver = execution == null &&
+                        (pendingDate == scheduledDate || todo.recurrenceType.isCompletionBased) &&
                         targetDate.isAfter(todo.effectiveDueDate(scheduledDate)),
                 )
             }.sortedWith(
@@ -349,7 +355,10 @@ class RoomTodoRepository @Inject constructor(
     )
 
     override fun observeTodos(): Flow<List<Todo>> =
-        todoDao.observeActive().map { entities -> entities.map(TodoEntity::toDomain) }
+        combine(todoDao.observeActive(), executionDao.observeAll()) { entities, executions ->
+            val byTodo = executions.groupBy(TodoExecutionEntity::todoId)
+            entities.map { it.toDomain().withExecutionHistory(byTodo[it.id].orEmpty()) }
+        }
 
     override fun observeCompletedDates(todoId: String): Flow<List<LocalDate>> =
         executionDao.observeCompletedLogicalDates(todoId).map { values ->
@@ -359,7 +368,7 @@ class RoomTodoRepository @Inject constructor(
     override suspend fun getTodo(id: String): Todo? = todoDao.findById(id)?.let { entity ->
         entity.toDomain(
             notifications = notificationDao.findForTodo(id).map(TodoNotificationEntity::toDomain),
-        )
+        ).withExecutionHistory(executionDao.findForTodo(id))
     }
 
     override suspend fun saveTodo(
@@ -453,7 +462,8 @@ class RoomTodoRepository @Inject constructor(
                     updatedAt = now,
                     archivedAt = existing?.archivedAt,
                     dueDate = dueDate.takeIf { recurrenceRule.type == RecurrenceType.ONCE }?.toString(),
-                    carryOverEnabled = carryOverEnabled && !recurrenceRule.type.isCountBased,
+                    carryOverEnabled = (carryOverEnabled || recurrenceRule.type.isCompletionBased) &&
+                        !recurrenceRule.type.isCountBased,
                     incompleteDismissedThroughDate = existing?.incompleteDismissedThroughDate?.let { dismissed ->
                         val scheduleChanged = existing.startDate != startDate.toString() ||
                             existing.recurrenceType != encodedRule.typeCode ||
@@ -485,6 +495,9 @@ class RoomTodoRepository @Inject constructor(
             )
             val existingRuntime = runtimeStateDao.find(todoId)
             var pendingScheduledDate = existingRuntime?.pendingScheduledLogicalDate
+            if (recurrenceRule.type.isCompletionBased ||
+                existing?.recurrenceType == RecurrenceType.AFTER_COMPLETION_DAYS.code
+            ) pendingScheduledDate = null
             if (pendingScheduledDate != null && !updatedTodo.carryOverEnabled) {
                 val scheduledDate = LocalDate.parse(pendingScheduledDate)
                 val effectiveDueDate = updatedTodo.toDomain().effectiveDueDate(scheduledDate)
@@ -838,7 +851,7 @@ class RoomTodoRepository @Inject constructor(
         allowExisting: Boolean,
     ) {
         if (entity.archivedAt != null) throw ValidationException(ValidationError.TODO_NOT_ACTIVE)
-        val todo = entity.toDomain()
+        val todo = entity.toDomain().withExecutionHistory(executionDao.findForTodo(entity.id))
         val currentLogicalDate = logicalDate(now, endHour)
         val pendingDate = runtimeStateDao.find(entity.id)?.pendingScheduledLogicalDate
             ?.let(LocalDate::parse)
@@ -848,6 +861,8 @@ class RoomTodoRepository @Inject constructor(
         }
         val validScheduledDate = when {
             allowExisting && existingResolvedToday -> true
+            todo.recurrenceType.isCompletionBased ->
+                scheduledLogicalDate == todo.completionOccurrenceOn(currentLogicalDate)
             pendingDate == scheduledLogicalDate -> true
             todo.recurrenceType == RecurrenceType.ONCE ->
                 scheduledLogicalDate == todo.startDate && todo.isInExecutionWindow(currentLogicalDate)
@@ -932,6 +947,14 @@ internal fun TodoEntity.toDomain(
     dueDate = dueDate?.let(LocalDate::parse),
     carryOverEnabled = carryOverEnabled,
 )
+
+internal fun Todo.withExecutionHistory(executions: Iterable<TodoExecutionEntity>): Todo =
+    copy(
+        lastResolvedLogicalDate = executions.asSequence()
+            .filter { it.status == TodoState.COMPLETED.code || it.status == TodoState.SKIPPED.code }
+            .map { LocalDate.parse(it.resolvedLogicalDate ?: it.logicalDate) }
+            .maxOrNull(),
+    )
 
 private fun TodoNotificationEntity.toDomain() = TodoNotification(
     id = id,

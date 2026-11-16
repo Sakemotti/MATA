@@ -1528,6 +1528,10 @@ private fun recurrenceDescription(rule: RecurrenceRule): String = when (rule.typ
         R.string.todo_recurrence_every_n_days_format,
         rule.intervalDays ?: 1,
     )
+    RecurrenceType.AFTER_COMPLETION_DAYS -> stringResource(
+        R.string.todo_recurrence_after_completion_days_format,
+        rule.intervalDays ?: 1,
+    )
     RecurrenceType.WEEKLY_COUNT -> {
         val period = stringResource(
             R.string.todo_recurrence_weekly_interval_count_format,

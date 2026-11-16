@@ -42,6 +42,10 @@
     <string name="label_monthly_nth_weekdays">毎月 第X X曜日</string>
     <string name="label_month_end">毎月の月末</string>
     <string name="label_every_n_days">一定日数ごと</string>
+    <string name="label_after_completion_days">前回完了日からN日後</string>
+    <string name="todo_recurrence_after_completion_days_format">前回完了日から%1$d日後</string>
+    <string name="todo_editor_completion_carry_over">この繰り返しでは常にオンです。未完了の1回分を、完了またはスキップするまで表示します。</string>
+    <string name="todo_editor_completion_schedule_description">初回は開始日、以後は完了・スキップした日から指定日数後に実行します。一日の終了時刻に従って日付を判定します。次の1回より先の予定は、解決するまで確定しません。</string>
     <string name="label_weekly_count">N週間にX回</string>
     <string name="label_monthly_count">月X回</string>
     <string name="label_not_set">設定なし</string>

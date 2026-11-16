@@ -385,6 +385,7 @@ class BackupArchiveReader @Inject constructor() {
         expectName("repeatType")
         val typeCode = strictString()
         val type = RecurrenceType.entries.firstOrNull { it.code == typeCode } ?: invalid("Invalid repeat type")
+        if (type.isCompletionBased && formatVersion < 7) invalid("Completion recurrence requires format 7")
         if (dueDate != null && (type != RecurrenceType.ONCE || dueDate.isBefore(startDate))) {
             invalid("Invalid TODO due date")
         }
@@ -407,6 +408,7 @@ class BackupArchiveReader @Inject constructor() {
             false
         }
         if (carryOverEnabled && type.isCountBased) invalid("Invalid carry-over setting")
+        if (type.isCompletionBased && !carryOverEnabled) invalid("Completion recurrence requires carry-over")
         val incompleteDismissedThroughDate = if (formatVersion >= 6) {
             expectName("incompleteDismissedThroughDate")
             nullableString()?.also { isoDate(it) }
@@ -511,7 +513,9 @@ class BackupArchiveReader @Inject constructor() {
                 }
                 RecurrenceRule(type, monthlyNthWeekdays = nthWeekdays.toSet())
             }
-            RecurrenceType.EVERY_N_DAYS -> {
+            RecurrenceType.EVERY_N_DAYS,
+            RecurrenceType.AFTER_COMPLETION_DAYS,
+            -> {
                 expectName("intervalDays")
                 RecurrenceRule(type, intervalDays = strictInt())
             }
@@ -833,7 +837,7 @@ class BackupArchiveReader @Inject constructor() {
         formatVersion: Int,
     ) {
         val snapshot = HistorySnapshotJson.decode(element.compact()) ?: invalid("Invalid execution snapshot")
-        validateCommonSnapshot(snapshot)
+        validateCommonSnapshot(snapshot, formatVersion)
         if (version != 1 || snapshot.version != version || snapshot.todoId != todoId ||
             snapshot.definitionRevision != revision || snapshot.logicalDate != logicalDate ||
             snapshot.periodStart != null || snapshot.periodEnd != null
@@ -876,7 +880,10 @@ class BackupArchiveReader @Inject constructor() {
         }
     }
 
-    private fun validateCommonSnapshot(snapshot: HistorySnapshotV1) {
+    private fun validateCommonSnapshot(
+        snapshot: HistorySnapshotV1,
+        formatVersion: Int = BACKUP_FORMAT_VERSION,
+    ) {
         requireCanonicalUuid(snapshot.todoId)
         snapshot.title.boundedCodePoints(1, 100, "snapshot title")
         snapshot.description.boundedCodePoints(0, 1000, "snapshot description")
@@ -893,6 +900,9 @@ class BackupArchiveReader @Inject constructor() {
             (type != RecurrenceType.ONCE || dueDate.isBefore(start))
         ) invalid("Invalid snapshot due date")
         if (snapshot.carryOverEnabled && type.isCountBased) invalid("Invalid snapshot carry-over")
+        if (type.isCompletionBased && (!snapshot.carryOverEnabled || formatVersion < 7)) {
+            invalid("Invalid completion recurrence snapshot")
+        }
         if (!rule.isValid() || snapshot.dueMinutes?.let { it !in 0..1439 } == true ||
             snapshot.definitionRevision < 1 || snapshot.endHour !in 0..23 || snapshot.weekStart !in 1..7
         ) {
